@@ -1,6 +1,34 @@
 ---
 name: loki-template-library
 description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, or project documentation indexes that should follow the package templates.
+when_to_use:
+  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, or project documentation indexes."
+  - "Use when an installed package template should be loaded before writing an artifact."
+argument-hint: "[template kind, artifact destination]"
+arguments:
+  required: []
+  optional:
+    - template_kind
+    - artifact_destination
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: long_context
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - template contract changes
+  - durable package documentation changes
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-template-library/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

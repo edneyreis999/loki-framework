@@ -1,6 +1,35 @@
 ---
 name: loki-index-navigator
 description: Navigate consumer project documentation through `docs/index.xml` first, with `index.md` only as a legacy fallback. Use when `bibliotecario` needs low-cost discovery, when a workflow must inspect existing business docs before editing, or when a project keeps durable context in `/docs`.
+when_to_use:
+  - "Use when navigating consumer project documentation through docs/index.xml before reading durable docs."
+  - "Use when bibliotecario needs low-cost discovery or a workflow must inspect existing business docs before editing."
+argument-hint: "[docs root, question, target document]"
+arguments:
+  required: []
+  optional:
+    - docs_root
+    - question
+    - target_document
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: low
+model_class: long_context
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - index is missing, stale, or ambiguous
+  - document ownership or scope is unclear
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-index-navigator/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

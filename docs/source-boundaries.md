@@ -14,7 +14,7 @@ self_contained: true
 | --- | --- | --- |
 | 1 | `manifest.yaml` | Indice de componentes, destinos sugeridos, guardrails e politica de instalacao. |
 | 2 | `commands/`, `skills/`, `agents/`, `codex/agents/` | Contratos operacionais e projecoes Codex versionadas que devem funcionar sem consultar arquivos externos ao pacote. |
-| 3 | `docs/usage-guide.md`, `docs/operational-inventory.md`, `docs/package-authoring-guardrails.md` e `docs/project-context-catalog.md` | Guia, inventario, checklist normativo e contrato de roteamento entre pacote e contexto duradouro do consumidor. |
+| 3 | `docs/usage-guide.md`, `docs/operational-inventory.md`, `docs/model-effort-guidance.md`, `docs/package-authoring-guardrails.md` e `docs/project-context-catalog.md` | Guia, inventario, politica de modelo/effort, checklist normativo e contrato de roteamento entre pacote e contexto duradouro do consumidor. |
 | 4 | `templates/` e `scripts/` | Contratos base e utilitarios versionados para instalar ou validar o pacote. |
 
 ## Limites

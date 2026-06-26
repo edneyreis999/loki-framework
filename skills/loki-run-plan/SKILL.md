@@ -1,6 +1,37 @@
 ---
 name: loki-run-plan
 description: Run the Loki `loki:run-plan` command workflow in Codex. Use when executing an approved Loki plan phase from `tasks.md` and `task-N.M.md`, producing execution briefs, serialized writes, validation evidence, task status updates, and resumable state.
+when_to_use:
+  - "Use when executing an approved Loki plan phase from tasks.md and task-N.M.md."
+  - "Use when producing execution briefs, serialized writes, validation evidence, task status updates, and resumable state."
+argument-hint: "[phase, tasks.md, task target, analysis directory]"
+arguments:
+  required: []
+  optional:
+    - phase
+    - tasks_md
+    - task_target
+    - analysis_directory
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - long execution with complex resume state
+  - broad cross-artifact writes
+  - high-risk implementation or sensitive write
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-run-plan/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

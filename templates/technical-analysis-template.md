@@ -15,6 +15,22 @@ created: "<YYYY-MM-DD>"
 
 - <brief, PRD, NSD, feedback, pedido direto ou decisao humana>
 
+## Execution Effort
+
+```yaml
+execution_effort: high
+model_class: frontier_reasoning
+escalation_reason: "<conflicting evidence | architecture | security | current external research | irreversible decision | none>"
+recommended_handoffs:
+  research: "<source-researcher|none>"
+  planning: "loki:generate-action-plan"
+validator_effort: "<low|medium|high>"
+```
+
+Analises geradas por `loki:tech-analysis` sao artefatos transientes, mas devem
+ser produzidas com high effort por padrao porque orientam decisoes, riscos,
+validators e planos futuros.
+
 ## Scope
 
 - <superficie, comportamento ou decisao tecnica permitida>
@@ -95,7 +111,7 @@ created: "<YYYY-MM-DD>"
 
 ## Human Gates
 
-- <interview/approval/human-validation/technical-review ou `none`>
+- <interview/approval/runtime-validation/technical-review ou `none`>
 
 ## Affected Docs
 
@@ -110,6 +126,8 @@ created: "<YYYY-MM-DD>"
 - **Recommended next command:** `loki:generate-action-plan`
 - **Plan input summary:** <escopo, decisao, riscos e validators que o plano deve preservar>
 - **Required skills:** <loki ou technology_required_skills>
+- **Downstream execution profile:** <model_class, execution_effort,
+  recommended_handoffs e validator_effort que o plano deve preservar>
 
 ## Resume State
 

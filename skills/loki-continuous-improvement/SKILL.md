@@ -1,6 +1,36 @@
 ---
 name: loki-continuous-improvement
 description: Run the Loki `loki:continuous-improvement` command workflow in Codex. Use when promoting validated learnings into durable project context, Loki package artifacts, standards, commands, skills, agents, templates, validators, docs, manifest updates, or backlog.
+when_to_use:
+  - "Use when promoting validated learnings into durable project context or Loki package artifacts."
+  - "Use when classifying candidates for standards, commands, skills, agents, templates, validators, docs, manifest updates, or backlog."
+argument-hint: "[retrospective path, candidate learning, target surface]"
+arguments:
+  required: []
+  optional:
+    - retrospective_path
+    - candidate_learning
+    - target_surface
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - durable package policy promotion
+  - command, skill, agent, template, validator, or manifest changes
+  - broad normative change with cross-adapter impact
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-continuous-improvement/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

@@ -1,6 +1,34 @@
 ---
 name: loki-command-workflows
 description: Use Loki command workflows from Codex. Trigger when the user invokes `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, `loki:retrospectiva-tecnica`, or `loki:continuous-improvement`; read the matching command contract and load the required Loki skills.
+when_to_use:
+  - "Use when the user invokes a Loki command workflow from Codex."
+  - "Use when routing loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, loki:retrospectiva-tecnica, or loki:continuous-improvement."
+argument-hint: "[loki command name, command arguments]"
+arguments:
+  required: []
+  optional:
+    - command_name
+    - command_arguments
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: generalist
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - ambiguous command routing
+  - command contract requires high-effort downstream workflow
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-command-workflows/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

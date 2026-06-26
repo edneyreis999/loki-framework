@@ -2,7 +2,38 @@
 name: technical-implementer
 type: agent
 status: draft
+description: Propor mudancas tecnicas e validadores para codigo, runtime ou integracoes sem escrever nem assumir tecnologia especifica sem fonte.
 mode: proposal-only
+confidence: medium
+model: inherit
+model_class: coding
+effort: high
+model_reasoning_effort: high
+isolation: proposal-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - approval
+  - human-validation
+risks:
+  - "Pode subestimar blast radius se declared runtime surfaces estiverem incompletas."
+  - "Nao deve substituir skill tecnica especializada quando a tecnologia for detectada."
+escalation_signals:
+  - "mudanca afeta runtime, integracao, migracao ou superficie sensivel"
+  - "proposta exige technology-specific skill"
+  - "validacao automatica nao cobre comportamento perceptivel"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent proposal-only de coding com high effort para risco tecnico."
+  codex: "Projetado em codex/agents/technical-implementer.toml com sandbox read-only e high reasoning effort."
+nickname_candidates:
+  - technical-implementer
+  - implementation-proposer
 ---
 
 # technical-implementer

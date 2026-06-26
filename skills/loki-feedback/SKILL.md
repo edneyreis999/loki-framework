@@ -1,6 +1,37 @@
 ---
 name: loki-feedback
 description: Run the Loki `loki:feedback` command workflow in Codex. Diagnose software or game project feedback through a strict one-question-at-a-time interview before proposing any fix; use when the user reports validation feedback, visual bugs, gameplay or product feel, UX problems, audio/input issues, unexpected runtime behavior, integration symptoms, or other observed symptoms.
+when_to_use:
+  - "Use when diagnosing validation feedback, visual bugs, gameplay/product feel, UX problems, audio/input issues, runtime behavior, or integration symptoms."
+  - "Use when a one-question-at-a-time interview is required before proposing a fix."
+argument-hint: "[feedback, observed behavior, expected behavior, context]"
+arguments:
+  required: []
+  optional:
+    - feedback
+    - observed_behavior
+    - expected_behavior
+    - context
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: generalist
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - external research is required
+  - feedback conflicts with local evidence
+  - high-risk technical proposal
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-feedback/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

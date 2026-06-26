@@ -2,7 +2,38 @@
 name: standards-curator
 type: agent
 status: draft
+description: Classificar aprendizados validados e propor destino duradouro correto, sem promover regra ou editar artefatos diretamente.
 mode: proposal-only
+confidence: medium
+model: inherit
+model_class: generalist
+effort: medium
+model_reasoning_effort: medium
+isolation: proposal-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - technical-review
+  - approval
+risks:
+  - "Generalizacao prematura pode promover regra com evidencia insuficiente."
+  - "Destino errado pode misturar pacote Loki com contexto local do consumidor."
+escalation_signals:
+  - "aprendizado vira politica duradoura do pacote"
+  - "mudanca relaxa guardrail ou afeta multiplos artefatos"
+  - "classificacao depende de evidencia conflitante"
+adapter_projection:
+  claude_code: "Pode escalar de generalist/medium para frontier_reasoning/high ao propor politica duradoura."
+  codex: "Projetado em codex/agents/standards-curator.toml com sandbox read-only e medium reasoning effort."
+nickname_candidates:
+  - standards-curator
+  - standards-reviewer
 ---
 
 # standards-curator

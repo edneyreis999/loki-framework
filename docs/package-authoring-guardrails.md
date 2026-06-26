@@ -25,14 +25,18 @@ duradoura.
 Antes de escrever:
 
 1. Classifique a mudanca como `command`, `skill`, `agent`, `template`, `doc`, `manifest`, `standard` ou `backlog`.
-2. Confirme se o destino certo e:
+2. Classifique tambem o perfil de execucao esperado usando
+   [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md):
+   documentacao duravel, artefato transitorio, implementacao de codigo,
+   escrita human-like, leitura read-only ou orquestracao.
+3. Confirme se o destino certo e:
    - artefato consolidado do pacote;
    - contexto duradouro do projeto consumidor, como `docs/**/*.md`,
      `docs/index.xml`, `AGENTS.md` ou `CLAUDE.md`;
    - ou apenas artefato transitorio do plano ativo.
-3. Se o aprendizado pertencer apenas a task, interaction, build, validation ou retrospectiva da fase atual, nao promova para o pacote; mantenha local ou faca handoff apropriado.
-4. Se a mudanca for normativa para o pacote, exija pelo menos `technical-review`.
-5. Se a mudanca relaxar politica, instalar em `.claude/**`, `.codex/**` ou `.agents/**`, sincronizar contexto duradouro no consumidor, ou promover regra duradoura, exija `approval`.
+4. Se o aprendizado pertencer apenas a task, interaction, build, validation ou retrospectiva da fase atual, nao promova para o pacote; mantenha local ou faca handoff apropriado.
+5. Se a mudanca for normativa para o pacote, exija pelo menos `technical-review`.
+6. Se a mudanca relaxar politica, instalar em `.claude/**`, `.codex/**` ou `.agents/**`, sincronizar contexto duradouro no consumidor, ou promover regra duradoura, exija `approval`.
 
 ## Superficies Duradouras vs Transitorias
 
@@ -70,6 +74,9 @@ Antes de escrever:
 - Skills do pacote Loki devem usar prefixo `loki-` quando fizerem parte do namespace do pacote.
 - `name` e `description` sao obrigatorios no frontmatter top-level.
 - O `description` deve carregar o principal contexto de trigger. `When To Use` no corpo nao substitui isso.
+- Quando a skill orientar roteamento de modelo, use a semantica provider-neutral
+  definida em `docs/model-effort-guidance.md` e nao prometa enforcement em
+  adaptadores que tratam `SKILL.md` apenas como metadado.
 - Material condicional, exemplos longos e variantes devem ir para `references/`.
 - Nao deve haver arquivos `.md` soltos diretamente em `skills/`.
 
@@ -77,6 +84,8 @@ Antes de escrever:
 
 - Comandos Loki devem usar namespace `loki:`.
 - O contrato precisa declarar `allowed_writes`, `forbidden_writes`, `validators`, `human_gates`, `stop_conditions` e `resume_contract`.
+- O contrato deve apontar para `model_class`, `effort`, sinais de escalamento
+  ou `execution_profile` quando orientar custo, raciocinio ou handoffs.
 - Quando o comando processar aprendizados de fase, ele deve separar claramente fonte transitoria de destino duradouro.
 - Se o comando evoluir o proprio pacote, ele deve listar validacoes de pacote e artefatos normativos impactados.
 - Quando um comando Loki precisar ser invocavel diretamente no Codex, mantenha
@@ -86,6 +95,9 @@ Antes de escrever:
 
 - Agentes devem ter responsabilidade estreita e formato `read-only` ou `proposal-only` por default no MVP.
 - `description` deve explicar gatilhos concretos e limites.
+- Metadados de agente devem distinguir `model_class`, `effort`, isolamento e
+  projecao por adaptador quando o agente puder ser materializado em Claude Code,
+  Codex custom agent ou outro runtime.
 - Mudancas em agentes do pacote devem indicar impacto em `manifest.yaml` e docs quando aplicavel.
 - Mudancas em `agents/*.md` devem manter `codex/agents/*.toml` sincronizado
   quando o agente tiver superficie Codex. O nome base do TOML deve acompanhar o
@@ -158,7 +170,10 @@ find "$PACKAGE_ROOT" -type f \
   -print0 | xargs -0 rg -n "(Jhonny/|docs/05-Loki-Framework/001-blueprint-aprovado|/Users/|~/|source_plan|canonical_blueprint|operational_plan|historical_reference)"
 ```
 
-Tambem validar YAML/frontmatter e paths do manifesto.
+Tambem validar YAML/frontmatter e paths do manifesto. Quando a mudanca tocar
+guidance de modelo ou effort, validar que `docs/model-effort-guidance.md`
+continua sendo a referencia central e que IDs concretos de modelos nao foram
+duplicados como regra canonica espalhada.
 
 Para superficies Codex do pacote, validar tambem:
 

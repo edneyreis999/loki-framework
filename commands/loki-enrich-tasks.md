@@ -5,6 +5,23 @@ status: draft
 domain: continuous-improvement
 required_skills:
   - loki-enrich-tasks
+execution_profile:
+  model_class: generalist
+  default_effort: medium
+  max_effort: high
+  escalation_signals:
+    - conflicting retrospective or build evidence
+    - enrichment changes execution order, scope, or gates
+    - durable package policy may be affected
+  handoff_effort:
+    research: medium
+    coding: medium
+    documentation_transient: low
+    documentation_durable: high
+    validator: low
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:enrich-tasks

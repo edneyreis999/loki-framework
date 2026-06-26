@@ -29,6 +29,11 @@ metadata_superset:
     - confidence
     - risks
     - required_gates
+    - model_class
+    - effort
+    - escalation_signals
+    - adapter_projection
+    - isolation
   claude_code_subagent:
     - name
     - description
@@ -75,14 +80,40 @@ agent_contract:
   forbidden_writes:
     - ".agents/**"
     - ".claude/**"
+    - ".codex/**"
     - "<sensitive_write_patterns>"
   tools: []
   required_skills:
     - "<technology_required_skills>"
+  model_class: "frontier_reasoning | coding | generalist | long_context | fast_low_cost | specialist_generalist_human_like"
+  effort: "low | medium | high | xhigh"
+  escalation_signals: []
+  isolation: "read-only | proposal-only | delegated-write-after-approval"
+  adapter_projection:
+    claude_code: "Project to subagent frontmatter/settings only when supported."
+    codex: "Project to codex/agents/*.toml or profile for strong enforcement."
   response_format: ""
   required_gates:
-    - "<human_validation_gate>"
+    - "<interview | approval | runtime-validation | technical-review>"
 ```
+
+## Model and Effort Rules
+
+Use `docs/model-effort-guidance.md` as the source for provider-neutral
+classification. Prefer `model_class` and `effort` over concrete provider model
+IDs in the Markdown contract.
+
+Use `model: inherit` or omit a concrete `model` when the runtime cannot enforce
+that field or when the agent should follow the orchestrator. Use `effort:
+medium` for normal proposal-only work, code review or bounded synthesis. Use
+`effort: high` for durable package policy, multi-source research, conflicting
+evidence, complex architecture, high-risk implementation proposals or agents
+that influence future command/skill/template behavior.
+
+Claude Code can apply model and effort through supported subagent or skill
+frontmatter and configuration precedence. Codex does not get strong enforcement
+from Markdown alone; project enforceable settings into `codex/agents/*.toml`,
+configuration profiles or explicit runtime selection.
 
 ## Response Format
 
@@ -100,6 +131,8 @@ parallel_agent_response:
   findings: []
   risks: []
   confidence: "low | medium | high"
+  model_class: ""
+  effort: "low | medium | high | xhigh"
   required_validations: []
   proposed_next_step: ""
 ```

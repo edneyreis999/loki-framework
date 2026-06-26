@@ -23,6 +23,8 @@ O relacionamento entre brief, analise, plano, execucao e validacao esta em
 relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
 `loki:continuous-improvement` esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md).
+As regras de classe de modelo, effort e projecao por adaptador estao em
+[Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md).
 
 ## Commands
 
@@ -120,6 +122,7 @@ relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
 | `docs/loki-plan-execution-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de execucao. |
 | `docs/loki-learning-workflow.md` | `mvp` | Explicar o workflow canonico de aprendizado, retrospectiva e promocao de contexto duradouro. |
 | `docs/loki-learning-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de aprendizado. |
+| `docs/model-effort-guidance.md` | `mvp` | Definir classes provider-neutral de modelo, effort, sinais de escalamento e projecao por adaptador para artefatos Loki. |
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |

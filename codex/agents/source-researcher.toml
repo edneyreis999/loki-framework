@@ -1,10 +1,13 @@
 name = "source-researcher"
 description = "Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao, sem decidir solucao nem escrever."
+nickname_candidates = ["source-researcher", "researcher"]
+model_reasoning_effort = "high"
 sandbox_mode = "read-only"
+approval_policy = "never"
 developer_instructions = '''
 This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Original package source: agents/source-researcher.md
-Original Loki mode: read-only
+Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
 ---
 name: source-researcher
@@ -12,6 +15,38 @@ type: agent
 status: draft-read-only
 mode: read-only
 description: Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao, sem decidir solucao nem escrever.
+confidence: high
+model: inherit
+model_class: frontier_reasoning
+effort: high
+model_reasoning_effort: high
+isolation: read-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - interview
+  - research-consent
+  - approval
+  - human-validation
+risks:
+  - "Pesquisa externa sem gate aprovado pode contaminar a decisao."
+  - "Conflitos entre fontes exigem evidencia antes de recomendar proximo passo."
+escalation_signals:
+  - "lacuna pre-decisional multi-fonte"
+  - "evidencia externa atual e material para a decisao"
+  - "conflito entre fontes locais ou oficiais"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent read-only de pesquisa com high effort quando houver conflito multi-fonte."
+  codex: "Projetado em codex/agents/source-researcher.toml com sandbox read-only e high reasoning effort."
+nickname_candidates:
+  - source-researcher
+  - researcher
 ---
 
 # source-researcher

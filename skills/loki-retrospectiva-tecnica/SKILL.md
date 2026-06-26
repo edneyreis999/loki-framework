@@ -1,6 +1,38 @@
 ---
 name: loki-retrospectiva-tecnica
 description: Run the Loki `loki:retrospectiva-tecnica` command workflow in Codex. Produce a concise technical retrospective after a Loki phase is completed or clearly paused, or after a real task difficulty is actually resolved, capturing artifacts, validations, human decisions, pending gates, reusable learnings, and residual risks for future LLM runs and continuous improvement.
+when_to_use:
+  - "Use after a Loki phase is completed or clearly paused."
+  - "Use after a real task difficulty is resolved and reusable evidence should be captured."
+  - "Use when recording artifacts, validations, human decisions, pending gates, learnings, and residual risks."
+argument-hint: "[phase, tasks.md, builds, interactions]"
+arguments:
+  required: []
+  optional:
+    - phase
+    - tasks_md
+    - builds
+    - interactions
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: generalist
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - reusable learning may become durable policy
+  - evidence is incomplete or conflicting
+  - retrospective recommends package artifact changes
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-retrospectiva-tecnica/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

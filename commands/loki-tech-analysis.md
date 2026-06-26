@@ -5,6 +5,23 @@ status: draft
 domain: spec-driven
 required_skills:
   - loki-tech-analysis-authoring
+execution_profile:
+  model_class: frontier_reasoning
+  default_effort: high
+  max_effort: xhigh
+  escalation_signals:
+    - architecture or security risk
+    - conflicting multi-source evidence
+    - irreversible or high-impact recommendation
+  handoff_effort:
+    research: high
+    coding: medium
+    documentation_transient: high
+    documentation_durable: high
+    validator: medium
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:tech-analysis

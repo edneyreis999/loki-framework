@@ -2,7 +2,37 @@
 name: runtime-qa
 type: agent
 status: draft
+description: Definir checklist, evidencias e human-validation gate para QA de comportamento perceptivel sem validar ou escrever por conta propria.
 mode: read-only
+confidence: medium
+model: inherit
+model_class: coding
+effort: medium
+model_reasoning_effort: medium
+isolation: read-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - human-validation
+  - approval
+risks:
+  - "Evidencia automatica pode nao cobrir experiencia perceptivel."
+  - "Nao pode marcar validacao humana como concluida sem resposta explicita."
+escalation_signals:
+  - "mudanca afeta UI, input, audio, timing, persistencia ou integracao ativa"
+  - "validators automaticos nao cobrem comportamento observado"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent read-only/proposal-only para checklist de runtime QA."
+  codex: "Projetado em codex/agents/runtime-qa.toml com sandbox read-only e medium reasoning effort."
+nickname_candidates:
+  - runtime-qa
+  - qa-checklist
 ---
 
 # runtime-qa

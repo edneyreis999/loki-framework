@@ -1,16 +1,49 @@
 name = "bibliotecario"
-description = "Localizar a menor leitura suficiente na documentacao duradoura do projeto consumidor, usando `docs/index.xml` como catalogo principal e lendo apenas os trechos necessarios para responder uma pergunta ou executar uma task."
+description = "Localizar a menor leitura suficiente em documentacao duradoura do projeto consumidor via docs/index.xml, sem escrever nem promover aprendizado."
+nickname_candidates = ["bibliotecario", "doc-lookup"]
+model_reasoning_effort = "low"
 sandbox_mode = "read-only"
+approval_policy = "never"
 developer_instructions = '''
 This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Original package source: agents/bibliotecario.md
-Original Loki mode: read-only
+Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
 ---
 name: bibliotecario
 type: agent
 status: draft
+description: Localizar a menor leitura suficiente em documentacao duradoura do projeto consumidor via docs/index.xml, sem escrever nem promover aprendizado.
 mode: read-only
+confidence: high
+model: inherit
+model_class: fast_low_cost
+effort: low
+model_reasoning_effort: low
+isolation: read-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - interview
+  - approval
+risks:
+  - "Catalogo ausente ou desatualizado pode exigir devolucao ao orquestrador."
+  - "Contexto nao documentado nao deve ser inventado."
+escalation_signals:
+  - "docs/index.xml ausente ou claramente obsoleto"
+  - "pergunta exige promocao ou edicao de documentacao duradoura"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent read-only com baixo effort quando o runtime suportar."
+  codex: "Projetado em codex/agents/bibliotecario.toml com sandbox read-only e low reasoning effort."
+nickname_candidates:
+  - bibliotecario
+  - doc-lookup
 required_skills:
   - loki-index-navigator
 ---

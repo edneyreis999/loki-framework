@@ -5,6 +5,23 @@ status: draft
 domain: execution
 required_skills:
   - loki-run-plan-execution
+execution_profile:
+  model_class: frontier_reasoning
+  default_effort: high
+  max_effort: xhigh
+  escalation_signals:
+    - long execution with complex resume state
+    - broad cross-artifact writes
+    - high-risk implementation or sensitive write
+  handoff_effort:
+    research: medium
+    coding: medium
+    documentation_transient: low
+    documentation_durable: high
+    validator: medium
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:run-plan

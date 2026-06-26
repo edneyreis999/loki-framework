@@ -1,6 +1,36 @@
 ---
 name: loki-generate-action-plan
 description: Run the Loki `loki:generate-action-plan` command workflow in Codex. Use when creating phased executable action plans, `tasks.md`, `task-N.M.md`, phase folders, dependencies, validators, human loops, stop conditions, and resume-ready Loki plan artifacts.
+when_to_use:
+  - "Use when running loki:generate-action-plan to create phased executable Loki plans."
+  - "Use when creating tasks.md, task-N.M.md, phase folders, dependencies, validators, human loops, stop conditions, and resumable state."
+argument-hint: "[analysis path, objective, plan directory]"
+arguments:
+  required: []
+  optional:
+    - analysis_path
+    - objective
+    - plan_directory
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - large multi-phase plan
+  - complex dependencies or human gates
+  - sensitive writes modeled for future execution
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-generate-action-plan/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

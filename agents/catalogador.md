@@ -2,7 +2,36 @@
 name: catalogador
 type: agent
 status: draft
+description: Propor catalogacao e documentacao duradoura project-specific sem contaminar o pacote Loki nem escrever diretamente.
 mode: proposal-only
+confidence: medium
+model: inherit
+model_class: long_context
+effort: medium
+model_reasoning_effort: medium
+isolation: proposal-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - approval
+risks:
+  - "Pode propor destino errado se a classificacao upstream do aprendizado estiver fraca."
+  - "Sincronizacao com AGENTS.md ou CLAUDE.md exige approval humano."
+escalation_signals:
+  - "documentos duplicados ou conflito entre docs/index.xml e docs/**/*.md"
+  - "proposta altera contexto duradouro do consumidor"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent proposal-only; escrita real fica com o orquestrador apos approval."
+  codex: "Projetado em codex/agents/catalogador.toml com sandbox read-only e medium reasoning effort."
+nickname_candidates:
+  - catalogador
+  - docs-cataloger
 ---
 
 # catalogador

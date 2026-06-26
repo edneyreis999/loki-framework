@@ -31,6 +31,25 @@ created: "<YYYY-MM-DD>"
 
 - <pergunta pendente ou `none`>
 
+## Downstream Execution Profile
+
+```yaml
+downstream_execution_profile:
+  model_class: "<frontier_reasoning|coding|generalist|long_context|fast_low_cost|specialist_generalist_human_like>"
+  execution_effort: "<low|medium|high|xhigh>"
+  escalation_reason: "<por que o plano exige esse effort>"
+  recommended_handoffs:
+    research: "<source-researcher|none>"
+    context: "<execution-context-reader|none>"
+    implementation: "<technical-implementer|none>"
+    runtime_validation: "<runtime-qa|none>"
+  validator_effort: "<low|medium|high>"
+```
+
+Planos gerados por `loki:generate-action-plan` sao transientes, mas devem usar
+`execution_effort: high` por padrao. Ajustes task-level podem reduzir effort
+para notas locais, validadores simples ou documentacao transiente.
+
 ## Phases
 
 ### Fase 1 - <phase-title>
@@ -40,7 +59,7 @@ created: "<YYYY-MM-DD>"
 
 | Task | Title | Dependencies | Estimate | Human Loop | Validators | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| task-1.1 | <task-title> | none | 2-4h | <none/interview/approval/human-validation> | <validator> | pending |
+| task-1.1 | <task-title> | none | 2-4h | <none/interview/approval/runtime-validation> | <validator> | pending |
 
 ## Execution Order
 

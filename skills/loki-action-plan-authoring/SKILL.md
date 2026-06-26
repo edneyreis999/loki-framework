@@ -1,6 +1,38 @@
 ---
 name: loki-action-plan-authoring
 description: Create or review executable Loki action plans from technical analysis, briefs, feedback, or approved objectives. Use when generating `tasks.md`, `task-N.M.md`, phase folders, dependencies, human loops, concrete references, observable validation, or when improving `loki:generate-action-plan` outputs.
+when_to_use:
+  - "Use when creating or reviewing executable Loki action plans from analysis, briefs, feedback, or approved objectives."
+  - "Use when generating tasks.md, task-N.M.md, phase folders, dependencies, human loops, references, or observable validation."
+  - "Use when improving outputs from loki:generate-action-plan."
+argument-hint: "[analysis path, scope, plan directory, gates]"
+arguments:
+  required: []
+  optional:
+    - analysis_path
+    - scope
+    - plan_directory
+    - gates
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - large multi-phase plan
+  - complex dependencies or human gates
+  - sensitive writes modeled for future execution
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-action-plan-authoring/SKILL.md"
+shell: {}
 ---
 
 # loki-action-plan-authoring

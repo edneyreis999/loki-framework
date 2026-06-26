@@ -1,6 +1,39 @@
 ---
 name: loki-command-creator
 description: Create or revise Loki commands, Claude Code custom commands, or Codex reusable command-like workflows. Use when a workflow has explicit inputs, outputs, gates, allowed writes, forbidden writes, handoffs, validators, and resumable state; also use when deciding whether a change belongs as a command, skill, agent, template, standard, or backlog item.
+when_to_use:
+  - "Use when creating or revising Loki commands, Claude Code custom commands, or Codex reusable command-like workflows."
+  - "Use when a workflow needs explicit inputs, outputs, gates, writes, handoffs, validators, and resumable state."
+  - "Use when deciding whether a change belongs as a command, skill, agent, template, standard, or backlog item."
+argument-hint: "[workflow goal, inputs, outputs, writes, gates]"
+arguments:
+  required: []
+  optional:
+    - workflow_goal
+    - inputs
+    - outputs
+    - writes
+    - gates
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - command contract changes
+  - durable workflow policy
+  - complex gates, validators, or resume state
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-command-creator/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

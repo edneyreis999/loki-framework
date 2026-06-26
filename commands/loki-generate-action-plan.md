@@ -5,6 +5,23 @@ status: draft
 domain: planning
 required_skills:
   - loki-action-plan-authoring
+execution_profile:
+  model_class: frontier_reasoning
+  default_effort: high
+  max_effort: xhigh
+  escalation_signals:
+    - large multi-phase plan
+    - complex dependency graph
+    - sensitive writes or human gates are hard to model
+  handoff_effort:
+    research: high
+    coding: medium
+    documentation_transient: high
+    documentation_durable: high
+    validator: medium
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:generate-action-plan

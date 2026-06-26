@@ -14,6 +14,7 @@ source:
   usage_guide: "docs/usage-guide.md"
   plan_execution_workflow: "docs/loki-plan-execution-workflow.md"
   learning_workflow: "docs/loki-learning-workflow.md"
+  model_effort_guidance: "docs/model-effort-guidance.md"
   authoring_guardrails: "docs/package-authoring-guardrails.md"
   consumer_context_contract: "docs/project-context-catalog.md"
   self_contained_policy: "This package must not require blueprint, plan, .agents, .claude, or game-project files outside this directory to operate."
@@ -58,6 +59,7 @@ guardrails:
     - "docs/usage-guide.md"
     - "docs/loki-plan-execution-workflow.md"
     - "docs/loki-learning-workflow.md"
+    - "docs/model-effort-guidance.md"
     - "docs/package-authoring-guardrails.md"
     - "docs/project-context-catalog.md"
     - "codex/agents/"
@@ -280,6 +282,8 @@ docs:
   - file: "docs/loki-learning-workflow.md"
     status: draft
   - file: "docs/loki-learning-workflow.excalidraw.md"
+    status: draft
+  - file: "docs/model-effort-guidance.md"
     status: draft
   - file: "docs/package-authoring-guardrails.md"
     status: draft

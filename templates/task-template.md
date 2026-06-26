@@ -16,6 +16,25 @@ task_id: "<task-N.M>"
 
 <Contexto minimo para outro agente executar sem memoria da conversa.>
 
+## Execution Profile
+
+```yaml
+model_class: "<frontier_reasoning|coding|generalist|long_context|fast_low_cost|specialist_generalist_human_like>"
+task_effort: "<low|medium|high|xhigh>"
+documentation_profile: "<none|transient|durable|human_like>"
+validator_effort: "<low|medium|high>"
+recommended_handoffs:
+  research: "<source-researcher|none>"
+  context: "<execution-context-reader|none>"
+  implementation: "<technical-implementer|none>"
+  runtime_validation: "<runtime-qa|none>"
+escalation_reason: "<none ou motivo verificavel>"
+```
+
+Use `coding` com effort medio para implementacao normal. Use effort alto para
+politica duravel, contratos/templates, analise tecnica, plano de acao, risco
+arquitetural, evidencia conflitante ou validacao dificil.
+
 ## Requirements
 
 - <requisito verificavel>
@@ -46,7 +65,7 @@ task_id: "<task-N.M>"
 
 ## Human Loop
 
-- Gate: <none | interview | approval | human-validation | technical-review>
+- Gate: <none | interview | approval | runtime-validation | technical-review>
 - Required decision: <decisao ou `none`>
 
 ## Definition Of Done

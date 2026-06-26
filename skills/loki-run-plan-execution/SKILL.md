@@ -1,6 +1,37 @@
 ---
 name: loki-run-plan-execution
 description: Execute approved Loki action-plan phases from `tasks.md` and `task-N.M.md` files. Use for `loki:run-plan` preflight, phase/task onboarding, execution briefs, dependency checks, read-only context extraction routing, serialized writes, validators, human gates, build evidence, and resumable task state.
+when_to_use:
+  - "Use for loki:run-plan preflight and phase execution from approved tasks.md and task-N.M.md files."
+  - "Use when checking dependencies, execution briefs, read-only context routing, serialized writes, validators, gates, build evidence, and resumable state."
+argument-hint: "[phase, tasks.md, task target, analysis directory]"
+arguments:
+  required: []
+  optional:
+    - phase
+    - tasks_md
+    - task_target
+    - analysis_directory
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - dependency or resume-state ambiguity
+  - broad cross-artifact writes
+  - sensitive write, runtime behavior, or human gate complexity
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-run-plan-execution/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

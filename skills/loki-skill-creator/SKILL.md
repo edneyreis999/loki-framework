@@ -1,6 +1,38 @@
 ---
 name: loki-skill-creator
 description: Create or update effective multi-adapter skills in the Loki Framework package for Codex and Claude Code. Use when designing a new skill, revising an existing skill, deciding whether a workflow belongs in a skill, or checking skill structure, frontmatter metadata, progressive disclosure, references, scripts, assets, and validation requirements.
+when_to_use:
+  - "Use when designing a new skill or revising an existing Loki skill."
+  - "Use when checking skill structure, frontmatter metadata, progressive disclosure, references, scripts, assets, or validation requirements."
+  - "Use when deciding whether reusable behavior belongs in a skill, command, agent, template, standard, or backlog item."
+argument-hint: "[skill goal, trigger context, target adapters, validation needs]"
+arguments:
+  required: []
+  optional:
+    - skill_goal
+    - trigger_context
+    - target_adapters
+    - validation_needs
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: generalist
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - durable package policy
+  - cross-adapter metadata design
+  - skill changes affect command workflows
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-skill-creator/SKILL.md"
+shell: {}
 ---
 
 # loki-skill-creator

@@ -1,6 +1,38 @@
 ---
 name: loki-agent-creator
 description: Create or revise Loki agents, Claude Code subagents, or Codex custom agents. Use when the main unit is a specialist role with independent judgment, isolated context, restricted tools, read-only analysis, proposal-only output, or structured handoff back to an orchestrator; also use when deciding between agent, skill, and command.
+when_to_use:
+  - "Use when creating or revising Loki agents, Claude Code subagents, or Codex custom agents."
+  - "Use when the work needs specialist judgment, isolated context, restricted tools, or proposal-only output."
+  - "Use when deciding whether a workflow belongs in an agent, skill, or command."
+argument-hint: "[agent purpose, target adapter, allowed writes, gates]"
+arguments:
+  required: []
+  optional:
+    - agent_purpose
+    - target_adapter
+    - allowed_writes
+    - gates
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - cross-adapter agent projection
+  - durable package artifact changes
+  - restricted tool or write boundary design
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-agent-creator/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

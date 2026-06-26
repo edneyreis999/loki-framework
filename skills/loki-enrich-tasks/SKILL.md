@@ -1,6 +1,37 @@
 ---
 name: loki-enrich-tasks
 description: Run the Loki `loki:enrich-tasks` command workflow in Codex. Revise and enrich Loki phase tasks before execution by incorporating prior retrospectives, build learnings, decisions, success criteria, and human loops without exposing unnecessary internal source material or creating direct normative handoffs; use before `loki:run-plan`.
+when_to_use:
+  - "Use before loki:run-plan when phase tasks need targeted enrichment from prior retrospectives, builds, decisions, success criteria, or human loops."
+  - "Use when improving active plan tasks without promoting durable context directly."
+argument-hint: "[phase, tasks.md, retrospectives, builds]"
+arguments:
+  required: []
+  optional:
+    - phase
+    - tasks_md
+    - retrospectives
+    - builds
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: medium
+model_class: generalist
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - conflicting retrospective or build evidence
+  - enrichment changes execution order, scope, or gates
+  - durable package policy may be affected
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-enrich-tasks/SKILL.md"
+shell: {}
 type: skill
 status: draft
 used_by:

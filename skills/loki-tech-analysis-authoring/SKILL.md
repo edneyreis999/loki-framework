@@ -1,6 +1,39 @@
 ---
 name: loki-tech-analysis-authoring
 description: Create or review evidence-based Loki technical analyses from briefs, feedback, specs, source paths, or runtime questions. Use when producing or improving `loki:tech-analysis` outputs, source maps, fact/hypothesis separation, decision matrices, external research gates, validators, human gates, and handoff to `loki:generate-action-plan`.
+when_to_use:
+  - "Use when creating or reviewing evidence-based Loki technical analyses."
+  - "Use when producing source maps, fact/hypothesis separation, decision matrices, research gates, validators, or planning handoff."
+  - "Use when improving outputs from loki:tech-analysis."
+argument-hint: "[brief, source paths, scope, forbidden writes, destination]"
+arguments:
+  required: []
+  optional:
+    - brief
+    - source_paths
+    - scope
+    - forbidden_writes
+    - destination
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: frontier_reasoning
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - conflicting evidence
+  - architecture or security decision
+  - irreversible or high-impact recommendation
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-tech-analysis-authoring/SKILL.md"
+shell: {}
 ---
 
 # loki-tech-analysis-authoring

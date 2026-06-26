@@ -39,6 +39,9 @@ Use estes dois documentos como fonte principal do ciclo operacional:
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   resultados, bugs, feedbacks e retrospectivas viram ajuste local, candidato,
   regra duradoura ou backlog.
+- [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md):
+  define como classificar `model_class`, `effort`, escalamento e projecao por
+  adaptador para comandos, skills, agentes, templates e docs gerados.
 
 Quando a melhoria atingir o proprio pacote, aplique
 `docs/package-authoring-guardrails.md` depois de identificar o destino pelo
@@ -57,6 +60,20 @@ O framework usa gates para impedir validacao falsa:
 Parsers estruturais, validadores de linguagem e diff restrito reduzem risco
 estrutural, mas nao substituem validacao humana quando a mudanca afeta
 comportamento perceptivel ou o runtime do consumidor.
+
+## Modelos e Effort
+
+Use `docs/model-effort-guidance.md` como referencia central para orientar
+modelo e effort. Artefatos canonicos devem declarar classes provider-neutral,
+como `frontier_reasoning`, `coding`, `generalist`, `long_context` e
+`fast_low_cost`, antes de citar IDs concretos de fornecedor.
+
+Documentacao duravel, politicas, contratos, templates e mudancas normativas do
+pacote usam effort alto por padrao. Documentacao transiente de execucao pode
+usar effort baixo ou medio, exceto analises de `loki:tech-analysis` e planos de
+`loki:generate-action-plan`, que continuam high effort. Implementacao de codigo
+usa modelo de codificacao e effort medio por padrao, escalando quando houver
+risco tecnico, integracao, arquitetura ou validacao dificil.
 
 ## Instalacao Codex por Symlink
 

@@ -2,7 +2,38 @@
 name: execution-context-reader
 type: agent
 status: draft
+description: Extrair contexto local relevante para executar uma fase Loki, retornando fatos, riscos e lacunas sem escrever.
 mode: read-only
+confidence: high
+model: inherit
+model_class: long_context
+effort: medium
+model_reasoning_effort: medium
+isolation: read-only
+sandbox_mode: read-only
+approval_policy: never
+tools: []
+disallowedTools:
+  - Write
+  - Edit
+  - MultiEdit
+  - NotebookEdit
+required_gates:
+  - interview
+  - approval
+  - human-validation
+risks:
+  - "Contexto amplo demais pode exigir source-researcher antes de execucao."
+  - "Conflito entre fontes locais deve bloquear escolha sem evidencia."
+escalation_signals:
+  - "fase com muitas fontes independentes ou referencias insuficientes"
+  - "fontes locais conflitantes"
+adapter_projection:
+  claude_code: "Pode ser projetado como subagent read-only de contexto com effort medio."
+  codex: "Projetado em codex/agents/execution-context-reader.toml com sandbox read-only e medium reasoning effort."
+nickname_candidates:
+  - execution-context-reader
+  - context-reader
 ---
 
 # execution-context-reader

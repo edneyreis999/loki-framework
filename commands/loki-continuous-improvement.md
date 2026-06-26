@@ -8,6 +8,23 @@ required_skills:
   - loki-command-creator
   - loki-agent-creator
   - loki-skill-creator
+execution_profile:
+  model_class: frontier_reasoning
+  default_effort: high
+  max_effort: xhigh
+  escalation_signals:
+    - durable package policy promotion
+    - command, skill, agent, template, validator, or manifest changes
+    - broad normative change with cross-adapter impact
+  handoff_effort:
+    research: high
+    coding: medium
+    documentation_transient: low
+    documentation_durable: high
+    validator: medium
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:continuous-improvement

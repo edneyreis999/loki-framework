@@ -1,6 +1,37 @@
 ---
 name: loki-rpg-maker-mz-data-json
 description: Reference the required RPG Maker MZ data JSON workflow for reviewing or editing `data/*.json`, Database arrays, Common Events, maps, events, switches, variables, troops, actors, enemies, skills, items, weapons, armors, states, tilesets, or animations with structured parsing, restricted diff, and runtime gates.
+when_to_use:
+  - "Use when reviewing or editing RPG Maker MZ data JSON, Database arrays, Common Events, maps, events, switches, variables, troops, actors, enemies, skills, items, weapons, armors, states, tilesets, or animations."
+  - "Use when structured parsing, restricted diff, and runtime gates are required."
+argument-hint: "[data file, IDs, intended change, validation gates]"
+arguments:
+  required: []
+  optional:
+    - data_file
+    - ids
+    - intended_change
+    - validation_gates
+disable-model-invocation: false
+user-invocable: false
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: high
+model_class: coding
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - database IDs or runtime behavior are affected
+  - parse or diff validation is unclear
+  - playtest gate is required
+context: standard
+agent: main
+hooks: []
+paths:
+  package_skill: "skills/loki-rpg-maker-mz-data-json/SKILL.md"
+shell: {}
 type: skill-dependency
 status: reference
 source_policy: dependency-reference-not-copy

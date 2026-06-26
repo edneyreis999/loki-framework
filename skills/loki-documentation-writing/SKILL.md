@@ -20,6 +20,14 @@ allowed-tools: []
 disallowed-tools: []
 model: inherit
 effort: medium
+model_class: specialist_generalist_human_like
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+escalation_signals:
+  - durable or normative documentation
+  - source-conflict-heavy writing
+  - future-agent guidance
 context: standard
 agent: main
 hooks: []

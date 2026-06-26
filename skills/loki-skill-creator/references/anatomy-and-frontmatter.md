@@ -45,6 +45,9 @@ metadata. The active runtime can use the fields it supports and ignore the rest.
 - `disallowed-tools`
 - `model`
 - `effort`
+- `model_class`
+- `adapter_projection`
+- `escalation_signals`
 - `context`
 - `agent`
 - `hooks`
@@ -65,6 +68,36 @@ Codex app/plugin metadata belongs in `agents/openai.yaml`:
 - `dependencies.tools[].description`
 - `dependencies.tools[].transport`
 - `dependencies.tools[].url`
+
+### Model and Effort Metadata
+
+Use `docs/model-effort-guidance.md` as the source for model/effort semantics.
+Prefer provider-neutral intent metadata in Loki package sources:
+
+```yaml
+model: inherit
+effort: medium
+model_class: generalist
+context: standard
+agent: main
+adapter_projection:
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
+```
+
+Use `model: inherit` when the skill should follow the orchestrator or when the
+adapter does not enforce model selection from `SKILL.md`. Omit a concrete model
+unless the package is intentionally creating an adapter-specific projection.
+
+Use `effort: medium` for normal reusable skills. Use `effort: high` for durable
+documentation policy, technical analysis, action-plan authoring, command/agent
+creation, multi-source research or high-risk package decisions. Use `effort:
+low` only for lookup, triage, local routing or transient bookkeeping.
+
+Claude Code can apply supported frontmatter in skills or subagents according to
+its runtime rules. Codex should treat `model` and `effort` in `SKILL.md` as
+advisory unless projected into a profile, command invocation or custom agent
+TOML.
 
 ## Body
 

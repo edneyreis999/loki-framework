@@ -5,6 +5,23 @@ status: draft
 domain: continuous-improvement
 required_skills:
   - loki-retrospectiva-tecnica
+execution_profile:
+  model_class: generalist
+  default_effort: medium
+  max_effort: high
+  escalation_signals:
+    - reusable learning may become durable policy
+    - evidence is incomplete or conflicting
+    - retrospective recommends package artifact changes
+  handoff_effort:
+    research: medium
+    coding: medium
+    documentation_transient: medium
+    documentation_durable: high
+    validator: low
+  adapter_projection:
+    codex: "Advisory unless projected through config, profile or custom agent."
+    claude_code: "May map to model/effort frontmatter where supported."
 ---
 
 # loki:retrospectiva-tecnica
