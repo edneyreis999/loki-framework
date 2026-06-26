@@ -1,0 +1,4 @@
+interface:
+  display_name: "Loki Tech Analysis Authoring"
+  short_description: "Create evidence-based Loki technical analyses."
+  default_prompt: "Use $loki-tech-analysis-authoring to create an evidence-based Loki technical analysis with source references, decision matrix, research gates, validators, and handoff for planning."

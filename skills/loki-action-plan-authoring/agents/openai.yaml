@@ -1,0 +1,4 @@
+interface:
+  display_name: "Loki Action Plan Authoring"
+  short_description: "Create executable Loki action plans."
+  default_prompt: "Create a phased Loki action plan with task files, dependencies, references, human loops, and observable validation."

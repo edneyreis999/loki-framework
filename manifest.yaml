@@ -1,0 +1,221 @@
+package:
+  name: loki-framework-local
+  version: "0.1.0"
+  status: approved-for-manual-installation
+  created: "2026-06-24"
+  scope: local-project-package
+  description: "Pacote documental local do Loki Framework dividido em agents, commands, skills, templates e docs, com roteamento explicito entre regras do pacote e documentacao duradoura do projeto consumidor."
+  human_approval: "Aprovado pelo usuario em 2026-06-24 na task-2.1 e aprovado como pacote operacional final em 2026-06-24 na task-4.3."
+
+source:
+  package_root: "."
+  source_boundaries: "docs/source-boundaries.md"
+  operational_inventory: "docs/operational-inventory.md"
+  usage_guide: "docs/usage-guide.md"
+  plan_execution_workflow: "docs/loki-plan-execution-workflow.md"
+  learning_workflow: "docs/loki-learning-workflow.md"
+  authoring_guardrails: "docs/package-authoring-guardrails.md"
+  consumer_context_contract: "docs/project-context-catalog.md"
+  self_contained_policy: "This package must not require blueprint, plan, .agents, .claude, or game-project files outside this directory to operate."
+
+install_policy:
+  mode: manual-or-sync-after-approval
+  project_scope_only: true
+  automatic_installation: false
+  claude_code_target:
+    commands: ".claude/commands/loki/"
+    agents: ".claude/agents/"
+    skills: ".claude/skills/"
+  codex_target:
+    agents: ".agents/agents/"
+    commands: ".agents/commands/"
+    skills: ".agents/skills/"
+  approval_required_before_copy:
+    - ".claude/**"
+    - ".agents/**"
+
+guardrails:
+  normative_sources:
+    - "."
+    - "manifest.yaml"
+    - "docs/source-boundaries.md"
+    - "docs/operational-inventory.md"
+    - "docs/usage-guide.md"
+    - "docs/loki-plan-execution-workflow.md"
+    - "docs/loki-learning-workflow.md"
+    - "docs/package-authoring-guardrails.md"
+    - "docs/project-context-catalog.md"
+  non_normative_sources:
+    - ".agents/**"
+  consumer_application_targets:
+    - "docs/**/*.md"
+    - "docs/index.xml"
+    - "AGENTS.md"
+    - "CLAUDE.md"
+  consumer_runtime_surfaces:
+    placeholder: "<consumer_runtime_surfaces>"
+    description: "Superficies de runtime/engine/framework declaradas pelo projeto consumidor ou por skill tecnica especializada."
+  sensitive_write_patterns:
+    placeholder: "<sensitive_write_patterns>"
+    description: "Padroes de escrita sensivel declarados pelo projeto consumidor, por contrato de plano ou por extensao tecnica opcional."
+  technology_required_skills:
+    placeholder: "<technology_required_skills>"
+    description: "Skills tecnicas carregadas somente quando o contexto, o usuario ou o plano aprovado exigir uma tecnologia especifica."
+  human_validation_gate:
+    placeholder: "<human_validation_gate>"
+    description: "Validacao humana apropriada ao dominio antes de declarar comportamento perceptivel, estado runtime ou integracoes como validadas."
+  forbidden_writes_without_later_approval:
+    - ".claude/**"
+    - ".agents/**"
+    - "<sensitive_write_patterns>"
+    - "<consumer_runtime_surfaces>"
+  runtime_gate: "Validacao humana obrigatoria para comportamento perceptivel, estado runtime, integracoes ativas ou superficies declaradas por skill tecnica."
+
+layout:
+  agents: "agents/"
+  commands: "commands/"
+  skills: "skills/"
+  templates: "templates/"
+  docs: "docs/"
+
+commands:
+  - name: "loki:feedback"
+    file: "commands/loki-feedback.md"
+    status: draft
+  - name: "loki:tech-analysis"
+    file: "commands/loki-tech-analysis.md"
+    status: draft
+  - name: "loki:generate-action-plan"
+    file: "commands/loki-generate-action-plan.md"
+    status: draft
+  - name: "loki:enrich-tasks"
+    file: "commands/loki-enrich-tasks.md"
+    status: draft
+  - name: "loki:run-plan"
+    file: "commands/loki-run-plan.md"
+    status: draft
+  - name: "loki:retrospectiva-tecnica"
+    file: "commands/loki-retrospectiva-tecnica.md"
+    status: draft
+  - name: "loki:continuous-improvement"
+    file: "commands/loki-continuous-improvement.md"
+    status: draft
+
+skills:
+  - name: "loki-feedback"
+    file: "skills/loki-feedback/SKILL.md"
+    status: draft
+  - name: "loki-enrich-tasks"
+    file: "skills/loki-enrich-tasks/SKILL.md"
+    status: draft
+  - name: "loki-run-plan-execution"
+    file: "skills/loki-run-plan-execution/SKILL.md"
+    status: draft
+  - name: "loki-retrospectiva-tecnica"
+    file: "skills/loki-retrospectiva-tecnica/SKILL.md"
+    status: draft
+  - name: "loki-command-creator"
+    file: "skills/loki-command-creator/SKILL.md"
+    status: draft
+  - name: "loki-agent-creator"
+    file: "skills/loki-agent-creator/SKILL.md"
+    status: draft
+  - name: "loki-skill-creator"
+    file: "skills/loki-skill-creator/SKILL.md"
+    status: draft
+  - name: "loki-index-navigator"
+    file: "skills/loki-index-navigator/SKILL.md"
+    status: draft
+  - name: "loki-action-plan-authoring"
+    file: "skills/loki-action-plan-authoring/SKILL.md"
+    status: draft
+  - name: "loki-tech-analysis-authoring"
+    file: "skills/loki-tech-analysis-authoring/SKILL.md"
+    status: draft
+  - name: "loki-rpg-maker-mz-data-json"
+    file: "skills/loki-rpg-maker-mz-data-json/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ"
+  - name: "loki-rpg-maker-mz-plugin-workflow"
+    file: "skills/loki-rpg-maker-mz-plugin-workflow/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ"
+
+agents:
+  - name: "standards-curator"
+    file: "agents/standards-curator.md"
+    status: draft
+  - name: "runtime-qa"
+    file: "agents/runtime-qa.md"
+    status: draft
+  - name: "execution-context-reader"
+    file: "agents/execution-context-reader.md"
+    status: draft-read-only
+  - name: "source-researcher"
+    file: "agents/source-researcher.md"
+    status: draft-read-only
+  - name: "technical-implementer"
+    file: "agents/technical-implementer.md"
+    status: draft-proposal-only
+  - name: "bibliotecario"
+    file: "agents/bibliotecario.md"
+    status: draft
+  - name: "catalogador"
+    file: "agents/catalogador.md"
+    status: draft
+
+templates:
+  - name: "command-contract-template"
+    file: "templates/command-contract-template.md"
+    status: draft
+  - name: "component-contract-template"
+    file: "templates/component-contract-template.md"
+    status: draft
+  - name: "project-doc-index-template"
+    file: "templates/project-doc-index-template.xml"
+    status: draft
+  - name: "tasks-template"
+    file: "templates/tasks-template.md"
+    status: draft
+  - name: "task-template"
+    file: "templates/task-template.md"
+    status: draft
+  - name: "technical-analysis-template"
+    file: "templates/technical-analysis-template.md"
+    status: draft
+
+docs:
+  - file: "index.md"
+    status: completed
+  - file: "docs/source-boundaries.md"
+    status: completed
+  - file: "docs/operational-inventory.md"
+    status: completed
+  - file: "docs/usage-guide.md"
+    status: draft
+  - file: "docs/loki-plan-execution-workflow.md"
+    status: draft
+  - file: "docs/loki-plan-execution-workflow.excalidraw.md"
+    status: draft
+  - file: "docs/loki-learning-workflow.md"
+    status: draft
+  - file: "docs/loki-learning-workflow.excalidraw.md"
+    status: draft
+  - file: "docs/package-authoring-guardrails.md"
+    status: draft
+  - file: "docs/project-context-catalog.md"
+    status: draft
+  - file: "docs/self-containment-audit.md"
+    status: completed
+  - file: "README.md"
+    status: draft
+
+optional_extensions:
+  - technology: "RPG Maker MZ"
+    status: optional
+    activation: "Use somente quando o projeto consumidor declarar essa engine ou quando o usuario pedir trabalho nessa tecnologia."
+    skills:
+      - "loki-rpg-maker-mz-data-json"
+      - "loki-rpg-maker-mz-plugin-workflow"
