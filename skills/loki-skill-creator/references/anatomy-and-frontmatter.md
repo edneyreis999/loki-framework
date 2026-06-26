@@ -27,6 +27,45 @@ description: Explain what this skill does and when to use it.
 
 Put "when to use" information in `description`, not only in the body. The body loads only after the skill is selected.
 
+## Multi-Adapter Metadata
+
+Generate new Loki skills with the union of known Codex and Claude Code
+metadata. The active runtime can use the fields it supports and ignore the rest.
+
+`SKILL.md` frontmatter superset:
+
+- `name`
+- `description`
+- `when_to_use`
+- `argument-hint`
+- `arguments`
+- `disable-model-invocation`
+- `user-invocable`
+- `allowed-tools`
+- `disallowed-tools`
+- `model`
+- `effort`
+- `context`
+- `agent`
+- `hooks`
+- `paths`
+- `shell`
+
+Codex app/plugin metadata belongs in `agents/openai.yaml`:
+
+- `interface.display_name`
+- `interface.short_description`
+- `interface.icon_small`
+- `interface.icon_large`
+- `interface.brand_color`
+- `interface.default_prompt`
+- `policy.allow_implicit_invocation`
+- `dependencies.tools[].type`
+- `dependencies.tools[].value`
+- `dependencies.tools[].description`
+- `dependencies.tools[].transport`
+- `dependencies.tools[].url`
+
 ## Body
 
 Use the body for instructions after activation:

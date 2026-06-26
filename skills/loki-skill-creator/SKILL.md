@@ -1,6 +1,6 @@
 ---
 name: loki-skill-creator
-description: Create or update effective Codex skills in the Loki Framework package. Use when designing a new skill, revising an existing skill, deciding whether a workflow belongs in a skill, or checking skill structure, frontmatter, progressive disclosure, references, scripts, assets, and validation requirements.
+description: Create or update effective multi-adapter skills in the Loki Framework package for Codex and Claude Code. Use when designing a new skill, revising an existing skill, deciding whether a workflow belongs in a skill, or checking skill structure, frontmatter metadata, progressive disclosure, references, scripts, assets, and validation requirements.
 ---
 
 # loki-skill-creator
@@ -18,16 +18,18 @@ skill-name/
 └── references/
 ```
 
-5. Keep `SKILL.md` focused on essential workflow, inputs, outputs, limits, and validation.
-6. Put variant-specific detail, long examples, templates, platform notes, or source research in `references/`.
-7. Include `name` and `description` as top-level frontmatter fields. Put trigger context in `description`, because the body loads only after the skill is selected.
-8. Validate that each skill directory has `SKILL.md`, YAML frontmatter, `name`, and `description`.
-9. Update the local package manifest when a skill is added, removed, renamed, or moved.
+5. Gere skills multi-adapter por padrao. Nao ramifique o contrato pelo executor atual; some os metadados conhecidos de Claude Code e Codex, usando valores neutros validos quando um campo nao se aplicar.
+6. Preencha o frontmatter superset de `SKILL.md`: `name`, `description`, `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `hooks`, `paths`, `shell`.
+7. Quando houver suporte Codex app/plugin, inclua `agents/openai.yaml` com `interface.display_name`, `interface.short_description`, `interface.icon_small`, `interface.icon_large`, `interface.brand_color`, `interface.default_prompt`, `policy.allow_implicit_invocation` e `dependencies.tools[].type/value/description/transport/url`.
+8. Keep `SKILL.md` focused on essential workflow, inputs, outputs, limits, and validation.
+9. Put variant-specific detail, long examples, templates, platform notes, or source research in `references/`.
+10. Validate that each skill directory has `SKILL.md`, YAML frontmatter, `name`, and `description`.
+11. Update the local package manifest when a skill is added, removed, renamed, or moved.
 
 ## References
 
 - Read [core-principles.md](references/core-principles.md) when deciding how much instruction to include, how strict the workflow should be, or how to preserve validation integrity.
-- Read [anatomy-and-frontmatter.md](references/anatomy-and-frontmatter.md) when checking folder structure, `SKILL.md`, required metadata, trigger descriptions, or optional UI metadata.
+- Read [anatomy-and-frontmatter.md](references/anatomy-and-frontmatter.md) when checking folder structure, `SKILL.md`, required metadata, trigger descriptions, multi-adapter frontmatter, or Codex `agents/openai.yaml` metadata.
 - Read [resources-and-disclosure.md](references/resources-and-disclosure.md) when deciding what belongs in `SKILL.md` versus `references/`, `scripts/`, or `assets/`.
 - Read [creation-process.md](references/creation-process.md) when creating a new skill or making a substantial revision.
 - Read [validation-and-forward-testing.md](references/validation-and-forward-testing.md) when validating a skill folder or testing a complex skill.
@@ -38,6 +40,7 @@ skill-name/
 
 - Do not install skills into `.claude/**`, `.codex/**`, or `.agents/**` without explicit approval.
 - Do not keep large conditional material in `SKILL.md` when a reference file would preserve context.
+- Do not branch the generated skill by the current executor; generate the multi-adapter metadata superset.
 - Do not create auxiliary README/changelog files inside a skill unless a platform explicitly requires them.
 - Do not leave package validation implicit; packaged skill work must finish with structural and self-containment checks.
 
