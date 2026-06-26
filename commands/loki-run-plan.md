@@ -96,7 +96,11 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 12. Rodar validators da task e registrar evidencias em `builds/faseN/` ou justificativa objetiva quando um validator nao se aplicar.
 13. Atualizar task files e `tasks.md` com status, arquivos afetados, validations, human_loop e next_action.
 14. Acionar `runtime-qa` quando a mudanca depender de comportamento perceptivel, runtime, integracao ativa, estado persistido ou artefato gerado.
-15. Ao concluir a fase, recomendar ou iniciar `loki:retrospectiva-tecnica` conforme o contrato do plano.
+15. Ao concluir a fase, recomendar ou iniciar `loki:retrospectiva-tecnica`
+    conforme o contrato do plano, incluindo resumo de arquivos afetados,
+    validators, gates humanos, riscos residuais, comandos e scripts executados,
+    outputs inesperados, inferencias uteis e incorretas, mismatches de ambiente,
+    correcoes do usuario e desperdicios que a proxima execucao deve evitar.
 
 ## Orchestration Rules
 

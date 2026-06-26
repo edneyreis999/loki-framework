@@ -88,7 +88,10 @@ decisoes humanas e validators em uma execucao rastreavel.
 14. Atualizar `task-N.M.md`, `tasks.md`, `builds/faseN/` e `interaction/faseN/`
     apenas conforme permitido pelo plano ativo.
 15. Ao concluir a fase, recomendar `loki:retrospectiva-tecnica` com resumo de
-    arquivos afetados, validators, gates humanos e riscos residuais.
+    arquivos afetados, validators, gates humanos, riscos residuais, comandos e
+    scripts executados, outputs inesperados, inferencias uteis e incorretas,
+    mismatches de ambiente, correcoes do usuario e desperdicios que a proxima
+    execucao deve evitar.
 
 ## Inputs
 

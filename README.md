@@ -147,7 +147,7 @@ Rollback simples:
 
 ```bash
 rm -f .claude/commands/loki/loki-*.md
-rm -f .claude/agents/standards-curator.md .claude/agents/runtime-qa.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
+rm -f .claude/agents/standards-curator.md .claude/agents/retrospective-digester.md .claude/agents/runtime-qa.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
 rm -rf .claude/skills/loki-feedback .claude/skills/loki-enrich-tasks .claude/skills/loki-run-plan-execution .claude/skills/loki-retrospectiva-tecnica .claude/skills/loki-command-creator .claude/skills/loki-agent-creator .claude/skills/loki-skill-creator .claude/skills/loki-index-navigator .claude/skills/loki-tech-analysis-authoring .claude/skills/loki-action-plan-authoring .claude/skills/loki-rpg-maker-mz-data-json .claude/skills/loki-rpg-maker-mz-plugin-workflow
 ```
 

@@ -33,7 +33,7 @@ descoberta tecnica fora de uma fase formal.
 3. Primeiro resolva o problema de fato. Nao transforme tentativa promissora em regra.
 4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki:retrospectiva-tecnica`.
 5. A retrospectiva registra objetivo, artefatos, validacoes, decisoes humanas, evidencia do que resolveu, riscos e candidatos de melhoria.
-6. So depois use `loki:continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro.
+6. So depois use `loki:continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
 7. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
 8. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
 9. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
@@ -64,6 +64,7 @@ descoberta tecnica fora de uma fase formal.
 | Agent | Contribuicao no workflow |
 | --- | --- |
 | `standards-curator` | Classifica escopo como `universal`, `probable-universal`, `project-specific` ou `backlog`. |
+| `retrospective-digester` | Digerir uma retrospectiva ou lote pequeno em paralelo read-only, extraindo aprendizados, atritos, candidatos e evidencias para o orquestrador. |
 | `source-researcher` | Confere evidencia, duplicidade, lacunas e conflitos multi-fonte antes de promocao duradoura. |
 | `catalogador` | Promove aprendizado `project-specific` para `/docs` do consumidor e atualiza `docs/index.xml`. |
 | `bibliotecario` | Localiza contexto duradouro existente antes de criar duplicidade. |

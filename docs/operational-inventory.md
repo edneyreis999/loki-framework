@@ -74,6 +74,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
+| `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki:continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis como proposta. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki:run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |

@@ -137,6 +137,9 @@ duradoura e backlog.
 ## Agents
 
 - `standards-curator`: classifica aprendizados como universal, provavel-universal, project-specific ou backlog.
+- `retrospective-digester`: digere retrospectivas tecnicas em modo read-only,
+  com fan-out por arquivo quando `loki:continuous-improvement` recebe multiplas
+  retros.
 - `bibliotecario`: consulta `docs/index.xml` antes de abrir a documentacao
   duradoura do consumidor.
 - `catalogador`: consolida aprendizado `project-specific` em `/docs` do

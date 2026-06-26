@@ -32,6 +32,9 @@ referencia sem copiar sua estrutura literalmente.
 
 - `standards-curator`: decide se o aprendizado vai para o pacote Loki ou para o
   contexto duradouro do consumidor.
+- `retrospective-digester`: extrai candidatos `project-specific` de
+  retrospectivas tecnicas para o orquestrador, sem escrever `/docs` nem decidir
+  promocao final.
 - `catalogador`: escreve ou revisa a documentacao duradoura do consumidor e
   mantem `docs/index.xml` coerente.
 - `bibliotecario`: consulta o catalogo e recomenda a menor leitura suficiente.

@@ -197,6 +197,9 @@ agents:
   - name: "standards-curator"
     file: "agents/standards-curator.md"
     status: draft
+  - name: "retrospective-digester"
+    file: "agents/retrospective-digester.md"
+    status: draft-read-only
   - name: "runtime-qa"
     file: "agents/runtime-qa.md"
     status: draft
@@ -232,6 +235,10 @@ codex_agents:
   - name: "runtime-qa"
     file: "codex/agents/runtime-qa.toml"
     source_agent: "agents/runtime-qa.md"
+    status: draft-derived
+  - name: "retrospective-digester"
+    file: "codex/agents/retrospective-digester.toml"
+    source_agent: "agents/retrospective-digester.md"
     status: draft-derived
   - name: "source-researcher"
     file: "codex/agents/source-researcher.toml"
