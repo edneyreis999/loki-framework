@@ -13,8 +13,10 @@ agnostico de engine/framework, dividido em `agents`, `commands`, `skills`,
 `templates` e `docs`.
 
 Este pacote e a fonte auditavel. Instalar significa copiar ou sincronizar estes
-arquivos para pastas locais do projeto, depois de approval humano. Instalacao
-global esta fora de escopo.
+arquivos para pastas locais do projeto, depois de approval humano. Para Codex,
+o caminho principal e o instalador por symlink em
+`scripts/install-loki-symlinks.py`, mantendo este repositorio como fonte
+versionada. Instalacao global esta fora de escopo.
 
 Conhecimento especifico do projeto consumidor nao pertence ao pacote. O destino
 duradouro desse tipo de contexto e `/docs` do consumidor, com `docs/index.xml`
@@ -32,8 +34,10 @@ PACKAGE_ROOT="$(pwd)"
 002-loki-framework-local/
 ├── manifest.yaml
 ├── agents/
+├── codex/
 ├── commands/
 ├── skills/
+├── scripts/
 ├── templates/
 └── docs/
 ```
@@ -78,50 +82,55 @@ Gate: escrever em `.claude/**` exige approval humano posterior. Este README nao 
 
 ## Codex
 
-Uso local recomendado:
+Uso local recomendado por symlink:
 
 1. Mantenha o diretorio do pacote como fonte auditavel.
 2. Leia `manifest.yaml` para entender componentes e destinos.
-3. Use `docs/usage-guide.md` como guia operacional.
-4. Quando houver approval, copie skills e artefatos para uma area local do projeto.
+3. Rode `--dry-run` no destino alvo e revise conflitos.
+4. Aplique com `--yes` somente apos approval especifico para o destino.
 
-Destino local sugerido para staging Codex:
-
-```text
-.agents/commands/
-.agents/agents/
-.agents/skills/
-```
-
-Mapeamento:
+Destino local criado pelo instalador:
 
 ```text
-commands/*.md -> .agents/commands/
-agents/*.md   -> .agents/agents/
-skills/*/     -> .agents/skills/
+.agents/skills/<skill-name> -> $PACKAGE_ROOT/skills/<skill-name>
+.agents/commands/loki      -> $PACKAGE_ROOT/commands
+.agents/agents             -> $PACKAGE_ROOT/agents
+.agents/templates          -> $PACKAGE_ROOT/templates
+.codex/agents/<agent>.toml -> $PACKAGE_ROOT/codex/agents/<agent>.toml
 ```
 
-Dry-run manual recomendado:
+Dry-run recomendado:
 
 ```bash
-find "$PACKAGE_ROOT"/{commands,agents,skills} -type f | sort
-find .agents/commands .agents/agents .agents/skills -maxdepth 2 -type f 2>/dev/null | sort
+DEST="/tmp/loki-symlink-test"
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run
 ```
 
 Aplicar somente apos approval explicito:
 
 ```bash
-mkdir -p .agents/commands .agents/agents .agents/skills
-cp "$PACKAGE_ROOT"/commands/*.md .agents/commands/
-cp "$PACKAGE_ROOT"/agents/*.md .agents/agents/
-cp -R "$PACKAGE_ROOT"/skills/* .agents/skills/
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes
 ```
 
-Gate: `.agents/` e deny-by-default e local/efemero. Nao copie artefatos de `.agents/` para o pacote. Escrever em `.agents/**` exige approval humano posterior.
+O script grava o manifest de auditoria no destino:
+
+```text
+$DEST/.agents/loki-installation-manifest.json
+```
+
+Use `--replace` somente com approval separado para o caminho e modo de
+execucao. Sem `--replace`, conflitos bloqueiam a instalacao em vez de
+sobrescrever arquivos reais ou links divergentes.
+
+Gate: `.agents/**` e `.codex/**` sao destinos deny-by-default e locais ao
+projeto consumidor. Nao copie artefatos de `.agents/**` ou `.codex/**` para o
+pacote. Escrever nesses destinos exige approval humano posterior.
 
 ## Sync, Risco e Rollback
 
-Use copia simples (`cp`) para o MVP. Evite `rsync --delete`, overwrite destrutivo e comandos que apaguem arquivos.
+Para Claude Code, use copia simples (`cp`) no MVP. Para Codex, use o script por
+symlink. Evite `rsync --delete`, overwrite destrutivo e comandos que apaguem
+arquivos.
 
 Antes de aplicar, registre:
 
@@ -131,18 +140,23 @@ Antes de aplicar, registre:
 - approval humano;
 - plano de rollback.
 
+Para Codex, use o manifest gerado no destino para auditar origem, destino,
+status e modo aplicado antes de qualquer remocao manual.
+
 Rollback simples:
 
 ```bash
 rm -f .claude/commands/loki/loki-*.md
 rm -f .claude/agents/standards-curator.md .claude/agents/runtime-qa.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
 rm -rf .claude/skills/loki-feedback .claude/skills/loki-enrich-tasks .claude/skills/loki-run-plan-execution .claude/skills/loki-retrospectiva-tecnica .claude/skills/loki-command-creator .claude/skills/loki-agent-creator .claude/skills/loki-skill-creator .claude/skills/loki-index-navigator .claude/skills/loki-tech-analysis-authoring .claude/skills/loki-action-plan-authoring .claude/skills/loki-rpg-maker-mz-data-json .claude/skills/loki-rpg-maker-mz-plugin-workflow
-rm -f .agents/commands/loki-*.md
-rm -f .agents/agents/standards-curator.md .agents/agents/runtime-qa.md .agents/agents/execution-context-reader.md .agents/agents/source-researcher.md .agents/agents/technical-implementer.md .agents/agents/bibliotecario.md .agents/agents/catalogador.md
-rm -rf .agents/skills/loki-feedback .agents/skills/loki-enrich-tasks .agents/skills/loki-run-plan-execution .agents/skills/loki-retrospectiva-tecnica .agents/skills/loki-command-creator .agents/skills/loki-agent-creator .agents/skills/loki-skill-creator .agents/skills/loki-index-navigator .agents/skills/loki-tech-analysis-authoring .agents/skills/loki-action-plan-authoring .agents/skills/loki-rpg-maker-mz-data-json .agents/skills/loki-rpg-maker-mz-plugin-workflow
 ```
 
-Nao execute rollback sem confirmar que os arquivos removidos vieram desta instalacao.
+Para Codex, o rollback e orientado pelo manifest de instalacao. Remova somente
+os destinos listados em `$DEST/.agents/loki-installation-manifest.json` depois
+de confirmar que cada destino e um symlink para `PACKAGE_ROOT`.
+
+Nao execute rollback sem confirmar que os arquivos removidos vieram desta
+instalacao.
 
 ## Guardrails
 

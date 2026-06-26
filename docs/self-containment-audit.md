@@ -16,7 +16,7 @@ O pacote deve operar com os arquivos presentes neste diretorio. Blueprint, plano
 
 | Categoria | Exemplos | Motivo |
 | --- | --- | --- |
-| Destinos de instalacao | `.claude/**`, `.codex/**`, `.agents/**` | Locais para onde o pacote pode ser copiado apos approval humano. |
+| Destinos de instalacao | `.claude/**`, `.codex/**`, `.agents/**` | Locais para onde o pacote pode ser copiado ou linkado apos approval humano. |
 | Destinos de contexto duradouro do consumidor | `docs/**/*.md`, `docs/index.xml`, `AGENTS.md`, `CLAUDE.md` | Superficies que o Loki pode recomendar ou sincronizar apos approval, sem transforma-las em fonte normativa do pacote. |
 | Superficies sensiveis declaradas do consumidor | Caminhos declarados pelo consumidor para runtime, extensoes, midia, builds ou outras areas protegidas | Arquivos que um plano futuro pode analisar ou modificar com gates; nao sao dependencias do pacote. |
 | URLs de documentacao | URLs oficiais de Claude Code, Codex ou OpenAI | Referencias externas de pesquisa, nao arquivos locais necessarios para instalar o pacote. |

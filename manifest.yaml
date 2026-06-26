@@ -1,7 +1,7 @@
 package:
   name: loki-framework-local
   version: "0.1.0"
-  status: approved-for-manual-installation
+  status: approved-for-local-installation
   created: "2026-06-24"
   scope: local-project-package
   description: "Pacote documental local do Loki Framework dividido em agents, commands, skills, templates e docs, com roteamento explicito entre regras do pacote e documentacao duradoura do projeto consumidor."
@@ -19,20 +19,32 @@ source:
   self_contained_policy: "This package must not require blueprint, plan, .agents, .claude, or game-project files outside this directory to operate."
 
 install_policy:
-  mode: manual-or-sync-after-approval
+  mode: codex-symlink-or-manual-after-approval
   project_scope_only: true
   automatic_installation: false
+  codex_install_script: "scripts/install-loki-symlinks.py"
+  codex_generated_manifest: ".agents/loki-installation-manifest.json"
+  codex_symlink_policy:
+    dry_run_first: true
+    apply_requires_yes: true
+    destination_approval_required: true
+    replace_requires_scoped_approval: true
+    source_root: "."
   claude_code_target:
     commands: ".claude/commands/loki/"
     agents: ".claude/agents/"
     skills: ".claude/skills/"
   codex_target:
-    agents: ".agents/agents/"
-    commands: ".agents/commands/"
     skills: ".agents/skills/"
+    commands: ".agents/commands/loki/"
+    agents: ".agents/agents/"
     templates: ".agents/templates/"
     custom_agents: ".codex/agents/"
   approval_required_before_copy:
+    - ".claude/**"
+    - ".agents/**"
+    - ".codex/**"
+  approval_required_before_write:
     - ".claude/**"
     - ".agents/**"
     - ".codex/**"
@@ -48,6 +60,8 @@ guardrails:
     - "docs/loki-learning-workflow.md"
     - "docs/package-authoring-guardrails.md"
     - "docs/project-context-catalog.md"
+    - "codex/agents/"
+    - "scripts/install-loki-symlinks.py"
   non_normative_sources:
     - ".agents/**"
     - ".codex/**"
@@ -81,8 +95,15 @@ layout:
   codex_agents: "codex/agents/"
   commands: "commands/"
   skills: "skills/"
+  scripts: "scripts/"
   templates: "templates/"
   docs: "docs/"
+
+scripts:
+  - name: "install-loki-symlinks"
+    file: "scripts/install-loki-symlinks.py"
+    status: draft
+    purpose: "Install Loki Framework Codex destinations by symlink after approval."
 
 commands:
   - name: "loki:feedback"

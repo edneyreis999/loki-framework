@@ -19,6 +19,10 @@ outro projeto.
 - `commands/`: fluxos invocaveis, como feedback, analise tecnica, plano, execucao e melhoria continua.
 - `skills/`: procedimentos tecnicos ou processuais que devem ser carregados quando o dominio aparecer.
 - `agents/`: papeis especialistas que retornam analise, checklist ou proposta.
+- `codex/agents/`: TOMLs versionados derivados de `agents/*.md` para custom
+  agents Codex.
+- `scripts/install-loki-symlinks.py`: instalador Codex por symlink para
+  projetos consumidores.
 - `templates/`: contratos minimos para criar novos comandos e componentes.
 - `docs/`: limites, inventario e guia de uso.
 - `docs/project-context-catalog.md`: contrato entre o pacote Loki e a
@@ -53,6 +57,31 @@ O framework usa gates para impedir validacao falsa:
 Parsers estruturais, validadores de linguagem e diff restrito reduzem risco
 estrutural, mas nao substituem validacao humana quando a mudanca afeta
 comportamento perceptivel ou o runtime do consumidor.
+
+## Instalacao Codex por Symlink
+
+Para Codex, o caminho principal e manter este pacote como fonte versionada e
+criar symlinks no projeto consumidor:
+
+```bash
+PACKAGE_ROOT="$(pwd)"
+DEST="/tmp/loki-symlink-test"
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes
+```
+
+O script instala:
+
+- `.agents/skills/<skill-name>` apontando para `skills/<skill-name>`;
+- `.agents/commands/loki` apontando para `commands`;
+- `.agents/agents` apontando para `agents`;
+- `.agents/templates` apontando para `templates`;
+- `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
+
+Instalacao em destino consumidor real exige approval especifico para o caminho
+e para o modo de execucao. `--replace` e excepcional e exige approval separado.
+O manifest gerado em `.agents/loki-installation-manifest.json` registra origem,
+destino, tipo e status de cada link.
 
 ## Skills Core e Extensoes
 
@@ -118,8 +147,9 @@ duradoura e backlog.
 
 ## Regra de Uso Seguro
 
-Mantenha o diretorio do pacote como fonte auditavel. Instale em `.claude/` ou
-`.agents/` somente depois de approval especifico. Nao copie `.agents/` como
-fonte normativa. Nao declare runtime validado sem gate humano apropriado.
+Mantenha o diretorio do pacote como fonte auditavel. Instale em `.claude/`,
+`.agents/` ou `.codex/` somente depois de approval especifico. Nao copie
+`.agents/` ou `.codex/` como fonte normativa. Nao declare runtime validado sem
+gate humano apropriado.
 
 Quando a mudanca for no proprio pacote, nao pare em retrospectiva ou intuicao: atualize o artefato normativo correto, registre impacto no `manifest.yaml` se necessario e termine com validacao objetiva de estrutura e autocontencao.

@@ -11,7 +11,7 @@ self_contained: true
 Este documento transforma os aprendizados operacionais do plano `010-manual-fixes-loki-framework` em regras de autoria para evoluir o proprio pacote `002-loki-framework-local`.
 
 Use este checklist sempre que a mudanca tocar `commands/`, `skills/`, `agents/`,
-`templates/`, `docs/`, `README.md`, `index.md`, `index.xml` ou
+`codex/agents/`, `scripts/`, `templates/`, `docs/`, `README.md`, `index.md`, `index.xml` ou
 `manifest.yaml`.
 
 Quando a mudanca nascer de aprendizado, retrospectiva ou melhoria continua,
@@ -44,8 +44,9 @@ Antes de escrever:
   terminologia e contexto factual que devem sobreviver a varios planos.
 - `docs/index.xml` do consumidor: catalogo navegavel para localizar a
   documentacao duradoura com baixo custo.
-- `commands/`, `skills/`, `agents/`, `templates/`, `docs/`, `README.md`,
-  `index.md`, `manifest.yaml` e validators do pacote.
+- `commands/`, `skills/`, `agents/`, `codex/agents/`, `scripts/`,
+  `templates/`, `docs/`, `README.md`, `index.md`, `manifest.yaml` e validators
+  do pacote.
 
 ### Artefatos transitorios
 
@@ -78,12 +79,29 @@ Antes de escrever:
 - O contrato precisa declarar `allowed_writes`, `forbidden_writes`, `validators`, `human_gates`, `stop_conditions` e `resume_contract`.
 - Quando o comando processar aprendizados de fase, ele deve separar claramente fonte transitoria de destino duradouro.
 - Se o comando evoluir o proprio pacote, ele deve listar validacoes de pacote e artefatos normativos impactados.
+- Quando um comando Loki precisar ser invocavel diretamente no Codex, mantenha
+  um wrapper correspondente em `skills/` e atualize `manifest.yaml`.
 
 ### Agents
 
 - Agentes devem ter responsabilidade estreita e formato `read-only` ou `proposal-only` por default no MVP.
 - `description` deve explicar gatilhos concretos e limites.
 - Mudancas em agentes do pacote devem indicar impacto em `manifest.yaml` e docs quando aplicavel.
+- Mudancas em `agents/*.md` devem manter `codex/agents/*.toml` sincronizado
+  quando o agente tiver superficie Codex. O nome base do TOML deve acompanhar o
+  nome base do Markdown.
+
+### Codex Symlink Installer
+
+- `scripts/install-loki-symlinks.py` e fonte versionada do pacote.
+- O instalador deve apontar destinos `.agents/**` e `.codex/**` para fontes
+  dentro do package root, nunca para artefatos instalados locais.
+- Alteracoes em wrappers core invocaveis pelo Codex devem revisar
+  `REQUIRED_SKILL_NAMES` no instalador quando aplicavel.
+- Validadores sobre diretorios instalados por symlink devem usar `find -L`
+  quando precisarem atravessar o conteudo dos diretorios linkados.
+- `--replace` em destino consumidor real exige approval escopado ao destino e
+  ao modo de execucao.
 
 ### Docs e Manifest
 
@@ -141,6 +159,32 @@ find "$PACKAGE_ROOT" -type f \
 ```
 
 Tambem validar YAML/frontmatter e paths do manifesto.
+
+Para superficies Codex do pacote, validar tambem:
+
+```bash
+python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run
+python3 - <<'PY'
+from pathlib import Path
+import tomllib
+
+for path in sorted(Path("codex/agents").glob("*.toml")):
+    tomllib.loads(path.read_text(encoding="utf-8"))
+
+agent_names = {path.stem for path in Path("agents").glob("*.md")}
+codex_agent_names = {path.stem for path in Path("codex/agents").glob("*.toml")}
+missing = sorted(agent_names - codex_agent_names)
+if missing:
+    raise SystemExit(f"missing Codex agent TOML(s): {', '.join(missing)}")
+PY
+```
+
+Quando validar um destino instalado por symlink, siga links para inspecionar
+conteudo interno:
+
+```bash
+find -L /tmp/loki-symlink-test/.agents/skills -maxdepth 2 -name SKILL.md | sort
+```
 
 Se uma proposta do Loki apontar para documentacao duradoura do consumidor,
 validar tambem:

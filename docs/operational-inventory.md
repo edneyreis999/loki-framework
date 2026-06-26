@@ -48,10 +48,16 @@ relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
+| `loki-command-workflows` | `mvp` | Skill agregadora para carregar contratos `loki:*` a partir de `commands/` no Codex. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
+| `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
+| `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
 | `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
+| `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |
 | `loki-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, escrita serializada, validators e estado retomavel. |
 | `loki-retrospectiva-tecnica` | `mvp` | Procedimento de retrospectiva tecnica apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
+| `loki-continuous-improvement` | `mvp` | Wrapper Codex para executar o workflow `loki:continuous-improvement`. |
+| `loki-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `loki-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `loki-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `loki-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
@@ -73,8 +79,20 @@ relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
 | `catalogador` | `mvp` | Manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima em `AGENTS.md` e `CLAUDE.md` do consumidor. |
 | `narrative-designer` | `backlog` | Apoiar NSD, dialogo e integracao narrativa em escopo futuro. |
-| `prompt-engineer` | `reference-only` | Apoiar consolidacao de prompts em comandos depois que contratos existirem. |
+| `prompt-engineer` | `reference-only` | Apoiar consolidacao de instrucoes reutilizaveis em comandos depois que contratos existirem. |
 | `context-engineer-optimization` | `reference-only` | Inspirar melhoria continua e promocao de contexto sem copiar estruturas externas literalmente. |
+
+## Codex Agents
+
+| Componente | Status | Responsabilidade |
+| --- | --- | --- |
+| `codex/agents/*.toml` | `mvp` | Fonte versionada derivada de `agents/*.md` para custom agents Codex em `.codex/agents/`. |
+
+## Scripts
+
+| Componente | Status | Responsabilidade |
+| --- | --- | --- |
+| `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex em destino consumidor por symlink, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
 
 ## Templates
 
