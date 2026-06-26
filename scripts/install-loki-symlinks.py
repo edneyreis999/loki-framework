@@ -21,6 +21,7 @@ REQUIRED_SKILL_NAMES = frozenset(
         "loki-command-creator",
         "loki-command-workflows",
         "loki-continuous-improvement",
+        "loki-documentation-writing",
         "loki-enrich-tasks",
         "loki-feedback",
         "loki-generate-action-plan",

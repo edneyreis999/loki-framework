@@ -168,6 +168,9 @@ skills:
   - name: "loki-skill-creator"
     file: "skills/loki-skill-creator/SKILL.md"
     status: draft
+  - name: "loki-documentation-writing"
+    file: "skills/loki-documentation-writing/SKILL.md"
+    status: draft
   - name: "loki-index-navigator"
     file: "skills/loki-index-navigator/SKILL.md"
     status: draft
