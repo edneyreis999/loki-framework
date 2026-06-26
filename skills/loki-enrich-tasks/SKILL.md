@@ -1,6 +1,6 @@
 ---
 name: loki-enrich-tasks
-description: Revise and enrich Loki phase tasks before execution by incorporating prior retrospectives, build learnings, decisions, success criteria, and human loops without exposing unnecessary internal source material or creating direct normative handoffs. Use when preparing `tasks.md` or `task-N.M.md` for a phase before `loki:run-plan`.
+description: Run the Loki `loki:enrich-tasks` command workflow in Codex. Revise and enrich Loki phase tasks before execution by incorporating prior retrospectives, build learnings, decisions, success criteria, and human loops without exposing unnecessary internal source material or creating direct normative handoffs; use before `loki:run-plan`.
 type: skill
 status: draft
 used_by:

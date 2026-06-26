@@ -1,6 +1,6 @@
 ---
 name: loki-feedback
-description: Diagnose software or game project feedback through a strict one-question-at-a-time interview before proposing any fix. Use when the user reports validation feedback, visual bugs, gameplay or product feel, UX problems, audio/input issues, unexpected runtime behavior, integration symptoms, or other observed symptoms.
+description: Run the Loki `loki:feedback` command workflow in Codex. Diagnose software or game project feedback through a strict one-question-at-a-time interview before proposing any fix; use when the user reports validation feedback, visual bugs, gameplay or product feel, UX problems, audio/input issues, unexpected runtime behavior, integration symptoms, or other observed symptoms.
 type: skill
 status: draft
 used_by:

@@ -1,6 +1,6 @@
 ---
 name: loki-retrospectiva-tecnica
-description: Produce a concise technical retrospective after a Loki phase is completed or clearly paused, or after a real task difficulty is actually resolved, capturing artifacts, validations, human decisions, pending gates, reusable learnings, and residual risks for future LLM runs and continuous improvement.
+description: Run the Loki `loki:retrospectiva-tecnica` command workflow in Codex. Produce a concise technical retrospective after a Loki phase is completed or clearly paused, or after a real task difficulty is actually resolved, capturing artifacts, validations, human decisions, pending gates, reusable learnings, and residual risks for future LLM runs and continuous improvement.
 type: skill
 status: draft
 used_by:

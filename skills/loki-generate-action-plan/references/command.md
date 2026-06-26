@@ -1,0 +1,1 @@
+../../../commands/loki-generate-action-plan.md

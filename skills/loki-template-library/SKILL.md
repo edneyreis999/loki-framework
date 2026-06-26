@@ -1,0 +1,51 @@
+---
+name: loki-template-library
+description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, or project documentation indexes that should follow the package templates.
+type: skill
+status: draft
+used_by:
+  - loki:tech-analysis
+  - loki:generate-action-plan
+  - loki:continuous-improvement
+---
+
+# loki-template-library
+
+## Purpose
+
+Expose Loki templates to Codex as skill references. Codex has no project-level
+template directory equivalent to a runtime command surface, so this skill
+exposes package templates through `references/templates/`. Installers may also
+link the package `templates/` directory to `.agents/templates/` as a local
+inspection mirror.
+
+## Template Map
+
+- Technical analysis:
+  [technical-analysis-template.md](references/templates/technical-analysis-template.md)
+- Action plan index:
+  [tasks-template.md](references/templates/tasks-template.md)
+- Action plan task:
+  [task-template.md](references/templates/task-template.md)
+- Command contract:
+  [command-contract-template.md](references/templates/command-contract-template.md)
+- Component contract:
+  [component-contract-template.md](references/templates/component-contract-template.md)
+- Project docs index:
+  [project-doc-index-template.xml](references/templates/project-doc-index-template.xml)
+
+## Procedure
+
+1. Select the smallest template that matches the requested artifact.
+2. Read the corresponding template from `references/templates/`.
+3. Fill placeholders with evidence from the active task, approved plan, user
+   decision, or local package source.
+4. Preserve required headings, frontmatter fields, validators, gates, and resume
+   information unless the user explicitly changes the contract.
+
+## Limits
+
+- Templates are scaffolds, not evidence. Do not fill fields with invented paths,
+  approvals, validators, runtime facts, or user decisions.
+- Use `templates/` for package content. The installed `.agents/templates/`
+  path is only a local inspection mirror.

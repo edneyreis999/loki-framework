@@ -30,9 +30,12 @@ install_policy:
     agents: ".agents/agents/"
     commands: ".agents/commands/"
     skills: ".agents/skills/"
+    templates: ".agents/templates/"
+    custom_agents: ".codex/agents/"
   approval_required_before_copy:
     - ".claude/**"
     - ".agents/**"
+    - ".codex/**"
 
 guardrails:
   normative_sources:
@@ -47,6 +50,7 @@ guardrails:
     - "docs/project-context-catalog.md"
   non_normative_sources:
     - ".agents/**"
+    - ".codex/**"
   consumer_application_targets:
     - "docs/**/*.md"
     - "docs/index.xml"
@@ -67,12 +71,14 @@ guardrails:
   forbidden_writes_without_later_approval:
     - ".claude/**"
     - ".agents/**"
+    - ".codex/**"
     - "<sensitive_write_patterns>"
     - "<consumer_runtime_surfaces>"
   runtime_gate: "Validacao humana obrigatoria para comportamento perceptivel, estado runtime, integracoes ativas ou superficies declaradas por skill tecnica."
 
 layout:
   agents: "agents/"
+  codex_agents: "codex/agents/"
   commands: "commands/"
   skills: "skills/"
   templates: "templates/"
@@ -102,17 +108,35 @@ commands:
     status: draft
 
 skills:
+  - name: "loki-command-workflows"
+    file: "skills/loki-command-workflows/SKILL.md"
+    status: draft
   - name: "loki-feedback"
     file: "skills/loki-feedback/SKILL.md"
     status: draft
+  - name: "loki-tech-analysis"
+    file: "skills/loki-tech-analysis/SKILL.md"
+    status: draft
+  - name: "loki-generate-action-plan"
+    file: "skills/loki-generate-action-plan/SKILL.md"
+    status: draft
   - name: "loki-enrich-tasks"
     file: "skills/loki-enrich-tasks/SKILL.md"
+    status: draft
+  - name: "loki-run-plan"
+    file: "skills/loki-run-plan/SKILL.md"
     status: draft
   - name: "loki-run-plan-execution"
     file: "skills/loki-run-plan-execution/SKILL.md"
     status: draft
   - name: "loki-retrospectiva-tecnica"
     file: "skills/loki-retrospectiva-tecnica/SKILL.md"
+    status: draft
+  - name: "loki-continuous-improvement"
+    file: "skills/loki-continuous-improvement/SKILL.md"
+    status: draft
+  - name: "loki-template-library"
+    file: "skills/loki-template-library/SKILL.md"
     status: draft
   - name: "loki-command-creator"
     file: "skills/loki-command-creator/SKILL.md"
@@ -165,6 +189,36 @@ agents:
   - name: "catalogador"
     file: "agents/catalogador.md"
     status: draft
+
+codex_agents:
+  - name: "bibliotecario"
+    file: "codex/agents/bibliotecario.toml"
+    source_agent: "agents/bibliotecario.md"
+    status: draft-derived
+  - name: "catalogador"
+    file: "codex/agents/catalogador.toml"
+    source_agent: "agents/catalogador.md"
+    status: draft-derived
+  - name: "execution-context-reader"
+    file: "codex/agents/execution-context-reader.toml"
+    source_agent: "agents/execution-context-reader.md"
+    status: draft-derived
+  - name: "runtime-qa"
+    file: "codex/agents/runtime-qa.toml"
+    source_agent: "agents/runtime-qa.md"
+    status: draft-derived
+  - name: "source-researcher"
+    file: "codex/agents/source-researcher.toml"
+    source_agent: "agents/source-researcher.md"
+    status: draft-derived
+  - name: "standards-curator"
+    file: "codex/agents/standards-curator.toml"
+    source_agent: "agents/standards-curator.md"
+    status: draft-derived
+  - name: "technical-implementer"
+    file: "codex/agents/technical-implementer.toml"
+    source_agent: "agents/technical-implementer.md"
+    status: draft-derived
 
 templates:
   - name: "command-contract-template"
