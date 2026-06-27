@@ -43,6 +43,20 @@ source_policy: dependency-reference-not-copy
 
 Dependencia obrigatoria para criar, editar, validar ou ativar plugins RPG Maker MZ em `js/plugins/` e `js/plugins.js` no projeto consumidor.
 
+## Required References
+
+- `references/plugin-activation-and-namespace.md` quando criar helper plugin, alterar parametros, tocar `plugins.js`, usar namespace global ou depender de `PluginManager`.
+
+## Procedure
+
+1. Prefira helper plugin isolado a patch direto em `rmmz_*.js`.
+2. Confirme se a task autoriza ativacao; editar arquivo plugin nao ativa runtime por si so.
+3. Valide header minimo MZ, `@help`, parametros e comandos quando aplicavel.
+4. Preserve namespace global existente; nao substitua acumuladores do projeto sem revisar APIs atuais.
+5. Rode `node -c` no plugin editado.
+6. Revise `plugins.js` somente com approval de ativacao e confirme parametros efetivos.
+7. Exija Playtest quando o plugin ativo afetar cena, input, audio, pictures, save ou fluxo runtime.
+
 ## Inputs
 
 - Objetivo do plugin ou patch.
@@ -77,4 +91,4 @@ Nenhuma escrita e autorizada por este arquivo. A permissao real vem da task ativ
 
 ## Source Boundary
 
-Este arquivo declara o contrato minimo esperado da skill no pacote Loki. Ele nao depende de uma copia local em `.agents/` para ser entendido.
+Este arquivo declara o contrato minimo esperado da skill no pacote Loki. Ele nao depende de uma copia local de artefatos de sessao para ser entendido.

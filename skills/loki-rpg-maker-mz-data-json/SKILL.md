@@ -43,6 +43,22 @@ source_policy: dependency-reference-not-copy
 
 Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no projeto consumidor, Database, Common Events, mapas, eventos, switches, variables, troops, actors, enemies, skills, items, weapons, armors, states, tilesets ou animations.
 
+## Required References
+
+- `references/common-event-command-contracts.md` quando a task interpretar, gerar ou auditar `code`/`parameters` de comandos de evento.
+- `references/common-event-lifecycle.md` quando Common Events paralelos, switches de trigger, `command117`, input lock ou handoffs forem afetados.
+- `references/json-write-style-and-diff.md` antes de qualquer escrita automatizada em `data/*.json`.
+- `references/common-event-merge-and-editor-slots.md` quando criar, mover, renumerar ou mesclar Common Events.
+
+## Procedure
+
+1. Confirme arquivo alvo, IDs e nomes no JSON real do projeto consumidor.
+2. Use parser JSON estruturado; nao use substituicao textual para alterar comandos, arrays ou Database entries.
+3. Quando houver `code` de evento, confirme a semantica no engine da versao alvo antes de escrever ou auditar.
+4. Preserve estilo de escrita do arquivo alvo e pare se o diff virar reflow massivo.
+5. Para Common Events novos ou movidos, valide se o editor reconhece os slots e remapeie callers `code:117`.
+6. Rode parse JSON depois da escrita, revise diff restrito e exija Playtest quando runtime for afetado.
+
 ## Inputs
 
 - Arquivo JSON alvo.
@@ -76,4 +92,4 @@ Nenhuma escrita e autorizada por este arquivo. A permissao real vem da task ativ
 
 ## Source Boundary
 
-Este arquivo declara o contrato minimo esperado da skill no pacote Loki. Ele nao depende de uma copia local em `.agents/` para ser entendido.
+Este arquivo declara o contrato minimo esperado da skill no pacote Loki. Ele nao depende de uma copia local de artefatos de sessao para ser entendido.

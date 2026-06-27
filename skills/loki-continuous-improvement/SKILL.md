@@ -59,10 +59,17 @@ used_by:
    all raw retrospectives into the main context unless resolving conflict or
    weak evidence requires it.
 6. Classify every candidate with the shortcut below before proposing a patch.
-7. When reading retrospectives, preserve execution friction fields such as
+7. For every candidate, set `root_cause_learning.required`. When it is `true`,
+   run the command's read-only root-cause learning phase by handoff before
+   choosing the final destination or proposed patch. Use `source-researcher`
+   for multi-source root-cause research and `retrospective-digester` for
+   retrospective pattern search. Keep raw research out of the main context
+   unless resolving conflict or weak evidence requires reopening a source.
+   External research still requires explicit consent.
+8. When reading retrospectives, preserve execution friction fields such as
    useful and bad inferences, scripts, unexpected outputs, environment
    mismatches, failed lookups, waste impact, and minimum next path.
-8. Treat this skill as the Codex entrypoint for the command name
+9. Treat this skill as the Codex entrypoint for the command name
    `loki:continuous-improvement`.
 
 ## Classification Shortcut
@@ -96,6 +103,10 @@ used_by:
   and required gate before writing.
 - Prefer the surface that would have prevented the repeated error with the least
   durable text.
+- Mark `root_cause_learning.required: true` when extra read-only research could
+  turn a symptom-level learning into a stronger source-of-truth rule, especially
+  for false-positive validation, wrong source of truth, repeated patterns,
+  surprising tool/engine semantics, or weak suspected cause.
 - Do not promote execution friction directly; convert it into a durable rule,
   skill procedure, validator, preflight, doc update, or backlog item only when it
   is reusable and evidenced.

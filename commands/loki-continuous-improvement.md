@@ -65,6 +65,7 @@ commands, skills, agents, templates, validators, docs normativos,
 - Candidatos de melhoria classificados com destino duradouro explicito.
 - Proposta de patch estruturada para a superficie normativa correta.
 - Lista dos artefatos normativos impactados e das validacoes, gates e checks de empacotamento exigidos.
+- Para candidatos marcados com `root_cause_learning.required: true`, resumo da fase extra de causa raiz antes da proposta final.
 - Backlog quando a evidencia for insuficiente.
 
 ## Allowed Writes
@@ -94,7 +95,11 @@ commands, skills, agents, templates, validators, docs normativos,
 - `retrospective-digester` em modo read-only quando a entrada for um diretorio, multiplas retrospectivas independentes, ou uma retrospectiva longa/ruidosa. Usar fan-out por arquivo quando o runtime permitir; cada instancia retorna digest estruturado para o orquestrador.
 - `source-researcher` em modo read-only quando a evidencia de um candidato
   precisar ser conferida em varias fontes, houver conflito de origem, risco de
-  duplicidade ou necessidade de distinguir fato local de referencia externa.
+  duplicidade, necessidade de distinguir fato local de referencia externa, ou
+  `root_cause_learning.required` for `true`. A main thread nao faz pesquisa
+  multi-fonte direta nesse caso: ela formula perguntas, escopo, fontes
+  permitidas e gate externo, entao recebe apenas o handoff estruturado
+  `source_research`.
 - `catalogador` quando o aprendizado for `project-specific` e pertencer a
   `docs/**/*.md`, `docs/index.xml`, `AGENTS.md` ou `CLAUDE.md` do consumidor.
 - `bibliotecario` quando for necessario revisar a documentacao duradoura do
@@ -124,13 +129,80 @@ Quando a entrada for um diretorio ou lista de retrospectivas:
 7. Detectar conflitos e evidencia fraca antes de chamar `standards-curator`,
    `catalogador`, `loki-skill-creator`, `loki-command-creator` ou
    `loki-agent-creator`.
-8. Nao escrever em paralelo. Toda promocao, patch, catalogacao ou atualizacao de
+8. Marcar `root_cause_learning.required` por candidato. Quando for `true`,
+   executar a fase read-only de causa raiz por handoff antes de fechar destino,
+   proposta ou patch. A main thread nao deve carregar fontes brutas extensas
+   para essa fase; use `source-researcher` e, quando houver lote de
+   retrospectivas, `retrospective-digester`.
+9. Nao escrever em paralelo. Toda promocao, patch, catalogacao ou atualizacao de
    skill/command/template/validator acontece serialmente pelo orquestrador apos
    gates.
 
 Nao jogue retrospectivas brutas inteiras no contexto principal quando um digest
 estruturado bastar. Reabra a retrospectiva completa apenas para resolver
 conflito, conferir evidencia fraca ou preparar patch aprovado.
+
+## Root-Cause Learning Phase
+
+Depois da classificacao inicial, todo candidato deve declarar se merece uma
+rodada extra de causa raiz antes da proposta final.
+
+Marque `root_cause_learning.required: true` quando pelo menos um destes sinais
+aparecer:
+
+- erro de severidade media ou alta com causa ainda generica ou apenas suspeita;
+- audit, validator, teste ou revisao passou falsamente;
+- a falha veio de fonte de verdade errada, spec desatualizada, memoria do agente
+  ou contrato tecnico mal entendido;
+- ha chance clara de transformar o aprendizado em regra mais forte descobrindo
+  a fonte de verdade;
+- o mesmo padrao aparece em varias retrospectivas, mas a causa comum ainda nao
+  foi isolada;
+- a proposta atual previne apenas o sintoma, nao a classe de erro;
+- ambiente, engine, ferramenta, formato ou integracao teve semantica
+  surpreendente.
+
+Quando `root_cause_learning.required` for `true`:
+
+1. Rodar uma fase read-only por handoff antes de promover ou escrever qualquer
+   superficie duradoura.
+2. Usar `source-researcher` como agente responsavel pela pesquisa de causa raiz:
+   localizar fonte de verdade, conflitos, contratos tecnicos e evidencias
+   independentes.
+3. Usar `retrospective-digester` para procurar ocorrencias relacionadas em
+   retrospectivas proximas quando houver lote ou catalogo.
+4. Usar `standards-curator` para confirmar se a causa raiz muda escopo, destino
+   ou gate.
+5. Usar `catalogador` quando a causa raiz for project-specific e precisar virar
+   documentacao do consumidor.
+6. Atualizar o candidato com fontes verificadas, causa raiz, regra preventiva
+   fortalecida e riscos residuais.
+7. So entao escolher destino final, diff proposto e gates.
+
+Essa fase nao autoriza internet automaticamente. Se a causa depender de versao,
+documentacao oficial atual, bug conhecido, API externa ou compatibilidade, pare
+e solicite consentimento de pesquisa externa com a frase exata da busca.
+
+### Root-Cause Handoff Boundary
+
+A main thread deve manter esta fase compacta:
+
+1. Definir a pergunta de pesquisa, candidato, evidencias conhecidas, fora de
+   escopo, fontes locais permitidas e status do gate externo.
+2. Despachar `source-researcher` em modo read-only para qualquer pesquisa
+   multi-fonte, conflito de fonte, fonte de verdade errada, semantica tecnica
+   surpreendente ou causa ainda suspeita.
+3. Despachar `retrospective-digester` em modo read-only quando a causa comum
+   depender de buscar padroes em retrospectivas longas ou multiplas fontes
+   retrospectivas.
+4. Receber e consolidar somente retornos estruturados (`source_research` e
+   `retrospective_digest`), com fontes, fatos, inferencias, conflitos, lacunas,
+   causa raiz proposta, regra preventiva e riscos residuais.
+5. Reabrir fontes brutas na main thread apenas quando o handoff indicar
+   conflito, evidencia fraca, trecho indispensavel para patch aprovado ou
+   stop condition.
+6. Nao transformar pesquisa externa em padrao automatico. Se `source-researcher`
+   indicar que fonte externa atual e material, parar para `research-consent`.
 
 ## Placement Matrix
 
@@ -153,6 +225,9 @@ conflito, conferir evidencia fraca ou preparar patch aprovado.
 - O destino proposto e concreto: arquivo, artefato ou categoria instalavel especifica.
 - A proposta explica por que a superficie escolhida teria prevenido o erro ou reduzido a repeticao.
 - Quando a fonte incluir atrito de execucao, a proposta preserva categoria, evidencia, caminho minimo e como a superficie proposta reduziria tokens, ferramentas, buscas ou interacoes futuras.
+- Todo candidato declara `root_cause_learning.required`. Quando for `true`, a
+  proposta inclui fontes checadas, causa raiz e regra preventiva fortalecida,
+  ou registra explicitamente por que a fase ficou bloqueada.
 - A proposta inclui comparacao `before/after` ou diff esperado para a superficie normativa.
 - Se o destino tocar o pacote, os checks de `docs/package-authoring-guardrails.md` aparecem explicitamente.
 - Se o destino tocar `docs/**/*.md`, `docs/index.xml`, `AGENTS.md` ou
@@ -235,6 +310,21 @@ continuous_improvement_candidate:
     type: "factual-error | misunderstanding | missing-context | ambiguous-instruction | validation-gap | workflow-gap | execution-friction | environment-friction | tool-waste | prompt-gap"
     severity: "low | medium | high"
     scope: "universal | probable-universal | project-specific | backlog"
+  root_cause_learning:
+    required: "true | false"
+    reason: ""
+    triggers:
+      - "false-positive-validation | wrong-source-of-truth | repeated-pattern | symptom-only-fix | surprising-engine-semantics | weak-suspected-cause | broad-prevention-potential"
+    research_questions: []
+    automatic_phase:
+      status: "not-needed | pending | completed | blocked"
+      handoffs:
+        - "source-researcher | retrospective-digester | standards-curator | catalogador"
+      sources_checked: []
+      findings_summary: ""
+      root_cause: ""
+      stronger_prevention_rule: ""
+      residual_unknowns: []
   context_gap:
     missing_information: ""
     ambiguity: ""
@@ -267,7 +357,11 @@ continuous_improvement_candidate:
 - Mudanca proposta relaxa gate de seguranca.
 - A proposta nao identifica o artefato normativo correto ou termina sem validacao verificavel.
 - A proposta tenta colocar regra de negocio do consumidor dentro do pacote Loki.
+- `root_cause_learning.required` esta `true`, mas a fase extra nao foi
+  concluida nem registrada como bloqueada com risco residual.
 
 ## Resume Contract
 
-Cada candidato deve declarar fonte, classificacao, escopo, destino, acao, gate, validadores, artefatos impactados, diff esperado, status de approval e risco residual.
+Cada candidato deve declarar fonte, classificacao, escopo, destino,
+`root_cause_learning`, acao, gate, validadores, artefatos impactados, diff
+esperado, status de approval e risco residual.

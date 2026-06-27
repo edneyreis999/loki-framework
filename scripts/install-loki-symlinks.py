@@ -272,6 +272,33 @@ def resolve_symlink_target(path: Path) -> Path:
     return raw_target.resolve(strict=False)
 
 
+def legacy_skill_file_symlink_reason(destination: Path, source: Path) -> str:
+    expected_skill_file = source / "SKILL.md"
+    if not source.is_dir() or not expected_skill_file.is_file():
+        return ""
+
+    try:
+        entries = list(destination.iterdir())
+    except OSError:
+        return ""
+
+    if len(entries) != 1 or entries[0].name != "SKILL.md":
+        return ""
+
+    installed_skill_file = destination / "SKILL.md"
+    if not installed_skill_file.is_symlink():
+        return ""
+
+    target = resolve_symlink_target(installed_skill_file)
+    if target != expected_skill_file.resolve(strict=True):
+        return ""
+
+    return (
+        "legacy skill file symlink exists; use --replace to migrate to "
+        "a skill directory symlink"
+    )
+
+
 def classify_destination(destination: Path, source: Path) -> tuple[str, str]:
     if destination.is_symlink():
         target = resolve_symlink_target(destination)
@@ -281,6 +308,9 @@ def classify_destination(destination: Path, source: Path) -> tuple[str, str]:
 
     if destination.exists():
         if destination.is_dir():
+            legacy_reason = legacy_skill_file_symlink_reason(destination, source)
+            if legacy_reason:
+                return "skill-file-symlink-conflict", legacy_reason
             return "directory-conflict", "real directory exists"
         return "file-conflict", "real file exists"
 
@@ -343,9 +373,24 @@ def print_plan(
             print(f"  reason={link.reason}")
 
 
-def remove_exact_conflict(path: Path) -> None:
+def remove_exact_conflict(path: Path, existing_state: str) -> None:
     if path.is_symlink():
         path.unlink()
+        return
+
+    if existing_state == "skill-file-symlink-conflict":
+        skill_file = path / "SKILL.md"
+        if not skill_file.is_symlink():
+            raise InstallError(
+                f"cannot migrate legacy skill install without SKILL.md symlink: {path}"
+            )
+        skill_file.unlink()
+        try:
+            path.rmdir()
+        except OSError as exc:
+            raise InstallError(
+                f"cannot migrate legacy skill install with extra entries: {path}"
+            ) from exc
         return
 
     if path.is_dir():
@@ -386,7 +431,7 @@ def apply_plan(planned_links: list[PlannedLink]) -> list[PlannedLink]:
             continue
 
         if link.status == "replaced":
-            remove_exact_conflict(link.destination)
+            remove_exact_conflict(link.destination, link.existing_state)
 
         create_symlink(link.source, link.destination, link.source_kind)
         applied.append(link)
