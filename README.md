@@ -118,6 +118,23 @@ O script grava o manifest de auditoria no destino:
 $DEST/.agents/loki-installation-manifest.json
 ```
 
+Validacao pos-instalacao:
+
+```bash
+find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
+find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
+python3 - "$DEST" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
+data = json.loads(manifest.read_text(encoding="utf-8"))
+print(f"links={len(data.get('links', []))}")
+PY
+git -C "$DEST" status --short .agents .codex
+```
+
 Use `--replace` somente com approval separado para o caminho e modo de
 execucao. Sem `--replace`, conflitos bloqueiam a instalacao em vez de
 sobrescrever arquivos reais ou links divergentes.

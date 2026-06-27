@@ -5,6 +5,7 @@ when_to_use:
   - "Use when creating, revising, or reviewing a document whose audience, lifetime, tone, density, or destination must be chosen."
   - "Use when deciding between technical, reader-facing, and agent-facing LLM-only document modes, with lite or rich depth."
   - "Use when a Loki workflow writes Markdown under a plan directory, /docs, or another approved documentation destination."
+  - "Use before vault-specific Markdown skills when Loki documentation is written inside an Obsidian vault or another Markdown knowledge base."
 argument-hint: "[goal, audience, destination, lifetime, source paths]"
 arguments:
   required: []
@@ -50,19 +51,25 @@ shell: {}
    learning, how-to for a concrete task, reference for lookup, explanation for
    understanding. Do not let Diataxis override Loki lifetime or destination
    rules.
-4. Read [document-taxonomy.md](references/document-taxonomy.md) when
+4. If the destination is inside an Obsidian vault, or the user asks for
+   Obsidian-specific Markdown features, use this skill first to choose mode,
+   lifetime, evidence and placement. Then, if an Obsidian Markdown skill is
+   available, use it as a formatting layer for vault syntax such as properties,
+   wikilinks, embeds, callouts, tags, block IDs or note aliases when those
+   features serve the selected Loki mode.
+5. Read [document-taxonomy.md](references/document-taxonomy.md) when
    classification is ambiguous or when the output will be reused by another
    agent.
-5. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
+6. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
    or reviewing the content, especially for rich documents or mixed
    technical/reader-facing audiences.
-6. Read [llm-only-documents.md](references/llm-only-documents.md) when the
+7. Read [llm-only-documents.md](references/llm-only-documents.md) when the
    document is meant primarily for AI agents, prompt assembly, retrieval,
    routing, context hydration, or deterministic reuse by an LLM.
-7. Gather local sources before writing durable or technical claims. Prefer
+8. Gather local sources before writing durable or technical claims. Prefer
    primary files, approved docs, command contracts, task files, validators and
    runtime evidence over memory.
-8. Write the smallest complete document for its mode. Lite documents optimize
+9. Write the smallest complete document for its mode. Lite documents optimize
    for task execution and handoff. Rich documents optimize for future readers
    who will not have conversation context.
    Technical documents may use strict section order. Reader-facing documents may
@@ -70,9 +77,44 @@ shell: {}
    open questions and next actions remain easy to find.
    Agent-facing LLM-only documents should use stable, dense, segmented
    structure instead of narrative prose.
-9. Validate placement before finalizing. Durable consumer documentation usually
+10. Validate placement before finalizing. Durable consumer documentation usually
    belongs in `/docs` and must keep the consumer documentation index in scope.
    Transient plan documentation belongs with the active plan or task artifacts.
+
+## Obsidian Cooperation
+
+Use vault-specific Markdown as an adapter, not as the documentation authority.
+The Loki document mode remains the source of truth for audience, lifetime,
+density, evidence, placement and validation.
+
+Apply Obsidian features when all of these are true:
+
+- the document destination is inside a known vault, the project exposes a
+  `.obsidian/` vault root, or the user explicitly asks for Obsidian notes;
+- an Obsidian Markdown skill or equivalent local rule is available;
+- the feature improves navigation, retrieval, review, or reader comprehension
+  for the selected Loki mode.
+
+Mode guidance:
+
+- `reader-facing rich`: wikilinks, aliases, tags, callouts and embeds may be
+  useful when they connect durable project context without hiding required
+  facts.
+- `reader-facing lite`: use lightweight properties, wikilinks or callouts only
+  when they help a human resume the current thread.
+- `technical rich`: use vault links and callouts for related references,
+  decisions, risks and validation gates, while keeping source paths and
+  evidence explicit.
+- `technical lite`: prefer plain Markdown plus only the vault links needed to
+  resume execution.
+- `agent-facing lite` or `agent-facing rich`: keep structure deterministic.
+  Use YAML properties when they support retrieval, but avoid decorative
+  callouts, ambiguous embeds, or wikilinks that replace explicit source paths.
+
+When using Obsidian syntax, preserve portability enough that the document can be
+understood as Markdown. Do not use a wikilink or embed as the only evidence for
+a claim unless the target is also identified by a concrete path, title, or
+source label.
 
 ## Classification Rules
 
@@ -107,6 +149,10 @@ shell: {}
   Use headings and order only when they serve the reader.
 - Do not make agent-facing LLM-only documents decorative, conversational,
   narrative, marketing-like, or dependent on implicit context.
+- Do not let Obsidian-specific syntax override Loki classification, evidence,
+  placement, validation, or LLM-only structure.
+- Do not add vault links, embeds, tags, properties or callouts just because the
+  syntax is available.
 - Do not promote transient findings into durable documentation unless the user,
   approved plan, or Loki workflow explicitly calls for promotion.
 - Do not use `.agents/**`, `.claude/**`, or `.codex/**` as normative source
@@ -117,6 +163,8 @@ shell: {}
 - A classified document mode.
 - Markdown content sized and structured for that mode.
 - Source references or evidence appropriate to the mode.
+- Vault-specific Markdown features when the destination and selected mode
+  justify them.
 - Placement and validation notes when creating or changing a durable document.
 
 ## Quality Checklist
@@ -130,4 +178,6 @@ shell: {}
   not required order.
 - Agent-facing LLM-only content is stable, explicit, segmented, traceable and
   easy to retrieve.
+- Obsidian syntax, when used, improves navigation or retrieval without hiding
+  sources, decisions, risks or validators.
 - Durable `/docs` changes consider index/catalog updates.

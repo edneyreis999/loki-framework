@@ -21,6 +21,18 @@ Write Markdown with concise YAML frontmatter where existing artifacts use it. Co
 
 For documentation-only changes, review rendered Markdown structure and run the integrity commands above. When adding, renaming, or removing commands, skills, agents, templates, or docs, update `manifest.yaml` in the same change. For package policy changes, also check `docs/package-authoring-guardrails.md` for required validation and approval gates.
 
+## Installation Workflow Routing
+
+When installing or synchronizing Loki into a consumer project, do not assume
+the model has read `README.md` or `docs/usage-guide.md`.
+
+- Before writing to a consumer destination, read the Codex installation section
+  in `README.md` and the symlink installation section in `docs/usage-guide.md`.
+- Run the required dry-run, apply only with explicit destination approval, and
+  then run the documented post-installation validation checklist.
+- Do not update the consumer project's `AGENTS.md` or `CLAUDE.md` unless the
+  user explicitly asks for consumer-context synchronization.
+
 ## Commit & Pull Request Guidelines
 
 The Git history currently only shows `first commit`, so no detailed convention is established. Use concise imperative commit subjects with an artifact scope when helpful, such as `Add loki skill validation notes`. Pull requests should include a summary, affected paths, validation commands run, linked issue or plan when available, and any required human approval or runtime-validation gate.

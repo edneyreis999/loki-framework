@@ -100,6 +100,28 @@ e para o modo de execucao. `--replace` e excepcional e exige approval separado.
 O manifest gerado em `.agents/loki-installation-manifest.json` registra origem,
 destino, tipo e status de cada link.
 
+Depois da instalacao, valide a estrutura instalada:
+
+```bash
+find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
+find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
+python3 - "$DEST" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
+data = json.loads(manifest.read_text(encoding="utf-8"))
+print(f"links={len(data.get('links', []))}")
+PY
+git -C "$DEST" status --short .agents .codex
+```
+
+Esses checks confirmam entrypoints de skills, TOMLs Codex, manifest parseavel
+e impacto visivel no git do consumidor. Eles nao substituem validacao funcional
+de um workflow Loki dentro do projeto consumidor quando esse comportamento for
+necessario.
+
 ## Skills Core e Extensoes
 
 As skills Loki (`loki-feedback`, `loki-enrich-tasks`,

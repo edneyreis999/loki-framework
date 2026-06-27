@@ -49,6 +49,7 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 - `references/common-event-lifecycle.md` quando Common Events paralelos, switches de trigger, `command117`, input lock ou handoffs forem afetados.
 - `references/json-write-style-and-diff.md` antes de qualquer escrita automatizada em `data/*.json`.
 - `references/common-event-merge-and-editor-slots.md` quando criar, mover, renumerar ou mesclar Common Events.
+- `references/historical-migration-scripts.md` quando revisar, adaptar ou considerar executar scripts historicos que alteram `data/*.json`.
 
 ## Procedure
 
@@ -57,7 +58,8 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 3. Quando houver `code` de evento, confirme a semantica no engine da versao alvo antes de escrever ou auditar.
 4. Preserve estilo de escrita do arquivo alvo e pare se o diff virar reflow massivo.
 5. Para Common Events novos ou movidos, valide se o editor reconhece os slots e remapeie callers `code:117`.
-6. Rode parse JSON depois da escrita, revise diff restrito e exija Playtest quando runtime for afetado.
+6. Para scripts historicos ou geradores de fase, classifique `read-only` versus mutador e confirme precondicoes atuais antes de qualquer execucao.
+7. Rode parse JSON depois da escrita, revise diff restrito e exija Playtest quando runtime for afetado.
 
 ## Inputs
 
@@ -72,6 +74,7 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 - Lista de arquivos e IDs afetados.
 - Evidencia de parse JSON depois da escrita.
 - Diff restrito ao escopo.
+- Classificacao de validacao: `structural_validation`, `runtime_pending` ou `playtest_validated`.
 - Gate de Playtest quando runtime for afetado.
 
 ## Allowed Writes
@@ -83,6 +86,7 @@ Nenhuma escrita e autorizada por este arquivo. A permissao real vem da task ativ
 - Escrita manual ad hoc que quebre estrutura JSON.
 - Alteracao de IDs nao planejados.
 - Validar runtime sem Playtest humano.
+- Executar script mutador historico sem preflight, precondicoes atuais e autorizacao explicita.
 
 ## Gates
 
