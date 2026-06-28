@@ -53,7 +53,7 @@ O framework usa gates para impedir validacao falsa:
 
 - `interview`: quando falta requisito, preferencia ou contexto.
 - `approval`: antes de politica duradoura, instalacao, promocao ou escrita sensivel.
-- `runtime-validation`: obrigatorio para comportamento perceptivel, estado
+- `human-validation`: obrigatorio para comportamento perceptivel, estado
   runtime, integracoes ativas ou superficies declaradas por skill tecnica.
 - `technical-review`: para mudanca em command, skill, agent, template, validator ou doc consolidado.
 

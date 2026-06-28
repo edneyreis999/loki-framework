@@ -47,7 +47,7 @@ command_contract:
   validators:
     - "<validators_for_consumer_runtime_surfaces>"
   human_gates:
-    - "<interview | approval | runtime-validation | technical-review>"
+    - "<interview | approval | human-validation | technical-review>"
   stop_conditions: []
   resume_contract: ""
 ```

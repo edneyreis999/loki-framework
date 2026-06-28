@@ -46,20 +46,28 @@ ele passa pelo workflow de aprendizado.
    `loki-run-plan-execution`, monta um `Execution Brief`, resolve contexto e
    bloqueia escrita quando faltar decisao, validator, approval ou gate humano.
 7. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
-   locais em modo read-only para extrair apenas o que afeta a fase alvo.
-8. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
+   locais em modo read-only para extrair apenas o que afeta a fase alvo. Quando
+   nao houver `DIR_ANALISE` e as referencias da task forem insuficientes, ele
+   faz uma pre-analise local minima antes da primeira escrita.
+8. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
+   a fase de execucao, pause antes de escrever e use `source-researcher` para
+   produzir evidencia que revise ou complemente o `Execution Brief`.
+9. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
    retrospectiva aprovada exigir aquela tecnologia.
-9. A implementacao acontece task por task, em ordem segura. Leitura pode ser
+10. A implementacao acontece task por task, em ordem segura. Leitura pode ser
    paralela; escrita fica serializada por um unico orquestrador.
-10. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
+11. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
-11. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
-    `interaction/faseN/` e status de retomada com arquivos afetados,
-    validators, human loops, blockers e proximo passo.
-12. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+12. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
+    `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
+    task, arquivos afetados, validations, human loops, blockers e proximo
+    passo.
+13. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki:retrospectiva-tecnica` e siga o
-    [Workflow de Aprendizado do Loki](loki-learning-workflow.md).
+    [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
+    validators, gates, comandos/scripts, outputs inesperados, inferencias,
+    mismatches de ambiente, correcoes humanas e desperdicios relevantes.
 
 ## Artefatos participantes
 
@@ -82,15 +90,15 @@ ele passa pelo workflow de aprendizado.
 | `loki-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
 | `loki-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
 | `loki-enrich-tasks` | Injeta aprendizados na task certa do plano ativo, preservando fontes sensiveis e sem criar norma duradoura. |
-| `loki-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, contexto read-only, escrita serializada, validators e `LokiRunState`. |
+| `loki-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |
 | Skills tecnicas opcionais | Entram apenas quando a superficie exige tecnologia especifica, como runtime, engine, framework, dados ou plugins. |
 
 ### Agents
 
 | Agent | Contribuicao no workflow |
 | --- | --- |
-| `execution-context-reader` | Extrai contexto relevante em modo read-only antes da escrita. |
-| `source-researcher` | Mapeia fatos, lacunas e conflitos em pesquisa multi-fonte antes de decisao, plano ou execucao. |
+| `execution-context-reader` | Extrai contexto relevante em modo read-only antes da escrita, incluindo pre-analise local minima quando faltam referencias executaveis. |
+| `source-researcher` | Mapeia fatos, lacunas e conflitos em pesquisa multi-fonte antes de decisao, plano ou execucao, especialmente quando a lacuna pre-escrita e ampla demais para `execution-context-reader`. |
 | `technical-implementer` | Propoe mudancas tecnicas em modo `proposal-only` quando a escrita for sensivel ou exigir julgamento especializado. |
 | `runtime-qa` | Produz checklist de validacao e evidencia esperada para comportamento perceptivel ou runtime. |
 | `bibliotecario` | Localiza a menor documentacao duradoura suficiente no projeto consumidor. |
@@ -101,6 +109,9 @@ ele passa pelo workflow de aprendizado.
 
 - Pare antes de escrever se `FASE_ATUAL`, `TASKS_MD`, task alvo, referencias,
   validator, approval ou human loop estiverem ausentes ou ambiguos.
+- Pare antes de escrever se o `Execution Brief` nao conseguir listar objetivo,
+  dependencias, referencias, validators e human loops suficientes para execucao
+  sem memoria da conversa.
 - Nao execute plano inteiro quando o usuario pediu apenas uma fase ou task.
 - Nao edite runtime, engine, framework, assets, dados persistidos,
   integracoes ou superficies sensiveis sem plano aprovado, skill tecnica
@@ -120,4 +131,6 @@ Ao fim da execucao, outra LLM deve conseguir retomar pelo disco:
 - quais validators rodaram ou foram bloqueados;
 - qual gate humano ficou pendente ou foi satisfeito;
 - quais evidencias foram salvas;
-- qual retrospectiva ou proximo passo deve alimentar o aprendizado.
+- qual `LokiRunState` ou resumo equivalente permite retomada;
+- qual retrospectiva ou proximo passo deve alimentar o aprendizado, incluindo
+  atritos materiais que a proxima execucao deve evitar.

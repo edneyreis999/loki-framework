@@ -71,7 +71,7 @@ Contratos canonicos devem preferir classes e effort a IDs fixos de modelo.
 
 ## Human Gates
 
-- <interview | approval | runtime-validation | technical-review | domain-approval | visual-ux-confirmation>
+- <interview | approval | human-validation | technical-review | domain-approval | visual-ux-confirmation>
 
 ## Packaging Checks
 

@@ -94,7 +94,7 @@ agent_contract:
     codex: "Project to codex/agents/*.toml or profile for strong enforcement."
   response_format: ""
   required_gates:
-    - "<interview | approval | runtime-validation | technical-review>"
+    - "<interview | approval | human-validation | technical-review>"
 ```
 
 ## Model and Effort Rules

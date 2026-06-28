@@ -59,7 +59,7 @@ para notas locais, validadores simples ou documentacao transiente.
 
 | Task | Title | Dependencies | Estimate | Human Loop | Validators | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| task-1.1 | <task-title> | none | 2-4h | <none/interview/approval/runtime-validation> | <validator> | pending |
+| task-1.1 | <task-title> | none | 2-4h | <none/interview/approval/human-validation> | <validator> | pending |
 
 ## Execution Order
 

@@ -65,7 +65,7 @@ arquitetural, evidencia conflitante ou validacao dificil.
 
 ## Human Loop
 
-- Gate: <none | interview | approval | runtime-validation | technical-review>
+- Gate: <none | interview | approval | human-validation | technical-review>
 - Required decision: <decisao ou `none`>
 
 ## Definition Of Done

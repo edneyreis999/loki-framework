@@ -115,7 +115,7 @@ material. Nao invente atritos para preencher checklist.
   arquivo irrelevante ou falta de `rg`/lookup localizado primeiro.
 - `scope-waste`: trabalho feito fora da task ativa, refactor cosmetico,
   artefato intermediario inutilizado ou investigacao maior que o risco exigia.
-- `safety-gate-friction`: approval, technical-review, runtime-validation,
+- `safety-gate-friction`: approval, technical-review, human-validation,
   research-consent ou human loop ausente, ambiguo ou descoberto tarde.
 - `minimum-next-path`: sequencia menor que uma proxima LLM deveria seguir para
   chegar ao mesmo resultado com menos tentativas.
