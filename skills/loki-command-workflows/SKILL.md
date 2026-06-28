@@ -1,9 +1,9 @@
 ---
 name: loki-command-workflows
-description: Use Loki command workflows from Codex. Trigger when the user invokes `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, `loki:retrospectiva-tecnica`, `loki:continuous-improvement`, or `loki:knowledge-extraction-analysis`; read the matching command contract and load the required Loki skills.
+description: Use Loki command workflows from Codex. Trigger when the user invokes `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, `loki:retrospectiva-tecnica`, `loki:continuous-improvement`, `loki:knowledge-extraction-analysis`, or `loki:self-healing`; read the matching command contract and load the required Loki skills.
 when_to_use:
   - "Use when the user invokes a Loki command workflow from Codex."
-  - "Use when routing loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, loki:retrospectiva-tecnica, loki:continuous-improvement, or loki:knowledge-extraction-analysis."
+  - "Use when routing loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, loki:retrospectiva-tecnica, loki:continuous-improvement, loki:knowledge-extraction-analysis, or loki:self-healing."
 argument-hint: "[loki command name, command arguments]"
 arguments:
   required: []
@@ -40,6 +40,7 @@ used_by:
   - loki:retrospectiva-tecnica
   - loki:continuous-improvement
   - loki:knowledge-extraction-analysis
+  - loki:self-healing
 ---
 
 # loki-command-workflows
@@ -77,6 +78,9 @@ for the command behavior by name.
 - `loki:knowledge-extraction-analysis`: read
   [loki-knowledge-extraction-analysis.md](references/commands/loki-knowledge-extraction-analysis.md),
   then use `loki-knowledge-extraction-analysis`.
+- `loki:self-healing`: read
+  [loki-self-healing.md](references/commands/loki-self-healing.md), then use
+  `loki-self-healing`.
 
 ## Procedure
 

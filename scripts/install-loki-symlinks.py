@@ -32,6 +32,7 @@ REQUIRED_SKILL_NAMES = frozenset(
         "loki-retrospectiva-tecnica",
         "loki-run-plan",
         "loki-run-plan-execution",
+        "loki-self-healing",
         "loki-skill-creator",
         "loki-tech-analysis",
         "loki-tech-analysis-authoring",

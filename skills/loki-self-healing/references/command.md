@@ -1,0 +1,1 @@
+../../../commands/loki-self-healing.md

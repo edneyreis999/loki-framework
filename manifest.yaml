@@ -132,6 +132,9 @@ commands:
   - name: "loki:knowledge-extraction-analysis"
     file: "commands/loki-knowledge-extraction-analysis.md"
     status: draft
+  - name: "loki:self-healing"
+    file: "commands/loki-self-healing.md"
+    status: draft
 
 skills:
   - name: "loki-command-workflows"
@@ -169,6 +172,9 @@ skills:
     status: draft
   - name: "loki-framework-impact-audit"
     file: "skills/loki-framework-impact-audit/SKILL.md"
+    status: draft
+  - name: "loki-self-healing"
+    file: "skills/loki-self-healing/SKILL.md"
     status: draft
   - name: "loki-template-library"
     file: "skills/loki-template-library/SKILL.md"
