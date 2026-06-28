@@ -1,0 +1,1 @@
+../../../commands/loki-knowledge-extraction-analysis.md

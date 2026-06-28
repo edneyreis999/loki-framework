@@ -37,6 +37,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki:run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
 | `loki:retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
 | `loki:continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
+| `loki:knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki:continuous-improvement`. |
 | `loki:criar-nsd` | `backlog` | Conduzir entrevista narrativa quando o contrato de NSD for normalizado. |
 | `loki:ai-enemy-optimizer` | `backlog` | Gerar comportamento de inimigos por contrato de dominio especializado. |
 | `loki:brainstorm-phase-1-create-boss` | `backlog` | Criar conceito inicial de boss com escopo narrativo/gameplay. |
@@ -59,6 +60,9 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, escrita serializada, validators e estado retomavel. |
 | `loki-retrospectiva-tecnica` | `mvp` | Procedimento de retrospectiva tecnica apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Wrapper Codex para executar o workflow `loki:continuous-improvement`. |
+| `loki-knowledge-extraction-analysis` | `mvp` | Wrapper Codex para executar `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
+| `loki-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
+| `loki-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `loki-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `loki-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `loki-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |

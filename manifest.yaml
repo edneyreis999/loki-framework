@@ -129,6 +129,9 @@ commands:
   - name: "loki:continuous-improvement"
     file: "commands/loki-continuous-improvement.md"
     status: draft
+  - name: "loki:knowledge-extraction-analysis"
+    file: "commands/loki-knowledge-extraction-analysis.md"
+    status: draft
 
 skills:
   - name: "loki-command-workflows"
@@ -157,6 +160,15 @@ skills:
     status: draft
   - name: "loki-continuous-improvement"
     file: "skills/loki-continuous-improvement/SKILL.md"
+    status: draft
+  - name: "loki-knowledge-extraction-analysis"
+    file: "skills/loki-knowledge-extraction-analysis/SKILL.md"
+    status: draft
+  - name: "loki-external-knowledge-extraction"
+    file: "skills/loki-external-knowledge-extraction/SKILL.md"
+    status: draft
+  - name: "loki-framework-impact-audit"
+    file: "skills/loki-framework-impact-audit/SKILL.md"
     status: draft
   - name: "loki-template-library"
     file: "skills/loki-template-library/SKILL.md"
