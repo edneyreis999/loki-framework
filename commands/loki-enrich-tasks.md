@@ -59,7 +59,7 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 - Project-context duradouro do projeto consumidor.
 - Commands, skills, agents, templates, validators, docs consolidados e `manifest.yaml`.
 - Runtime, engine, framework ou superficies sensiveis do consumidor fora do escopo aprovado.
-- `.claude/**` e `.agents/**`.
+- `.claude/**`, `.agents/**` e `.codex/**`.
 
 ## Required Skills
 

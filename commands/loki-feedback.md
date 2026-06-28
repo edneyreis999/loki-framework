@@ -54,6 +54,7 @@ Investigar feedback de usuario, QA ou validacao humana por entrevista curta, uma
 - Artefatos de runtime, engine ou framework sem approval.
 - `.claude/**`
 - `.agents/**`
+- `.codex/**`
 
 ## Gates
 

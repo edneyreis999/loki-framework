@@ -58,7 +58,7 @@ riscos, validators, gates humanos e handoff para planejamento.
 ## Forbidden Writes
 
 - Runtime, engine, framework ou superficies sensiveis do consumidor fora do escopo aprovado.
-- `.claude/**` e `.agents/**`.
+- `.claude/**`, `.agents/**` e `.codex/**`.
 - Docs consolidados sem task de promocao.
 
 ## Required Skills

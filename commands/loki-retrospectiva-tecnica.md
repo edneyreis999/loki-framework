@@ -57,7 +57,7 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 - Project-context duradouro do projeto consumidor.
 - Promover standards, commands, skills, agents, templates, validators, docs consolidados ou `manifest.yaml` diretamente.
 - Runtime, engine, framework ou superficies sensiveis do consumidor fora do escopo aprovado.
-- `.claude/**` e `.agents/**`.
+- `.claude/**`, `.agents/**` e `.codex/**`.
 
 ## Required Skills
 

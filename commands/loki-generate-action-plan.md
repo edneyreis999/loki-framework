@@ -60,6 +60,7 @@ estrutura de artefatos Loki.
 - Qualquer superficie fora do novo diretorio de plano aprovado.
 - `.claude/**`
 - `.agents/**`
+- `.codex/**`
 - Blueprint consolidado ou documentacao duradoura sem approval posterior.
 
 ## Required Skills

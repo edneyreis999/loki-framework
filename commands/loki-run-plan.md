@@ -55,7 +55,7 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 ## Forbidden Writes
 
 - Qualquer superficie fora do escopo da task.
-- `.claude/**` e `.agents/**` sem approval especifico posterior.
+- `.claude/**`, `.agents/**` e `.codex/**` sem approval especifico posterior.
 - Runtime, engine, framework ou superficies sensiveis do consumidor sem plano, skill tecnica selecionada quando exigida, validadores e gate humano.
 
 ## Required Skills
