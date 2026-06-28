@@ -66,6 +66,7 @@ formal ou auditoria interna de conformidade do pacote.
 | `loki-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
 | `loki-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
 | `loki-self-healing` | Executa auditoria interna de conformidade do pacote e limita correcoes a achados claros e verificaveis. |
+| `loki-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
 | `loki-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
 | `loki-skill-creator` | Ajuda quando o aprendizado deve virar procedimento reutilizavel com trigger e progressive disclosure. |

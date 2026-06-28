@@ -71,7 +71,8 @@ installation profile.
 ## Procedure
 
 1. Match the user request to one command in the command map.
-2. Read only the matching command contract from `references/commands/`.
+2. Read only the matching installed command contract from
+   `.agents/commands/loki/`, as listed in the command map.
 3. Load the command's required Loki skill or skills by name from the installed
    skill set.
 4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
