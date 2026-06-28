@@ -5,8 +5,11 @@ recommendations are consolidated.
 
 ## Inventory Requirement
 
-Read `docs/operational-inventory.md` as the primary source for existing Loki
-artifacts, their function, relationships, and likely impact surfaces.
+Use the available Loki inventory as the primary source for existing Loki
+artifacts, their function, relationships, and likely impact surfaces. Prefer
+`docs/operational-inventory.md` when running inside the package source and it is
+available. If the skill is installed in a consumer project without package docs,
+use visible commands, skills, templates, manifest data or provided context.
 
 If the inventory is unavailable, incomplete, or insufficient, declare that
 limitation explicitly. Do not invent Loki files, workflows, or relationships.

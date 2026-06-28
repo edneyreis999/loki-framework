@@ -51,14 +51,19 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 
 ## Procedure
 
-1. Leia primeiro `loki-taxonomy.md`, `command-handoff-contracts.md`, `validators-and-gates.md`, `feature-artifact-structure.md`, `continuous-improvement-design.md`, `docs/package-authoring-guardrails.md` e o `manifest.yaml` do pacote local.
+1. Leia primeiro as regras embutidas nesta skill e
+   `references/command-contract-template.md`. Se estiver rodando dentro da
+   fonte do pacote Loki e `manifest.yaml` ou `docs/*.md` estiverem disponiveis,
+   use-os como contexto adicional. Quando a skill estiver instalada em um
+   projeto consumidor sem docs do pacote, nao bloqueie a execucao; use os
+   artefatos Loki visiveis e declare a limitacao.
 2. Procure comandos existentes em `commands/` e no catalogo aprovado antes de criar um novo nome.
 3. Classifique a necessidade:
    - `command` quando for fluxo invocavel com orquestracao, estado, handoffs, outputs e gates.
    - `skill` quando for procedimento tecnico reutilizavel que outros fluxos chamam.
    - `agent` quando houver julgamento especialista, isolamento de contexto ou proposta `read-only`/`proposal-only`.
    - `template` quando o valor principal for formato de saida repetivel.
-4. Rode preflight de autoria quando o destino for o proprio pacote: namespace, artefato correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
+4. Rode preflight de autoria quando o destino for o proprio pacote: namespace, artefato correto, artefatos impactados, referencias externas classificadas, docs/manifest impactados quando disponiveis e validacoes finais.
 5. Defina o contrato minimo do comando: `name`, `purpose`, `inputs`, `outputs`, `allowed_writes`, `forbidden_writes`, `required_skills`, `handoffs`, `validators`, `human_gates`, `stop_conditions` e `resume_contract`.
 6. Escreva o comando como fluxo curto e auditavel. Mova detalhes tecnicos para skills e exemplos longos para templates ou referencias.
 7. Nao embuta regras de projeto, engine ou framework em comandos core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
@@ -86,14 +91,15 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 - O output e revisavel em Markdown/YAML.
 - Validadores automaticos nao substituem gates humanos.
 - O comando aponta para skills tecnicas em vez de reexplicar todo o dominio.
-- Se o comando for empacotado, a mudanca respeita `docs/package-authoring-guardrails.md`.
+- Se o comando for empacotado, a mudanca respeita as regras de autoria do pacote
+  embutidas nesta skill e os guardrails do pacote quando estiverem disponiveis.
 - A mudanca em command consolidado tem `technical-review` ou `approval`.
 
 ## Inputs
 
 - Demanda do usuario.
-- Blueprint aprovado.
-- Manifesto do pacote local.
+- Demanda aprovada ou contexto fornecido.
+- Manifesto do pacote local, quando disponivel.
 - Comandos, skills, agents e templates existentes.
 - Pesquisa atual de Claude Code ou Codex quando a superficie da plataforma estiver em duvida.
 

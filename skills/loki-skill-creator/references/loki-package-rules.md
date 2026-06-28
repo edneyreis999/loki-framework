@@ -54,6 +54,16 @@ Never make a packaged skill depend on:
 - blueprint or plan files outside the package root;
 - a project-specific path such as a game name or workspace path;
 - `.agents/**` or `.claude/**` as normative source material.
+- package `docs/*.md` files as an operational runtime dependency after the
+  skill is installed in a consumer project.
+
+Packaged skills must be installable and self-contained. Any package-doc rule
+that is required for the skill to execute must be summarized inside `SKILL.md`
+or a bundled `references/` file. Package docs such as
+`docs/operational-inventory.md`, `docs/model-effort-guidance.md` or
+`docs/package-authoring-guardrails.md` may be optional context when running
+inside the package source, but a missing package doc must not block an
+installed skill in a consumer project.
 
 Classify external references before keeping them:
 

@@ -146,4 +146,4 @@ nao ha aprendizado util a incorporar.
 Allowed reasons include already covered by Loki, incompatible with Loki,
 irrelevant to Loki, too specific to the source artifact, insufficient context,
 no practical change, would add noise or complexity, no relevant Loki artifact was
-impacted, or `docs/operational-inventory.md` indicates no affected workflow.
+impacted, or the available Loki inventory indicates no affected workflow.

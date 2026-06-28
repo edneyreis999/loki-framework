@@ -107,8 +107,8 @@ independente.
 1. Carregar `loki-knowledge-extraction-analysis`.
 2. Carregar `loki-external-knowledge-extraction` para mapear artefatos externos
    e produzir `external_extraction`.
-3. Carregar `loki-framework-impact-audit` para ler
-   `docs/operational-inventory.md`, selecionar artefatos Loki afetados e
+3. Carregar `loki-framework-impact-audit` para usar o inventario Loki
+   disponivel ou artefatos visiveis, selecionar artefatos Loki afetados e
    produzir `impact_audit`.
 4. Consolidar os handoffs sem duplicar recomendacoes equivalentes.
 5. Aplicar o principio de nao-forcamento: recomendar somente quando houver
@@ -124,7 +124,8 @@ independente.
   relacao ao Loki.
 - Pontos ja contemplados, rejeitados, incompativeis ou sem evidencia suficiente
   nao viram recomendacoes implementaveis.
-- A auditoria usa `docs/operational-inventory.md` ou declara sua ausencia.
+- A auditoria usa inventario Loki disponivel ou artefatos visiveis e declara
+  qualquer limitacao.
 - A etapa externa retorna `external_extraction` antes da auditoria do Loki.
 - A etapa de impacto retorna `impact_audit` antes da consolidacao final.
 - A saida inclui testes de validacao para aprendizados implementaveis.
@@ -145,8 +146,8 @@ independente.
 
 - A analise deve deixar claro se uma recomendacao posterior tocaria o pacote
   Loki, contexto duradouro do consumidor ou backlog.
-- Se tocar o pacote, `loki:continuous-improvement` deve aplicar
-  `docs/package-authoring-guardrails.md` antes de qualquer patch.
+- Se tocar o pacote, `loki:continuous-improvement` deve aplicar as regras de
+  autoria e autocontencao disponiveis antes de qualquer patch.
 
 ## Stop Conditions
 

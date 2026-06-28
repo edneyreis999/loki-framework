@@ -143,7 +143,8 @@ ele entrega evidencia para a analise.
 ## Packaging Checks
 
 - Se a analise revisar command, skill, agent, template, validator ou doc
-  consolidado do pacote, aplicar `docs/package-authoring-guardrails.md`.
+  consolidado do pacote, aplicar as regras de autoria e autocontencao
+  disponiveis.
 - Atualizar `manifest.yaml` apenas quando artefatos forem adicionados, removidos,
   renomeados ou movidos no pacote.
 - Validar que referencias normativas do pacote continuam internas ao package

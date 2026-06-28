@@ -32,19 +32,24 @@ scope.
 
 ## Global Context
 
-Before individual file analysis, read enough package context to understand the
-whole:
+Before individual file analysis, read enough available package context to
+understand the whole. Prefer these sources when running inside the package
+source, but do not require package docs when the skill is installed in a
+consumer project:
 
-- `docs/operational-inventory.md`;
-- `manifest.yaml`;
-- `docs/package-authoring-guardrails.md`;
-- `docs/model-effort-guidance.md` when model, effort, execution profile, or
-  adapter projection appears in scope;
+- `manifest.yaml`, when available;
+- package docs such as `docs/operational-inventory.md`,
+  `docs/package-authoring-guardrails.md`, and `docs/model-effort-guidance.md`,
+  when available;
 - command contracts in `commands/`;
 - wrapper skills and references in `skills/`;
 - `skills/loki-command-workflows/SKILL.md` for invocable commands;
 - `scripts/install-loki-symlinks.py` when skills, commands, agents, templates,
   or Codex installation surfaces are affected.
+
+If package docs are unavailable, use visible package artifacts, bundled skill
+references, command references, manifest data, and provided context; declare the
+limitation instead of blocking clear low-risk corrections.
 
 ## Audit Lenses
 
@@ -149,8 +154,8 @@ Apply only `corrigir agora`.
 - Prefer the smallest coherent patch.
 - Preserve existing package style and ASCII unless the file already requires
   non-ASCII content.
-- Update related metadata when required: `manifest.yaml`,
-  `docs/operational-inventory.md`, `skills/loki-command-workflows/SKILL.md`,
+- Update related metadata when required and available: `manifest.yaml`,
+  package inventory docs, `skills/loki-command-workflows/SKILL.md`,
   `scripts/install-loki-symlinks.py`, command references, and wrapper skill
   references.
 - Never stage or commit.

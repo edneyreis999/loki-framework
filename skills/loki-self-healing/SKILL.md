@@ -50,9 +50,11 @@ used_by:
 2. Read the self-healing contract:
    [self-healing-contract.md](references/self-healing-contract.md).
 3. Resolve the requested scope: file, directory, workflow, or staged files.
-4. Read global package context first: `docs/operational-inventory.md`,
-   `manifest.yaml`, `docs/package-authoring-guardrails.md`, and any command,
-   skill, template, doc, script, or agent contract required by the scope.
+4. Read enough available package context before writing. Prefer
+   `manifest.yaml`, package docs and related command, skill, template, script or
+   agent contracts when running inside the package source. If this skill is
+   installed in a consumer project without package docs, use visible package
+   artifacts and bundled skill references, then state the limitation.
 5. Build a source map before writing: selected files, related package metadata,
    expected relationships, applicable instruction-quality checklist items,
    validators, and forbidden writes.

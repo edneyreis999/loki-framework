@@ -60,8 +60,9 @@ used_by:
 5. Load `loki-external-knowledge-extraction` and produce an
    `external_extraction` handoff before auditing Loki impact.
 6. Load `loki-framework-impact-audit` with the `external_extraction` handoff.
-   That skill reads `docs/operational-inventory.md`, selects impacted Loki
-   artifacts, audits them individually, and returns `impact_audit`.
+   That skill uses available Loki inventory or visible package artifacts,
+   selects impacted Loki artifacts, audits them individually, and returns
+   `impact_audit`.
 7. Consolidate `external_extraction` and `impact_audit` into the final report.
 8. Apply the mandatory non-forcing principle: only recommend changes that solve
    a real problem, are compatible or consciously rejectable, can become a
@@ -94,7 +95,7 @@ used_by:
 - Do not apply package, consumer documentation, runtime, or installation changes
   directly from this skill.
 - Do not claim Loki coverage unless it is visible in the provided context,
-  `docs/operational-inventory.md`, or files actually read.
+  available Loki inventory, or files actually read.
 - Do not use an external plan, blueprint, `.agents/**`, `.claude/**`, or
   workspace-specific path as a normative dependency for this packaged skill.
 

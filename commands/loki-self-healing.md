@@ -62,8 +62,8 @@ quando o runtime permitir, consolida achados e aplica correcoes serialmente.
 - Arquivos do pacote Loki dentro do escopo explicitamente selecionado:
   `commands/**`, `skills/**`, `agents/**`, `codex/agents/**`, `templates/**`,
   `docs/**`, `README.md`, `index.md`, `manifest.yaml` e `scripts/**`.
-- Arquivos relacionados obrigatorios quando a correcao exigir consistencia de
-  pacote, como `manifest.yaml`, `docs/operational-inventory.md`,
+- Arquivos relacionados obrigatorios e disponiveis quando a correcao exigir
+  consistencia de pacote, como `manifest.yaml`, inventario do pacote,
   `skills/loki-command-workflows/SKILL.md` ou
   `scripts/install-loki-symlinks.py`.
 
@@ -103,12 +103,11 @@ quando o runtime permitir, consolida achados e aplica correcoes serialmente.
 1. Resolver o escopo de entrada.
    - Para `staged`, usar a lista do indice git, mas aplicar correcoes somente
      aos arquivos no working tree.
-   - Para workflow, mapear artefatos relacionados via
-     `docs/operational-inventory.md`, `manifest.yaml` e contratos em
-     `commands/` e `skills/`.
-2. Ler `docs/operational-inventory.md`, `manifest.yaml`,
-   `docs/package-authoring-guardrails.md` e os contratos relevantes antes de
-   propor correcao.
+   - Para workflow, mapear artefatos relacionados via inventario disponivel,
+     `manifest.yaml` quando existir e contratos em `commands/` e `skills/`.
+2. Ler contexto global disponivel antes de propor correcao: inventario do
+   pacote quando existir, `manifest.yaml`, contratos relevantes e regras de
+   autoria/autocontencao embutidas nas skills instaladas.
 3. Entender o todo: relacoes entre artefatos, wrapper de comando, skill,
    referencias, instalador, inventario, manifest e docs impactados.
 4. Analisar arquivos individualmente em paralelo quando possivel. Se nao houver

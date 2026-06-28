@@ -50,17 +50,18 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 
 ## Procedure
 
-1. Leia primeiro `manifest.yaml`, `docs/source-boundaries.md`,
-   `docs/operational-inventory.md`, `docs/usage-guide.md`,
-   `docs/loki-plan-execution-workflow.md`, `docs/loki-learning-workflow.md`,
-   `docs/package-authoring-guardrails.md` e `docs/project-context-catalog.md`
-   do pacote local.
+1. Leia primeiro as regras embutidas nesta skill e
+   `references/agent-contract-template.md`. Se estiver rodando dentro da fonte
+   do pacote Loki e `manifest.yaml` ou `docs/*.md` estiverem disponiveis,
+   use-os como contexto adicional. Quando a skill estiver instalada em um
+   projeto consumidor sem docs do pacote, nao bloqueie a execucao; use os
+   artefatos Loki visiveis e declare a limitacao.
 2. Procure agentes existentes em `agents/` e no catalogo aprovado antes de criar um novo papel.
 3. Confirme que agente e a abstracao correta:
    - Crie agente quando houver julgamento especialista, pesquisa ruidosa, revisao independente, restricao de ferramentas ou proposta isolada.
    - Use skill quando o valor for procedimento reutilizavel no contexto principal.
    - Use command quando o valor for orquestrar fluxo completo com estado, outputs e gates.
-4. Se o agente fizer parte do pacote, rode preflight de autoria: destino correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
+4. Se o agente fizer parte do pacote, rode preflight de autoria: destino correto, artefatos impactados, docs/manifest impactados quando disponiveis, referencias externas classificadas e validacoes finais.
 5. Gere agentes multi-adapter por padrao. Nao ramifique o contrato pelo executor atual; some os metadados conhecidos de Claude Code, Codex e Loki, usando valores neutros validos quando um campo nao se aplicar.
 6. Preencha o superset de metadados de agente:
    - Loki/common: `name`, `description`, `type`, `status`, `mode`, `purpose`, `when_to_trigger`, `inputs`, `outputs`, `allowed_writes`, `forbidden_writes`, `response_format`, `confidence`, `risks`, `required_gates`.
@@ -91,14 +92,15 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - A saida tem evidencia, risco, confianca e proximo passo.
 - O agente declara quando deve parar e devolver ao orquestrador.
 - Conflitos por arquivo, `<domain_ids>`, `<consumer_runtime_surfaces>`, gate ou destino ficam detectaveis.
-- Se o agente for empacotado, a mudanca respeita `docs/package-authoring-guardrails.md`.
+- Se o agente for empacotado, a mudanca respeita as regras de autoria do pacote
+  embutidas nesta skill e os guardrails do pacote quando estiverem disponiveis.
 - O agente nao generaliza aprendizado local sem approval.
 - A mudanca em agente consolidado tem `technical-review` ou `approval`.
 
 ## Inputs
 
 - Demanda do usuario.
-- Manifesto, inventario e docs canonicos do pacote local.
+- Manifesto, inventario ou docs canonicos do pacote local, quando disponiveis.
 - Agentes, commands e skills existentes.
 - Politica de orquestracao e gates do Loki.
 - Pesquisa atual de Claude Code ou Codex quando a superficie da plataforma estiver em duvida.

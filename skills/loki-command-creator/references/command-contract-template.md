@@ -55,8 +55,10 @@ command_contract:
 ## Execution Profile Rules
 
 Command contracts should declare model and effort intent with provider-neutral
-classes from `docs/model-effort-guidance.md`. Do not make concrete provider
-model IDs mandatory in command templates.
+classes. Do not make concrete provider model IDs mandatory in command
+templates. When running inside the package source, `docs/model-effort-guidance.md`
+may be used as an optional central reference, not as an installed-skill runtime
+dependency.
 
 Use `default_effort` for the normal command path and `max_effort` for explicit
 escalation. Typical command orchestration starts at `medium` or `high`;

@@ -87,7 +87,7 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 
 ## Packaging Checks
 
-- Se a retrospectiva sugerir mudanca no pacote, registrar tipo de artefato afetado e encaminhar para `loki:continuous-improvement` com referencia a `docs/package-authoring-guardrails.md`.
+- Se a retrospectiva sugerir mudanca no pacote, registrar tipo de artefato afetado e encaminhar para `loki:continuous-improvement` com referencia as regras de autoria e autocontencao disponiveis.
 
 ## Execution Friction Capture
 

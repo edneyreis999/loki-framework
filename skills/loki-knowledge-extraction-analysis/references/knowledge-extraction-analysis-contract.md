@@ -327,7 +327,11 @@ A análise não deve comparar o artefato externo apenas contra o Loki de forma g
 
 ## 1. Como identificar quais instruções do Loki devem ser avaliadas
 
-Leia o arquivo `docs/operational-inventory.md`.
+Use o inventario Loki disponivel. Prefira `docs/operational-inventory.md`
+quando estiver rodando dentro da fonte do pacote e esse arquivo existir.
+Quando a skill estiver instalada em um projeto consumidor sem docs do pacote,
+use comandos, skills, templates, manifest ou contexto fornecido que estejam
+visiveis.
 
 Use esse arquivo como a principal fonte para entender:
 
@@ -337,13 +341,13 @@ Use esse arquivo como a principal fonte para entender:
 - quais relações existem entre os artefatos;
 - quais arquivos devem ser auditados para avaliar corretamente o impacto dos artefatos externos.
 
-Se o arquivo `docs/operational-inventory.md` não estiver disponível, incompleto ou insuficiente, declare essa limitação explicitamente e faça a melhor análise possível com os artefatos fornecidos no contexto.
+Se o inventario disponivel estiver ausente, incompleto ou insuficiente, declare essa limitação explicitamente e faça a melhor análise possível com os artefatos fornecidos no contexto.
 
 Não invente arquivos, workflows ou relações internas do Loki que não estejam visíveis no inventário ou nos artefatos fornecidos.
 
 ## 2. Seleção dos artefatos do Loki potencialmente afetados
 
-Depois de ler o `docs/operational-inventory.md`, identifique quais artefatos do Loki podem ser afetados pelos artefatos externos analisados.
+Depois de ler o inventario disponivel, identifique quais artefatos do Loki podem ser afetados pelos artefatos externos analisados.
 
 Para cada artefato potencialmente afetado, explique:
 
@@ -448,7 +452,7 @@ Informe o nome ou caminho do artefato.
 Skill | comando | workflow | documentação | template | regra global | outro
 
 **Função no Loki:**  
-Explique a função do artefato com base no `docs/operational-inventory.md` ou nos arquivos fornecidos.
+Explique a função do artefato com base no inventario Loki disponivel ou nos arquivos fornecidos.
 
 **Artefatos externos comparados:**  
 Liste os artefatos externos usados na comparação.
@@ -782,7 +786,7 @@ Escolha um ou mais:
 - não gera mudança prática;
 - aumentaria ruído ou complexidade;
 - nenhum artefato relevante do Loki foi impactado;
-- o `docs/operational-inventory.md` não indica workflow afetado.
+- o inventario Loki disponivel não indica workflow afetado.
 
 **Artefatos do Loki verificados:**  
 Liste os artefatos considerados e explique por que nenhum exige alteração.

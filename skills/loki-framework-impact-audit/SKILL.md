@@ -1,10 +1,10 @@
 ---
 name: loki-framework-impact-audit
-description: Audit how extracted external learnings may impact concrete Loki Framework artifacts, workflows, commands, skills, templates, docs, validators, or manifest entries. Use after loki-external-knowledge-extraction or when comparing candidate learnings against docs/operational-inventory.md.
+description: Audit how extracted external learnings may impact concrete Loki Framework artifacts, workflows, commands, skills, templates, docs, validators, or manifest entries. Use after loki-external-knowledge-extraction or when comparing candidate learnings against available Loki inventory, visible package artifacts, or docs/operational-inventory.md when present.
 when_to_use:
   - "Use after extracting external learnings to identify impacted Loki artifacts and workflows."
   - "Use when auditing Loki deltas, gaps, redundancies, conflicts, and concrete change opportunities."
-  - "Use when the analysis must read docs/operational-inventory.md before recommending Loki changes."
+  - "Use when the analysis must inspect available Loki inventory or visible package artifacts before recommending Loki changes."
 argument-hint: "[external_extraction, Loki package root, scope]"
 arguments:
   required: []
@@ -44,8 +44,11 @@ used_by:
 
 1. Read the impact audit contract:
    [framework-impact-audit-contract.md](references/framework-impact-audit-contract.md).
-2. Read `docs/operational-inventory.md` before selecting Loki artifacts to
-   audit. If it is missing, incomplete, or insufficient, state the limitation.
+2. Inspect the available Loki inventory before selecting artifacts to audit.
+   Prefer `docs/operational-inventory.md` when running inside the package
+   source and it is available. If installed in a consumer project without
+   package docs, use visible commands, skills, templates, manifest data or
+   provided context, and state the limitation.
 3. Use the `external_extraction` handoff as input. Do not re-extract external
    artifacts unless evidence is missing or contradictory.
 4. Select Loki artifacts with potential impact `alto`, `medio`, or `incerto`

@@ -47,9 +47,13 @@ commands, skills, agents, templates, validators, docs normativos,
 - Superficie duradoura candidata: `AGENTS.md`, `CLAUDE.md`, `docs/**/*.md`,
   `docs/index.xml`, command, skill, agent, template, validator, doc normativo,
   `manifest.yaml` ou backlog.
-- `docs/package-authoring-guardrails.md` quando o destino atingir componente consolidado do pacote.
-- `docs/project-context-catalog.md` quando o destino puder ser documentacao do
-  projeto consumidor.
+- Regras de autoria do pacote embutidas nas skills instaladas. Quando estiver
+  rodando dentro da fonte do pacote Loki e docs do pacote estiverem
+  disponiveis, use-os como contexto adicional. A ausencia desses docs em um
+  projeto consumidor nao deve bloquear a classificacao.
+- Contrato de contexto duradouro do consumidor embutido neste comando e nas
+  skills de catalogacao quando o destino puder ser documentacao do projeto
+  consumidor.
 - Quando a fonte for erro observado, normalize tambem:
   - `Mistake Description`
   - `Expected Behavior`
@@ -229,7 +233,8 @@ A main thread deve manter esta fase compacta:
   proposta inclui fontes checadas, causa raiz e regra preventiva fortalecida,
   ou registra explicitamente por que a fase ficou bloqueada.
 - A proposta inclui comparacao `before/after` ou diff esperado para a superficie normativa.
-- Se o destino tocar o pacote, os checks de `docs/package-authoring-guardrails.md` aparecem explicitamente.
+- Se o destino tocar o pacote, os checks de autoria e autocontencao do pacote
+  aparecem explicitamente.
 - Se o destino tocar `docs/**/*.md`, `docs/index.xml`, `AGENTS.md` ou
   `CLAUDE.md` do consumidor, a proposta declara que esses arquivos sao destino
   de aplicacao, nao fonte normativa do pacote.

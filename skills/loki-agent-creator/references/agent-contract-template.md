@@ -99,9 +99,11 @@ agent_contract:
 
 ## Model and Effort Rules
 
-Use `docs/model-effort-guidance.md` as the source for provider-neutral
-classification. Prefer `model_class` and `effort` over concrete provider model
-IDs in the Markdown contract.
+Use provider-neutral `model_class` and `effort` classification in agent
+contracts. Prefer those fields over concrete provider model IDs in the Markdown
+contract. When running inside the package source, `docs/model-effort-guidance.md`
+may be used as an optional central reference, not as an installed-skill runtime
+dependency.
 
 Use `model: inherit` or omit a concrete `model` when the runtime cannot enforce
 that field or when the agent should follow the orchestrator. Use `effort:

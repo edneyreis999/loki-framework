@@ -20,8 +20,8 @@ Status permitidos nesta fase:
 
 O relacionamento entre brief, analise, plano, execucao e validacao esta em
 [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md). O
-relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
-`loki:continuous-improvement` esta em
+relacionamento entre ajuste local, retrospectiva, melhoria continua, extracao
+de aprendizados externos e auditoria interna de conformidade esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md).
 As regras de classe de modelo, effort e projecao por adaptador estao em
 [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md).

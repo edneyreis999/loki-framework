@@ -79,6 +79,12 @@ Antes de escrever:
   adaptadores que tratam `SKILL.md` apenas como metadado.
 - Material condicional, exemplos longos e variantes devem ir para `references/`.
 - Nao deve haver arquivos `.md` soltos diretamente em `skills/`.
+- Skills instalaveis devem ser autocontidas para rodar em projetos
+  consumidores. `SKILL.md` e arquivos em `references/` nao devem depender de
+  `docs/*.md` do pacote como fonte operacional obrigatoria; regras necessarias
+  para execucao devem ser resumidas dentro da propria skill ou de referencias
+  empacotadas. Docs do pacote podem ser contexto opcional apenas quando a skill
+  estiver rodando dentro da fonte do pacote.
 
 ### Commands
 
