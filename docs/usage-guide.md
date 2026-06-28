@@ -22,7 +22,9 @@ outro projeto.
 - `codex/agents/`: TOMLs versionados derivados de `agents/*.md` para custom
   agents Codex.
 - `scripts/install-loki-symlinks.py`: instalador Codex por symlink para
-  projetos consumidores.
+  projetos consumidores ou para o package source, filtrado por perfil.
+- `install-scopes.json`: fonte machine-readable dos escopos `internal-only`,
+  `both` e `consumer-only`.
 - `templates/`: contratos minimos para criar novos comandos e componentes.
 - `docs/`: limites, inventario e guia de uso.
 - `docs/project-context-catalog.md`: contrato entre o pacote Loki e a
@@ -83,14 +85,24 @@ criar symlinks no projeto consumidor:
 ```bash
 PACKAGE_ROOT="$(pwd)"
 DEST="/tmp/loki-symlink-test"
-python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run
-python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run --profile consumer
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes --profile consumer
 ```
+
+Perfis aceitos:
+
+- `consumer`: instala artefatos `both` e `consumer-only`.
+- `package-source`: instala artefatos `both` e `internal-only`.
+- `all`: instala todos os escopos para validacao/desenvolvimento.
+
+O perfil default e `consumer`. `package-source` existe para manter workflows de
+manutencao do pacote fora de projetos consumidores. Distribuicao por
+plugin/marketplace continua etapa posterior, fora do v2.
 
 O script instala:
 
 - `.agents/skills/<skill-name>` apontando para `skills/<skill-name>`;
-- `.agents/commands/loki` apontando para `commands`;
+- `.agents/commands/loki/<command>.md` apontando para `commands/<command>.md`;
 - `.agents/agents` apontando para `agents`;
 - `.agents/templates` apontando para `templates`;
 - `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
@@ -98,12 +110,14 @@ O script instala:
 Instalacao em destino consumidor real exige approval especifico para o caminho
 e para o modo de execucao. `--replace` e excepcional e exige approval separado.
 O manifest gerado em `.agents/loki-installation-manifest.json` registra origem,
-destino, tipo e status de cada link.
+destino, tipo, `install_profile`, `install_scope` e status de cada link.
 
 Depois da instalacao, valide a estrutura instalada:
 
 ```bash
+python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
+find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
 import json
@@ -112,7 +126,8 @@ import sys
 
 manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
 data = json.loads(manifest.read_text(encoding="utf-8"))
-print(f"links={len(data.get('links', []))}")
+print(f"profile={data.get('install_profile')} links={len(data.get('links', []))}")
+assert all("install_scope" in link for link in data.get("links", []))
 PY
 git -C "$DEST" status --short .agents .codex
 ```

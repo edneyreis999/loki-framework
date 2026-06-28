@@ -72,7 +72,7 @@ Codex app/plugin metadata belongs in `agents/openai.yaml`:
 ### Model and Effort Metadata
 
 Use `docs/model-effort-guidance.md` as the source for model/effort semantics.
-Prefer provider-neutral intent metadata in Loki package sources:
+Prefer provider-neutral intent metadata in Loki package artifacts:
 
 ```yaml
 model: inherit

@@ -52,7 +52,8 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki-command-workflows` | `mvp` | Skill agregadora para carregar contratos `loki:*` a partir de `commands/` no Codex. |
+| `loki-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
+| `loki-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
 | `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
@@ -69,9 +70,9 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `loki-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `loki-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
-| `loki-command-creator` | `mvp` | Skill operacional para criar ou revisar commands quando `loki:continuous-improvement` direcionar mudanca para `commands/`. |
-| `loki-agent-creator` | `mvp` | Skill operacional para criar ou revisar agents quando `loki:continuous-improvement` direcionar mudanca para `agents/`. |
-| `loki-skill-creator` | `mvp` | Skill operacional para criar ou revisar skills quando `loki:continuous-improvement` direcionar mudanca para `skills/`. |
+| `loki-command-creator` | `mvp` | Skill compartilhada para criar ou revisar commands com estado, gates, outputs, limites e validadores. |
+| `loki-agent-creator` | `mvp` | Skill compartilhada para criar ou revisar agents especialistas com julgamento proprio, ferramentas restritas e handoff claro. |
+| `loki-skill-creator` | `mvp` | Skill compartilhada para criar ou revisar skills com trigger, progressive disclosure, referencias e validacao estrutural. |
 | `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `loki-run-plan-execution`. |
 | `brainstorm-character` | `backlog` | Apoio futuro para design de personagens e bosses. |
 
@@ -101,7 +102,14 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex em destino consumidor por symlink, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
+| `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
+| `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos e TOMLs Codex. |
+
+## Install Scope Source
+
+| Componente | Status | Responsabilidade |
+| --- | --- | --- |
+| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills e comandos instalaveis. |
 
 ## Templates
 

@@ -86,30 +86,40 @@ Uso local recomendado por symlink:
 
 1. Mantenha o diretorio do pacote como fonte auditavel.
 2. Leia `manifest.yaml` para entender componentes e destinos.
-3. Rode `--dry-run` no destino alvo e revise conflitos.
-4. Aplique com `--yes` somente apos approval especifico para o destino.
+3. Escolha o perfil: `consumer`, `package-source` ou `all`.
+4. Rode `--dry-run` no destino alvo e revise conflitos.
+5. Aplique com `--yes` somente apos approval especifico para o destino.
 
 Destino local criado pelo instalador:
 
 ```text
 .agents/skills/<skill-name> -> $PACKAGE_ROOT/skills/<skill-name>
-.agents/commands/loki      -> $PACKAGE_ROOT/commands
+.agents/commands/loki/<command>.md -> $PACKAGE_ROOT/commands/<command>.md
 .agents/agents             -> $PACKAGE_ROOT/agents
 .agents/templates          -> $PACKAGE_ROOT/templates
 .codex/agents/<agent>.toml -> $PACKAGE_ROOT/codex/agents/<agent>.toml
 ```
 
+Perfis:
+
+- `consumer`: instala artefatos `both` e `consumer-only`.
+- `package-source`: instala artefatos `both` e `internal-only`.
+- `all`: instala todos os escopos para validacao/desenvolvimento.
+
+`install-scopes.json` e a fonte machine-readable dos escopos. O perfil default
+do script e `consumer`.
+
 Dry-run recomendado:
 
 ```bash
 DEST="/tmp/loki-symlink-test"
-python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --dry-run --profile consumer
 ```
 
 Aplicar somente apos approval explicito:
 
 ```bash
-python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes
+python3 "$PACKAGE_ROOT/scripts/install-loki-symlinks.py" --dest "$DEST" --yes --profile consumer
 ```
 
 O script grava o manifest de auditoria no destino:
@@ -121,7 +131,9 @@ $DEST/.agents/loki-installation-manifest.json
 Validacao pos-instalacao:
 
 ```bash
+python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
+find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
 import json
@@ -130,7 +142,9 @@ import sys
 
 manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
 data = json.loads(manifest.read_text(encoding="utf-8"))
-print(f"links={len(data.get('links', []))}")
+print(f"profile={data.get('install_profile')} links={len(data.get('links', []))}")
+assert data.get("install_profile") == "consumer"
+assert all("install_scope" in link for link in data.get("links", []))
 PY
 git -C "$DEST" status --short .agents .codex
 ```

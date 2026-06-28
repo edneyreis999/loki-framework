@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "all": ["both", "consumer-only", "internal-only"],
+    "consumer": ["both", "consumer-only"],
+    "package-source": ["both", "internal-only"]
+  },
+  "artifacts": {
+    "commands": {
+      "loki-continuous-improvement.md": "internal-only",
+      "loki-enrich-tasks.md": "both",
+      "loki-feedback.md": "both",
+      "loki-generate-action-plan.md": "both",
+      "loki-knowledge-extraction-analysis.md": "internal-only",
+      "loki-retrospectiva-tecnica.md": "both",
+      "loki-run-plan.md": "both",
+      "loki-self-healing.md": "internal-only",
+      "loki-tech-analysis.md": "both"
+    },
+    "skills": {
+      "loki-action-plan-authoring": "both",
+      "loki-agent-creator": "both",
+      "loki-command-creator": "both",
+      "loki-command-workflows": "both",
+      "loki-continuous-improvement": "internal-only",
+      "loki-documentation-writing": "both",
+      "loki-enrich-tasks": "both",
+      "loki-external-knowledge-extraction": "internal-only",
+      "loki-feedback": "both",
+      "loki-framework-impact-audit": "internal-only",
+      "loki-generate-action-plan": "both",
+      "loki-index-navigator": "consumer-only",
+      "loki-internal-command-workflows": "internal-only",
+      "loki-knowledge-extraction-analysis": "internal-only",
+      "loki-retrospectiva-tecnica": "both",
+      "loki-rpg-maker-mz-data-json": "consumer-only",
+      "loki-rpg-maker-mz-plugin-workflow": "consumer-only",
+      "loki-run-plan": "both",
+      "loki-run-plan-execution": "both",
+      "loki-self-healing": "internal-only",
+      "loki-skill-creator": "both",
+      "loki-tech-analysis": "both",
+      "loki-tech-analysis-authoring": "both",
+      "loki-template-library": "both"
+    }
+  }
+}

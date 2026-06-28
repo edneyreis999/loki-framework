@@ -67,7 +67,7 @@ inspection mirror.
 1. Select the smallest template that matches the requested artifact.
 2. Read the corresponding template from `references/templates/`.
 3. Fill placeholders with evidence from the active task, approved plan, user
-   decision, or local package source.
+   decision, or available project context.
 4. Preserve required headings, frontmatter fields, validators, gates, and resume
    information unless the user explicitly changes the contract.
 

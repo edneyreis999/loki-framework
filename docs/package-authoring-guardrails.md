@@ -106,10 +106,28 @@ Antes de escrever:
 ### Codex Symlink Installer
 
 - `scripts/install-loki-symlinks.py` e fonte versionada do pacote.
+- `install-scopes.json` e a fonte machine-readable dos perfis e escopos de
+  instalacao. Mantenha esse arquivo em sincronia com `skills/*/SKILL.md` e
+  `commands/*.md`.
+- Escopos validos: `internal-only`, `both`, `consumer-only`.
+- Perfis validos: `consumer` (`both` + `consumer-only`), `package-source`
+  (`both` + `internal-only`) e `all` (todos os escopos).
+- Artefatos `both` devem ser neutros: sem instrucao Loki-only, sem condicional
+  package/consumer e sem dependencia obrigatoria de artefato `internal-only`.
+- Para comandos e skills `both`, aplique checklist binaria antes de escrever:
+  nao exigir checkout do pacote, `manifest.yaml`, docs internos de autoria,
+  `planos/**`, branch guardada, build reports, comandos `internal-only`, skills
+  `internal-only` ou condicionais package/consumer como fonte de execucao.
+- Quando uma regra util falhar essa checklist, mova para artefato
+  `internal-only`; se for historico, remova; se for reutilizavel, reescreva em
+  termos neutros; se a decisao nao for objetiva, bloqueie para
+  `technical-review`.
 - O instalador deve apontar destinos `.agents/**` e `.codex/**` para fontes
   dentro do package root, nunca para artefatos instalados locais.
-- Alteracoes em wrappers core invocaveis pelo Codex devem revisar
-  `REQUIRED_SKILL_NAMES` no instalador quando aplicavel.
+- Alteracoes em comandos ou skills instalaveis devem atualizar
+  `install-scopes.json` na mesma mudanca.
+- Comandos Codex sao instalados por arquivo em `.agents/commands/loki/*.md`
+  para respeitar o perfil ativo.
 - Validadores sobre diretorios instalados por symlink devem usar `find -L`
   quando precisarem atravessar o conteudo dos diretorios linkados.
 - `--replace` em destino consumidor real exige approval escopado ao destino e
@@ -178,7 +196,10 @@ duplicados como regra canonica espalhada.
 Para superficies Codex do pacote, validar tambem:
 
 ```bash
-python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run
+python3 scripts/validate-install-scopes.py
+python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile consumer
+python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile package-source
+python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile all
 python3 - <<'PY'
 from pathlib import Path
 import tomllib
@@ -199,6 +220,7 @@ conteudo interno:
 
 ```bash
 find -L /tmp/loki-symlink-test/.agents/skills -maxdepth 2 -name SKILL.md | sort
+find -L /tmp/loki-symlink-test/.agents/commands/loki -maxdepth 1 -name 'loki-*.md' | sort
 ```
 
 Se uma proposta do Loki apontar para documentacao duradoura do consumidor,

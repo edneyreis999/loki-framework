@@ -50,21 +50,29 @@ used_by:
 2. Read the self-healing contract:
    [self-healing-contract.md](references/self-healing-contract.md).
 3. Resolve the requested scope: file, directory, workflow, or staged files.
-4. Read global package context first: `docs/operational-inventory.md`,
+4. Load `install-scopes.json` before any write to `commands/` or `skills/`.
+   Classify every selected command or skill file as `internal-only`, `both`,
+   `consumer-only`, or `unclassified-blocker`.
+5. Read global package context first: `docs/operational-inventory.md`,
    `manifest.yaml`, `docs/package-authoring-guardrails.md`, and any command,
    skill, template, doc, script, or agent contract required by the scope.
-5. Build a source map before writing: selected files, related package metadata,
+6. Build a source map before writing: selected files, install scope, related
+   package metadata,
    expected relationships, applicable instruction-quality checklist items,
    validators, and forbidden writes.
-6. Analyze files individually against the audit lenses and internal instruction
+7. Analyze files individually against the audit lenses and internal instruction
    quality checklist. Use parallel read-only handoffs when available; otherwise
-   keep a separate subsection per file in the main context.
-7. Consolidate findings and apply only clear, scoped corrections. Write
+   keep a separate subsection per file in the main context. For `both`
+   artifacts, apply the shared-artifact neutrality checklist in the self-healing
+   contract before proposing or applying any correction.
+8. Consolidate findings and apply only clear, scoped corrections. Write
    serially.
-8. Do not run `git add`, `git commit`, `git reset`, `git checkout`, or any
+9. Do not run `git add`, `git commit`, `git reset`, `git checkout`, or any
    command that changes the git index.
-9. Run package validators proportional to the touched surfaces.
-10. Report changed files, validators, skipped findings, residual risks, and the
+10. After any command or skill change, run
+    `python3 scripts/validate-install-scopes.py`.
+11. Run package validators proportional to the touched surfaces.
+12. Report changed files, validators, skipped findings, residual risks, and the
     required user action: review the diff and stage manually.
 
 ## Inputs
@@ -89,6 +97,11 @@ used_by:
 - Do not change consumer runtime surfaces.
 - Do not apply speculative rewrites. Leave unclear findings as `investigar` or
   `bloqueado`.
+- Do not edit an unclassified command or skill file. Register it as
+  `unclassified-blocker` until `install-scopes.json` is updated by an approved
+  package decision.
+- Do not add Loki-only rules to `both` artifacts. Use the checklist in the
+  self-healing contract instead of relying on inferred "neutral mode".
 - Do not silently broaden scope beyond required metadata consistency files.
 
 ## Required Gates

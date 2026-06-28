@@ -10,7 +10,7 @@ Create packaged skills under:
 <package-root>/skills/<skill-name>/SKILL.md
 ```
 
-This package is an auditable source, not an automatic installation target.
+This package is an auditable source tree, not an automatic installation target.
 
 For Loki-packaged skills:
 
@@ -60,7 +60,7 @@ Classify external references before keeping them:
 - installation targets such as `.claude/**`, `.codex/**`, `.agents/**` are allowed as destinations;
 - consumer runtime surfaces must be represented as `<consumer_runtime_surfaces>` until a specialized skill defines them;
 - sensitive write paths must be represented as `<sensitive_write_patterns>` until a specialized skill defines them;
-- normative package sources must remain inside the package root.
+- normative package artifacts must remain within the package root.
 
 ## Manifest
 

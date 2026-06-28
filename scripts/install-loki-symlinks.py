@@ -13,36 +13,24 @@ from pathlib import Path
 
 
 MANIFEST_RELATIVE_PATH = Path(".agents") / "loki-installation-manifest.json"
+INSTALL_SCOPES_RELATIVE_PATH = Path("install-scopes.json")
 CONFLICT_EXIT_CODE = 2
-REQUIRED_SKILL_NAMES = frozenset(
-    {
-        "loki-action-plan-authoring",
-        "loki-agent-creator",
-        "loki-command-creator",
-        "loki-command-workflows",
-        "loki-continuous-improvement",
-        "loki-documentation-writing",
-        "loki-enrich-tasks",
-        "loki-external-knowledge-extraction",
-        "loki-feedback",
-        "loki-framework-impact-audit",
-        "loki-generate-action-plan",
-        "loki-index-navigator",
-        "loki-knowledge-extraction-analysis",
-        "loki-retrospectiva-tecnica",
-        "loki-run-plan",
-        "loki-run-plan-execution",
-        "loki-self-healing",
-        "loki-skill-creator",
-        "loki-tech-analysis",
-        "loki-tech-analysis-authoring",
-        "loki-template-library",
-    }
-)
+VALID_SCOPES = frozenset({"internal-only", "both", "consumer-only"})
+PROFILE_SCOPES = {
+    "consumer": frozenset({"both", "consumer-only"}),
+    "package-source": frozenset({"both", "internal-only"}),
+    "all": frozenset(VALID_SCOPES),
+}
 
 
 class InstallError(Exception):
     """Raised when the install plan cannot be built or applied safely."""
+
+
+@dataclass(frozen=True)
+class InstallScopeConfig:
+    skills: dict[str, str]
+    commands: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -51,6 +39,7 @@ class LinkSpec:
     destination: Path
     link_type: str
     source_kind: str
+    install_scope: str
 
 
 @dataclass(frozen=True)
@@ -59,6 +48,7 @@ class PlannedLink:
     destination: Path
     link_type: str
     source_kind: str
+    install_scope: str
     existing_state: str
     status: str
     blocked: bool = False
@@ -70,6 +60,7 @@ class PlannedLink:
             "destination": str(self.destination),
             "type": self.link_type,
             "source_kind": self.source_kind,
+            "install_scope": self.install_scope,
             "status": self.status,
         }
         if self.reason:
@@ -88,6 +79,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--dest",
         required=True,
         help="Destination project directory that should receive the Loki links.",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILE_SCOPES),
+        default="consumer",
+        help=(
+            "Installation profile. consumer installs both + consumer-only; "
+            "package-source installs both + internal-only; all installs every scope."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -156,7 +156,46 @@ def require_non_empty_files(
     return files
 
 
-def discover_skills(package_root: Path) -> list[Path]:
+def read_install_scopes(package_root: Path) -> InstallScopeConfig:
+    path = require_file(package_root / INSTALL_SCOPES_RELATIVE_PATH, package_root)
+    try:
+        raw_config = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise InstallError(f"invalid JSON in {path}: {exc}") from exc
+
+    if raw_config.get("schema_version") != 1:
+        raise InstallError(f"{path} must declare schema_version 1")
+
+    profiles = raw_config.get("profiles", {})
+    for profile, expected_scopes in PROFILE_SCOPES.items():
+        configured = frozenset(profiles.get(profile, []))
+        if configured != expected_scopes:
+            raise InstallError(
+                f"profile {profile} must map to {sorted(expected_scopes)}"
+            )
+
+    artifacts = raw_config.get("artifacts", {})
+    skills = artifacts.get("skills")
+    commands = artifacts.get("commands")
+    if not isinstance(skills, dict) or not isinstance(commands, dict):
+        raise InstallError(f"{path} must define artifacts.skills and artifacts.commands")
+
+    unknown_scopes = sorted((set(skills.values()) | set(commands.values())) - VALID_SCOPES)
+    if unknown_scopes:
+        raise InstallError("unknown install scope(s): " + ", ".join(unknown_scopes))
+
+    return InstallScopeConfig(skills=dict(skills), commands=dict(commands))
+
+
+def scope_selected(scope: str, profile: str) -> bool:
+    return scope in PROFILE_SCOPES[profile]
+
+
+def discover_skills(
+    package_root: Path,
+    scope_config: InstallScopeConfig,
+    profile: str,
+) -> list[tuple[Path, str]]:
     skills_root = require_directory(package_root / "skills", package_root)
     skill_dirs = sorted(
         path
@@ -165,13 +204,50 @@ def discover_skills(package_root: Path) -> list[Path]:
     )
     if not skill_dirs:
         raise InstallError(f"missing required skill directories in {skills_root}")
+
     discovered_names = {path.name for path in skill_dirs}
-    missing = sorted(REQUIRED_SKILL_NAMES - discovered_names)
-    if missing:
-        raise InstallError(
-            "missing required Loki skill wrapper(s): " + ", ".join(missing)
-        )
-    return [resolve_required_source(path, package_root) for path in skill_dirs]
+    configured_names = set(scope_config.skills)
+    missing = sorted(discovered_names - configured_names)
+    extra = sorted(configured_names - discovered_names)
+    if missing or extra:
+        details = []
+        if missing:
+            details.append("missing scope for skill(s): " + ", ".join(missing))
+        if extra:
+            details.append("scope references missing skill(s): " + ", ".join(extra))
+        raise InstallError("; ".join(details))
+
+    return [
+        (resolve_required_source(path, package_root), scope_config.skills[path.name])
+        for path in skill_dirs
+        if scope_selected(scope_config.skills[path.name], profile)
+    ]
+
+
+def discover_commands(
+    package_root: Path,
+    scope_config: InstallScopeConfig,
+    profile: str,
+) -> list[tuple[Path, str]]:
+    commands_root = require_directory(package_root / "commands", package_root)
+    command_files = require_non_empty_files(commands_root, "*.md", "command contracts")
+    discovered_names = {path.name for path in command_files}
+    configured_names = set(scope_config.commands)
+    missing = sorted(discovered_names - configured_names)
+    extra = sorted(configured_names - discovered_names)
+    if missing or extra:
+        details = []
+        if missing:
+            details.append("missing scope for command(s): " + ", ".join(missing))
+        if extra:
+            details.append("scope references missing command(s): " + ", ".join(extra))
+        raise InstallError("; ".join(details))
+
+    return [
+        (require_file(path, package_root), scope_config.commands[path.name])
+        for path in command_files
+        if scope_selected(scope_config.commands[path.name], profile)
+    ]
 
 
 def discover_codex_agents(package_root: Path) -> list[Path]:
@@ -198,12 +274,15 @@ def assert_destination_inside_root(destination: Path, destination_root: Path) ->
         ) from exc
 
 
-def build_link_specs(package_root: Path, destination_root: Path) -> list[LinkSpec]:
-    commands_root = require_directory(package_root / "commands", package_root)
+def build_link_specs(
+    package_root: Path,
+    destination_root: Path,
+    scope_config: InstallScopeConfig,
+    profile: str,
+) -> list[LinkSpec]:
     agents_root = require_directory(package_root / "agents", package_root)
     templates_root = require_directory(package_root / "templates", package_root)
 
-    require_non_empty_files(commands_root, "*.md", "command contracts")
     agent_contracts = require_non_empty_files(agents_root, "*.md", "agent contracts")
     require_non_empty_files(templates_root, "*", "templates")
     codex_agent_files = discover_codex_agents(package_root)
@@ -218,7 +297,7 @@ def build_link_specs(package_root: Path, destination_root: Path) -> list[LinkSpe
 
     specs: list[LinkSpec] = []
 
-    for skill_dir in discover_skills(package_root):
+    for skill_dir, scope in discover_skills(package_root, scope_config, profile):
         destination = destination_root / ".agents" / "skills" / skill_dir.name
         specs.append(
             LinkSpec(
@@ -226,28 +305,39 @@ def build_link_specs(package_root: Path, destination_root: Path) -> list[LinkSpe
                 destination=destination,
                 link_type="skill",
                 source_kind="directory",
+                install_scope=scope,
+            )
+        )
+
+    for command_file, scope in discover_commands(package_root, scope_config, profile):
+        destination = (
+            destination_root / ".agents" / "commands" / "loki" / command_file.name
+        )
+        specs.append(
+            LinkSpec(
+                source=command_file,
+                destination=destination,
+                link_type="command",
+                source_kind="file",
+                install_scope=scope,
             )
         )
 
     specs.extend(
         [
             LinkSpec(
-                source=commands_root,
-                destination=destination_root / ".agents" / "commands" / "loki",
-                link_type="commands",
-                source_kind="directory",
-            ),
-            LinkSpec(
                 source=agents_root,
                 destination=destination_root / ".agents" / "agents",
                 link_type="agents",
                 source_kind="directory",
+                install_scope="both",
             ),
             LinkSpec(
                 source=templates_root,
                 destination=destination_root / ".agents" / "templates",
                 link_type="templates",
                 source_kind="directory",
+                install_scope="both",
             ),
         ]
     )
@@ -260,6 +350,7 @@ def build_link_specs(package_root: Path, destination_root: Path) -> list[LinkSpe
                 destination=destination,
                 link_type="codex-agent",
                 source_kind="file",
+                install_scope="both",
             )
         )
 
@@ -346,6 +437,7 @@ def plan_links(
                 destination=spec.destination,
                 link_type=spec.link_type,
                 source_kind=spec.source_kind,
+                install_scope=spec.install_scope,
                 existing_state=state,
                 status=status,
                 blocked=blocked,
@@ -361,9 +453,12 @@ def print_plan(
     destination_root: Path,
     dry_run: bool,
     replace: bool,
+    profile: str,
 ) -> None:
     mode = "dry-run" if dry_run else "apply"
     print(f"mode: {mode}")
+    print(f"profile: {profile}")
+    print("install_scope: " + ",".join(sorted(PROFILE_SCOPES[profile])))
     print(f"replace: {str(replace).lower()}")
     print(f"package_root: {package_root}")
     print(f"dest_root: {destination_root}")
@@ -371,7 +466,8 @@ def print_plan(
     for link in planned_links:
         print(
             f"- status={link.status} type={link.link_type} "
-            f"source={link.source} destination={link.destination}"
+            f"scope={link.install_scope} source={link.source} "
+            f"destination={link.destination}"
         )
         if link.reason:
             print(f"  reason={link.reason}")
@@ -447,6 +543,7 @@ def write_manifest(
     destination_root: Path,
     package_root: Path,
     replace: bool,
+    profile: str,
     planned_links: list[PlannedLink],
 ) -> Path:
     manifest_path = destination_root / MANIFEST_RELATIVE_PATH
@@ -459,6 +556,8 @@ def write_manifest(
         .replace("+00:00", "Z"),
         "mode": "apply",
         "replace": replace,
+        "install_profile": profile,
+        "install_scope": sorted(PROFILE_SCOPES[profile]),
         "links": [link.manifest_entry() for link in planned_links],
     }
     manifest_path.write_text(
@@ -480,7 +579,13 @@ def run(argv: list[str]) -> int:
     try:
         package_root = resolve_package_root()
         destination_root = resolve_destination_root(args.dest)
-        specs = build_link_specs(package_root, destination_root)
+        scope_config = read_install_scopes(package_root)
+        specs = build_link_specs(
+            package_root,
+            destination_root,
+            scope_config=scope_config,
+            profile=args.profile,
+        )
         planned_links = plan_links(
             specs,
             replace=args.replace,
@@ -496,6 +601,7 @@ def run(argv: list[str]) -> int:
         destination_root=destination_root,
         dry_run=args.dry_run,
         replace=args.replace,
+        profile=args.profile,
     )
     sys.stdout.flush()
 
@@ -517,6 +623,7 @@ def run(argv: list[str]) -> int:
             destination_root,
             package_root=package_root,
             replace=args.replace,
+            profile=args.profile,
             planned_links=applied_links,
         )
     except InstallError as exc:

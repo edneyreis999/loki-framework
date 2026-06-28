@@ -35,6 +35,7 @@ scope.
 Before individual file analysis, read enough package context to understand the
 whole:
 
+- `install-scopes.json`;
 - `docs/operational-inventory.md`;
 - `manifest.yaml`;
 - `docs/package-authoring-guardrails.md`;
@@ -45,6 +46,57 @@ whole:
 - `skills/loki-command-workflows/SKILL.md` for invocable commands;
 - `scripts/install-loki-symlinks.py` when skills, commands, agents, templates,
   or Codex installation surfaces are affected.
+
+## Install Scope Classification
+
+Before any correction to `commands/` or `skills/`, load `install-scopes.json`
+and classify every selected file:
+
+- `commands/<name>.md`: use `artifacts.commands["<name>.md"]`;
+- `skills/<skill-name>/**`: use `artifacts.skills["<skill-name>"]`;
+- any missing key: mark the file as `unclassified-blocker` and do not edit it.
+
+Record the classification in the source map and in the final report. The
+classification controls the write rules:
+
+| Scope | Write rule |
+| --- | --- |
+| `internal-only` | Internal package maintenance rules are allowed, but avoid package/consumer conditionals when the scope already decides installation. |
+| `both` | Apply the shared-artifact neutrality checklist before every edit. |
+| `consumer-only` | Do not introduce package maintenance requirements or internal workflow dependencies. |
+| `unclassified-blocker` | Stop for package classification; do not edit. |
+
+## Shared-Artifact Neutrality Checklist
+
+For every `both` artifact, answer each check with `pass` or `fail` before
+writing. If any check fails, use the decision table below instead of adding the
+text as-is.
+
+- The text does not require the repository checkout or local Loki package root.
+- The text does not require reading `manifest.yaml`,
+  `docs/package-authoring-guardrails.md`, `docs/operational-inventory.md`,
+  `planos/**`, a guarded branch, or build reports as execution sources.
+- The text does not invoke or route `loki:self-healing`,
+  `loki:continuous-improvement`, or `loki:knowledge-extraction-analysis`.
+- The text does not require loading an `internal-only` skill.
+- The text does not use a package/consumer conditional such as "when installed
+  in a consumer project" or "when running from the package checkout".
+- The text is reusable from either installed profile without changing meaning.
+
+Do not rely on labels such as "neutral mode" or "Loki-only" without the
+checklist result. The report must name the failed check.
+
+## Loki-Only Decision Table
+
+When a candidate correction for a `both` artifact fails the neutrality
+checklist, choose exactly one objective destination:
+
+| Finding | Action |
+| --- | --- |
+| Useful package maintenance rule | Move or add it to an `internal-only` command, skill, reference, validator, or package doc that is not installed as `both`. |
+| Historical explanation, branch note, build note, or plan context | Remove it from the `both` artifact; keep evidence only in the active plan/build report if needed. |
+| Reusable behavior expressed with package-only wording | Rewrite it in neutral terms that do not depend on package checkout, internal docs, guarded branches, or internal-only workflows. |
+| Required behavior whose destination is unclear | Mark `bloqueado` and require `technical-review`; do not edit the `both` artifact. |
 
 ## Audit Lenses
 
@@ -65,6 +117,8 @@ For each selected file, check:
 - no duplicate instruction that adds noise without improving behavior;
 - no instruction that makes staged files, commits, approvals, or installation
   ambiguous;
+- no `both` artifact that carries Loki-only requirements instead of using the
+  shared-artifact neutrality checklist and decision table;
 - output formats are actionable and testable;
 - uncertainty is explicit and does not block clear low-risk correction.
 
@@ -149,10 +203,16 @@ Apply only `corrigir agora`.
 - Prefer the smallest coherent patch.
 - Preserve existing package style and ASCII unless the file already requires
   non-ASCII content.
+- For `both` artifacts, apply only corrections that pass the shared-artifact
+  neutrality checklist or have been rewritten by the decision table.
 - Update related metadata when required: `manifest.yaml`,
   `docs/operational-inventory.md`, `skills/loki-command-workflows/SKILL.md`,
   `scripts/install-loki-symlinks.py`, command references, and wrapper skill
   references.
+- After any change under `commands/` or `skills/`, run
+  `python3 scripts/validate-install-scopes.py`. Treat a failure as a concrete
+  blocker unless it is already assigned to an active task with file-level
+  evidence.
 - Never stage or commit.
 - When input is staged files, leave corrections as unstaged working-tree changes
   for user review.

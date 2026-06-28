@@ -24,7 +24,22 @@ install_policy:
   project_scope_only: true
   automatic_installation: false
   codex_install_script: "scripts/install-loki-symlinks.py"
+  codex_install_scope_source: "install-scopes.json"
   codex_generated_manifest: ".agents/loki-installation-manifest.json"
+  codex_install_profiles:
+    consumer:
+      install_scopes:
+        - both
+        - consumer-only
+    package-source:
+      install_scopes:
+        - both
+        - internal-only
+    all:
+      install_scopes:
+        - both
+        - consumer-only
+        - internal-only
   codex_symlink_policy:
     dry_run_first: true
     apply_requires_yes: true
@@ -100,12 +115,23 @@ layout:
   scripts: "scripts/"
   templates: "templates/"
   docs: "docs/"
+  install_scope_source: "install-scopes.json"
 
 scripts:
   - name: "install-loki-symlinks"
     file: "scripts/install-loki-symlinks.py"
     status: draft
-    purpose: "Install Loki Framework Codex destinations by symlink after approval."
+    purpose: "Install Loki Framework Codex destinations by symlink after approval, filtered by install profile."
+  - name: "validate-install-scopes"
+    file: "scripts/validate-install-scopes.py"
+    status: draft
+    purpose: "Validate installer scope metadata, shared-artifact neutrality, command dependencies and Codex agent TOML."
+
+install_scope_sources:
+  - name: "install-scopes"
+    file: "install-scopes.json"
+    status: draft
+    purpose: "Machine-readable source for installer artifact scopes and profiles."
 
 commands:
   - name: "loki:feedback"
@@ -139,6 +165,9 @@ commands:
 skills:
   - name: "loki-command-workflows"
     file: "skills/loki-command-workflows/SKILL.md"
+    status: draft
+  - name: "loki-internal-command-workflows"
+    file: "skills/loki-internal-command-workflows/SKILL.md"
     status: draft
   - name: "loki-feedback"
     file: "skills/loki-feedback/SKILL.md"
