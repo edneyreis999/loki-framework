@@ -54,9 +54,11 @@ used_by:
    `manifest.yaml`, `docs/package-authoring-guardrails.md`, and any command,
    skill, template, doc, script, or agent contract required by the scope.
 5. Build a source map before writing: selected files, related package metadata,
-   expected relationships, validators, and forbidden writes.
-6. Analyze files individually. Use parallel read-only handoffs when available;
-   otherwise keep a separate subsection per file in the main context.
+   expected relationships, applicable instruction-quality checklist items,
+   validators, and forbidden writes.
+6. Analyze files individually against the audit lenses and internal instruction
+   quality checklist. Use parallel read-only handoffs when available; otherwise
+   keep a separate subsection per file in the main context.
 7. Consolidate findings and apply only clear, scoped corrections. Write
    serially.
 8. Do not run `git add`, `git commit`, `git reset`, `git checkout`, or any

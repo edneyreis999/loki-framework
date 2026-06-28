@@ -68,6 +68,66 @@ For each selected file, check:
 - output formats are actionable and testable;
 - uncertainty is explicit and does not block clear low-risk correction.
 
+## Internal Instruction Quality Checklist
+
+Apply this checklist after the global context pass and before finding
+classification. Treat a failed check as a candidate finding, not automatic
+permission to edit. Use `nao alterar` when the package already covers the
+behavior clearly, and use `investigar` or `bloqueado` when the right correction
+depends on a broader workflow decision.
+
+This checklist is only for internal Loki artifacts. Do not use self-healing to
+learn directly from external artifacts; when external material is relevant, rely
+on the output of `loki:knowledge-extraction-analysis` or
+`loki-framework-impact-audit` and then classify whether the internal package
+should adopt, adapt, reject, or recognize the behavior as already covered.
+
+Check each applicable artifact for:
+
+- Instruction clarity: purpose, trigger, action, and stop condition are direct;
+  success or failure can be judged with binary criteria; ambiguous words are
+  narrowed; modal terms are precise: `deve` for required behavior, `nao deve`
+  for prohibitions, `prefira` for defaults, `evite` for risk reduction, and
+  `somente se` for preconditions.
+- Prompt economy: repeated wording is removed or consolidated; long guidance is
+  replaced by a shorter verifiable rule when possible; examples remain only
+  when they prevent likely misuse.
+- Loki essence preservation: corrections preserve package boundaries,
+  source-of-truth rules, human gates, serial writes, validation discipline, and
+  conservative autonomy; reject imported behavior that creates excessive
+  autonomy, excessive rigidity, consumer-specific policy, or package drift.
+- Knowledge transfer: specific observations are converted into reusable
+  principles only when they generalize; general principles are adapted to the
+  smallest correct surface: command, skill, agent, template, doc, validator, or
+  backlog item; do not copy external instructions verbatim into Loki.
+- Taxonomy and organization: the artifact exposes the sections its type needs,
+  such as objective, triggers, inputs, outputs, preconditions, limits, process,
+  validators, human gates, expected output, failure modes, completion criteria,
+  resume contract, and when not to use.
+- Redundancy and noise: useful instructions already covered elsewhere are
+  referenced, consolidated, or left unchanged; duplicates that add conflict,
+  cognitive cost, or token cost are removed.
+- Output actionability: reports and diagnostics identify source, observation,
+  reason, proposed adaptation or fix, risk, priority, and validation or test;
+  observation stays separate from recommendation.
+- Conflict detection: explicit and subtle conflicts across artifacts are
+  surfaced, including tensions between autonomy, validation, safety, scope,
+  precision, adapter behavior, and package philosophy.
+- Command quality: command contracts control ambiguity, scope, allowed writes,
+  forbidden writes, validation before changes, handoffs, human gates, stop
+  conditions, output shape, and resume behavior; overly broad behavior is
+  narrowed.
+- Skill quality: skills define trigger context, preconditions when needed,
+  limits, common failure modes when useful, completion criteria, and when not to
+  use; detailed conditional guidance lives in `references/`, not in a bloated
+  `SKILL.md`.
+- Internal documentation quality: docs explain purpose, use, limits, and
+  artifact relationships without turning consumer context into package policy;
+  examples reduce ambiguity instead of increasing surface area.
+- Uncertainty handling: assumptions are explicit; recommendations are
+  conservative; unknown facts are not invented; questions are asked only when
+  local evidence cannot resolve a material risk.
+
 ## Finding Classification
 
 Classify findings as:
