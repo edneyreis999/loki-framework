@@ -10,8 +10,8 @@ tags: [excalidraw]
 ## Text Elements
 1. Sinal aparece
 feedback, bug,
-build, validacao
-ou decisao ^learn-signal
+validacao ou
+artefato externo ^learn-signal
 
 2. Fase ativa?
 `enrich-tasks`
@@ -26,7 +26,7 @@ fonte + evidencia ^learn-retro
 
 4. Continuous
 Improvement
-candidato auditavel ^learn-ci
+causa raiz? ^learn-ci
 
 Classificar escopo
 `standards-curator` ^learn-scope
@@ -60,7 +60,7 @@ risco residual ^learn-apply
   "source": "https://excalidraw.com",
   "elements": [
     {"id":"signal-box","type":"rectangle","x":0,"y":60,"width":190,"height":104,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#e7f5ff","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":301,"version":1,"versionNonce":301,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"signal-text","type":"text","x":16,"y":75,"width":158,"height":75,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":302,"version":1,"versionNonce":302,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"1. Sinal aparece\nfeedback, bug,\nbuild, validacao\nou decisao","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"1. Sinal aparece\nfeedback, bug,\nbuild, validacao\nou decisao","lineHeight":1.25,"baseline":70},
+    {"id":"signal-text","type":"text","x":16,"y":75,"width":158,"height":75,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":302,"version":1,"versionNonce":302,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"1. Sinal aparece\nfeedback, bug,\nvalidacao ou\nartefato externo","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"1. Sinal aparece\nfeedback, bug,\nvalidacao ou\nartefato externo","lineHeight":1.25,"baseline":70},
 
     {"id":"enrich-box","type":"rectangle","x":250,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#fff4e6","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":303,"version":1,"versionNonce":303,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
     {"id":"enrich-text","type":"text","x":266,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":304,"version":1,"versionNonce":304,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"2. Fase ativa?\nenrich-tasks\najusta so o plano","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"2. Fase ativa?\nenrich-tasks\najusta so o plano","lineHeight":1.25,"baseline":50},
@@ -72,7 +72,7 @@ risco residual ^learn-apply
     {"id":"retro-text","type":"text","x":716,"y":75,"width":178,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":308,"version":1,"versionNonce":308,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"3. Retrospectiva\nretrospectiva-tecnica\nfonte + evidencia","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"3. Retrospectiva\nretrospectiva-tecnica\nfonte + evidencia","lineHeight":1.25,"baseline":50},
 
     {"id":"ci-box","type":"rectangle","x":970,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#ebfbee","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":309,"version":1,"versionNonce":309,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"ci-text","type":"text","x":986,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":310,"version":1,"versionNonce":310,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"4. Continuous\nImprovement\ncandidato auditavel","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"4. Continuous\nImprovement\ncandidato auditavel","lineHeight":1.25,"baseline":50},
+    {"id":"ci-text","type":"text","x":986,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":310,"version":1,"versionNonce":310,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"4. Continuous\nImprovement\ncausa raiz?","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"4. Continuous\nImprovement\ncausa raiz?","lineHeight":1.25,"baseline":50},
 
     {"id":"scope-box","type":"rectangle","x":1220,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#fff9db","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":311,"version":1,"versionNonce":311,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
     {"id":"scope-text","type":"text","x":1236,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":312,"version":1,"versionNonce":312,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Classificar escopo\nstandards-curator\n","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Classificar escopo\nstandards-curator\n","lineHeight":1.25,"baseline":50},
