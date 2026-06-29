@@ -107,14 +107,14 @@ Antes de escrever:
 
 - `scripts/install-loki-symlinks.py` e fonte versionada do pacote.
 - `install-scopes.json` e a fonte machine-readable dos perfis e escopos de
-  instalacao. Mantenha esse arquivo em sincronia com `skills/*/SKILL.md` e
-  `commands/*.md`.
+  instalacao. Mantenha esse arquivo em sincronia com `skills/*/SKILL.md`,
+  `commands/*.md`, `agents/*.md` e `codex/agents/*.toml`.
 - Escopos validos: `internal-only`, `both`, `consumer-only`.
 - Perfis validos: `consumer` (`both` + `consumer-only`), `package-source`
   (`both` + `internal-only`) e `all` (todos os escopos).
 - Artefatos `both` devem ser neutros: sem instrucao Loki-only, sem condicional
   package/consumer e sem dependencia obrigatoria de artefato `internal-only`.
-- Para comandos e skills `both`, aplique checklist binaria antes de escrever:
+- Para comandos, skills e agentes `both`, aplique checklist binaria antes de escrever:
   nao exigir checkout do pacote, `manifest.yaml`, docs internos de autoria,
   `planos/**`, branch guardada, build reports, comandos `internal-only`, skills
   `internal-only` ou condicionais package/consumer como fonte de execucao.
@@ -124,10 +124,15 @@ Antes de escrever:
   `technical-review`.
 - O instalador deve apontar destinos `.agents/**` e `.codex/**` para fontes
   dentro do package root, nunca para artefatos instalados locais.
-- Alteracoes em comandos ou skills instalaveis devem atualizar
+- Alteracoes em comandos, skills ou agentes instalaveis devem atualizar
   `install-scopes.json` na mesma mudanca.
 - Comandos Codex sao instalados por arquivo em `.agents/commands/loki/*.md`
   para respeitar o perfil ativo.
+- Agentes Markdown e projecoes Codex sao instalados por arquivo em
+  `.agents/agents/*.md` e `.codex/agents/*.toml` para respeitar o perfil ativo.
+- Destinos legados com `.agents/agents` como symlink de diretorio devem
+  bloquear a instalacao por arquivo; nao escreva nem substitua arquivos atraves
+  desse symlink.
 - Validadores sobre diretorios instalados por symlink devem usar `find -L`
   quando precisarem atravessar o conteudo dos diretorios linkados.
 - `--replace` em destino consumidor real exige approval escopado ao destino e

@@ -31,6 +31,8 @@ class InstallError(Exception):
 class InstallScopeConfig:
     skills: dict[str, str]
     commands: dict[str, str]
+    agents: dict[str, str]
+    codex_agents: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -177,14 +179,37 @@ def read_install_scopes(package_root: Path) -> InstallScopeConfig:
     artifacts = raw_config.get("artifacts", {})
     skills = artifacts.get("skills")
     commands = artifacts.get("commands")
-    if not isinstance(skills, dict) or not isinstance(commands, dict):
-        raise InstallError(f"{path} must define artifacts.skills and artifacts.commands")
+    agents = artifacts.get("agents")
+    codex_agents = artifacts.get("codex_agents")
+    if (
+        not isinstance(skills, dict)
+        or not isinstance(commands, dict)
+        or not isinstance(agents, dict)
+        or not isinstance(codex_agents, dict)
+    ):
+        raise InstallError(
+            f"{path} must define artifacts.skills, artifacts.commands, "
+            "artifacts.agents and artifacts.codex_agents"
+        )
 
-    unknown_scopes = sorted((set(skills.values()) | set(commands.values())) - VALID_SCOPES)
+    unknown_scopes = sorted(
+        (
+            set(skills.values())
+            | set(commands.values())
+            | set(agents.values())
+            | set(codex_agents.values())
+        )
+        - VALID_SCOPES
+    )
     if unknown_scopes:
         raise InstallError("unknown install scope(s): " + ", ".join(unknown_scopes))
 
-    return InstallScopeConfig(skills=dict(skills), commands=dict(commands))
+    return InstallScopeConfig(
+        skills=dict(skills),
+        commands=dict(commands),
+        agents=dict(agents),
+        codex_agents=dict(codex_agents),
+    )
 
 
 def scope_selected(scope: str, profile: str) -> bool:
@@ -250,18 +275,64 @@ def discover_commands(
     ]
 
 
-def discover_codex_agents(package_root: Path) -> list[Path]:
+def discover_agents(
+    package_root: Path,
+    scope_config: InstallScopeConfig,
+    profile: str,
+) -> list[tuple[Path, str]]:
+    agents_root = require_directory(package_root / "agents", package_root)
+    agent_files = require_non_empty_files(agents_root, "*.md", "agent contracts")
+    discovered_names = {path.name for path in agent_files}
+    configured_names = set(scope_config.agents)
+    missing = sorted(discovered_names - configured_names)
+    extra = sorted(configured_names - discovered_names)
+    if missing or extra:
+        details = []
+        if missing:
+            details.append("missing scope for agent(s): " + ", ".join(missing))
+        if extra:
+            details.append("scope references missing agent(s): " + ", ".join(extra))
+        raise InstallError("; ".join(details))
+
+    return [
+        (require_file(path, package_root), scope_config.agents[path.name])
+        for path in agent_files
+        if scope_selected(scope_config.agents[path.name], profile)
+    ]
+
+
+def discover_codex_agents(
+    package_root: Path,
+    scope_config: InstallScopeConfig,
+    profile: str,
+) -> list[tuple[Path, str]]:
     codex_agents_root = require_directory(
         package_root / "codex" / "agents",
         package_root,
     )
+    codex_agent_files = require_non_empty_files(
+        codex_agents_root,
+        "*.toml",
+        "Codex agent TOML files",
+    )
+    discovered_names = {path.name for path in codex_agent_files}
+    configured_names = set(scope_config.codex_agents)
+    missing = sorted(discovered_names - configured_names)
+    extra = sorted(configured_names - discovered_names)
+    if missing or extra:
+        details = []
+        if missing:
+            details.append("missing scope for Codex agent(s): " + ", ".join(missing))
+        if extra:
+            details.append(
+                "scope references missing Codex agent(s): " + ", ".join(extra)
+            )
+        raise InstallError("; ".join(details))
+
     return [
-        require_file(path, package_root)
-        for path in require_non_empty_files(
-            codex_agents_root,
-            "*.toml",
-            "Codex agent TOML files",
-        )
+        (require_file(path, package_root), scope_config.codex_agents[path.name])
+        for path in codex_agent_files
+        if scope_selected(scope_config.codex_agents[path.name], profile)
     ]
 
 
@@ -280,14 +351,13 @@ def build_link_specs(
     scope_config: InstallScopeConfig,
     profile: str,
 ) -> list[LinkSpec]:
-    agents_root = require_directory(package_root / "agents", package_root)
     templates_root = require_directory(package_root / "templates", package_root)
 
-    agent_contracts = require_non_empty_files(agents_root, "*.md", "agent contracts")
     require_non_empty_files(templates_root, "*", "templates")
-    codex_agent_files = discover_codex_agents(package_root)
-    agent_names = {path.stem for path in agent_contracts}
-    codex_agent_names = {path.stem for path in codex_agent_files}
+    agent_contracts = discover_agents(package_root, scope_config, "all")
+    codex_agent_files = discover_codex_agents(package_root, scope_config, "all")
+    agent_names = {path.stem for path, _scope in agent_contracts}
+    codex_agent_names = {path.stem for path, _scope in codex_agent_files}
     missing_codex_agents = sorted(agent_names - codex_agent_names)
     if missing_codex_agents:
         raise InstallError(
@@ -323,26 +393,29 @@ def build_link_specs(
             )
         )
 
-    specs.extend(
-        [
+    for agent_file, scope in discover_agents(package_root, scope_config, profile):
+        destination = destination_root / ".agents" / "agents" / agent_file.name
+        specs.append(
             LinkSpec(
-                source=agents_root,
-                destination=destination_root / ".agents" / "agents",
-                link_type="agents",
-                source_kind="directory",
-                install_scope="both",
-            ),
-            LinkSpec(
-                source=templates_root,
-                destination=destination_root / ".agents" / "templates",
-                link_type="templates",
-                source_kind="directory",
-                install_scope="both",
-            ),
-        ]
+                source=agent_file,
+                destination=destination,
+                link_type="agent",
+                source_kind="file",
+                install_scope=scope,
+            )
+        )
+
+    specs.append(
+        LinkSpec(
+            source=templates_root,
+            destination=destination_root / ".agents" / "templates",
+            link_type="templates",
+            source_kind="directory",
+            install_scope="both",
+        )
     )
 
-    for agent_file in codex_agent_files:
+    for agent_file, scope in discover_codex_agents(package_root, scope_config, profile):
         destination = destination_root / ".codex" / "agents" / agent_file.name
         specs.append(
             LinkSpec(
@@ -350,7 +423,7 @@ def build_link_specs(
                 destination=destination,
                 link_type="codex-agent",
                 source_kind="file",
-                install_scope="both",
+                install_scope=scope,
             )
         )
 
@@ -365,6 +438,18 @@ def resolve_symlink_target(path: Path) -> Path:
     if not raw_target.is_absolute():
         raw_target = path.parent / raw_target
     return raw_target.resolve(strict=False)
+
+
+def parent_symlink_conflict_reason(destination: Path, destination_root: Path) -> str:
+    for parent in destination.parents:
+        if parent == destination_root:
+            return ""
+        if parent.is_symlink():
+            return (
+                f"parent path is a symlink: {parent}; remove or replace the "
+                "legacy directory symlink before installing per-file links"
+            )
+    return ""
 
 
 def legacy_skill_file_symlink_reason(destination: Path, source: Path) -> str:
@@ -394,7 +479,15 @@ def legacy_skill_file_symlink_reason(destination: Path, source: Path) -> str:
     )
 
 
-def classify_destination(destination: Path, source: Path) -> tuple[str, str]:
+def classify_destination(
+    destination: Path,
+    source: Path,
+    destination_root: Path,
+) -> tuple[str, str]:
+    parent_conflict = parent_symlink_conflict_reason(destination, destination_root)
+    if parent_conflict:
+        return "parent-symlink-conflict", parent_conflict
+
     if destination.is_symlink():
         target = resolve_symlink_target(destination)
         if target == source:
@@ -413,6 +506,8 @@ def classify_destination(destination: Path, source: Path) -> tuple[str, str]:
 
 
 def status_for_state(state: str, replace: bool, dry_run: bool) -> tuple[str, bool]:
+    if state == "parent-symlink-conflict":
+        return ("blocked", True)
     if state == "missing":
         return ("would-create" if dry_run else "created", False)
     if state == "symlink-correct":
@@ -424,12 +519,17 @@ def status_for_state(state: str, replace: bool, dry_run: bool) -> tuple[str, boo
 
 def plan_links(
     specs: list[LinkSpec],
+    destination_root: Path,
     replace: bool,
     dry_run: bool,
 ) -> list[PlannedLink]:
     planned: list[PlannedLink] = []
     for spec in specs:
-        state, reason = classify_destination(spec.destination, spec.source)
+        state, reason = classify_destination(
+            spec.destination,
+            spec.source,
+            destination_root,
+        )
         status, blocked = status_for_state(state, replace=replace, dry_run=dry_run)
         planned.append(
             PlannedLink(
@@ -588,6 +688,7 @@ def run(argv: list[str]) -> int:
         )
         planned_links = plan_links(
             specs,
+            destination_root=destination_root,
             replace=args.replace,
             dry_run=args.dry_run,
         )
@@ -608,8 +709,9 @@ def run(argv: list[str]) -> int:
     blocked_links = [link for link in planned_links if link.blocked]
     if blocked_links:
         print(
-            f"error: {len(blocked_links)} blocked destination(s); rerun with "
-            "--replace only after approval",
+            f"error: {len(blocked_links)} blocked destination(s); resolve the "
+            "reported blocker(s). Use --replace only for exact path conflicts "
+            "after approval",
             file=sys.stderr,
         )
         return CONFLICT_EXIT_CODE

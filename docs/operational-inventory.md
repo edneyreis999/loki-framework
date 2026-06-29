@@ -109,7 +109,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills e comandos instalaveis. |
+| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills, comandos, agentes Markdown e projecoes Codex instalaveis. |
 
 ## Templates
 

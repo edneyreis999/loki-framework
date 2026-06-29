@@ -6,7 +6,7 @@ sandbox_mode = "read-only"
 approval_policy = "never"
 developer_instructions = '''
 This Codex custom agent was generated from the Loki Framework Markdown agent contract.
-Original package source: agents/retrospective-digester.md
+Source agent contract: agents/retrospective-digester.md
 Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
 ---

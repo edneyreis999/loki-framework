@@ -82,12 +82,18 @@ def iter_artifact_files(package_root: Path, kind: str, name: str) -> list[Path]:
         return sorted(path for path in root.rglob("*") if path.is_file())
     if kind == "commands":
         return [package_root / "commands" / name]
+    if kind == "agents":
+        return [package_root / "agents" / name]
+    if kind == "codex_agents":
+        return [package_root / "codex" / "agents" / name]
     raise ValueError(f"unsupported kind: {kind}")
 
 
 def validate_neutrality(package_root: Path, data: dict) -> None:
     skill_scopes = artifact_scopes(data, "skills")
     command_scopes = artifact_scopes(data, "commands")
+    agent_scopes = artifact_scopes(data, "agents")
+    codex_agent_scopes = artifact_scopes(data, "codex_agents")
     internal_skill_names = {
         name for name, scope in skill_scopes.items() if scope == "internal-only"
     }
@@ -103,7 +109,12 @@ def validate_neutrality(package_root: Path, data: dict) -> None:
                     f"{command_path}: both command requires internal-only {skill_name}"
                 )
 
-    for kind, scopes in (("skills", skill_scopes), ("commands", command_scopes)):
+    for kind, scopes in (
+        ("skills", skill_scopes),
+        ("commands", command_scopes),
+        ("agents", agent_scopes),
+        ("codex_agents", codex_agent_scopes),
+    ):
         for name, scope in scopes.items():
             if scope != "both":
                 continue
@@ -146,14 +157,36 @@ def main() -> int:
         data = load_scopes(package_root)
         skill_scopes = artifact_scopes(data, "skills")
         command_scopes = artifact_scopes(data, "commands")
+        agent_scopes = artifact_scopes(data, "agents")
+        codex_agent_scopes = artifact_scopes(data, "codex_agents")
 
         skill_names = {
             path.parent.name
             for path in (package_root / "skills").glob("*/SKILL.md")
         }
         command_names = {path.name for path in (package_root / "commands").glob("*.md")}
+        agent_names = {path.name for path in (package_root / "agents").glob("*.md")}
+        codex_agent_names = {
+            path.name for path in (package_root / "codex" / "agents").glob("*.toml")
+        }
         assert_exact_keys("skill", set(skill_scopes), skill_names)
         assert_exact_keys("command", set(command_scopes), command_names)
+        assert_exact_keys("agent", set(agent_scopes), agent_names)
+        assert_exact_keys("Codex agent", set(codex_agent_scopes), codex_agent_names)
+
+        mismatched_agent_scopes = []
+        for agent_name, scope in sorted(agent_scopes.items()):
+            codex_name = f"{Path(agent_name).stem}.toml"
+            if codex_agent_scopes.get(codex_name) != scope:
+                mismatched_agent_scopes.append(
+                    f"{agent_name}={scope} vs {codex_name}="
+                    f"{codex_agent_scopes.get(codex_name, 'missing')}"
+                )
+        if mismatched_agent_scopes:
+            raise ValueError(
+                "agent and Codex agent scopes differ: "
+                + "; ".join(mismatched_agent_scopes)
+            )
 
         validate_neutrality(package_root, data)
         validate_toml(package_root)

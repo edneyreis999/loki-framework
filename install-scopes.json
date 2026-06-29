@@ -17,6 +17,26 @@
       "loki-self-healing.md": "internal-only",
       "loki-tech-analysis.md": "both"
     },
+    "agents": {
+      "bibliotecario.md": "both",
+      "catalogador.md": "both",
+      "execution-context-reader.md": "both",
+      "retrospective-digester.md": "both",
+      "runtime-qa.md": "both",
+      "source-researcher.md": "both",
+      "standards-curator.md": "both",
+      "technical-implementer.md": "both"
+    },
+    "codex_agents": {
+      "bibliotecario.toml": "both",
+      "catalogador.toml": "both",
+      "execution-context-reader.toml": "both",
+      "retrospective-digester.toml": "both",
+      "runtime-qa.toml": "both",
+      "source-researcher.toml": "both",
+      "standards-curator.toml": "both",
+      "technical-implementer.toml": "both"
+    },
     "skills": {
       "loki-action-plan-authoring": "both",
       "loki-agent-creator": "both",

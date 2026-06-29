@@ -103,7 +103,7 @@ O script instala:
 
 - `.agents/skills/<skill-name>` apontando para `skills/<skill-name>`;
 - `.agents/commands/loki/<command>.md` apontando para `commands/<command>.md`;
-- `.agents/agents` apontando para `agents`;
+- `.agents/agents/<agent>.md` apontando para `agents/<agent>.md`;
 - `.agents/templates` apontando para `templates`;
 - `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
 
@@ -112,12 +112,18 @@ e para o modo de execucao. `--replace` e excepcional e exige approval separado.
 O manifest gerado em `.agents/loki-installation-manifest.json` registra origem,
 destino, tipo, `install_profile`, `install_scope` e status de cada link.
 
+Se um destino antigo ainda tiver `.agents/agents` como symlink para o diretorio
+inteiro `agents/`, o instalador bloqueia os links por agente para evitar escrita
+acidental atraves do symlink. Remova esse symlink legado somente no destino
+aprovado e rode o dry-run novamente antes de aplicar.
+
 Depois da instalacao, valide a estrutura instalada:
 
 ```bash
 python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
 find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
+find "$DEST/.agents/agents" -maxdepth 1 -type l -name '*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
 import json
@@ -132,10 +138,10 @@ PY
 git -C "$DEST" status --short .agents .codex
 ```
 
-Esses checks confirmam entrypoints de skills, TOMLs Codex, manifest parseavel
-e impacto visivel no git do consumidor. Eles nao substituem validacao funcional
-de um workflow Loki dentro do projeto consumidor quando esse comportamento for
-necessario.
+Esses checks confirmam entrypoints de skills, agentes Markdown, TOMLs Codex,
+manifest parseavel e impacto visivel no git do consumidor. Eles nao substituem
+validacao funcional de um workflow Loki dentro do projeto consumidor quando
+esse comportamento for necessario.
 
 ## Skills Core e Extensoes
 

@@ -95,7 +95,7 @@ Destino local criado pelo instalador:
 ```text
 .agents/skills/<skill-name> -> $PACKAGE_ROOT/skills/<skill-name>
 .agents/commands/loki/<command>.md -> $PACKAGE_ROOT/commands/<command>.md
-.agents/agents             -> $PACKAGE_ROOT/agents
+.agents/agents/<agent>.md   -> $PACKAGE_ROOT/agents/<agent>.md
 .agents/templates          -> $PACKAGE_ROOT/templates
 .codex/agents/<agent>.toml -> $PACKAGE_ROOT/codex/agents/<agent>.toml
 ```
@@ -128,12 +128,18 @@ O script grava o manifest de auditoria no destino:
 $DEST/.agents/loki-installation-manifest.json
 ```
 
+Instalacoes antigas podem ter `.agents/agents` como symlink para o diretorio
+inteiro `agents/`. O instalador atual usa um link por agente para respeitar
+`install-scopes.json`; se esse symlink legado existir, o dry-run bloqueia a
+instalacao ate ele ser removido no destino aprovado.
+
 Validacao pos-instalacao:
 
 ```bash
 python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
 find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
+find "$DEST/.agents/agents" -maxdepth 1 -type l -name '*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
 import json
