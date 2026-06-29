@@ -57,9 +57,11 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
    do pacote local.
 2. Procure agentes existentes em `agents/` e no catalogo aprovado antes de criar um novo papel.
 3. Confirme que agente e a abstracao correta:
+   - Use a heuristica curta: agent = quem julga, skill = como executar, command = o que orquestrar.
    - Crie agente quando houver julgamento especialista, pesquisa ruidosa, revisao independente, restricao de ferramentas ou proposta isolada.
    - Use skill quando o valor for procedimento reutilizavel no contexto principal.
    - Use command quando o valor for orquestrar fluxo completo com estado, outputs e gates.
+   - Se o corpo do agente estiver virando receita repetivel, checklist operacional longo, passos de ferramenta ou comando executavel, mova esse procedimento para uma skill e deixe o agente com papel, julgamento, limites e handoff.
 4. Se o agente fizer parte do pacote, rode preflight de autoria: destino correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
 5. Gere agentes multi-adapter por padrao. Nao ramifique o contrato pelo executor atual; some os metadados conhecidos de Claude Code, Codex e Loki, usando valores neutros validos quando um campo nao se aplicar.
 6. Preencha o superset de metadados de agente:
@@ -74,7 +76,8 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 12. Limite ferramentas e permissoes ao minimo necessario. Em plugin Claude Code, nao dependa de `hooks`, `mcpServers` ou `permissionMode` para comportamento essencial, porque esses campos podem ser ignorados.
 13. Para Codex, lembre que subagents so sao spawned quando o usuario pede explicitamente; eles herdam sandbox/approval do turno pai, e fan-out aumenta custo e latencia.
 14. Inclua formato de resposta estruturado para o orquestrador detectar conflitos por arquivo, `<domain_ids>`, superficie e gate.
-15. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
+15. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
+16. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
 
 ## References
 
@@ -83,15 +86,19 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 ## Quality Checklist
 
 - O agente tem julgamento proprio que uma skill nao cobriria melhor.
+- A decisao agent/skill/command passou pela regra: quem julga, como executar, o que orquestrar.
+- Procedimentos repetiveis, comandos, receitas de ferramenta e checklists longos foram movidos para skill ou command, nao embutidos no agente.
 - O papel e estreito e nao compete com agente existente.
 - A `description` inclui gatilhos concretos e limites claros.
 - O superset de metadados multi-adapter foi preenchido ou recebeu valor neutro valido.
+- O agente declara `mode`, `allowed_writes`, `forbidden_writes`, `required_gates` e `response_format`.
 - Ferramentas, modelo, effort, permissoes e gates sao minimos para a tarefa.
 - O agente nao escreve diretamente em superficies sensiveis no MVP.
 - A saida tem evidencia, risco, confianca e proximo passo.
 - O agente declara quando deve parar e devolver ao orquestrador.
 - Conflitos por arquivo, `<domain_ids>`, `<consumer_runtime_surfaces>`, gate ou destino ficam detectaveis.
 - Se o agente for empacotado, a mudanca respeita `docs/package-authoring-guardrails.md`.
+- Se houver projecao Codex, o TOML em `codex/agents/` existe, acompanha o nome base do agente e parseia com `tomllib`.
 - O agente nao generaliza aprendizado local sem approval.
 - A mudanca em agente consolidado tem `technical-review` ou `approval`.
 
@@ -109,7 +116,7 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - Contrato fonte multi-adapter e projecoes de runtime quando o formato exigir.
 - Contrato de papel, gatilhos, ferramentas, writes e gates.
 - Registro no `manifest.yaml` quando aprovado.
-- Lista de validacoes de pacote quando o destino for componente consolidado.
+- Lista de validacoes de pacote quando o destino for componente consolidado, incluindo check estrutural de agente e TOML Codex quando aplicavel.
 - Backlog quando a demanda nao justificar agente.
 
 ## Limits
