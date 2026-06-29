@@ -30,6 +30,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
+| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, envelopes de agentes, retrospectivas por agente e consolidacao serial. |
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
@@ -53,6 +54,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `loki-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
+| `loki-init` | `mvp` | Wrapper Codex para executar o workflow `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
 | `loki-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |

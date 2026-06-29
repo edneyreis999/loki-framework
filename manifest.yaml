@@ -136,6 +136,11 @@ install_scope_sources:
     purpose: "Machine-readable source for installer artifact scopes and profiles."
 
 commands:
+  - name: "loki:init"
+    file: "commands/loki-init.md"
+    status: draft
+    aliases:
+      - "init-loki"
   - name: "loki:feedback"
     file: "commands/loki-feedback.md"
     status: draft
@@ -170,6 +175,9 @@ skills:
     status: draft
   - name: "loki-command-workflows"
     file: "skills/loki-command-workflows/SKILL.md"
+    status: draft
+  - name: "loki-init"
+    file: "skills/loki-init/SKILL.md"
     status: draft
   - name: "loki-internal-command-workflows"
     file: "skills/loki-internal-command-workflows/SKILL.md"

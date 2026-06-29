@@ -7,6 +7,7 @@
   },
   "artifacts": {
     "commands": {
+      "loki-init.md": "both",
       "loki-continuous-improvement.md": "internal-only",
       "loki-enrich-tasks.md": "both",
       "loki-feedback.md": "both",
@@ -82,6 +83,7 @@
       "loki-feedback": "both",
       "loki-framework-impact-audit": "internal-only",
       "loki-generate-action-plan": "both",
+      "loki-init": "both",
       "loki-index-navigator": "consumer-only",
       "loki-internal-command-workflows": "internal-only",
       "loki-knowledge-extraction-analysis": "internal-only",

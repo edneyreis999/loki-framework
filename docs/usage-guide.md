@@ -154,7 +154,7 @@ esse comportamento for necessario.
 
 ## Skills Core e Extensoes
 
-As skills Loki (`loki-feedback`, `loki-enrich-tasks`,
+As skills Loki (`loki-init`, `loki-feedback`, `loki-enrich-tasks`,
 `loki-run-plan-execution`, `loki-retrospectiva-tecnica`, `loki-command-creator`,
 `loki-agent-creator`, `loki-skill-creator`, `loki-index-navigator`,
 `loki-tech-analysis-authoring` e `loki-action-plan-authoring`) governam
@@ -164,6 +164,24 @@ agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.
+
+## Inicializacao Pos-Instalacao
+
+Depois de instalar o Loki em um projeto consumidor aprovado, use `loki:init`
+para criar ou auditar a documentacao inicial do projeto. `init-loki` e apenas
+alias/adaptador quando o runtime suportar; o nome canonico do pacote e
+`loki:init`.
+
+A execucao explicita de `loki:init` autoriza escrita somente em `docs/**` e
+`planos/000-init-loki/**` do consumidor. O comando cria ou audita
+`docs/loki-init/**`, `docs/index.xml` e a trilha operacional
+`planos/000-init-loki/` com `interaction/fase1`, `builds/fase1` e
+`retrospetivas/fase1`.
+
+O init nao escreve em runtime, engine, assets, dados gerados, `.agents/**`,
+`.codex/**`, `.claude/**`, `AGENTS.md` ou `CLAUDE.md`. Ele tambem nao valida
+gameplay, UI, audio, build, save/load, integracoes ou estado persistido sem
+human-validation posterior.
 
 ### Extensao Opcional: RPG Maker MZ
 

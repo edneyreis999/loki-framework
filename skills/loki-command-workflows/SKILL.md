@@ -1,9 +1,9 @@
 ---
 name: loki-command-workflows
-description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
+description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
 when_to_use:
   - "Use when the user invokes a shared Loki command workflow from Codex."
-  - "Use when routing loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
+  - "Use when routing loki:init, init-loki, loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
 argument-hint: "[loki command name, command arguments]"
 arguments:
   required: []
@@ -32,6 +32,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
+  - loki:init
   - loki:feedback
   - loki:tech-analysis
   - loki:generate-action-plan
@@ -50,6 +51,8 @@ installation profile.
 
 ## Command Map
 
+- `loki:init` or `init-loki`: read
+  `.agents/commands/loki/loki-init.md`, then use `loki-init`.
 - `loki:feedback`: read
   `.agents/commands/loki/loki-feedback.md`, then use `loki-feedback`.
 - `loki:tech-analysis`: read
