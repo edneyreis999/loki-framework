@@ -173,6 +173,18 @@ skills:
   - name: "excalidraw-diagram-generator"
     file: "skills/excalidraw-diagram-generator/SKILL.md"
     status: draft
+  - name: "json-canvas"
+    file: "skills/json-canvas/SKILL.md"
+    status: draft
+  - name: "obsidian-bases"
+    file: "skills/obsidian-bases/SKILL.md"
+    status: draft
+  - name: "obsidian-cli"
+    file: "skills/obsidian-cli/SKILL.md"
+    status: draft
+  - name: "obsidian-markdown"
+    file: "skills/obsidian-markdown/SKILL.md"
+    status: draft
   - name: "loki-command-workflows"
     file: "skills/loki-command-workflows/SKILL.md"
     status: draft

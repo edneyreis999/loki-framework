@@ -72,6 +72,7 @@
     },
     "skills": {
       "excalidraw-diagram-generator": "both",
+      "json-canvas": "both",
       "loki-action-plan-authoring": "both",
       "loki-agent-creator": "both",
       "loki-command-creator": "both",
@@ -96,7 +97,10 @@
       "loki-skill-creator": "both",
       "loki-tech-analysis": "both",
       "loki-tech-analysis-authoring": "both",
-      "loki-template-library": "both"
+      "loki-template-library": "both",
+      "obsidian-bases": "both",
+      "obsidian-cli": "both",
+      "obsidian-markdown": "both"
     }
   }
 }
