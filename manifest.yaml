@@ -12,6 +12,7 @@ source:
   source_boundaries: "docs/source-boundaries.md"
   operational_inventory: "docs/operational-inventory.md"
   usage_guide: "docs/usage-guide.md"
+  installation_workflow: "docs/loki-installation-workflow.md"
   plan_execution_workflow: "docs/loki-plan-execution-workflow.md"
   learning_workflow: "docs/loki-learning-workflow.md"
   model_effort_guidance: "docs/model-effort-guidance.md"
@@ -72,6 +73,7 @@ guardrails:
     - "docs/source-boundaries.md"
     - "docs/operational-inventory.md"
     - "docs/usage-guide.md"
+    - "docs/loki-installation-workflow.md"
     - "docs/loki-plan-execution-workflow.md"
     - "docs/loki-learning-workflow.md"
     - "docs/model-effort-guidance.md"
@@ -163,6 +165,9 @@ commands:
     status: draft
 
 skills:
+  - name: "excalidraw-diagram-generator"
+    file: "skills/excalidraw-diagram-generator/SKILL.md"
+    status: draft
   - name: "loki-command-workflows"
     file: "skills/loki-command-workflows/SKILL.md"
     status: draft
@@ -328,6 +333,10 @@ docs:
   - file: "docs/operational-inventory.md"
     status: completed
   - file: "docs/usage-guide.md"
+    status: draft
+  - file: "docs/loki-installation-workflow.md"
+    status: draft
+  - file: "docs/loki-installation-workflow.excalidraw.md"
     status: draft
   - file: "docs/loki-plan-execution-workflow.md"
     status: draft

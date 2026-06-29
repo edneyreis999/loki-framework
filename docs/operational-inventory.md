@@ -67,6 +67,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `loki-self-healing` | `mvp` | Wrapper Codex para executar `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
 | `loki-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
+| `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
 | `loki-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `loki-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `loki-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
@@ -133,6 +134,8 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `docs/source-boundaries.md` | `mvp` | Declarar fonte canonica, limites e politica de conflito do pacote. |
 | `docs/operational-inventory.md` | `mvp` | Listar componentes operacionais a gerar. |
 | `docs/usage-guide.md` | `mvp` | Explicar uso do framework em ate 2000 tokens. |
+| `docs/loki-installation-workflow.md` | `mvp` | Explicar o workflow canonico de instalacao do Loki em projetos consumidores, do dry-run ao rollback por manifest. |
+| `docs/loki-installation-workflow.excalidraw.md` | `mvp` | Ilustrar o workflow canonico de instalacao do Loki em projetos consumidores. |
 | `docs/loki-plan-execution-workflow.md` | `mvp` | Explicar o workflow canonico de execucao de plano, da descricao curta ate codigo, validacao e handoff para aprendizado. |
 | `docs/loki-plan-execution-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de execucao. |
 | `docs/loki-learning-workflow.md` | `mvp` | Explicar o workflow canonico de aprendizado, retrospectiva e promocao de contexto duradouro. |

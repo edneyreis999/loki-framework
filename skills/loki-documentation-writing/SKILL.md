@@ -57,19 +57,25 @@ shell: {}
    available, use it as a formatting layer for vault syntax such as properties,
    wikilinks, embeds, callouts, tags, block IDs or note aliases when those
    features serve the selected Loki mode.
-5. Read [document-taxonomy.md](references/document-taxonomy.md) when
+5. For rich documents that explain a workflow, process, architecture, system
+   relationship, or decision path, check whether an Excalidraw or equivalent
+   diagramming skill is available. If available, use it to create or update a
+   companion diagram when the visual would improve comprehension. If no
+   diagramming skill is available, continue without blocking and do not invent a
+   manual diagram format.
+6. Read [document-taxonomy.md](references/document-taxonomy.md) when
    classification is ambiguous or when the output will be reused by another
    agent.
-6. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
+7. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
    or reviewing the content, especially for rich documents or mixed
    technical/reader-facing audiences.
-7. Read [llm-only-documents.md](references/llm-only-documents.md) when the
+8. Read [llm-only-documents.md](references/llm-only-documents.md) when the
    document is meant primarily for AI agents, prompt assembly, retrieval,
    routing, context hydration, or deterministic reuse by an LLM.
-8. Gather local sources before writing durable or technical claims. Prefer
+9. Gather local sources before writing durable or technical claims. Prefer
    primary files, approved docs, command contracts, task files, validators and
    runtime evidence over memory.
-9. Write the smallest complete document for its mode. Lite documents optimize
+10. Write the smallest complete document for its mode. Lite documents optimize
    for task execution and handoff. Rich documents optimize for future readers
    who will not have conversation context.
    Technical documents may use strict section order. Reader-facing documents may
@@ -77,7 +83,7 @@ shell: {}
    open questions and next actions remain easy to find.
    Agent-facing LLM-only documents should use stable, dense, segmented
    structure instead of narrative prose.
-10. Validate placement before finalizing. Durable consumer documentation usually
+11. Validate placement before finalizing. Durable consumer documentation usually
    belongs in `/docs` and must keep the consumer documentation index in scope.
    Transient plan documentation belongs with the active plan or task artifacts.
 
@@ -165,6 +171,8 @@ source label.
 - Source references or evidence appropriate to the mode.
 - Vault-specific Markdown features when the destination and selected mode
   justify them.
+- A companion diagram when the document is rich, visual structure would improve
+  comprehension, and a diagramming skill is available.
 - Placement and validation notes when creating or changing a durable document.
 
 ## Quality Checklist
@@ -176,6 +184,8 @@ source label.
 - Reader-facing prose remains factual, direct and maintainable.
 - Reader-facing structure is reader-led; template sections are optional scaffolds,
   not required order.
+- Rich workflow, process, architecture, system-relationship or decision-path
+  documents checked for an available diagramming skill.
 - Agent-facing LLM-only content is stable, explicit, segmented, traceable and
   easy to retrieve.
 - Obsidian syntax, when used, improves navigation or retrieval without hiding

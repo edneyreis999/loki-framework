@@ -38,6 +38,7 @@
       "technical-implementer.toml": "both"
     },
     "skills": {
+      "excalidraw-diagram-generator": "both",
       "loki-action-plan-authoring": "both",
       "loki-agent-creator": "both",
       "loki-command-creator": "both",

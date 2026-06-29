@@ -33,8 +33,11 @@ outro projeto.
 
 ## Fluxos Canonicos
 
-Use estes dois documentos como fonte principal do ciclo operacional:
+Use estes documentos como fonte principal do ciclo operacional:
 
+- [Workflow de Instalacao do Loki em Projetos Consumidores](loki-installation-workflow.md):
+  descreve dry-run, approval, aplicacao por symlink, perfis, validacao e
+  rollback antes de usar Loki em um projeto alvo.
 - [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md):
   descreve como uma descricao curta vira analise, plano, tasks, escrita
   serializada, validacao e evidencia.
