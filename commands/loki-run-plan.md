@@ -102,7 +102,7 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 1. Confirmar `FASE_ATUAL`, `TASKS_MD`, `TASK_TARGET` opcional, `DIR_ANALISE` opcional, escopo permitido e forbidden writes.
 2. Resolver paths relativos ou absolutos e parar se algum path obrigatorio estiver ausente, ambiguo ou fora do plano ativo.
 3. Carregar `loki-run-plan-execution`.
-4. Ler `TASKS_MD`, identificar tasks da fase alvo, localizar os arquivos `task-N.M.md` correspondentes e conferir ordem topologica, dependencias, status, validators e human loops.
+4. Ler `TASKS_MD`, identificar tasks da fase alvo, localizar os arquivos `task-N.M.md` correspondentes e conferir ordem topologica, dependencias, status, validators e human loops. Se os artefatos do plano estiverem ignorados, untracked ou ausentes do `git status`, conferir estado por leitura direta em disco (`find`, `rg`, `sed`/equivalente) e nao usar status do VCS como unico validador.
 5. Montar um `Execution Brief` antes de escrever: objetivo da fase, tasks em ordem, referencias, arquivos provaveis, superficies afetadas, skills sugeridas, approvals existentes, riscos, blockers e proximo passo.
 6. Se `DIR_ANALISE` foi informado, acionar uma ou mais instancias de
    `execution-context-reader` em modo read-only para extrair apenas informacoes

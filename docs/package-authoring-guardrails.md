@@ -187,8 +187,31 @@ Ao concluir uma mudanca no pacote, validar pelo menos:
 ```bash
 find "$PACKAGE_ROOT"/skills -maxdepth 2 -name SKILL.md | sort
 find "$PACKAGE_ROOT"/skills -maxdepth 1 -type f -name '*.md'
-find "$PACKAGE_ROOT" -type f \
+```
+
+Quando a mudanca tocar superficies duraveis do pacote, rode primeiro um scan
+focado nos artefatos duraveis alterados ou nas superficies consolidadas
+aplicaveis. Esse scan focado e o decisor para a mudanca escopada:
+
+```bash
+find commands skills agents codex scripts templates docs README.md index.md manifest.yaml install-scopes.json -type f \
+  ! -path 'docs/package-authoring-guardrails.md' \
   ! -path '*/docs/package-authoring-guardrails.md' \
+  ! -path 'skills/loki-skill-creator/references/validation-and-forward-testing.md' \
+  ! -path '*/skills/loki-skill-creator/references/validation-and-forward-testing.md' \
+  -print0 | xargs -0 rg -n "(Jhonny/|docs/05-Loki-Framework/001-blueprint-aprovado|/Users/|~/|source_plan|canonical_blueprint|operational_plan|historical_reference)"
+```
+
+Use o scan amplo abaixo como auditoria bruta do repositorio. Ele pode ser
+ruidoso quando incluir `planos/**`, mirrors instalados, referencias externas,
+historico local, `.git` ou binarios; nesse caso, registre o ruido e conclua a
+validacao da mudanca pelo scan focado nas superficies duraveis afetadas.
+
+```bash
+find "$PACKAGE_ROOT" -type f \
+  ! -path 'docs/package-authoring-guardrails.md' \
+  ! -path '*/docs/package-authoring-guardrails.md' \
+  ! -path 'skills/loki-skill-creator/references/validation-and-forward-testing.md' \
   ! -path '*/skills/loki-skill-creator/references/validation-and-forward-testing.md' \
   -print0 | xargs -0 rg -n "(Jhonny/|docs/05-Loki-Framework/001-blueprint-aprovado|/Users/|~/|source_plan|canonical_blueprint|operational_plan|historical_reference)"
 ```

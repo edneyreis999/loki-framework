@@ -53,6 +53,9 @@ decisoes humanas e validators em uma execucao rastreavel.
 2. Resolver paths relativos ou absolutos antes de ler. Parar se um path
    obrigatorio estiver ausente, ambiguo ou fora do plano ativo.
 3. Ler `TASKS_MD` e localizar todos os arquivos `task-N.M.md` da fase alvo.
+   Quando artefatos do plano estiverem ignorados, untracked ou ausentes do
+   `git status`, validar estado por leitura direta em disco (`find`, `rg`,
+   `sed`/equivalente) e nao usar status do VCS como unico sinal.
 4. Conferir dependencias, status, referencias, validators, observable
    validation, human loop, Definition of Done e resume notes de cada task.
 5. Montar um `Execution Brief` antes da primeira escrita:
@@ -172,6 +175,9 @@ decisoes humanas e validators em uma execucao rastreavel.
 - `TASKS_MD` existe e referencia a fase alvo.
 - Todos os `task-N.M.md` da fase alvo foram localizados ou a lacuna foi
   registrada como blocker.
+- Se `tasks.md`, `task-N.M.md`, `builds/`, `interaction/` ou `retrospetivas/`
+  estiverem ignorados ou nao aparecerem no `git status`, o estado foi conferido
+  por leitura direta dos arquivos do plano.
 - Dependencias e ordem topologica foram conferidas antes da execucao.
 - Cada task executada tem referencia, validator, human loop e out of scope.
 - `Execution Brief` foi produzido antes da primeira escrita.
