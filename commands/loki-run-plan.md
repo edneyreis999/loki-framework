@@ -45,6 +45,10 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 - Status atualizado em task files e `tasks.md`.
 - Evidencias em `builds/faseN/`.
 - `Execution Brief` ou resumo equivalente com contexto, dependencias, riscos, validators e gates antes da primeira escrita.
+- Disclaimer final destacado somente quando a execucao terminar com input humano
+  material ainda necessario, como `pending-technical-review`,
+  `pending-human-validation`, `pending-approval`, `interview` pendente ou outro
+  bloqueio nao resolvido pelo plano aprovado.
 - Retrospectiva quando a fase terminar.
 
 ## Allowed Writes
@@ -71,6 +75,28 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 - `human-validation` para comportamento perceptivel, superficies runtime, estado em execucao, integracoes ativas, dados persistidos ou artefatos gerados.
 - `technical-review` para mudanca em command, skill, agent, template ou validator.
 
+## Human Gate Resolution Policy
+
+- A coluna `Human Loop` e os gates descritos em uma task aprovada documentam a
+  natureza da revisao, mas nao obrigam parada automatica quando a execucao segue
+  exatamente o que o plano ja autorizou.
+- Considere como aprovado pelo plano qualquer decisao explicitamente descrita
+  em `tasks.md`, `task-N.M.md`, artefatos aprovados de fases anteriores ou
+  confirmacao humana ja registrada.
+- Pare e marque `pending-technical-review`, `pending-approval`,
+  `pending-human-validation` ou `interview` apenas quando:
+  - a task exige uma decisao que nao esta no plano nem em decisao humana
+    registrada;
+  - a execucao precisou inferir, alterar ou escolher algo fora do que estava
+    previsto;
+  - algo previsto no plano nao pode ser executado como descrito;
+  - um validator falhou ou ficou inconclusivo;
+  - a mudanca toca superficie sensivel, runtime perceptivel ou instalacao que
+    exige confirmacao humana especifica.
+- Quando parar, explique concretamente por que a parada foi necessaria e quais
+  pontos dependem do usuario. Nao use technical-review como checkpoint
+  cerimonial.
+
 ## Workflow
 
 1. Confirmar `FASE_ATUAL`, `TASKS_MD`, `TASK_TARGET` opcional, `DIR_ANALISE` opcional, escopo permitido e forbidden writes.
@@ -89,14 +115,33 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
    da escrita e acionar `source-researcher` para produzir evidencia que revise
    ou complemente o `Execution Brief`. Paralelizar apenas quando houver fontes
    independentes.
-8. Resolver lacunas criticas antes da implementacao. Nao iniciar escrita quando faltarem referencia executavel, approval, validator ou decisao humana obrigatoria.
+8. Resolver lacunas criticas antes da implementacao. Nao iniciar escrita quando
+   faltarem referencia executavel, approval, validator ou decisao humana
+   obrigatoria nao coberta pelo plano aprovado ou por decisao humana registrada.
 9. Carregar skills tecnicas apenas quando a task, contexto detectado, pedido do usuario ou retrospectiva aprovada exigir `<technology_required_skills>`.
 10. Executar tasks em ordem topologica, uma por vez. Leitura pode continuar em paralelo; escrita permanece serializada pelo orquestrador.
 11. Antes de cada escrita, confirmar que o arquivo, superficie, `<domain_ids>` e gate estao cobertos pela task ativa e pelo plano.
 12. Rodar validators da task e registrar evidencias em `builds/faseN/` ou justificativa objetiva quando um validator nao se aplicar.
 13. Atualizar task files e `tasks.md` com status, arquivos afetados, validations, human_loop e next_action.
 14. Acionar `runtime-qa` quando a mudanca depender de comportamento perceptivel, runtime, integracao ativa, estado persistido ou artefato gerado.
-15. Ao concluir a fase, recomendar ou iniciar `loki:retrospectiva-tecnica`
+15. Quando uma task terminar com `pending-technical-review` ou qualquer input
+    humano material ainda pendente, encerrar a resposta final com um bloco
+    destacado no formato abaixo, listando em bullets o que ainda precisa ser
+    esclarecido, aprovado ou validado:
+
+    ```markdown
+    --------------
+    pending-technical-review
+    ------------
+
+    - Aprovar ou ajustar ...
+    - Confirmar ...
+    - Responder ...
+    ```
+
+    Substituir o titulo pelo gate real quando for `pending-human-validation`,
+    `pending-approval`, `interview` ou outro status humano pendente.
+16. Ao concluir a fase, recomendar ou iniciar `loki:retrospectiva-tecnica`
     conforme o contrato do plano, incluindo resumo de arquivos afetados,
     validators, gates humanos, riscos residuais, comandos e scripts executados,
     outputs inesperados, inferencias uteis e incorretas, mismatches de ambiente,
@@ -133,11 +178,31 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 - `FASE_ATUAL`, `TASKS_MD` ou task files nao existem ou sao ambiguos; quando `DIR_ANALISE` for informado, ele tambem deve existir.
 - Nao e possivel determinar quais tasks pertencem a fase alvo ou a ordem topologica segura.
 - `Execution Brief` nao consegue listar objetivo, dependencias, referencias, validators e human loops suficientes para executar sem memoria da conversa.
-- Human loop obrigatorio pendente.
+- Input humano obrigatorio pendente que nao esteja resolvido pelo plano
+  aprovado ou por decisao humana registrada.
 - Validator blocker falhou.
 - Validacao humana necessaria ainda nao foi confirmada.
 - A task exige superficie fora do escopo aprovado.
 - A task exige escrita sensivel sem approval, skill tecnica aplicavel, validator e gate humano.
+
+## Final Response Contract
+
+Se a execucao terminar com status humano pendente real, a ultima secao da
+resposta ao usuario deve ser um disclaimer visualmente destacado. Use o status
+exato como titulo e bullets concretos para o que falta decidir. Nao diluir esse
+aviso em prosa comum. Nao emitir disclaimer quando a task foi executada conforme
+o plano aprovado e nao restar decisao humana material.
+
+Exemplo:
+
+```markdown
+--------------
+pending-technical-review
+------------
+
+- Aprovar a matriz antes de executar a proxima task.
+- Confirmar se algum papel deve mudar de agente para skill/checklist.
+```
 
 ## Resume Contract
 

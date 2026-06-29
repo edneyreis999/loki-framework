@@ -28,7 +28,9 @@ execution_profile:
 
 ## Purpose
 
-Investigar feedback de usuario, QA ou validacao humana por entrevista curta, uma pergunta por vez, ate obter diagnostico suficiente para propor proximos passos.
+Investigar feedback de usuario, QA ou validacao humana por entrevista curta,
+uma pergunta por vez, ate obter diagnostico suficiente para propor proximos
+passos, sem aplicar alteracoes no projeto ou no pacote.
 
 ## Inputs
 
@@ -39,19 +41,28 @@ Investigar feedback de usuario, QA ou validacao humana por entrevista curta, uma
 ## Outputs
 
 - Diagnostico resumido.
-- Perguntas e respostas registraveis em `interaction/faseN/`.
-- Proposta de correcao ou investigacao, sem aplicar escrita automaticamente.
+- Perguntas e respostas para registro pelo orquestrador ou por retrospectiva
+  tecnica posterior.
+- Proposta de correcao, investigacao ou encaminhamento, sem aplicar escrita.
 - Resultado do research gate: nao necessario, recusado, aprovado com query, ou realizado com fontes citadas.
 
 ## Allowed Writes
 
-- Markdown do plano ativo em `interaction/faseN/`.
-- Resumo de diagnostico no plano ativo, quando solicitado.
+- Nenhuma por default.
+- Excepcao unica: criar ou complementar um artefato de retrospectiva tecnica
+  autorizado pelo workflow `loki:retrospectiva-tecnica`, quando o objetivo for
+  registrar feedback, atrito, decisao humana, risco residual ou aprendizado para
+  uma futura melhoria continua.
 
 ## Forbidden Writes
 
+- Arquivos do plano ativo, task files, build evidence ou interaction records,
+  salvo quando a execucao atual for explicitamente uma retrospectiva tecnica
+  autorizada.
+- Correcoes de codigo, configuracao, docs duradouros, comandos, skills,
+  agentes, templates, validators, `manifest.yaml` ou `install-scopes.json`.
 - Superficies sensiveis do consumidor declaradas por plano, skill tecnica ou contexto (`<sensitive_write_patterns>`).
-- Artefatos de runtime, engine ou framework sem approval.
+- Artefatos de runtime, engine ou framework.
 - `.claude/**`
 - `.agents/**`
 - `.codex/**`
@@ -73,7 +84,17 @@ Investigar feedback de usuario, QA ou validacao humana por entrevista curta, uma
 7. Quando acionar `research-consent`, perguntar em turno proprio: `Posso pesquisar na internet por: "<frase exata da busca>"?`
 8. Nao pesquisar na internet sem consentimento explicito do usuario para a frase apresentada.
 9. Construir hipoteses com evidencia local, decisao humana ou fonte externa aprovada.
-10. Propor correcao ou investigacao apenas quando nao houver duvida critica pendente.
+10. Propor correcao, investigacao, plano de acao, retrospectiva ou
+    encaminhamento para outro comando apenas quando nao houver duvida critica
+    pendente.
+11. Nao aplicar a correcao proposta. Se o feedback revelar uma mudanca
+    necessaria, encaminhar para o comando apropriado (`loki:tech-analysis`,
+    `loki:generate-action-plan`, `loki:run-plan`,
+    `loki:retrospectiva-tecnica` ou `loki:continuous-improvement`) em vez de
+    editar diretamente.
+12. Se for necessario registrar aprendizado operacional, criar ou complementar
+    somente o artefato de retrospectiva tecnica autorizado; nao escrever em
+    task, interaction, build ou fonte duradoura por conta do feedback.
 
 ## Handoffs
 
@@ -87,7 +108,11 @@ Investigar feedback de usuario, QA ou validacao humana por entrevista curta, uma
   proposta tecnica.
 - `technical-implementer` ou skill tecnica selecionada apenas como proposta
   quando houver possivel escrita sensivel. Pode rodar em paralelo com
-  `runtime-qa` quando a superficie provavel ja estiver identificada.
+  `runtime-qa` quando a superficie provavel ja estiver identificada, mas o
+  `loki:feedback` nao aplica a proposta.
+- `loki:retrospectiva-tecnica` quando o feedback e uma correcao operacional ou
+  aprendizado que deve ficar registrado antes de melhoria continua. Neste caso,
+  a unica escrita permitida e o artefato de retrospectiva tecnica autorizado.
 
 Paralelismo nao substitui a regra de uma pergunta por turno: se houver
 ambiguidade critica, resolver a entrevista antes de acionar handoffs paralelos.
@@ -98,7 +123,12 @@ ambiguidade critica, resolver a entrevista antes de acionar handoffs paralelos.
 - A proxima acao exigiria escrita sensivel sem approval.
 - Ha conflito entre evidencias e feedback.
 - A recomendacao depende de pesquisa externa, o usuario nao autoriza a busca proposta e nao ha evidencia local suficiente.
+- O usuario pede para aplicar a correcao diretamente dentro de
+  `loki:feedback`; encaminhar para o comando apropriado em vez de escrever.
 
 ## Resume Contract
 
-Registrar pergunta ativa, resposta humana, query de pesquisa proposta, consentimento de pesquisa, fontes externas aprovadas, status e proximo passo em `interaction/faseN/<task>-feedback.md`.
+Retornar ao usuario pergunta ativa, resposta humana, query de pesquisa proposta,
+consentimento de pesquisa, fontes externas aprovadas, status e proximo passo.
+Persistir esse registro apenas quando um artefato de retrospectiva tecnica
+estiver autorizado pelo workflow `loki:retrospectiva-tecnica`.

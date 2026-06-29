@@ -270,6 +270,54 @@ agents:
   - name: "catalogador"
     file: "agents/catalogador.md"
     status: draft
+  - name: "game-product-owner"
+    file: "agents/game-product-owner.md"
+    status: draft-proposal-only
+  - name: "game-business-analyst"
+    file: "agents/game-business-analyst.md"
+    status: draft-proposal-only
+  - name: "game-designer"
+    file: "agents/game-designer.md"
+    status: draft-proposal-only
+  - name: "narrative-designer"
+    file: "agents/narrative-designer.md"
+    status: draft-proposal-only
+  - name: "ux-ui-designer"
+    file: "agents/ux-ui-designer.md"
+    status: draft-proposal-only
+  - name: "gameplay-engineer"
+    file: "agents/gameplay-engineer.md"
+    status: draft-proposal-only
+  - name: "narrative-qa"
+    file: "agents/narrative-qa.md"
+    status: draft-proposal-only
+  - name: "level-designer"
+    file: "agents/level-designer.md"
+    status: draft-proposal-only
+  - name: "balance-economy-designer"
+    file: "agents/balance-economy-designer.md"
+    status: draft-proposal-only
+  - name: "branching-narrative-designer"
+    file: "agents/branching-narrative-designer.md"
+    status: draft-proposal-only
+  - name: "scene-presentation-designer"
+    file: "agents/scene-presentation-designer.md"
+    status: draft-proposal-only
+  - name: "audio-designer"
+    file: "agents/audio-designer.md"
+    status: draft-proposal-only
+  - name: "quest-content-designer"
+    file: "agents/quest-content-designer.md"
+    status: draft-proposal-only
+  - name: "dialogue-editor"
+    file: "agents/dialogue-editor.md"
+    status: draft-proposal-only
+  - name: "tools-pipeline-engineer"
+    file: "agents/tools-pipeline-engineer.md"
+    status: draft-proposal-only
+  - name: "technical-artist"
+    file: "agents/technical-artist.md"
+    status: draft-proposal-only
 
 codex_agents:
   - name: "bibliotecario"
@@ -303,6 +351,70 @@ codex_agents:
   - name: "technical-implementer"
     file: "codex/agents/technical-implementer.toml"
     source_agent: "agents/technical-implementer.md"
+    status: draft-derived
+  - name: "game-product-owner"
+    file: "codex/agents/game-product-owner.toml"
+    source_agent: "agents/game-product-owner.md"
+    status: draft-derived
+  - name: "game-business-analyst"
+    file: "codex/agents/game-business-analyst.toml"
+    source_agent: "agents/game-business-analyst.md"
+    status: draft-derived
+  - name: "game-designer"
+    file: "codex/agents/game-designer.toml"
+    source_agent: "agents/game-designer.md"
+    status: draft-derived
+  - name: "narrative-designer"
+    file: "codex/agents/narrative-designer.toml"
+    source_agent: "agents/narrative-designer.md"
+    status: draft-derived
+  - name: "ux-ui-designer"
+    file: "codex/agents/ux-ui-designer.toml"
+    source_agent: "agents/ux-ui-designer.md"
+    status: draft-derived
+  - name: "gameplay-engineer"
+    file: "codex/agents/gameplay-engineer.toml"
+    source_agent: "agents/gameplay-engineer.md"
+    status: draft-derived
+  - name: "narrative-qa"
+    file: "codex/agents/narrative-qa.toml"
+    source_agent: "agents/narrative-qa.md"
+    status: draft-derived
+  - name: "level-designer"
+    file: "codex/agents/level-designer.toml"
+    source_agent: "agents/level-designer.md"
+    status: draft-derived
+  - name: "balance-economy-designer"
+    file: "codex/agents/balance-economy-designer.toml"
+    source_agent: "agents/balance-economy-designer.md"
+    status: draft-derived
+  - name: "branching-narrative-designer"
+    file: "codex/agents/branching-narrative-designer.toml"
+    source_agent: "agents/branching-narrative-designer.md"
+    status: draft-derived
+  - name: "scene-presentation-designer"
+    file: "codex/agents/scene-presentation-designer.toml"
+    source_agent: "agents/scene-presentation-designer.md"
+    status: draft-derived
+  - name: "audio-designer"
+    file: "codex/agents/audio-designer.toml"
+    source_agent: "agents/audio-designer.md"
+    status: draft-derived
+  - name: "quest-content-designer"
+    file: "codex/agents/quest-content-designer.toml"
+    source_agent: "agents/quest-content-designer.md"
+    status: draft-derived
+  - name: "dialogue-editor"
+    file: "codex/agents/dialogue-editor.toml"
+    source_agent: "agents/dialogue-editor.md"
+    status: draft-derived
+  - name: "tools-pipeline-engineer"
+    file: "codex/agents/tools-pipeline-engineer.toml"
+    source_agent: "agents/tools-pipeline-engineer.md"
+    status: draft-derived
+  - name: "technical-artist"
+    file: "codex/agents/technical-artist.toml"
+    source_agent: "agents/technical-artist.md"
     status: draft-derived
 
 templates:

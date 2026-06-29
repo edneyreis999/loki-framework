@@ -89,7 +89,22 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `technical-implementer` | `mvp` | Propor mudancas tecnicas em modo `proposal-only`; nao escreve diretamente no MVP. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
 | `catalogador` | `mvp` | Manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima em `AGENTS.md` e `CLAUDE.md` do consumidor. |
-| `narrative-designer` | `backlog` | Apoiar NSD, dialogo e integracao narrativa em escopo futuro. |
+| `game-product-owner` | `mvp` | Refinar objetivos, valor, prioridade e criterios de aceite para stories de jogo. |
+| `game-business-analyst` | `mvp` | Converter brief de jogo em requisitos, regras e lacunas verificaveis para refinamento. |
+| `game-designer` | `mvp` | Propor mecanicas, loops, regras e criterios de jogabilidade em modo `proposal-only`. |
+| `narrative-designer` | `mvp` | Propor estrutura narrativa, personagens, cenas, escolhas e integracao com gameplay. |
+| `ux-ui-designer` | `mvp` | Avaliar fluxos, HUD, menus, legibilidade e interacao em historias de jogo. |
+| `gameplay-engineer` | `mvp` | Propor decomposicao tecnica jogavel sem escrever diretamente em runtime do consumidor. |
+| `narrative-qa` | `mvp` | Revisar coerencia narrativa, flags, rotas, regressao de dialogo e riscos de conteudo. |
+| `level-designer` | `mvp` | Propor mapas, ritmo espacial, encounters e navegacao quando a story tocar superficie de level. |
+| `balance-economy-designer` | `mvp` | Avaliar progressao, recompensas, custos, economia e curva de dificuldade. |
+| `branching-narrative-designer` | `mvp` | Projetar rotas, escolhas, flags e consequencias para narrativa ramificada. |
+| `scene-presentation-designer` | `mvp` | Propor apresentacao de cenas, beats, transicoes, timing e leitura visual. |
+| `audio-designer` | `mvp` | Propor intencao de audio, musica, SFX e cues sem validar audio perceptivel automaticamente. |
+| `quest-content-designer` | `mvp` | Estruturar quests, objetivos, prerequisitos, recompensas e estados de conteudo. |
+| `dialogue-editor` | `mvp` | Revisar fala, voz, consistencia, concisao e clareza de dialogos. |
+| `tools-pipeline-engineer` | `mvp` | Propor automacoes, validadores e pipeline para conteudo de jogo sem escrita sensivel direta. |
+| `technical-artist` | `mvp` | Avaliar viabilidade de assets, apresentacao tecnica, constraints visuais e pipeline. |
 | `prompt-engineer` | `reference-only` | Apoiar consolidacao de instrucoes reutilizaveis em comandos depois que contratos existirem. |
 | `context-engineer-optimization` | `reference-only` | Inspirar melhoria continua e promocao de contexto sem copiar estruturas externas literalmente. |
 

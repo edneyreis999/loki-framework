@@ -56,6 +56,15 @@ Use quando o usuario trouxer feedback, bug visual, validacao humana, sensacao de
 8. Se informacao externa atual for material, proponha a frase exata da busca e peca consentimento antes de pesquisar.
 9. Nao pesquise na internet sem consentimento explicito para a frase apresentada.
 10. Proponha diagnostico e proximo passo sem aplicar escrita, somente quando nao houver duvida critica pendente.
+11. Nao altere codigo, docs, plano, commands, skills, agents, templates,
+    validators, manifest, runtime ou contexto duradouro como parte de
+    `loki:feedback`.
+12. Se o feedback revelar mudanca necessaria, encaminhe para
+    `loki:tech-analysis`, `loki:generate-action-plan`, `loki:run-plan`,
+    `loki:retrospectiva-tecnica` ou `loki:continuous-improvement`.
+13. A unica escrita permitida por este workflow e criar ou complementar um
+    artefato autorizado de `loki:retrospectiva-tecnica`, quando o objetivo for
+    registrar feedback, atrito, decisao humana, risco residual ou aprendizado.
 
 ## External Research Consent
 
@@ -86,12 +95,20 @@ como risco, pergunta aberta ou stop condition.
 - Proposta de proximo passo.
 - Gates necessarios.
 - Query de pesquisa proposta, consentimento e fontes citadas quando pesquisa externa for aprovada.
+- Registro em retrospectiva tecnica somente quando esse artefato estiver
+  explicitamente autorizado.
 
 ## Limits
 
 - Nao simula confirmacao humana.
 - Nao declara validacao humana como aprovada.
+- Nao aplica correcao nem executa alteracao proposta.
+- Nao escreve em codigo, docs, plano, task, interaction, build evidence,
+  commands, skills, agents, templates, validators, `manifest.yaml`,
+  `install-scopes.json` ou contexto duradouro por conta propria.
 - Nao escreve no consumer runtime/engine/framework.
+- Nao escreve em `.claude/**`, `.agents/**` ou `.codex/**`.
+- Nao cria artefato novo exceto retrospectiva tecnica autorizada.
 - Nao pesquisa na internet sem apresentar a frase exata da busca e receber consentimento explicito.
 
 ## Required Gates

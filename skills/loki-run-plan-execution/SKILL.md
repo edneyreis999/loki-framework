@@ -73,8 +73,8 @@ decisoes humanas e validators em uma execucao rastreavel.
    antes de implementar, paralelizando apenas quando houver fontes
    independentes.
 8. Resolver lacunas criticas antes de escrever. Nao iniciar implementacao se
-   faltar decisao humana, referencia executavel, approval, validator ou skill
-   tecnica exigida.
+   faltar decisao humana nao coberta pelo plano aprovado, referencia
+   executavel, approval, validator ou skill tecnica exigida.
 9. Carregar `<technology_required_skills>` apenas quando o usuario, a task, o
    contexto detectado ou retrospectiva aprovada indicar uma tecnologia.
 10. Executar tasks uma por vez na ordem topologica. Leitura pode ser paralela;
@@ -87,7 +87,21 @@ decisoes humanas e validators em uma execucao rastreavel.
     persistido ou artefato gerado como validado sem `<human_validation_gate>`.
 14. Atualizar `task-N.M.md`, `tasks.md`, `builds/faseN/` e `interaction/faseN/`
     apenas conforme permitido pelo plano ativo.
-15. Ao concluir a fase, recomendar `loki:retrospectiva-tecnica` com resumo de
+15. Quando uma task terminar com `pending-technical-review` ou qualquer input
+    humano material ainda pendente, a resposta final ao usuario deve terminar
+    com um disclaimer destacado, usando o status exato como titulo e bullets
+    concretos do que falta esclarecer, aprovar ou validar:
+
+    ```markdown
+    --------------
+    pending-technical-review
+    ------------
+
+    - Aprovar ou ajustar ...
+    - Confirmar ...
+    - Responder ...
+    ```
+16. Ao concluir a fase, recomendar `loki:retrospectiva-tecnica` com resumo de
     arquivos afetados, validators, gates humanos, riscos residuais, comandos e
     scripts executados, outputs inesperados, inferencias uteis e incorretas,
     mismatches de ambiente, correcoes do usuario e desperdicios que a proxima
@@ -110,6 +124,9 @@ decisoes humanas e validators em uma execucao rastreavel.
 - Evidencias de validators e build reports.
 - Atualizacao de status em `tasks.md` e `task-N.M.md`.
 - `LokiRunState` retomavel.
+- Disclaimer final destacado quando o status depender de input humano material
+  nao resolvido pelo plano aprovado, como `technical-review`,
+  `human-validation`, `approval`, `interview` ou outro gate pendente.
 - Recomendacao de retrospectiva ao fim da fase.
 
 ## Limits
@@ -136,6 +153,20 @@ decisoes humanas e validators em uma execucao rastreavel.
 - `technical-review` para mudanca em command, skill, agent, template ou
   validator.
 
+## Human Gate Resolution Policy
+
+- `Human Loop` em `tasks.md` e `task-N.M.md` identifica o tipo de revisao, mas
+  nao e uma ordem para parar sempre.
+- Informacao explicitamente aprovada no plano, em artefatos aprovados de fases
+  anteriores ou em confirmacao humana registrada deve ser tratada como aprovada
+  para execucao.
+- Pare e marque status pendente somente quando a execucao depender de input
+  humano novo: inferencia fora do plano, desvio necessario, impossibilidade de
+  cumprir o que estava descrito, validator falho/inconclusivo, escrita sensivel
+  nao autorizada ou validacao perceptivel/runtime ainda nao confirmada.
+- Quando parar, registre por que o plano nao bastou e liste as decisoes
+  concretas pendentes. Nao use `technical-review` como checkpoint cerimonial.
+
 ## Validators
 
 - `TASKS_MD` existe e referencia a fase alvo.
@@ -146,5 +177,6 @@ decisoes humanas e validators em uma execucao rastreavel.
 - `Execution Brief` foi produzido antes da primeira escrita.
 - Toda escrita ficou dentro do escopo da task ativa.
 - Validators foram executados ou justificados.
-- Human gates pendentes nao foram marcados como aprovados.
+- Human gates pendentes nao foram marcados como aprovados quando dependiam de
+  input humano material fora do plano aprovado.
 - `LokiRunState` permite retomada sem memoria da conversa.
