@@ -112,6 +112,12 @@ e para o modo de execucao. `--replace` e excepcional e exige approval separado.
 O manifest gerado em `.agents/loki-installation-manifest.json` registra origem,
 destino, tipo, `install_profile`, `install_scope` e status de cada link.
 
+O instalador bloqueia mistura de perfis. Se o destino ja tiver um manifest Loki
+de outro perfil, ou artefatos Loki conhecidos que nao pertencem ao perfil
+solicitado, pare e faca rollback manual dos links registrados no manifest
+anterior antes de rodar novo dry-run. Nao trate `consumer`, `package-source` e
+`all` como camadas incrementais.
+
 Se um destino antigo ainda tiver `.agents/agents` como symlink para o diretorio
 inteiro `agents/`, o instalador bloqueia os links por agente para evitar escrita
 acidental atraves do symlink. Remova esse symlink legado somente no destino

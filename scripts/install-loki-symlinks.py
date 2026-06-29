@@ -547,6 +547,92 @@ def plan_links(
     return planned
 
 
+def profile_selected_specs(specs: list[LinkSpec], profile: str) -> list[LinkSpec]:
+    return [
+        spec for spec in specs if scope_selected(spec.install_scope, profile)
+    ]
+
+
+def profile_excluded_specs(specs: list[LinkSpec], profile: str) -> list[LinkSpec]:
+    return [
+        spec for spec in specs if not scope_selected(spec.install_scope, profile)
+    ]
+
+
+def plan_profile_exclusion_blocks(
+    specs: list[LinkSpec],
+    destination_root: Path,
+    profile: str,
+) -> list[PlannedLink]:
+    blockers: list[PlannedLink] = []
+    for spec in profile_excluded_specs(specs, profile):
+        state, reason = classify_destination(
+            spec.destination,
+            spec.source,
+            destination_root,
+        )
+        if state == "missing":
+            continue
+
+        blockers.append(
+            PlannedLink(
+                source=spec.source,
+                destination=spec.destination,
+                link_type=spec.link_type,
+                source_kind=spec.source_kind,
+                install_scope=spec.install_scope,
+                existing_state=state,
+                status="blocked",
+                blocked=True,
+                reason=(
+                    f"destination contains artifact outside profile {profile}: "
+                    f"scope={spec.install_scope}; remove stale Loki install "
+                    "targets using the previous installation manifest before "
+                    f"applying profile {profile}"
+                    + (f"; existing state: {reason}" if reason else "")
+                ),
+            )
+        )
+    return blockers
+
+
+def existing_manifest_profile(destination_root: Path) -> str:
+    manifest_path = destination_root / MANIFEST_RELATIVE_PATH
+    if not manifest_path.exists():
+        return ""
+    if not manifest_path.is_file():
+        raise InstallError(f"installation manifest is not a file: {manifest_path}")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise InstallError(f"invalid installation manifest: {manifest_path}: {exc}") from exc
+
+    profile = manifest.get("install_profile")
+    if profile is None:
+        return ""
+    if not isinstance(profile, str):
+        raise InstallError(
+            f"invalid install_profile in installation manifest: {manifest_path}"
+        )
+    return profile
+
+
+def assert_profile_matches_existing_manifest(
+    destination_root: Path,
+    profile: str,
+) -> None:
+    existing_profile = existing_manifest_profile(destination_root)
+    if not existing_profile or existing_profile == profile:
+        return
+
+    raise InstallError(
+        "destination already has a Loki installation manifest for profile "
+        f"{existing_profile}; refusing to apply profile {profile}. Roll back the "
+        "existing Loki links from .agents/loki-installation-manifest.json, then "
+        "run a new dry-run for the desired profile."
+    )
+
+
 def print_plan(
     planned_links: list[PlannedLink],
     package_root: Path,
@@ -680,17 +766,26 @@ def run(argv: list[str]) -> int:
         package_root = resolve_package_root()
         destination_root = resolve_destination_root(args.dest)
         scope_config = read_install_scopes(package_root)
-        specs = build_link_specs(
+        assert_profile_matches_existing_manifest(destination_root, args.profile)
+        all_specs = build_link_specs(
             package_root,
             destination_root,
             scope_config=scope_config,
-            profile=args.profile,
+            profile="all",
         )
+        specs = profile_selected_specs(all_specs, args.profile)
         planned_links = plan_links(
             specs,
             destination_root=destination_root,
             replace=args.replace,
             dry_run=args.dry_run,
+        )
+        planned_links.extend(
+            plan_profile_exclusion_blocks(
+                all_specs,
+                destination_root=destination_root,
+                profile=args.profile,
+            )
         )
     except InstallError as exc:
         print(f"error: {exc}", file=sys.stderr)

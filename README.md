@@ -128,6 +128,13 @@ O script grava o manifest de auditoria no destino:
 $DEST/.agents/loki-installation-manifest.json
 ```
 
+O perfil instalado e tratado como parte do estado do destino. Se o destino ja
+tiver manifest Loki de outro perfil, ou se existirem artefatos Loki fora do
+perfil solicitado, o instalador bloqueia a execucao. Trocar entre `consumer`,
+`package-source` e `all` exige rollback manual dos links registrados no manifest
+anterior e um novo dry-run limpo para o perfil desejado; a troca nao e
+incremental.
+
 Instalacoes antigas podem ter `.agents/agents` como symlink para o diretorio
 inteiro `agents/`. O instalador atual usa um link por agente para respeitar
 `install-scopes.json`; se esse symlink legado existir, o dry-run bloqueia a
