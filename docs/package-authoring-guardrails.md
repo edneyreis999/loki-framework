@@ -94,6 +94,17 @@ Antes de escrever:
 ### Agents
 
 - Agentes devem ter responsabilidade estreita e formato `read-only` ou `proposal-only` por default no MVP.
+- `proposal-only` continua proibindo escrita em docs duradouros, runtime, codigo,
+  assets, config, inventarios finais, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
+  `.codex/**` e `.claude/**`, salvo approval explicito em outro contrato.
+- Workflows Loki que invoquem agentes `proposal-only` e exijam retrospectiva
+  tecnica por agente podem conceder uma excecao estreita: o agente pode escrever
+  somente o proprio arquivo `target_retrospective` exato sob o diretorio de
+  retrospectivas da fase ativa, como
+  `planos/<plano>/retrospetivas/faseN/<agent-name>-retrospectiva.md`.
+- Se o runtime nao suportar a excecao de escrita por arquivo, o agente deve
+  retornar `retrospective_handoff` completo e o workflow deve registrar essa
+  limitacao; nao transforme essa limitacao em permissao ampla de escrita.
 - `description` deve explicar gatilhos concretos e limites.
 - Metadados de agente devem distinguir `model_class`, `effort`, isolamento e
   projecao por adaptador quando o agente puder ser materializado em Claude Code,

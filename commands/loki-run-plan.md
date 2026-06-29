@@ -154,6 +154,14 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 - Handoffs `read-only` ou `proposal-only` podem rodar em paralelo quando as
   entradas forem independentes; seus retornos devem ser consolidados antes de
   qualquer escrita.
+- Quando o plano aprovado exigir retrospectiva tecnica por agente, um handoff
+  `proposal-only` pode receber permissao para escrever somente o proprio
+  `target_retrospective` exato sob o diretorio `retrospetivas/faseN/` do plano
+  ativo. Se o runtime nao suportar essa excecao por arquivo, o agente retorna
+  `retrospective_handoff` e o orquestrador registra a limitacao.
+- A excecao de retrospectiva nao autoriza escrita em docs duradouros,
+  inventarios finais, runtime, codigo, assets, config, `AGENTS.md`,
+  `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
 - Conflitos por arquivo, superficie, gate ou destino bloqueiam escrita ate resolucao.
 
 ## Handoffs

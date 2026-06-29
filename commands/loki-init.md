@@ -106,6 +106,13 @@ sobrescrever silenciosamente.
 1. Preflight e escopo:
    - confirmar `consumer_project_root`, `docs_root` e `plan_root`;
    - declarar allowed writes e forbidden writes;
+   - quando o workflow selecionar agent fan-out, declarar explicitamente a
+     intencao de usar subagents/delegacao e executar preflight de capacidade
+     antes de declarar agentes indisponiveis;
+   - em Codex, projetar esse preflight como descoberta direcionada de
+     capacidade multi-agent/subagent, por exemplo via `tool_search`; tratar
+     namespaces concretos de ferramenta como evidencia da sessao atual, nao
+     como contrato universal do pacote;
    - criar ou auditar `docs/` e `planos/000-init-loki/`;
    - criar ou auditar `interaction/fase1`, `builds/fase1` e
      `retrospetivas/fase1`;
@@ -126,11 +133,22 @@ sobrescrever silenciosamente.
      `docs/loki-init/engine-context.md`.
 4. Fan-out paralelo por `agent_init_envelope`:
    - selecionar agentes por perfil detectado, nao por hardcode de engine;
+   - registrar agentes planejados, invocados, bloqueados e pulados com motivo;
+   - se houver limite pratico ou configurado de concorrencia, executar fan-out
+     em lotes conservadores; em Codex, quando nenhum limite menor for conhecido,
+     usar `agents.max_threads` quando disponivel ou o default documentado de 6
+     como teto inicial, registrando qualquer limite observado diferente;
    - dar a cada agente um documento alvo, inventario alvo, retrospectiva alvo,
      fontes permitidas, budget e forbidden writes;
    - agentes atuais permanecem `read-only` ou `proposal-only`; quando o runtime
-     nao permitir escrita, eles retornam conteudo estruturado e o orquestrador
-     grava nos allowed writes;
+     nao permitir escrita em documentos finais ou inventarios, eles retornam
+     conteudo estruturado e o orquestrador grava nos allowed writes;
+   - quando o workflow exigir retrospectiva tecnica por agente, permitir que
+     cada agente escreva somente o proprio `target_retrospective` no diretorio
+     de retrospectivas da fase ativa; se o runtime nao suportar essa excecao,
+     exigir `retrospective_handoff` e registrar a limitacao;
+   - fechar ou liberar agentes concluidos antes de abrir novo lote quando o
+     runtime exigir capacidade limitada;
    - nenhum agente escreve no mesmo arquivo que outro.
 5. Retrospectiva por agente:
    - apos documento e inventario ou falha estruturada, cada agente selecionado
@@ -174,7 +192,9 @@ agent_init_envelope:
     max_files_per_agent: 0
     max_lines_per_agent_artifact: 0
     max_deep_read_bytes_per_agent: 0
-  write_mode: "proposal-only-or-orchestrator-write"
+  write_mode:
+    final_artifacts: "proposal-only-or-orchestrator-write"
+    retrospective: "direct-target-retrospective-or-retrospective-handoff"
 ```
 
 ## Output Contracts
@@ -221,8 +241,12 @@ conteudo util, mas nunca podem desaparecer silenciosamente.
   `planos/000-init-loki/builds/fase1/`.
 - Contexto de tecnologia registra evidencia, confianca e skills sugeridas sem
   hardcode de engine.
+- Agent fan-out registra preflight de capacidade, metodo de descoberta,
+  agentes planejados, invocados, bloqueados e pulados, com motivos.
 - Cada agente selecionado tem documento, inventario e retrospectiva, ou falha
   estruturada equivalente.
+- Retrospectivas escritas por agentes `proposal-only` ficam restritas ao
+  `target_retrospective` exato sob `planos/000-init-loki/retrospetivas/fase1/`.
 - `docs/index.xml` foi criado ou atualizado quando documentos duradouros foram
   criados.
 - `planos/000-init-loki/tasks.md` e resume state refletem status, conflitos,
@@ -277,6 +301,17 @@ loki_init_state:
   agent_outputs: {}
   agent_inventories: {}
   agent_retrospectives: {}
+  agent_fanout:
+    capability_preflight: ""
+    discovery_method: ""
+    compatible_tools_found: []
+    planned: []
+    invoked: []
+    blocked: []
+    skipped: []
+    batch_limit_configured: null
+    batch_limit_observed: null
+    write_mode_by_agent: {}
   conflicts: []
   open_questions: []
   validators_run: []

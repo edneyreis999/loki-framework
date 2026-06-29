@@ -145,6 +145,13 @@ decisoes humanas e validators em uma execucao rastreavel.
   ou `proposal-only` podem rodar em paralelo quando as entradas forem
   independentes e retornam contexto, checklist ou proposta para consolidacao
   pelo orquestrador.
+- Excecao: quando o plano aprovado exigir retrospectiva tecnica por agente, um
+  handoff `proposal-only` pode escrever somente o proprio
+  `target_retrospective` exato sob `retrospetivas/faseN/`. Se isso nao for
+  suportado pelo runtime, exigir `retrospective_handoff` e registrar a
+  limitacao. Essa excecao nao se aplica a docs duradouros, inventarios finais,
+  runtime, codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
+  `.codex/**` ou `.claude/**`.
 
 ## Required Gates
 

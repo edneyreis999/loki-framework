@@ -71,13 +71,21 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 7. Quando formatos de runtime divergirem, mantenha um contrato Loki como fonte e gere as projecoes exigidas: Markdown/YAML para Claude Code e TOML em `codex/agents/` para Codex.
 8. Defina uma responsabilidade estreita. O agente deve fazer uma coisa bem e retornar uma saida consolidada.
 9. Defina o modo default do Loki como `proposal-only`, salvo approval humano explicito em fase futura.
-10. Nao embuta regras de projeto, engine ou framework em agentes core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
-11. Use placeholders genericos para fronteiras do consumidor: `<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `<domain_ids>` e `<human_validation_gate>`.
-12. Limite ferramentas e permissoes ao minimo necessario. Em plugin Claude Code, nao dependa de `hooks`, `mcpServers` ou `permissionMode` para comportamento essencial, porque esses campos podem ser ignorados.
-13. Para Codex, lembre que subagents so sao spawned quando o usuario pede explicitamente; eles herdam sandbox/approval do turno pai, e fan-out aumenta custo e latencia.
-14. Inclua formato de resposta estruturado para o orquestrador detectar conflitos por arquivo, `<domain_ids>`, superficie e gate.
-15. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
-16. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
+10. Quando um workflow Loki exigir retrospectiva tecnica por agente, permita no
+   contrato apenas uma excecao estreita de escrita: o agente pode escrever o
+   proprio `target_retrospective` exato no diretorio de retrospectivas da fase
+   ativa. Essa excecao nao autoriza docs duradouros, inventarios finais,
+   runtime, codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
+   `.codex/**` ou `.claude/**`.
+11. Se o adaptador nao conseguir aplicar a excecao por arquivo, exija
+   `retrospective_handoff` e registre a limitacao no workflow chamador.
+12. Nao embuta regras de projeto, engine ou framework em agentes core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
+13. Use placeholders genericos para fronteiras do consumidor: `<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `<domain_ids>` e `<human_validation_gate>`.
+14. Limite ferramentas e permissoes ao minimo necessario. Em plugin Claude Code, nao dependa de `hooks`, `mcpServers` ou `permissionMode` para comportamento essencial, porque esses campos podem ser ignorados.
+15. Para Codex, lembre que subagents so sao spawned quando o usuario pede explicitamente; eles herdam sandbox/approval do turno pai, e fan-out aumenta custo e latencia.
+16. Inclua formato de resposta estruturado para o orquestrador detectar conflitos por arquivo, `<domain_ids>`, superficie e gate.
+17. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
+18. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
 
 ## References
 
@@ -94,6 +102,8 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - O agente declara `mode`, `allowed_writes`, `forbidden_writes`, `required_gates` e `response_format`.
 - Ferramentas, modelo, effort, permissoes e gates sao minimos para a tarefa.
 - O agente nao escreve diretamente em superficies sensiveis no MVP.
+- Se houver retrospectiva tecnica por agente, qualquer escrita direta fica
+  limitada ao `target_retrospective` exato ou vira `retrospective_handoff`.
 - A saida tem evidencia, risco, confianca e proximo passo.
 - O agente declara quando deve parar e devolver ao orquestrador.
 - Conflitos por arquivo, `<domain_ids>`, `<consumer_runtime_surfaces>`, gate ou destino ficam detectaveis.
