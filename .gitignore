@@ -3,6 +3,7 @@
 .agents
 .codex
 planos
+.DS_Store
 # AgentOps session artifacts
 .agents/
 frameworks-de-referencia
