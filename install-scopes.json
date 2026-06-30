@@ -8,7 +8,7 @@
   "artifacts": {
     "commands": {
       "loki-init.md": "both",
-      "loki-continuous-improvement.md": "internal-only",
+      "loki-continuous-improvement.md": "both",
       "loki-enrich-tasks.md": "both",
       "loki-feedback.md": "both",
       "loki-generate-action-plan.md": "both",
@@ -80,7 +80,7 @@
       "loki-agent-creator": "both",
       "loki-command-creator": "both",
       "loki-command-workflows": "both",
-      "loki-continuous-improvement": "internal-only",
+      "loki-continuous-improvement": "both",
       "loki-documentation-writing": "both",
       "loki-enrich-tasks": "both",
       "loki-external-knowledge-extraction": "internal-only",
