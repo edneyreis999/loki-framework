@@ -70,6 +70,9 @@
       "tools-pipeline-engineer.toml": "consumer-only",
       "ux-ui-designer.toml": "consumer-only"
     },
+    "docs": {
+      "loki-init-inventory-contracts.md": "both"
+    },
     "skills": {
       "excalidraw-diagram-generator": "both",
       "json-canvas": "both",

@@ -22,8 +22,8 @@ referencia sem copiar sua estrutura literalmente.
 - `docs/**/*.md`: verdade de negocio, lore, fluxo funcional, termos, regras
   especificas e contexto factual do software ou jogo.
 - `docs/loki-init/**`: documentacao inicial produzida por `loki:init`,
-  incluindo inventario comum, contexto de tecnologia, documentos por
-  perspectiva, perguntas abertas e conflitos.
+  incluindo inventario comum, contexto de tecnologia, pastas de inventario por
+  agente, perguntas abertas e conflitos.
 - `docs/index.xml`: catalogo navegavel por maquina que ajuda a localizar os
   documentos certos com baixo custo de contexto.
 - `AGENTS.md`: instrucoes project-wide e roteamento minimo para dizer quando a

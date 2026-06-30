@@ -40,7 +40,7 @@ escalation_signals:
   - "proposta altera contexto duradouro do consumidor"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/catalogador.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/catalogador.toml com sandbox workspace-write; escrita limitada por contrato ao envelope init_final_cataloger de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - catalogador
   - docs-cataloger
@@ -84,8 +84,10 @@ consumidor, mantendo coerencia entre `docs/**/*.md`, `docs/index.xml`,
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: quando invocado como `init_final_cataloger`, rodar somente na
+  consolidacao serial final, usando pastas de inventario validadas como fontes
+  e escrevendo apenas os destinos de catalogacao explicitamente declarados no
+  envelope.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.

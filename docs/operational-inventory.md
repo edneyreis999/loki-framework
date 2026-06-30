@@ -30,7 +30,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, documentos de contexto por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
+| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, pastas de inventario por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
@@ -127,7 +127,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills, comandos, agentes Markdown e projecoes Codex instalaveis. |
+| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills, comandos, agentes Markdown, docs compartilhados declarados e projecoes Codex instalaveis. |
 
 ## Templates
 
@@ -160,6 +160,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `docs/model-effort-guidance.md` | `mvp` | Definir classes provider-neutral de modelo, effort, sinais de escalamento e projecao por adaptador para artefatos Loki. |
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
+| `docs/loki-init-inventory-contracts.md` | `mvp` | Definir contrato compartilhado de conteudo minimo para pastas de inventario por agente produzidas por `loki:init`. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |
 | `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki:init` para selecao de agentes. |
 | Fontes historicas externalizadas | `reference-only` | Usadas como origem antes da publicacao do pacote; nao sao dependencias operacionais. |

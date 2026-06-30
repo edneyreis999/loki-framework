@@ -45,7 +45,7 @@ escalation_signals:
   - "criterios de aceite dependem de comportamento perceptivel ou validacao de rota/jornada"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/game-business-analyst.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/game-business-analyst.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - game-business-analyst
   - game-ba
@@ -103,8 +103,9 @@ valor, design, narrativa, UX, tecnica e QA em criterios testaveis.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
+  `docs/loki-init-inventory-contracts.md`.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.

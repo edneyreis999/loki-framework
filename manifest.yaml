@@ -18,6 +18,7 @@ source:
   model_effort_guidance: "docs/model-effort-guidance.md"
   authoring_guardrails: "docs/package-authoring-guardrails.md"
   consumer_context_contract: "docs/project-context-catalog.md"
+  loki_init_inventory_contracts: "docs/loki-init-inventory-contracts.md"
   self_contained_policy: "This package must not require blueprint, plan, .agents, .claude, or game-project files outside this directory to operate."
 
 install_policy:
@@ -79,6 +80,7 @@ guardrails:
     - "docs/model-effort-guidance.md"
     - "docs/package-authoring-guardrails.md"
     - "docs/project-context-catalog.md"
+    - "docs/loki-init-inventory-contracts.md"
     - "codex/agents/"
     - "scripts/install-loki-symlinks.py"
   non_normative_sources:
@@ -544,6 +546,8 @@ docs:
   - file: "docs/package-authoring-guardrails.md"
     status: draft
   - file: "docs/project-context-catalog.md"
+    status: draft
+  - file: "docs/loki-init-inventory-contracts.md"
     status: draft
   - file: "docs/self-containment-audit.md"
     status: completed

@@ -99,12 +99,17 @@ Antes de escrever:
 - `proposal-only` continua proibindo escrita em docs duradouros, runtime, codigo,
   assets, config, inventarios finais, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` e `.claude/**`, salvo approval explicito em outro contrato.
-- `loki:init` pode classificar agentes como `init_context_scoped_writer` e
-  conceder uma excecao estreita: cada agente escreve somente o proprio
-  `target_document` exato em `docs/loki-init/<perspective>-context.md`. Essa
-  excecao nao autoriza `docs/index.xml`, `planos/000-init-loki/tasks.md`,
-  runtime, assets, dados, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
-  `.codex/**` ou `.claude/**`.
+- `loki:init` pode classificar agentes de dominio como
+  `init_inventory_domain_writer` e conceder uma excecao estreita: cada agente
+  escreve somente dentro do proprio `target_inventory_dir` em
+  `docs/loki-init/<agent-name>/**`, validado contra
+  `docs/loki-init-inventory-contracts.md`. Essa excecao nao autoriza
+  `docs/index.xml`, `planos/000-init-loki/tasks.md`, runtime, assets, dados,
+  `AGENTS.md`, `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
+- `loki:init` deve manter `catalogador` fora do fan-out paralelo de inventarios.
+  Quando invocado, ele e `init_final_cataloger`: roda uma vez na consolidacao
+  serial, usa as pastas de inventario validadas como fontes e so escreve os
+  destinos de catalogacao explicitamente declarados no envelope.
 - Quando `loki:init` exigir retrospectiva tecnica por agente, todo agente
   invocado pode receber tambem uma excecao estreita para escrever somente o
   proprio `target_retrospective` exato em
