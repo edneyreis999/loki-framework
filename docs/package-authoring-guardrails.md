@@ -105,6 +105,13 @@ Antes de escrever:
   excecao nao autoriza `docs/index.xml`, `planos/000-init-loki/tasks.md`,
   runtime, assets, dados, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` ou `.claude/**`.
+- Quando `loki:init` exigir retrospectiva tecnica por agente, todo agente
+  invocado pode receber tambem uma excecao estreita para escrever somente o
+  proprio `target_retrospective` exato em
+  `planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md`.
+  Essa excecao nao autoriza docs duradouros, inventarios finais, runtime,
+  codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
+  `.codex/**` ou `.claude/**`.
 - `loki:run-plan` pode invocar agentes `scoped-writer` como owners de escrita
   por task. O envelope deve declarar `target_files`, `allowed_writes`,
   `scoped_write_domains`, validators e gates; nenhum agente escreve fora desses

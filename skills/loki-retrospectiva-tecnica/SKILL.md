@@ -16,6 +16,7 @@ arguments:
     - interactions
     - execution_trace
     - scripts_or_commands
+    - target_retrospective
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -52,7 +53,7 @@ Use ao concluir ou pausar claramente uma fase, ou assim que uma dificuldade real
 
 ## Procedure
 
-1. Declare objetivo, resultado entregue, criterio de conclusao e restricoes relevantes.
+1. Declare objetivo, resultado entregue, criterio de conclusao, restricoes relevantes e `target_retrospective` quando o workflow chamador tiver fornecido um destino exato.
 2. Liste artefatos criados, alterados, consultados ou descartados.
 3. Registre validacoes feitas, nao feitas, bloqueadas, inconclusivas ou dependentes de gate humano.
 4. Registre decisoes humanas, correcoes do usuario, mudancas de escopo e pendencias.
@@ -149,7 +150,7 @@ Para cada atrito material, registre:
 
 ## Outputs
 
-- Retrospectiva Markdown em `retrospetivas/faseN/`.
+- Retrospectiva Markdown em `retrospetivas/faseN/`, ou no `target_retrospective` exato quando o workflow chamador tiver fornecido um destino por agente.
 - Mapa de atritos de execucao com impacto e caminho minimo recomendado.
 - Candidatos para melhoria continua baseados apenas no que foi validado ou resolveu o problema de fato.
 

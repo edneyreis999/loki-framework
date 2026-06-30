@@ -37,10 +37,14 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 - Tasks, builds, interaction records e validacoes da fase.
 - Rastro operacional relevante: ferramentas, comandos, scripts, buscas, leituras, tentativas falhas, tentativas uteis, inferencias e correcoes de rota.
 - Riscos residuais e pendencias humanas.
+- `target_retrospective` exato quando um workflow chamador exigir retrospectiva
+  tecnica por agente.
 
 ## Outputs
 
 - `retrospetivas/faseN/retrospectiva-faseN-<slug>.md`.
+- `retrospetivas/faseN/<agent-name>-retrospectiva.md` quando o workflow
+  chamador fornecer `target_retrospective` exato para retrospectiva por agente.
 - Aprendizados reutilizaveis.
 - Atritos de execucao estruturados para reduzir custo de tokens, ferramentas, buscas e interacoes futuras.
 - Candidatos estruturados para `loki:continuous-improvement`, baseados apenas no que foi validado ou resolveu o problema de fato.
@@ -48,6 +52,7 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 ## Allowed Writes
 
 - Retrospectiva do plano ativo.
+- `target_retrospective` exato fornecido pelo workflow chamador.
 - Pequenos resumos de status quando a task exigir.
 
 ## Forbidden Writes
@@ -71,6 +76,8 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 ## Validators
 
 - Cada aprendizado reutilizavel cita fonte concreta da fase.
+- Quando `target_retrospective` for fornecido, a retrospectiva foi escrita
+  exatamente nesse caminho e nao em outro arquivo.
 - A retrospectiva separa fato observado, inferencia, decisao humana, validacao, risco residual, hipotese, atrito operacional e desperdicio.
 - Quando houver erro, acerto relevante ou atrito recorrente, capture tambem `expected behavior`, `actual behavior`, `context`, `suspected cause` e `reuse guidance`.
 - Scripts Python, shell commands, validadores e ferramentas usados para chegar ao resultado devem registrar objetivo, entrada, resultado observado, se contribuiu, se surpreendeu a LLM e como reutilizar ou evitar.
