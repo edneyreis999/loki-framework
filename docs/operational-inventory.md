@@ -121,7 +121,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
-| `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos e TOMLs Codex. |
+| `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex e tags de tipo de projeto dos agentes no `manifest.yaml`. |
 
 ## Install Scope Source
 
@@ -161,7 +161,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |
-| `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes e destinos locais. |
+| `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki:init` para selecao de agentes. |
 | Fontes historicas externalizadas | `reference-only` | Usadas como origem antes da publicacao do pacote; nao sao dependencias operacionais. |
 
 ## Extensoes Opcionais: RPG Maker MZ

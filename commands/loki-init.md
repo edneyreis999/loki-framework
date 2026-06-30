@@ -113,12 +113,17 @@ sobrescrever silenciosamente.
      capacidade multi-agent/subagent, por exemplo via `tool_search`; tratar
      namespaces concretos de ferramenta como evidencia da sessao atual, nao
      como contrato universal do pacote;
-   - executar tambem preflight de catalogo de agentes antes da selecao:
-     listar agentes disponiveis/instalados nas superficies aprovadas do
-     adaptador quando existirem, como `.codex/agents`, `.agents/agents`,
-     `agents/`, `codex/agents/` ou inventario equivalente de agentes;
-   - registrar fonte do catalogo de agentes, agentes disponiveis e limitacoes
-     de descoberta; leitura de `.codex/**` ou `.agents/**` nao autoriza escrita
+   - executar tambem preflight de catalogo de agentes antes da selecao: ler
+     `manifest.yaml` como fonte estruturada primaria de agentes,
+     `supported_project_types`, `agent_project_tag_policy` e
+     `agents[].project_tags`;
+   - quando superficies aprovadas do adaptador existirem, como `.codex/agents`,
+     `.agents/agents`, `agents/`, `codex/agents/` ou inventario equivalente de
+     agentes, usa-las como evidencia de disponibilidade/capacidade, nao como
+     fonte primaria de tags de aplicabilidade;
+   - registrar fonte do catalogo de agentes, agentes disponiveis,
+     `supported_project_types`, tag base, tags por agente e limitacoes de
+     descoberta; leitura de `.codex/**` ou `.agents/**` nao autoriza escrita
      nesses caminhos;
    - criar ou auditar `docs/` e `planos/000-init-loki/`;
    - criar ou auditar `interaction/fase1`, `builds/fase1` e
@@ -134,6 +139,12 @@ sobrescrever silenciosamente.
    - produzir `docs/loki-init/project-inventory.md`.
 3. Contexto de tecnologia:
    - detectar ou aplicar hints de tipo de projeto, engine e framework;
+   - classificar `selected_project_type` em exatamente um valor de
+     `supported_project_types` do `manifest.yaml`; `core` nao e tipo de
+     projeto classificavel, e tag base sempre incluida;
+   - quando `project_type_hint` existir, aceitar somente se ele estiver em
+     `supported_project_types` ou registrar conflito/open question antes do
+     fan-out;
    - registrar evidencia, confianca, skills tecnicas sugeridas, superficies
      sensiveis, validators e human gates;
    - registrar skills tecnicas candidatas como contexto para os agentes
@@ -141,12 +152,20 @@ sobrescrever silenciosamente.
    - produzir `docs/loki-init/technology-context.md` ou
      `docs/loki-init/engine-context.md`.
 4. Fan-out paralelo por `agent_init_envelope`:
-   - selecionar agentes pelo perfil detectado cruzado com o catalogo
-     disponivel, nao por memoria nem por hardcode de engine;
-   - quando um perfil amplo como game-dev for detectado, considerar todos os
-     agentes aplicaveis do catalogo disponivel; se algum agente aplicavel nao
-     for invocado, registrar `skipped` com motivo concreto;
-   - registrar matriz `available -> selected -> invoked | blocked | skipped`
+   - montar `inventory_required` pela uniao ordenada, sem duplicatas, dos
+     agentes em `manifest.yaml` marcados com a tag base `core` e dos agentes
+     marcados com `selected_project_type`;
+   - registrar `inventory_required_reasons` por agente, apontando a tag que
+     justificou a inclusao, por exemplo `project_tags: core` ou
+     `project_tags: game-dev`;
+   - usar `inventory_required` como lista selecionada para envelopes do init,
+     limitada pela disponibilidade/capacidade do adaptador; se algum agente
+     requerido nao for invocado, registrar `blocked` ou `skipped` com motivo
+     concreto;
+   - para `software-development`, enquanto nao houver agentes especializados
+     com essa tag, selecionar somente agentes `core`;
+   - registrar matriz
+     `available -> inventory_required -> selected -> invoked | blocked | skipped`
      com motivo, documento alvo, inventario alvo e retrospectiva alvo;
    - se houver limite pratico ou configurado de concorrencia, executar fan-out
      em lotes conservadores; em Codex, quando nenhum limite menor for conhecido,
@@ -187,6 +206,8 @@ Cada agente selecionado recebe um envelope com este formato minimo:
 agent_init_envelope:
   agent: "<agent-name>"
   purpose: ""
+  project_tags: []
+  selection_reason: []
   target_document: "docs/loki-init/<perspective>-context.md"
   target_inventory: "docs/loki-init/inventories/<agent-name>-inventory.md"
   target_retrospective: "planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md"
@@ -253,15 +274,25 @@ conteudo util, mas nunca podem desaparecer silenciosamente.
   `.claude/**`, `AGENTS.md` ou `CLAUDE.md` foi escrito.
 - `docs/loki-init/project-inventory.md` existe ou a falha estruturada esta em
   `planos/000-init-loki/builds/fase1/`.
-- Contexto de tecnologia registra evidencia, confianca e skills sugeridas sem
-  hardcode de engine.
+- Contexto de tecnologia registra evidencia, confianca, `selected_project_type`
+  e skills sugeridas sem hardcode de engine.
+- `selected_project_type` esta em `supported_project_types` lido de
+  `manifest.yaml`.
+- `agent_project_tag_policy.base_tag` e `core`, e `core` nao aparece em
+  `supported_project_types`.
+- Todo agente em `manifest.yaml` possui `project_tags` nao vazio, e cada tag e
+  `core` ou pertence a `supported_project_types`.
+- Todo `codex_agents[].source_agent` em `manifest.yaml` aponta para agente
+  existente.
 - Agent fan-out registra preflight de capacidade, metodo de descoberta,
-  catalogo de agentes usado, agentes disponiveis, planejados, invocados,
-  bloqueados e pulados, com motivos.
-- Para perfis amplos como game-dev, todo agente aplicavel no catalogo
-  disponivel esta em `selected`, `invoked`, `blocked` ou `skipped` com motivo;
-  `skipped: []` so e valido quando o catalogo foi auditado e nenhum agente
-  aplicavel ficou fora.
+  catalogo de agentes usado, tipos suportados, tags por agente, agentes
+  disponiveis, inventario requerido, planejados, invocados, bloqueados e
+  pulados, com motivos.
+- `inventory_required` e exatamente a uniao ordenada dos agentes marcados com
+  `core` e dos agentes marcados com `selected_project_type`; todo agente
+  requerido esta em `selected`, `invoked`, `blocked` ou `skipped` com motivo.
+- `software-development` pode selecionar somente `core` enquanto nao houver
+  agentes especializados com essa tag.
 - Cada agente selecionado tem documento, inventario e retrospectiva, ou falha
   estruturada equivalente.
 - Retrospectivas escritas por agentes `proposal-only` ficam restritas ao
@@ -315,6 +346,7 @@ loki_init_state:
     ignored_patterns: []
     project_areas: []
     detected_project_type: []
+    selected_project_type: ""
     detected_engines: []
     git_available: false
   agent_outputs: {}
@@ -324,8 +356,15 @@ loki_init_state:
     capability_preflight: ""
     discovery_method: ""
     agent_catalog_source: []
+    supported_project_types: []
+    agent_project_tag_policy:
+      base_tag: ""
+      selection_rule: ""
+    agent_project_tags: {}
     compatible_tools_found: []
     available: []
+    inventory_required: []
+    inventory_required_reasons: {}
     selected: []
     planned: []
     invoked: []

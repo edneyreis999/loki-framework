@@ -59,38 +59,48 @@ used_by:
    Treat discovered tool namespaces as adapter/session evidence, not universal
    Loki package contracts.
 7. Before selecting agents, run an explicit agent catalog preflight for the
-   active adapter. Read approved agent surfaces when present, such as
-   `.codex/agents`, `.agents/agents`, `agents/`, `codex/agents` or an
-   equivalent adapter role list. Record the catalog source, available agents and
-   discovery limits; reading install mirrors does not permit writing them.
+   active adapter. Prefer the installed `manifest.yaml` as the structured
+   catalog for `supported_project_types`, `agent_project_tag_policy` and
+   `agents[].project_tags`. Read approved adapter surfaces when present, such
+   as `.codex/agents`, `.agents/agents`, `agents/`, `codex/agents` or an
+   equivalent adapter role list only as availability/capability evidence.
+   Record the catalog source, supported project types, base tag, project tags,
+   available agents and discovery limits; reading install mirrors does not
+   permit writing them.
 8. Pass detected technology and candidate technology-specific skills into the
    selected agent envelopes without executing engine-specific rules in the core
    init workflow. Specialist agents decide whether a technology skill is needed.
-9. Select agents by crossing the detected profile with the available catalog.
-   For broad profiles such as game-dev, include every applicable available
-   agent in `selected`, `invoked`, `blocked` or `skipped` with a concrete
-   reason.
-10. Build an `agent_init_envelope` for each selected agent, including
-   `target_document`, `target_inventory`, `target_retrospective`,
-   `allowed_sources`, `forbidden_writes`, `context_budget` and `write_mode`.
-11. Keep current agents read-only or proposal-only. Prefer structured handoffs
+9. Classify the project into exactly one `selected_project_type` from
+   `supported_project_types`; `core` is not classifiable, it is the base tag
+   that is always included. If `project_type_hint` is outside the supported
+   list, record a conflict/open question before fan-out.
+10. Build `inventory_required` from the ordered union of agents tagged with the
+   base tag `core` plus agents tagged with `selected_project_type`, with no
+   duplicates. Record `inventory_required_reasons` by agent. For
+   `software-development`, selecting only `core` agents is valid until
+   specialized agents receive that tag.
+11. Build an `agent_init_envelope` for each selected agent, including
+   `project_tags`, `selection_reason`, `target_document`, `target_inventory`,
+   `target_retrospective`, `allowed_sources`, `forbidden_writes`,
+   `context_budget` and `write_mode`.
+12. Keep current agents read-only or proposal-only. Prefer structured handoffs
    from specialist agents and serial materialization by the orchestrator for
    final documents and inventories.
-12. When per-agent technical retrospectives are required, the selected agent may
+13. When per-agent technical retrospectives are required, the selected agent may
    write only its exact `target_retrospective` under the active phase
    retrospective directory. If the runtime cannot support that file-specific
    exception, require `retrospective_handoff` and record the limitation.
-13. For Codex subagent fan-out, use conservative batches, prefer the configured
+14. For Codex subagent fan-out, use conservative batches, prefer the configured
     `agents.max_threads` when known, otherwise use the documented default of 6
     as an initial ceiling, record observed limits and close completed agents
     before opening a later batch.
-14. Require document, inventory and retrospective per selected agent, or a
+15. Require document, inventory and retrospective per selected agent, or a
    structured failure artifact.
-15. Record `available`, `selected`, `planned`, `invoked`, `blocked` and
-    `skipped` agents with reasons before consolidation.
-16. Consolidate serially: conflicts, open questions, docs index, init README,
+16. Record `available`, `inventory_required`, `selected`, `planned`, `invoked`,
+    `blocked` and `skipped` agents with reasons before consolidation.
+17. Consolidate serially: conflicts, open questions, docs index, init README,
     task state and next recommended Loki command.
-17. Run validators from the command contract and record evidence in
+18. Run validators from the command contract and record evidence in
     `planos/000-init-loki/builds/fase1/` when executing in a consumer project.
 
 ## Limits
@@ -100,8 +110,9 @@ used_by:
   `CLAUDE.md` during init.
 - Do not infer subagent capability absence from the initial tool surface alone;
   run adapter-aware discovery before choosing serial fallback.
-- Do not infer a sufficient agent set from memory or from the first few obvious
-  roles; audit the available agent catalog and justify every applicable skipped
+- Do not infer a sufficient agent set from memory or from obvious role names;
+  classify the project against `supported_project_types`, derive required
+  agents from `manifest.yaml` project tags, and justify every required skipped
   agent.
 - Do not let proposal-only agents write final docs, inventories, runtime,
   assets, code or config. The only default write exception is the selected

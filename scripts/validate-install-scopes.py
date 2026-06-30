@@ -151,6 +151,201 @@ def validate_manifest_entries(package_root: Path) -> None:
         raise ValueError("missing manifest/source entries: " + ", ".join(missing))
 
 
+def parse_manifest_scalar(value: str) -> str:
+    text = value.strip()
+    if (
+        len(text) >= 2
+        and text[0] == text[-1]
+        and text.startswith(("'", '"'))
+    ):
+        return text[1:-1]
+    return text
+
+
+def parse_manifest_list_value(value: str) -> list[str]:
+    text = value.strip()
+    if not text or text == "[]":
+        return []
+    if not (text.startswith("[") and text.endswith("]")):
+        return [parse_manifest_scalar(text)]
+    inner = text[1:-1].strip()
+    if not inner:
+        return []
+    return [
+        parse_manifest_scalar(part)
+        for part in inner.split(",")
+        if part.strip()
+    ]
+
+
+def parse_manifest_agent_catalog(package_root: Path) -> dict:
+    lines = (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines()
+    supported_project_types: list[str] = []
+    agent_project_tag_policy: dict[str, str] = {}
+    agents: list[dict] = []
+    codex_agents: list[dict] = []
+
+    section = ""
+    current_agent: dict | None = None
+    current_codex_agent: dict | None = None
+    project_tags_owner: dict | None = None
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        if indent == 0 and stripped.endswith(":"):
+            section = stripped[:-1]
+            current_agent = None
+            current_codex_agent = None
+            project_tags_owner = None
+            continue
+
+        if section == "supported_project_types":
+            if indent == 2 and stripped.startswith("- "):
+                supported_project_types.append(parse_manifest_scalar(stripped[2:]))
+            continue
+
+        if section == "agent_project_tag_policy":
+            if indent == 2 and ":" in stripped:
+                key, value = stripped.split(":", 1)
+                agent_project_tag_policy[key.strip()] = parse_manifest_scalar(value)
+            continue
+
+        if section == "agents":
+            if indent == 2 and stripped.startswith("- "):
+                current_agent = {}
+                agents.append(current_agent)
+                current_codex_agent = None
+                project_tags_owner = None
+                item = stripped[2:]
+                if ":" in item:
+                    key, value = item.split(":", 1)
+                    current_agent[key.strip()] = parse_manifest_scalar(value)
+                continue
+            if current_agent is None:
+                continue
+            if indent == 4 and ":" in stripped:
+                key, value = stripped.split(":", 1)
+                key = key.strip()
+                if key == "project_tags":
+                    current_agent[key] = parse_manifest_list_value(value)
+                    project_tags_owner = current_agent
+                else:
+                    current_agent[key] = parse_manifest_scalar(value)
+                    project_tags_owner = None
+                continue
+            if indent == 6 and project_tags_owner is current_agent:
+                if stripped.startswith("- "):
+                    current_agent.setdefault("project_tags", []).append(
+                        parse_manifest_scalar(stripped[2:])
+                    )
+                continue
+
+        if section == "codex_agents":
+            if indent == 2 and stripped.startswith("- "):
+                current_codex_agent = {}
+                codex_agents.append(current_codex_agent)
+                current_agent = None
+                project_tags_owner = None
+                item = stripped[2:]
+                if ":" in item:
+                    key, value = item.split(":", 1)
+                    current_codex_agent[key.strip()] = parse_manifest_scalar(value)
+                continue
+            if current_codex_agent is None:
+                continue
+            if indent == 4 and ":" in stripped:
+                key, value = stripped.split(":", 1)
+                current_codex_agent[key.strip()] = parse_manifest_scalar(value)
+
+    return {
+        "supported_project_types": supported_project_types,
+        "agent_project_tag_policy": agent_project_tag_policy,
+        "agents": agents,
+        "codex_agents": codex_agents,
+    }
+
+
+def validate_agent_project_tags(package_root: Path) -> None:
+    catalog = parse_manifest_agent_catalog(package_root)
+    supported_project_types = catalog["supported_project_types"]
+    agent_project_tag_policy = catalog["agent_project_tag_policy"]
+    agents = catalog["agents"]
+    codex_agents = catalog["codex_agents"]
+
+    failures: list[str] = []
+    required_project_types = {"game-dev", "software-development"}
+    missing_project_types = sorted(
+        required_project_types - set(supported_project_types)
+    )
+    if missing_project_types:
+        failures.append(
+            "supported_project_types missing: "
+            + ", ".join(missing_project_types)
+        )
+
+    base_tag = agent_project_tag_policy.get("base_tag")
+    if base_tag != "core":
+        failures.append("agent_project_tag_policy.base_tag must be core")
+    if "core" in supported_project_types:
+        failures.append("core must not appear in supported_project_types")
+
+    allowed_tags = set(supported_project_types)
+    if base_tag:
+        allowed_tags.add(base_tag)
+
+    agent_files: set[str] = set()
+    agent_names: set[str] = set()
+    for agent in agents:
+        name = agent.get("name", "")
+        file = agent.get("file", "")
+        tags = agent.get("project_tags", [])
+        if not name:
+            failures.append("agent entry missing name")
+        elif name in agent_names:
+            failures.append(f"duplicate agent in manifest: {name}")
+        else:
+            agent_names.add(name)
+        if not file:
+            failures.append(f"agent {name or '<unnamed>'} missing file")
+        else:
+            agent_files.add(file)
+            if not (package_root / file).exists():
+                failures.append(f"agent file does not exist: {file}")
+        if not tags:
+            failures.append(f"agent {name or file or '<unnamed>'} missing project_tags")
+            continue
+        unknown_tags = sorted(set(tags) - allowed_tags)
+        if unknown_tags:
+            failures.append(
+                f"agent {name or file} has unknown project_tags: "
+                + ", ".join(unknown_tags)
+            )
+
+    for codex_agent in codex_agents:
+        source_agent = codex_agent.get("source_agent", "")
+        name = codex_agent.get("name", "")
+        file = codex_agent.get("file", "")
+        if not file:
+            failures.append(f"codex agent {name or '<unnamed>'} missing file")
+        elif not (package_root / file).exists():
+            failures.append(f"codex agent file does not exist: {file}")
+        if not source_agent:
+            failures.append(f"codex agent {name or '<unnamed>'} missing source_agent")
+            continue
+        if source_agent not in agent_files:
+            failures.append(
+                f"codex agent {name or source_agent} source_agent not in agents: "
+                f"{source_agent}"
+            )
+
+    if failures:
+        raise ValueError("agent project tag failures:\n- " + "\n- ".join(failures))
+
+
 def main() -> int:
     package_root = Path(__file__).resolve().parent.parent
     try:
@@ -191,6 +386,7 @@ def main() -> int:
         validate_neutrality(package_root, data)
         validate_toml(package_root)
         validate_manifest_entries(package_root)
+        validate_agent_project_tags(package_root)
     except (OSError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

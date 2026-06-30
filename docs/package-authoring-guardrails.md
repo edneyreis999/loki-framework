@@ -152,6 +152,10 @@ Antes de escrever:
 ### Docs e Manifest
 
 - `manifest.yaml` deve apontar apenas para arquivos existentes dentro do package root.
+- `manifest.yaml` deve manter `supported_project_types`,
+  `agent_project_tag_policy.base_tag` e `agents[].project_tags` coerentes com o
+  contrato de selecao de agentes do `loki:init`; rode o validador estrutural
+  quando adicionar, remover ou retaggear agentes.
 - Nenhuma fonte normativa do pacote pode apontar para fora deste diretorio.
 - `README.md`, `docs/usage-guide.md`, `docs/source-boundaries.md` e docs de politica devem continuar coerentes entre si.
 - Se o pacote orientar aplicacao em `docs/**/*.md`, `docs/index.xml`,
