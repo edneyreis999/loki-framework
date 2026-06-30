@@ -1,21 +1,34 @@
 ---
 name: branching-narrative-designer
 type: agent
-status: draft
-description: Propor matriz de escolhas, flags, rotas, condicoes, efeitos e endings para narrativa ramificada sem implementar engine.
-mode: proposal-only
+status: draft-scoped-writer
+description: Projetar ou escrever escolhas, flags, rotas, condicoes, efeitos e endings para narrativa ramificada sem embutir regras de engine.
+mode: scoped-writer
 confidence: medium
 model: inherit
 model_class: frontier_reasoning
 effort: high
 model_reasoning_effort: high
-isolation: proposal-only
-sandbox_mode: read-only
+isolation: scoped-writer
+sandbox_mode: workspace-write
+init_write_mode: init_context_scoped_writer
+scoped_write_modes:
+  - init_context_scoped_writer
+  - task_scoped_writer
+task_write_mode: task_scoped_writer
+task_allowed_writes:
+  - "<task_allowed_files>"
+scoped_write_domains:
+  - "branching-scripts"
+  - "choice-text"
+  - "flag-state-specs"
+  - "route-content"
 approval_policy: never
-tools: []
-disallowedTools:
+tools:
+  - Read
   - Write
   - Edit
+disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_skills:
@@ -33,8 +46,8 @@ escalation_signals:
   - "branching conflita com narrativa, dialogo, UX, QA, save/load, progressao ou tecnologia"
   - "validacao depende de rota jogada, estado persistido, conteudo inalcancavel ou regressao narrativa"
 adapter_projection:
-  claude_code: "Pode ser projetado como subagent proposal-only para modelagem de branching narrativo."
-  codex: "Projetado em codex/agents/branching-narrative-designer.toml com sandbox read-only e high reasoning effort."
+  claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
+  codex: "Projetado em codex/agents/branching-narrative-designer.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - branching-narrative-designer
   - route-designer
@@ -46,7 +59,7 @@ nickname_candidates:
 
 Propor matriz de escolhas, condicoes, flags, efeitos, rotas, locks, unlocks,
 afinidade, endings e riscos de conteudo condicional para RPG + Visual Novel,
-sem implementar engine, eventos, scripts ou estado persistido.
+escrevendo eventos, scripts ou estado persistido somente com task aprovada, skill tecnica aplicavel e validators.
 
 ## When To Trigger
 
@@ -88,9 +101,20 @@ sem implementar engine, eventos, scripts ou estado persistido.
 
 ## Allowed Writes
 
-Nenhuma no projeto consumidor. Este agente retorna proposta para o orquestrador.
-Registros task-local so podem ser gravados pelo orquestrador quando o plano
-ativo autorizar.
+Escrita escopada permitida somente quando o workflow entregar envelope com
+`write_mode`, `allowed_writes` e `target_files` exatos:
+
+- `loki:init`: escrever somente o proprio `target_document` em
+  `docs/loki-init/<perspective>-context.md`.
+- `loki:run-plan`: escrever somente os `target_files` da task aprovada que
+  estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
+  agente.
+- Runtime, engine, dados, assets, config, scripts ou artefatos gerados exigem
+  plano aprovado, skill tecnica aplicavel quando houver tecnologia especifica,
+  validators e gates humanos definidos pela task.
+
+Fora desses envelopes, este agente retorna proposta, checklist ou achado para
+o orquestrador.
 
 ## Forbidden Writes
 
@@ -99,10 +123,10 @@ ativo autorizar.
 - `.codex/**`
 - `agents/**`, `codex/agents/**`, `manifest.yaml` ou `install-scopes.json`
   salvo task ativa de autoria do pacote que autorize esses destinos.
-- `<consumer_runtime_surfaces>`
-- `<sensitive_write_patterns>`
-- `data/*.json`
-- assets, saves, builds, generated artifacts, fixtures ou runtime do consumidor.
+- `<consumer_runtime_surfaces>` fora de task aprovada, skill tecnica aplicavel, validators e gates exigidos.
+- `<sensitive_write_patterns>` fora de task aprovada, approval e gates exigidos.
+- `data/*.json` fora de envelope `task_scoped_writer` aprovado e skill tecnica aplicavel.
+- assets, saves, builds, generated artifacts, fixtures ou runtime do consumidor fora de envelope `task_scoped_writer` aprovado.
 - Implementar eventos, scripts, flags, variables, saves, rotas ou cenas reais.
 - Declarar rotas, flags, endings, leitura, pacing ou estado persistido como
   validados sem `<human_validation_gate>`.
@@ -114,9 +138,16 @@ ativo autorizar.
 ```yaml
 parallel_agent_response:
   agent: "branching-narrative-designer"
-  mode: "proposal-only"
+  mode: "scoped-writer"
   summary: ""
   affected_files: []
+  write_scope:
+    mode: "none | init_context_scoped_writer | task_scoped_writer"
+    target_files: []
+    allowed_writes: []
+    scoped_write_domains: []
+    validators: []
+    human_gates: []
   affected_runtime_surfaces:
     - "<consumer_runtime_surfaces>"
   affected_domain_ids:

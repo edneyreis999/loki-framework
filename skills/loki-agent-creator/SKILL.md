@@ -1,9 +1,9 @@
 ---
 name: loki-agent-creator
-description: Create or revise Loki agents, Claude Code subagents, or Codex custom agents. Use when the main unit is a specialist role with independent judgment, isolated context, restricted tools, read-only analysis, proposal-only output, or structured handoff back to an orchestrator; also use when deciding between agent, skill, and command.
+description: Create or revise Loki agents, Claude Code subagents, or Codex custom agents. Use when the main unit is a specialist role with independent judgment, isolated context, restricted tools, read-only analysis, proposal-only output, scoped-writer output, or structured handoff back to an orchestrator; also use when deciding between agent, skill, and command.
 when_to_use:
   - "Use when creating or revising Loki agents, Claude Code subagents, or Codex custom agents."
-  - "Use when the work needs specialist judgment, isolated context, restricted tools, or proposal-only output."
+  - "Use when the work needs specialist judgment, isolated context, restricted tools, proposal-only output, or scoped-writer output."
   - "Use when deciding whether a workflow belongs in an agent, skill, or command."
 argument-hint: "[agent purpose, target adapter, allowed writes, gates]"
 arguments:
@@ -44,7 +44,10 @@ used_by:
 
 ## When To Use
 
-Use para criar ou revisar um agente Loki, subagent Claude Code, ou custom agent Codex quando a unidade principal for papel especialista com julgamento proprio, isolamento de contexto, ferramentas restritas ou saida `read-only`/`proposal-only`.
+Use para criar ou revisar um agente Loki, subagent Claude Code, ou custom agent
+Codex quando a unidade principal for papel especialista com julgamento proprio,
+isolamento de contexto, ferramentas restritas ou saida
+`read-only`/`proposal-only`/`scoped-writer`.
 
 Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 
@@ -70,15 +73,18 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
    - Codex custom agent TOML: `name`, `description`, `developer_instructions`, `nickname_candidates`, `model`, `model_reasoning_effort`, `sandbox_mode`, `approval_policy`, `mcp_servers`, `skills.config`.
 7. Quando formatos de runtime divergirem, mantenha um contrato Loki como fonte e gere as projecoes exigidas: Markdown/YAML para Claude Code e TOML em `codex/agents/` para Codex.
 8. Defina uma responsabilidade estreita. O agente deve fazer uma coisa bem e retornar uma saida consolidada.
-9. Defina o modo default do Loki como `proposal-only`, salvo approval humano explicito em fase futura.
-10. Quando um workflow Loki exigir retrospectiva tecnica por agente, permita no
-   contrato apenas uma excecao estreita de escrita: o agente pode escrever o
-   proprio `target_retrospective` exato no diretorio de retrospectivas da fase
-   ativa. Essa excecao nao autoriza docs duradouros, inventarios finais,
-   runtime, codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
-   `.codex/**` ou `.claude/**`.
-11. Se o adaptador nao conseguir aplicar a excecao por arquivo, exija
-   `retrospective_handoff` e registre a limitacao no workflow chamador.
+9. Defina o modo default do Loki como `proposal-only`, salvo approval humano
+   explicito ou politica de pacote que autorize um `scoped-writer` com
+   `target_files`, dominios de escrita, validators, gates e proibicoes
+   sensiveis.
+10. Quando um workflow Loki autorizar escrita por agente, declare no contrato
+   os modos escopados aplicaveis, como `init_context_scoped_writer`,
+   `task_scoped_writer` ou `target_retrospective`, e exija caminhos exatos no
+   envelope do workflow chamador.
+11. Escrita `task_scoped_writer` pode cobrir codigo, configuracao, conteudo,
+   dialogo, dados, assets ou runtime somente quando a task aprovada declarar
+   `target_files`, owner, skill tecnica aplicavel, validators e gates. Fora
+   desse envelope, o agente retorna proposta, checklist ou achado.
 12. Nao embuta regras de projeto, engine ou framework em agentes core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
 13. Use placeholders genericos para fronteiras do consumidor: `<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `<domain_ids>` e `<human_validation_gate>`.
 14. Limite ferramentas e permissoes ao minimo necessario. Em plugin Claude Code, nao dependa de `hooks`, `mcpServers` ou `permissionMode` para comportamento essencial, porque esses campos podem ser ignorados.
@@ -101,9 +107,14 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - O superset de metadados multi-adapter foi preenchido ou recebeu valor neutro valido.
 - O agente declara `mode`, `allowed_writes`, `forbidden_writes`, `required_gates` e `response_format`.
 - Ferramentas, modelo, effort, permissoes e gates sao minimos para a tarefa.
-- O agente nao escreve diretamente em superficies sensiveis no MVP.
+- O agente nao escreve diretamente em superficies sensiveis sem task aprovada,
+  owner, skill tecnica aplicavel, validators e gates.
+- Quando `mode: scoped-writer`, o contrato declara `sandbox_mode`,
+  `scoped_write_modes`, `task_write_mode`/destino equivalente, ferramentas
+  minimas, dominios de escrita e Allowed Writes com caminhos exatos recebidos
+  pelo envelope.
 - Se houver retrospectiva tecnica por agente, qualquer escrita direta fica
-  limitada ao `target_retrospective` exato ou vira `retrospective_handoff`.
+  limitada ao `target_retrospective` exato.
 - A saida tem evidencia, risco, confianca e proximo passo.
 - O agente declara quando deve parar e devolver ao orquestrador.
 - Conflitos por arquivo, `<domain_ids>`, `<consumer_runtime_surfaces>`, gate ou destino ficam detectaveis.

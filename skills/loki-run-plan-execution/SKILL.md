@@ -81,9 +81,12 @@ decisoes humanas e validators em uma execucao rastreavel.
 9. Carregar `<technology_required_skills>` apenas quando o usuario, a task, o
    contexto detectado ou retrospectiva aprovada indicar uma tecnologia.
 10. Executar tasks uma por vez na ordem topologica. Leitura pode ser paralela;
-    escrita e serializada por um unico orquestrador.
+    escrita e serializada por owner e arquivo. O owner pode ser o orquestrador
+    ou um agente `scoped-writer` quando a task aprovada declarar
+    `target_files`, `allowed_writes`, validators e gates.
 11. Antes de cada escrita, verificar que o arquivo, superficie, `<domain_ids>`,
-    integration point e gate estao cobertos pela task ativa.
+    integration point, owner, `scoped_write_domains` e gate estao cobertos pela
+    task ativa.
 12. Rodar validators declarados. Registrar comando/checklist, resultado,
     evidencia e justificativa quando um validator nao se aplicar.
 13. Nao declarar comportamento perceptivel, runtime, integracao, estado
@@ -125,6 +128,8 @@ decisoes humanas e validators em uma execucao rastreavel.
 - `Execution Brief`.
 - Lista de tasks executadas, bloqueadas ou puladas com motivo.
 - Evidencias de validators e build reports.
+- Diffs ou artefatos gerados por owners `scoped-writer`, sempre associados a
+  `target_files` e validators da task.
 - Atualizacao de status em `tasks.md` e `task-N.M.md`.
 - `LokiRunState` retomavel.
 - Disclaimer final destacado quando o status depender de input humano material
@@ -141,17 +146,14 @@ decisoes humanas e validators em uma execucao rastreavel.
   em disco.
 - Nao carregue skill tecnica por default.
 - Nao marque human validation como aprovada sem resposta humana explicita.
-- Nao permita que handoffs escrevam no projeto consumidor; handoffs `read-only`
-  ou `proposal-only` podem rodar em paralelo quando as entradas forem
-  independentes e retornam contexto, checklist ou proposta para consolidacao
-  pelo orquestrador.
-- Excecao: quando o plano aprovado exigir retrospectiva tecnica por agente, um
-  handoff `proposal-only` pode escrever somente o proprio
-  `target_retrospective` exato sob `retrospetivas/faseN/`. Se isso nao for
-  suportado pelo runtime, exigir `retrospective_handoff` e registrar a
-  limitacao. Essa excecao nao se aplica a docs duradouros, inventarios finais,
-  runtime, codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
-  `.codex/**` ou `.claude/**`.
+- Nao permita handoff solto escrever no projeto consumidor. Escrita por agente
+  exige `mode: scoped-writer`, task aprovada, `target_files`, `allowed_writes`,
+  ownership exclusivo, validators e gates aplicaveis.
+- Quando o plano aprovado exigir retrospectiva tecnica por agente, o agente
+  escreve somente o proprio `target_retrospective` exato sob
+  `retrospetivas/faseN/`. Essa excecao nao se aplica a docs duradouros,
+  inventarios finais, runtime, codigo, assets, config, `AGENTS.md`,
+  `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
 
 ## Required Gates
 
@@ -187,8 +189,11 @@ decisoes humanas e validators em uma execucao rastreavel.
   por leitura direta dos arquivos do plano.
 - Dependencias e ordem topologica foram conferidas antes da execucao.
 - Cada task executada tem referencia, validator, human loop e out of scope.
+- Cada task com agente `scoped-writer` tem owner, `target_files`,
+  `allowed_writes`, `scoped_write_domains`, validators e gates rastreados.
 - `Execution Brief` foi produzido antes da primeira escrita.
-- Toda escrita ficou dentro do escopo da task ativa.
+- Toda escrita ficou dentro do escopo da task ativa, com owner e `target_files`
+  rastreados.
 - Validators foram executados ou justificados.
 - Human gates pendentes nao foram marcados como aprovados quando dependiam de
   input humano material fora do plano aprovado.

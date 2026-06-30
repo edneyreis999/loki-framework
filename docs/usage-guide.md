@@ -18,7 +18,8 @@ outro projeto.
 
 - `commands/`: fluxos invocaveis, como feedback, analise tecnica, plano, execucao e melhoria continua.
 - `skills/`: procedimentos tecnicos ou processuais que devem ser carregados quando o dominio aparecer.
-- `agents/`: papeis especialistas que retornam analise, checklist ou proposta.
+- `agents/`: papeis especialistas que retornam analise, checklist, proposta ou
+  escrita escopada quando um workflow aprovado atribuir `target_files`.
 - `codex/agents/`: TOMLs versionados derivados de `agents/*.md` para custom
   agents Codex.
 - `scripts/install-loki-symlinks.py`: instalador Codex por symlink para
@@ -165,6 +166,11 @@ agents e skills.
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.
 
+Planos executaveis devem declarar write owner, `target_files`,
+`allowed_writes`, validators e gates quando uma task puder ser executada por
+agente `scoped-writer`. `loki:enrich-tasks` deve preservar ou refinar esse
+escopo antes de `loki:run-plan`.
+
 ## Inicializacao Pos-Instalacao
 
 Depois de instalar o Loki em um projeto consumidor aprovado, use `loki:init`
@@ -175,8 +181,8 @@ alias/adaptador quando o runtime suportar; o nome canonico do pacote e
 A execucao explicita de `loki:init` autoriza escrita somente em `docs/**` e
 `planos/000-init-loki/**` do consumidor. O comando cria ou audita
 `docs/loki-init/**`, `docs/index.xml` e a trilha operacional
-`planos/000-init-loki/` com `interaction/fase1`, `builds/fase1` e
-`retrospetivas/fase1`.
+`planos/000-init-loki/` com `interaction/fase1` e `builds/fase1` quando
+necessario para registrar interacoes ou evidencias operacionais.
 
 O init nao escreve em runtime, engine, assets, dados gerados, `.agents/**`,
 `.codex/**`, `.claude/**`, `AGENTS.md` ou `CLAUDE.md`. Ele tambem nao valida
@@ -227,8 +233,13 @@ duradoura e backlog.
 - `source-researcher`: mapeia fatos, lacunas e conflitos em pesquisa
   multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao,
   sem decidir solucao nem escrever.
-- `technical-implementer`: no MVP e `proposal-only`; propoe mudancas,
-  validadores e gates, mas nao escreve diretamente.
+- `technical-implementer`: pode aplicar mudancas tecnicas como
+  `scoped-writer` quando a task atribuir `target_files`; caso contrario,
+  retorna proposta, validadores e gates.
+- Agentes game-dev como `gameplay-engineer`, `narrative-designer` e
+  `dialogue-editor` podem escrever mecanicas, conteudo narrativo, dialogos,
+  quests, tuning ou artefatos equivalentes quando `loki:run-plan` entregar
+  envelope `task_scoped_writer` com arquivos, validators e gates.
 
 ## Contexto Duradouro do Consumidor
 

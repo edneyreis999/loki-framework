@@ -71,24 +71,34 @@ because Codex custom agents are TOML files.
 ```yaml
 agent_contract:
   name: "example-agent"
-  mode: "read-only | proposal-only"
+  mode: "read-only | proposal-only | scoped-writer"
   purpose: ""
   when_to_trigger: []
   inputs: []
   outputs: []
   allowed_writes: []
+  init_write_mode: "init_context_scoped_writer"
+  scoped_write_modes:
+    - "init_context_scoped_writer"
+    - "task_scoped_writer"
+  task_write_mode: "task_scoped_writer"
+  task_allowed_writes:
+    - "<task_allowed_files>"
+  scoped_write_domains:
+    - "<domain-artifact-type>"
   forbidden_writes:
     - ".agents/**"
     - ".claude/**"
     - ".codex/**"
-    - "<sensitive_write_patterns>"
-  tools: []
+    - "<sensitive_write_patterns> outside approved task envelope"
+  tools:
+    - Read
   required_skills:
     - "<technology_required_skills>"
   model_class: "frontier_reasoning | coding | generalist | long_context | fast_low_cost | specialist_generalist_human_like"
   effort: "low | medium | high | xhigh"
   escalation_signals: []
-  isolation: "read-only | proposal-only | delegated-write-after-approval"
+  isolation: "read-only | proposal-only | scoped-writer | delegated-write-after-approval"
   adapter_projection:
     claude_code: "Project to subagent frontmatter/settings only when supported."
     codex: "Project to codex/agents/*.toml or profile for strong enforcement."
@@ -120,9 +130,16 @@ configuration profiles or explicit runtime selection.
 ```yaml
 parallel_agent_response:
   agent: ""
-  mode: "read-only | proposal-only"
+  mode: "read-only | proposal-only | scoped-writer"
   summary: ""
   affected_files: []
+  write_scope:
+    mode: "none | init_context_scoped_writer | task_scoped_writer"
+    target_files: []
+    allowed_writes: []
+    scoped_write_domains: []
+    validators: []
+    human_gates: []
   affected_runtime_surfaces:
     - "<consumer_runtime_surfaces>"
   affected_domain_ids:

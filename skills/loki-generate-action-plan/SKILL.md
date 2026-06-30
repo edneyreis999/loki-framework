@@ -1,9 +1,9 @@
 ---
 name: loki-generate-action-plan
-description: Run the Loki `loki:generate-action-plan` command workflow in Codex. Use when creating phased executable action plans, `tasks.md`, `task-N.M.md`, phase folders, dependencies, validators, human loops, stop conditions, and resume-ready Loki plan artifacts.
+description: Run the Loki `loki:generate-action-plan` command workflow in Codex. Use when creating phased executable action plans, `tasks.md`, `task-N.M.md`, phase folders, dependencies, scoped write owners, validators, human loops, stop conditions, and resume-ready Loki plan artifacts.
 when_to_use:
   - "Use when running loki:generate-action-plan to create phased executable Loki plans."
-  - "Use when creating tasks.md, task-N.M.md, phase folders, dependencies, validators, human loops, stop conditions, and resumable state."
+  - "Use when creating tasks.md, task-N.M.md, phase folders, dependencies, scoped write owners, validators, human loops, stop conditions, and resumable state."
 argument-hint: "[analysis path, objective, plan directory]"
 arguments:
   required: []

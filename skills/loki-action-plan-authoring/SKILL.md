@@ -48,6 +48,9 @@ shell: {}
    - every phase has an observable validation;
    - every task is concrete, dependency-aware, and sized for one focused
      implementation pass;
+   - every task declares write owner, `target_files`, `allowed_writes` and
+     `scoped_write_domains` when a specialist agent may execute as
+     `task_scoped_writer`;
    - future sensitive writes are represented as gates, not hidden permission.
 4. Propose the plan directory name and wait for explicit approval before
    creating files.
@@ -84,4 +87,5 @@ Use these package-root templates when writing artifacts:
 
 The final plan must let `loki:run-plan` or another agent resume from disk
 without conversation memory. Include the next action, blocked decisions, human
-loops, validators, and expected observable result in the files themselves.
+loops, write owner, target files, validators, and expected observable result in
+the files themselves.

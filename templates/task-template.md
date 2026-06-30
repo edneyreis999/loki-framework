@@ -28,6 +28,9 @@ recommended_handoffs:
   context: "<execution-context-reader|none>"
   implementation: "<technical-implementer|none>"
   runtime_validation: "<runtime-qa|none>"
+scoped_write_owner: "<orchestrator|agent-name|none>"
+scoped_write_mode: "<none|task_scoped_writer>"
+scoped_write_domains: []
 escalation_reason: "<none ou motivo verificavel>"
 ```
 
@@ -54,6 +57,24 @@ arquitetural, evidencia conflitante ou validacao dificil.
 ## Implementation Steps
 
 1. <acao concreta>
+
+## Scoped Write Plan
+
+```yaml
+scoped_write:
+  owner: "<orchestrator|agent-name|none>"
+  mode: "<none|task_scoped_writer>"
+  target_files: []
+  allowed_writes: []
+  scoped_write_domains: []
+  required_skills: []
+  validators: []
+  human_gates: []
+```
+
+Use `task_scoped_writer` quando a task atribuir escrita a um agente
+especialista. Liste arquivos exatos em `target_files`; nao use diretorios
+amplos quando a task puder nomear arquivos.
 
 ## Validators
 
@@ -82,6 +103,8 @@ arquitetural, evidencia conflitante ou validacao dificil.
 loki_task_state:
   status: "pending"
   files_expected: []
+  write_owner: "<orchestrator|agent-name|none>"
+  target_files: []
   validations: []
   next_action: ""
   blocked_by: []

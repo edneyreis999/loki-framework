@@ -54,13 +54,18 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 ## Allowed Writes
 
 - Arquivos do plano ativo autorizados pela task.
+- `target_files` de dominio, conteudo, runtime, configuracao, dados, scripts ou
+  assets explicitamente autorizados pela task e atribuidos a um owner
+  `scoped-writer`.
 - Build reports e interaction records da fase.
 
 ## Forbidden Writes
 
 - Qualquer superficie fora do escopo da task.
 - `.claude/**`, `.agents/**` e `.codex/**` sem approval especifico posterior.
-- Runtime, engine, framework ou superficies sensiveis do consumidor sem plano, skill tecnica selecionada quando exigida, validadores e gate humano.
+- Runtime, engine, framework ou superficies sensiveis do consumidor sem plano,
+  owner de escrita, skill tecnica selecionada quando exigida, validadores e
+  gate humano.
 
 ## Required Skills
 
@@ -119,8 +124,13 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
    faltarem referencia executavel, approval, validator ou decisao humana
    obrigatoria nao coberta pelo plano aprovado ou por decisao humana registrada.
 9. Carregar skills tecnicas apenas quando a task, contexto detectado, pedido do usuario ou retrospectiva aprovada exigir `<technology_required_skills>`.
-10. Executar tasks em ordem topologica, uma por vez. Leitura pode continuar em paralelo; escrita permanece serializada pelo orquestrador.
-11. Antes de cada escrita, confirmar que o arquivo, superficie, `<domain_ids>` e gate estao cobertos pela task ativa e pelo plano.
+10. Executar tasks em ordem topologica, uma por vez. Leitura pode continuar em
+    paralelo; escrita permanece serializada por owner e por arquivo. O owner
+    pode ser o orquestrador ou um agente `scoped-writer` quando a task aprovada
+    declarar `target_files`, `allowed_writes`, validators e gates.
+11. Antes de cada escrita, confirmar que o arquivo, superficie, `<domain_ids>`,
+    owner, `scoped_write_domains` e gate estao cobertos pela task ativa e pelo
+    plano.
 12. Rodar validators da task e registrar evidencias em `builds/faseN/` ou justificativa objetiva quando um validator nao se aplicar.
 13. Atualizar task files e `tasks.md` com status, arquivos afetados, validations, human_loop e next_action.
 14. Acionar `runtime-qa` quando a mudanca depender de comportamento perceptivel, runtime, integracao ativa, estado persistido ou artefato gerado.
@@ -150,15 +160,14 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 ## Orchestration Rules
 
 - Leitura e analise podem ser paralelas.
-- Escrita deve ser feita por um unico orquestrador.
-- Handoffs `read-only` ou `proposal-only` podem rodar em paralelo quando as
-  entradas forem independentes; seus retornos devem ser consolidados antes de
-  qualquer escrita.
-- Quando o plano aprovado exigir retrospectiva tecnica por agente, um handoff
-  `proposal-only` pode receber permissao para escrever somente o proprio
-  `target_retrospective` exato sob o diretorio `retrospetivas/faseN/` do plano
-  ativo. Se o runtime nao suportar essa excecao por arquivo, o agente retorna
-  `retrospective_handoff` e o orquestrador registra a limitacao.
+- Escrita deve ser serializada por arquivo e owner. Nao ha duas entidades
+  escrevendo o mesmo `target_file` no mesmo passo.
+- Handoffs `read-only`, `proposal-only` ou `scoped-writer` podem rodar em
+  paralelo quando as entradas e `target_files` forem independentes; retornos e
+  diffs devem ser consolidados antes de liberar escrita dependente.
+- Quando o plano aprovado exigir retrospectiva tecnica por agente, o agente
+  escreve somente o proprio `target_retrospective` exato sob
+  `retrospetivas/faseN/`.
 - A excecao de retrospectiva nao autoriza escrita em docs duradouros,
   inventarios finais, runtime, codigo, assets, config, `AGENTS.md`,
   `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
@@ -173,13 +182,18 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
   lacuna de contexto for pre-decisional, multi-fonte ou ruidosa. Use antes da
   primeira escrita; para contexto estreito de fase, prefira
   `execution-context-reader`.
-- `technical-implementer` em modo proposal-only quando a task exigir proposta
-  para escrita sensivel, integration point, asset, artefato gerado ou
-  `<consumer_runtime_surfaces>`. Pode rodar em paralelo com `runtime-qa` quando
-  a superficie ja estiver conhecida ou hipotetizada.
-- `runtime-qa` em modo read-only/proposal-only para checklist e evidencia humana
-  quando validators automaticos nao cobrirem comportamento perceptivel. Pode
-  rodar em paralelo com proposta tecnica, mas nunca substitui human validation.
+- `technical-implementer` como `scoped-writer` quando a task atribuir
+  `target_files` tecnicos; como proposta quando a escrita sensivel ainda
+  depender de decisao, skill tecnica ou gate.
+- `gameplay-engineer` como `scoped-writer` para mecanicas, codigo/config de
+  gameplay e superficies runtime aprovadas pela task.
+- `narrative-designer`, `dialogue-editor`, `quest-content-designer`,
+  `branching-narrative-designer` e agentes game-dev equivalentes como
+  `scoped-writer` para conteudo narrativo, dialogo, quests, escolhas, cenas,
+  tuning ou artefatos de dominio quando a task declarar `target_files`.
+- `runtime-qa` para checklist, reports e evidencia humana quando validators
+  automaticos nao cobrirem comportamento perceptivel. Pode rodar em paralelo
+  com proposta ou escrita tecnica, mas nunca substitui human validation.
 
 ## Stop Conditions
 
@@ -192,6 +206,8 @@ Executar uma fase planejada com leitura paralela, escrita serializada, validator
 - Validacao humana necessaria ainda nao foi confirmada.
 - A task exige superficie fora do escopo aprovado.
 - A task exige escrita sensivel sem approval, skill tecnica aplicavel, validator e gate humano.
+- A task atribui agente `scoped-writer` sem `target_files`, `allowed_writes`,
+  owner exclusivo, validators ou gates suficientes.
 
 ## Final Response Contract
 

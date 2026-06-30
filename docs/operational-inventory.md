@@ -30,7 +30,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, envelopes de agentes, retrospectivas por agente e consolidacao serial. |
+| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, documentos de contexto por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
@@ -59,9 +59,9 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
 | `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
-| `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
+| `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
 | `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |
-| `loki-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, escrita serializada, validators e estado retomavel. |
+| `loki-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
 | `loki-retrospectiva-tecnica` | `mvp` | Procedimento de retrospectiva tecnica apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Wrapper Codex para executar o workflow `loki:continuous-improvement`. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Wrapper Codex para executar `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
@@ -85,18 +85,18 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | --- | --- | --- |
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki:continuous-improvement`. |
-| `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis como proposta. |
+| `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki:run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
-| `technical-implementer` | `mvp` | Propor mudancas tecnicas em modo `proposal-only`; nao escreve diretamente no MVP. |
+| `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
 | `catalogador` | `mvp` | Manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima em `AGENTS.md` e `CLAUDE.md` do consumidor. |
 | `game-product-owner` | `mvp` | Refinar objetivos, valor, prioridade e criterios de aceite para stories de jogo. |
 | `game-business-analyst` | `mvp` | Converter brief de jogo em requisitos, regras e lacunas verificaveis para refinamento. |
-| `game-designer` | `mvp` | Propor mecanicas, loops, regras e criterios de jogabilidade em modo `proposal-only`. |
-| `narrative-designer` | `mvp` | Propor estrutura narrativa, personagens, cenas, escolhas e integracao com gameplay. |
+| `game-designer` | `mvp` | Pode escrever specs, regras, tuning e criterios de jogabilidade quando a task atribuir target_files. |
+| `narrative-designer` | `mvp` | Pode escrever estrutura narrativa, personagens, cenas, dialogos, escolhas e integracao com gameplay quando a task atribuir target_files. |
 | `ux-ui-designer` | `mvp` | Avaliar fluxos, HUD, menus, legibilidade e interacao em historias de jogo. |
-| `gameplay-engineer` | `mvp` | Propor decomposicao tecnica jogavel sem escrever diretamente em runtime do consumidor. |
+| `gameplay-engineer` | `mvp` | Pode escrever mecanicas, codigo/config de gameplay e dados aprovados quando a task atribuir target_files, skills e gates. |
 | `narrative-qa` | `mvp` | Revisar coerencia narrativa, flags, rotas, regressao de dialogo e riscos de conteudo. |
 | `level-designer` | `mvp` | Propor mapas, ritmo espacial, encounters e navegacao quando a story tocar superficie de level. |
 | `balance-economy-designer` | `mvp` | Avaliar progressao, recompensas, custos, economia e curva de dificuldade. |
@@ -104,7 +104,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `scene-presentation-designer` | `mvp` | Propor apresentacao de cenas, beats, transicoes, timing e leitura visual. |
 | `audio-designer` | `mvp` | Propor intencao de audio, musica, SFX e cues sem validar audio perceptivel automaticamente. |
 | `quest-content-designer` | `mvp` | Estruturar quests, objetivos, prerequisitos, recompensas e estados de conteudo. |
-| `dialogue-editor` | `mvp` | Revisar fala, voz, consistencia, concisao e clareza de dialogos. |
+| `dialogue-editor` | `mvp` | Pode revisar ou escrever falas, escolhas, barks e texto fonte de localizacao quando a task atribuir target_files. |
 | `tools-pipeline-engineer` | `mvp` | Propor automacoes, validadores e pipeline para conteudo de jogo sem escrita sensivel direta. |
 | `technical-artist` | `mvp` | Avaliar viabilidade de assets, apresentacao tecnica, constraints visuais e pipeline. |
 | `prompt-engineer` | `reference-only` | Apoiar consolidacao de instrucoes reutilizaveis em comandos depois que contratos existirem. |
@@ -134,7 +134,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `tasks-template.md` | `mvp` | Registrar fases, objetivos, validacao observavel, dependencias, human loops, validators e estado de retomada. |
-| `task-template.md` | `mvp` | Detalhar objetivo, contexto, requisitos, referencias, passos, validators, human loop, Definition of Done e resume notes de cada task. |
+| `task-template.md` | `mvp` | Detalhar objetivo, contexto, requisitos, referencias, passos, Scoped Write Plan, validators, human loop, Definition of Done e resume notes de cada task. |
 | `technical-analysis-template.md` | `mvp` | Padronizar analise tecnica com fontes, fatos, inferencias, hipoteses, research gate, matriz de decisao, validators e handoff. |
 | `interaction/faseN/*.md` | `mvp` | Registrar perguntas, recomendacoes, decisoes e pendencias humanas. |
 | `retrospetivas/faseN/*.md` | `mvp` | Registrar aprendizados tecnicos pos-fase. |
@@ -192,7 +192,7 @@ projeto consumidor declarar RPG Maker MZ.
 
 | Pendencia | Status | Motivo |
 | --- | --- | --- |
-| Escrita direta por `technical-implementer` | `backlog` | MVP permite apenas `proposal-only`; escrita sensivel exigira aprovacao humana futura. |
+| Politica fina de concorrencia multi-agent em runtime | `backlog` | O scoped-writer atual exige ownership exclusivo por `target_file`; concorrencia mais granular por AST, evento ou recurso exigira politica futura. |
 | Politica de alocacao em superficies runtime especializadas | `backlog` | Nao necessaria para pacote documental; exigira decisao antes de alterar runtime. |
 | Renomeacao de namespaces antigos | `backlog` | Nao renomear comandos historicos automaticamente. |
 

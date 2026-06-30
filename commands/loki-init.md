@@ -65,7 +65,6 @@ Documentacao duradoura permitida:
 - `docs/loki-init/open-questions.md`.
 - `docs/loki-init/conflicts-and-decisions.md`.
 - `docs/loki-init/<perspective>-context.md`.
-- `docs/loki-init/inventories/<agent-name>-inventory.md`.
 
 Estado operacional permitido:
 
@@ -73,7 +72,6 @@ Estado operacional permitido:
 - `planos/000-init-loki/task-1.1.md` quando o init materializar tasks.
 - `planos/000-init-loki/interaction/fase1/**`.
 - `planos/000-init-loki/builds/fase1/**`.
-- `planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md`.
 
 ## Allowed Writes
 
@@ -99,7 +97,52 @@ sobrescrever silenciosamente.
 - `loki-index-navigator` quando `docs/index.xml` existir e precisar ser lido.
 - `<technology_required_skills>` somente quando o inventario, o usuario ou um
   agente especialista declararem uma tecnologia especifica.
-- `loki-retrospectiva-tecnica` para retrospectiva por agente selecionado.
+
+## Agent Init Write Policy
+
+Durante `loki:init`, agentes classificados como
+`init_context_scoped_writer` recebem uma excecao estreita de escrita: cada um
+pode escrever somente o proprio `target_document` exato em
+`docs/loki-init/<perspective>-context.md`. Essa excecao nao autoriza
+`docs/index.xml`, `planos/000-init-loki/tasks.md`, runtime, assets, dados,
+`.agents/**`, `.codex/**`, `.claude/**`, `AGENTS.md` ou `CLAUDE.md`.
+
+Agentes `init_support_only` nao geram `<perspective>-context.md` por default.
+Eles podem ser invocados para leitura, pesquisa, validacao, classificacao ou
+orientacao, mas retornam apenas resultado estruturado para o orquestrador.
+
+O init nao usa handoff como substituto para documento de agente
+`init_context_scoped_writer`: o agente escreve o proprio documento e pronto.
+
+`init_context_scoped_writer`:
+
+- `runtime-qa`
+- `technical-implementer`
+- `catalogador`
+- `game-product-owner`
+- `game-business-analyst`
+- `game-designer`
+- `narrative-designer`
+- `ux-ui-designer`
+- `gameplay-engineer`
+- `narrative-qa`
+- `level-designer`
+- `balance-economy-designer`
+- `branching-narrative-designer`
+- `scene-presentation-designer`
+- `audio-designer`
+- `quest-content-designer`
+- `dialogue-editor`
+- `tools-pipeline-engineer`
+- `technical-artist`
+
+`init_support_only`:
+
+- `standards-curator`
+- `retrospective-digester`
+- `execution-context-reader`
+- `source-researcher`
+- `bibliotecario`
 
 ## Workflow
 
@@ -109,6 +152,9 @@ sobrescrever silenciosamente.
    - quando o workflow selecionar agent fan-out, declarar explicitamente a
      intencao de usar subagents/delegacao e executar preflight de capacidade
      antes de declarar agentes indisponiveis;
+  - declarar que agentes `init_context_scoped_writer` escrevem somente o
+    proprio `target_document` e nunca usam handoff como substituto desse
+    documento;
    - em Codex, projetar esse preflight como descoberta direcionada de
      capacidade multi-agent/subagent, por exemplo via `tool_search`; tratar
      namespaces concretos de ferramenta como evidencia da sessao atual, nao
@@ -126,8 +172,8 @@ sobrescrever silenciosamente.
      descoberta; leitura de `.codex/**` ou `.agents/**` nao autoriza escrita
      nesses caminhos;
    - criar ou auditar `docs/` e `planos/000-init-loki/`;
-   - criar ou auditar `interaction/fase1`, `builds/fase1` e
-     `retrospetivas/fase1`;
+   - criar ou auditar `interaction/fase1` e `builds/fase1` quando o init
+     precisar registrar interacoes ou evidencias operacionais;
    - parar se o usuario pedir destino fora de `docs/**` ou
      `planos/000-init-loki/**`.
 2. Inventario comum sequencial:
@@ -164,33 +210,30 @@ sobrescrever silenciosamente.
      concreto;
    - para `software-development`, enquanto nao houver agentes especializados
      com essa tag, selecionar somente agentes `core`;
+   - dividir agentes selecionados entre `init_context_scoped_writer` e
+     `init_support_only`;
    - registrar matriz
      `available -> inventory_required -> selected -> invoked | blocked | skipped`
-     com motivo, documento alvo, inventario alvo e retrospectiva alvo;
+     com motivo, classe de init, documento alvo quando aplicavel e tipo de
+     resultado esperado;
    - se houver limite pratico ou configurado de concorrencia, executar fan-out
      em lotes conservadores; em Codex, quando nenhum limite menor for conhecido,
      usar `agents.max_threads` quando disponivel ou o default documentado de 6
      como teto inicial, registrando qualquer limite observado diferente;
-   - dar a cada agente um documento alvo, inventario alvo, retrospectiva alvo,
-     fontes permitidas, budget e forbidden writes;
-   - agentes atuais permanecem `read-only` ou `proposal-only`; quando o runtime
-     nao permitir escrita em documentos finais ou inventarios, eles retornam
-     conteudo estruturado e o orquestrador grava nos allowed writes;
-   - quando o workflow exigir retrospectiva tecnica por agente, permitir que
-     cada agente escreva somente o proprio `target_retrospective` no diretorio
-     de retrospectivas da fase ativa; se o runtime nao suportar essa excecao,
-     exigir `retrospective_handoff` e registrar a limitacao;
+   - dar a cada agente `init_context_scoped_writer` um documento alvo, fontes
+     permitidas, budget, envelope de escrita exato para `target_document` e
+     forbidden writes;
+   - exigir que cada agente `init_context_scoped_writer` escreva o proprio
+     `target_document`; se nao houver conteudo util, o agente deve escrever
+     falha estruturada no proprio `target_document`;
+   - dar a cada agente `init_support_only`, quando invocado, fontes permitidas,
+     budget e forbidden writes, sem documento alvo obrigatorio;
    - fechar ou liberar agentes concluidos antes de abrir novo lote quando o
      runtime exigir capacidade limitada;
    - nenhum agente escreve no mesmo arquivo que outro.
-5. Retrospectiva por agente:
-   - apos documento e inventario ou falha estruturada, cada agente selecionado
-     deve produzir retrospectiva em
-     `planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md`;
-   - a retrospectiva registra fontes lidas, validadores, atritos, lacunas,
-     limites de contexto, decisoes e riscos.
-6. Consolidacao serial:
-   - validar existencia de documentos, inventarios e retrospectivas;
+5. Consolidacao serial:
+   - validar existencia de `target_document` escrito por cada
+     `init_context_scoped_writer` selecionado;
    - consolidar conflitos e lacunas em
      `docs/loki-init/conflicts-and-decisions.md` e
      `docs/loki-init/open-questions.md`;
@@ -200,7 +243,9 @@ sobrescrever silenciosamente.
 
 ## Agent Init Envelope
 
-Cada agente selecionado recebe um envelope com este formato minimo:
+Cada agente `init_context_scoped_writer` selecionado recebe um envelope com
+este formato minimo:
+
 
 ```yaml
 agent_init_envelope:
@@ -209,8 +254,8 @@ agent_init_envelope:
   project_tags: []
   selection_reason: []
   target_document: "docs/loki-init/<perspective>-context.md"
-  target_inventory: "docs/loki-init/inventories/<agent-name>-inventory.md"
-  target_retrospective: "planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md"
+  allowed_writes:
+    - "docs/loki-init/<perspective>-context.md"
   allowed_sources:
     - "docs/loki-init/project-inventory.md"
     - "docs/loki-init/technology-context.md"
@@ -228,13 +273,15 @@ agent_init_envelope:
     max_lines_per_agent_artifact: 0
     max_deep_read_bytes_per_agent: 0
   write_mode:
-    final_artifacts: "proposal-only-or-orchestrator-write"
-    retrospective: "direct-target-retrospective-or-retrospective-handoff"
+    final_artifacts: "direct-target-document"
 ```
+
+Agentes `init_support_only` invocados recebem envelope sem `target_document` e
+com `write_mode.final_artifacts: "structured-support-result-only"`.
 
 ## Output Contracts
 
-Documento por agente:
+Documento por agente `init_context_scoped_writer`:
 
 - titulo, agente, escopo, status e data;
 - fatos com fontes;
@@ -244,7 +291,7 @@ Documento por agente:
 - validadores recomendados;
 - `Context Budget Used`.
 
-Inventario por agente:
+Resultado estruturado de agente `init_support_only` quando invocado:
 
 - `Status`: complete, partial ou blocked;
 - `Sources Attempted`;
@@ -255,17 +302,10 @@ Inventario por agente:
 - `Do Not Assume`;
 - `Context Budget Used`.
 
-Retrospectiva por agente:
-
-- objetivo e resultado;
-- documentos e inventarios produzidos ou falha estruturada;
-- validadores executados, nao aplicaveis ou pendentes;
-- decisoes e gates humanos;
-- atritos, limites de contexto e aprendizados;
-- riscos residuais e proximo passo.
-
-Falhas estruturadas sao artefatos validos quando um agente nao conseguir gerar
-conteudo util, mas nunca podem desaparecer silenciosamente.
+Falhas estruturadas de `init_context_scoped_writer` devem ser escritas no
+proprio `target_document`. Falhas estruturadas de `init_support_only` devem
+ficar no resultado estruturado ou em build report quando forem materiais para
+retomada.
 
 ## Validators
 
@@ -288,15 +328,17 @@ conteudo util, mas nunca podem desaparecer silenciosamente.
   catalogo de agentes usado, tipos suportados, tags por agente, agentes
   disponiveis, inventario requerido, planejados, invocados, bloqueados e
   pulados, com motivos.
+- Agent fan-out registra `init_context_scoped_writers` e
+  `init_support_only_agents`.
 - `inventory_required` e exatamente a uniao ordenada dos agentes marcados com
   `core` e dos agentes marcados com `selected_project_type`; todo agente
   requerido esta em `selected`, `invoked`, `blocked` ou `skipped` com motivo.
 - `software-development` pode selecionar somente `core` enquanto nao houver
   agentes especializados com essa tag.
-- Cada agente selecionado tem documento, inventario e retrospectiva, ou falha
-  estruturada equivalente.
-- Retrospectivas escritas por agentes `proposal-only` ficam restritas ao
-  `target_retrospective` exato sob `planos/000-init-loki/retrospetivas/fase1/`.
+- Cada agente `init_context_scoped_writer` selecionado escreveu o proprio
+  `target_document`.
+- Nenhum agente `init_support_only` escreveu `docs/loki-init/**`,
+  `docs/index.xml`, `planos/000-init-loki/tasks.md` ou runtime.
 - `docs/index.xml` foi criado ou atualizado quando documentos duradouros foram
   criados.
 - `planos/000-init-loki/tasks.md` e resume state refletem status, conflitos,
@@ -322,8 +364,8 @@ conteudo util, mas nunca podem desaparecer silenciosamente.
   `planos/000-init-loki/**`.
 - Existe conflito com arquivos existentes e nao ha regra segura de merge/audit.
 - O comando nao consegue produzir inventario comum minimo ou falha estruturada.
-- Um agente selecionado nao retorna documento, inventario, retrospectiva ou
-  falha estruturada.
+- Um agente `init_context_scoped_writer` selecionado nao consegue escrever o
+  proprio `target_document` nem falha estruturada no mesmo destino.
 - O usuario pede validacao de runtime sem skill tecnica, validator e
   human-validation.
 
@@ -350,8 +392,6 @@ loki_init_state:
     detected_engines: []
     git_available: false
   agent_outputs: {}
-  agent_inventories: {}
-  agent_retrospectives: {}
   agent_fanout:
     capability_preflight: ""
     discovery_method: ""
@@ -365,6 +405,8 @@ loki_init_state:
     available: []
     inventory_required: []
     inventory_required_reasons: {}
+    init_context_scoped_writers: []
+    init_support_only_agents: []
     selected: []
     planned: []
     invoked: []
@@ -372,8 +414,7 @@ loki_init_state:
     skipped: []
     skipped_reasons: {}
     target_documents: {}
-    target_inventories: {}
-    target_retrospectives: {}
+    support_outputs: {}
     batch_limit_configured: null
     batch_limit_observed: null
     write_mode_by_agent: {}

@@ -47,6 +47,8 @@ estrutura de artefatos Loki.
 - Pastas `interaction/faseN/`, `builds/faseN/` e `retrospetivas/faseN/` para
   todas as fases.
 - Lista explicita de human loops, validators e stop conditions.
+- Owner de escrita por task, com `target_files`, `allowed_writes` e
+  `scoped_write_domains` quando a execucao puder usar agente `scoped-writer`.
 - Estado de retomada suficiente para `loki:run-plan`.
 
 ## Allowed Writes
@@ -85,7 +87,7 @@ estrutura de artefatos Loki.
 
 1. Fazer scan das entradas, decisoes humanas e limites de escrita.
 2. Planejar antes de escrever: fases, tasks, dependencias, referencias,
-   validators, human loops e ordem topologica.
+   validators, human loops, write owners e ordem topologica.
 3. Se faltar referencia concreta, usar `TODO: localizar`; se a lacuna impedir
    task executavel, parar e perguntar.
 4. Propor diretorio de destino com nome simples baseado no escopo e aguardar
@@ -115,7 +117,8 @@ validacao observavel.
 
 Cada task deve declarar objetivo, contexto, requisitos, fora de escopo,
 dependencias, referencias, passos de implementacao, validators,
-observable_validation, human_loop, definition of done e resume notes.
+observable_validation, human_loop, scoped_write_plan, definition of done e
+resume notes.
 
 ## Validators
 
@@ -124,6 +127,8 @@ observable_validation, human_loop, definition of done e resume notes.
 - Nenhuma task e generica ou maior que um passe focado de 2-4h.
 - Dependencias formam ordem topologica sem pular setup obrigatorio.
 - Escritas sensiveis futuras possuem gate humano e validator correspondente.
+- Tasks com agente `scoped-writer` possuem owner, `target_files`,
+  `allowed_writes`, `scoped_write_domains`, validators e gates.
 - As pastas `interaction/`, `builds/` e `retrospetivas/` possuem subpasta para
   cada fase.
 - O plano pode ser retomado por `tasks.md` e `task-N.M.md` sem memoria da

@@ -55,7 +55,9 @@ ele passa pelo workflow de aprendizado.
 9. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
    retrospectiva aprovada exigir aquela tecnologia.
 10. A implementacao acontece task por task, em ordem segura. Leitura pode ser
-   paralela; escrita fica serializada por um unico orquestrador.
+   paralela; escrita fica serializada por owner e arquivo. O owner pode ser o
+   orquestrador ou um agente `scoped-writer` quando a task aprovada declarar
+   `target_files`, validators e gates.
 11. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
@@ -99,11 +101,13 @@ ele passa pelo workflow de aprendizado.
 | --- | --- |
 | `execution-context-reader` | Extrai contexto relevante em modo read-only antes da escrita, incluindo pre-analise local minima quando faltam referencias executaveis. |
 | `source-researcher` | Mapeia fatos, lacunas e conflitos em pesquisa multi-fonte antes de decisao, plano ou execucao, especialmente quando a lacuna pre-escrita e ampla demais para `execution-context-reader`. |
-| `technical-implementer` | Propoe mudancas tecnicas em modo `proposal-only` quando a escrita for sensivel ou exigir julgamento especializado. |
+| `technical-implementer` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir `target_files`; caso contrario, retorna proposta. |
 | `runtime-qa` | Produz checklist de validacao e evidencia esperada para comportamento perceptivel ou runtime. |
 | `bibliotecario` | Localiza a menor documentacao duradoura suficiente no projeto consumidor. |
 | `catalogador` | Entra depois da execucao, quando aprendizado `project-specific` precisar virar `/docs` do consumidor. |
 | `standards-curator` | Entra depois da retrospectiva, quando houver candidato a regra duradoura ou backlog. |
+| `gameplay-engineer` | Pode escrever mecanicas, codigo/config de gameplay ou dados aprovados quando a task atribuir `target_files` e skills/gates aplicaveis. |
+| `narrative-designer` e `dialogue-editor` | Podem escrever conteudo narrativo, dialogos, escolhas e texto de dominio quando a task atribuir `target_files` e gates aplicaveis. |
 
 ## Gates e pontos de parada
 
@@ -115,7 +119,9 @@ ele passa pelo workflow de aprendizado.
 - Nao execute plano inteiro quando o usuario pediu apenas uma fase ou task.
 - Nao edite runtime, engine, framework, assets, dados persistidos,
   integracoes ou superficies sensiveis sem plano aprovado, skill tecnica
-  aplicavel, validator e gate humano.
+  aplicavel, owner de escrita, validator e gate humano.
+- Nao acione agente `scoped-writer` sem `target_files`, `allowed_writes`,
+  owner exclusivo, validators e gates suficientes.
 - Nao declare comportamento perceptivel como validado sem confirmacao humana.
 - Nao transforme resultado de execucao diretamente em regra duradoura. A
   promocao acontece no workflow de aprendizado.
@@ -128,6 +134,7 @@ Ao fim da execucao, outra LLM deve conseguir retomar pelo disco:
 - qual `Execution Brief` guiou a escrita;
 - quais fontes foram lidas;
 - quais arquivos foram alterados;
+- qual owner escreveu cada arquivo quando houve agente `scoped-writer`;
 - quais validators rodaram ou foram bloqueados;
 - qual gate humano ficou pendente ou foi satisfeito;
 - quais evidencias foram salvas;

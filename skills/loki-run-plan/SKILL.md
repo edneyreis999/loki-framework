@@ -1,9 +1,9 @@
 ---
 name: loki-run-plan
-description: Run the Loki `loki:run-plan` command workflow in Codex. Use when executing an approved Loki plan phase from `tasks.md` and `task-N.M.md`, producing execution briefs, serialized writes, validation evidence, task status updates, and resumable state.
+description: Run the Loki `loki:run-plan` command workflow in Codex. Use when executing an approved Loki plan phase from `tasks.md` and `task-N.M.md`, producing execution briefs, scoped-writer ownership, serialized writes, validation evidence, task status updates, and resumable state.
 when_to_use:
   - "Use when executing an approved Loki plan phase from tasks.md and task-N.M.md."
-  - "Use when producing execution briefs, serialized writes, validation evidence, task status updates, and resumable state."
+  - "Use when producing execution briefs, scoped-writer ownership, serialized writes, validation evidence, task status updates, and resumable state."
 argument-hint: "[phase, tasks.md, task target, analysis directory]"
 arguments:
   required: []

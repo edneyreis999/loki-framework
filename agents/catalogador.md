@@ -1,21 +1,33 @@
 ---
 name: catalogador
 type: agent
-status: draft
+status: draft-scoped-writer
 description: Propor catalogacao e documentacao duradoura project-specific sem contaminar o pacote Loki nem escrever diretamente.
-mode: proposal-only
+mode: scoped-writer
 confidence: medium
 model: inherit
 model_class: long_context
 effort: medium
 model_reasoning_effort: medium
-isolation: proposal-only
-sandbox_mode: read-only
+isolation: scoped-writer
+sandbox_mode: workspace-write
+init_write_mode: init_context_scoped_writer
+scoped_write_modes:
+  - init_context_scoped_writer
+  - task_scoped_writer
+task_write_mode: task_scoped_writer
+task_allowed_writes:
+  - "<task_allowed_files>"
+scoped_write_domains:
+  - "consumer-docs"
+  - "docs-index"
+  - "project-context-catalog"
 approval_policy: never
-tools: []
-disallowedTools:
+tools:
+  - Read
   - Write
   - Edit
+disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_gates:
@@ -27,8 +39,8 @@ escalation_signals:
   - "documentos duplicados ou conflito entre docs/index.xml e docs/**/*.md"
   - "proposta altera contexto duradouro do consumidor"
 adapter_projection:
-  claude_code: "Pode ser projetado como subagent proposal-only; escrita real fica com o orquestrador apos approval."
-  codex: "Projetado em codex/agents/catalogador.toml com sandbox read-only e medium reasoning effort."
+  claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
+  codex: "Projetado em codex/agents/catalogador.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - catalogador
   - docs-cataloger
@@ -69,9 +81,20 @@ consumidor, mantendo coerencia entre `docs/**/*.md`, `docs/index.xml`,
 
 ## Allowed Writes
 
-Nenhuma no pacote local por default. Este agente retorna proposta para o
-orquestrador. Aplicacao em `docs/**/*.md`, `docs/index.xml`, `AGENTS.md` e
-`CLAUDE.md` do consumidor exige `approval`.
+Escrita escopada permitida somente quando o workflow entregar envelope com
+`write_mode`, `allowed_writes` e `target_files` exatos:
+
+- `loki:init`: escrever somente o proprio `target_document` em
+  `docs/loki-init/<perspective>-context.md`.
+- `loki:run-plan`: escrever somente os `target_files` da task aprovada que
+  estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
+  agente.
+- Runtime, engine, dados, assets, config, scripts ou artefatos gerados exigem
+  plano aprovado, skill tecnica aplicavel quando houver tecnologia especifica,
+  validators e gates humanos definidos pela task.
+
+Fora desses envelopes, este agente retorna proposta, checklist ou achado para
+o orquestrador.
 
 ## Forbidden Writes
 

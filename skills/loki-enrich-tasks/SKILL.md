@@ -1,8 +1,8 @@
 ---
 name: loki-enrich-tasks
-description: Run the Loki `loki:enrich-tasks` command workflow in Codex. Revise and enrich Loki phase tasks before execution by incorporating prior retrospectives, build learnings, decisions, success criteria, and human loops without exposing unnecessary internal source material or creating direct normative handoffs; use before `loki:run-plan`.
+description: Run the Loki `loki:enrich-tasks` command workflow in Codex. Revise and enrich Loki phase tasks before execution by incorporating prior retrospectives, build learnings, decisions, scoped write owners, target files, success criteria, and human loops without exposing unnecessary internal source material or creating direct normative handoffs; use before `loki:run-plan`.
 when_to_use:
-  - "Use before loki:run-plan when phase tasks need targeted enrichment from prior retrospectives, builds, decisions, success criteria, or human loops."
+  - "Use before loki:run-plan when phase tasks need targeted enrichment from prior retrospectives, builds, decisions, scoped write owners, target files, success criteria, or human loops."
   - "Use when improving active plan tasks without promoting durable context directly."
 argument-hint: "[phase, tasks.md, retrospectives, builds]"
 arguments:
@@ -61,14 +61,18 @@ Resolva todos os caminhos no filesystem. Se algum caminho obrigatorio nao existi
 
 1. Leia `TASKS_MD` antes de qualquer fonte antiga.
 2. Identifique todas as tasks da `FASE_ATUAL` e localize arquivos detalhados como `task-N.M.md`.
-3. Entenda objetivo, escopo tecnico, arquivos provavelmente impactados, riscos, dependencias, decisoes ja documentadas, validators, criterios de sucesso e human loops.
+3. Entenda objetivo, escopo tecnico, arquivos provavelmente impactados, write
+   owner, `target_files`, riscos, dependencias, decisoes ja documentadas,
+   validators, criterios de sucesso e human loops.
 4. Analise retrospectivas, builds e interactions por arquivo ou lote pequeno. Quando houver suporte, paralelize a leitura e consolide apenas depois que todas as analises retornarem.
 5. Para cada fonte transitoria, produza internamente: aprendizados tecnicos, relacao possivel com `FASE_ATUAL`, tasks afetadas, instrucoes concretas sugeridas, arquivos adicionais a investigar e nivel de confianca.
 6. Investigue arquivos locais adicionais quando um aprendizado parecer aplicavel, mas depender do escopo atual.
 7. Aplique o research gate condicionado descrito abaixo.
 8. Resolva ambiguidades antes de editar. Nao trate diferenca terminologica como conflito real.
 9. Edite apenas quando houver melhoria clara, aplicavel e tecnicamente justificada para a fase atual.
-10. Converta aprendizados em diretrizes tecnicas objetivas: instrucao direta, restricao tecnica, validator, cuidado de implementacao, criterio de aceite ou nota de compatibilidade.
+10. Converta aprendizados em diretrizes tecnicas objetivas: instrucao direta,
+    restricao tecnica, write owner, `target_files`, validator, cuidado de
+    implementacao, criterio de aceite ou nota de compatibilidade.
 11. Preserve estrutura, nao reescreva texto correto por estilo, evite duplicacao e nao altere tasks de outras fases.
 12. Registre qualquer mudanca de escopo como pergunta ou approval.
 13. Se surgir atrito resolvido ou aprendizado aparentemente duradouro, registre apenas observacao local para consolidacao posterior na `loki:retrospectiva-tecnica`.
@@ -131,6 +135,9 @@ Quando resolver sem perguntar, mantenha registro interno da divergencia, fonte m
 - Nao adicione novas tasks, requisitos ou objetivos fora do escopo da fase, salvo quando necessario para evitar erro tecnico diretamente ligado a execucao.
 - Nao altere arquivos apenas porque encontrou um aprendizado antigo.
 - Se a task ja refletir corretamente o aprendizado, nao edite.
+- Preserve `Scoped Write Plan` existente. Altere owner, `target_files` ou
+  `scoped_write_domains` somente quando a evidencia reduzir risco real ou
+  corrigir ambiguidade de execucao.
 - Nunca cite, linke, nomeie ou insinue retrospectivas, builds, arquivos analisados, datas de fonte interna ou frases como "foi aprendido anteriormente", "na fase passada" ou "no build anterior" dentro dos artefatos editados.
 - Use fontes transitorias apenas como contexto interno.
 
@@ -152,6 +159,8 @@ Antes de finalizar, valide:
 - Nenhum trecho correto foi reescrito por estilo.
 - Cada mudanca reduz risco real ou ambiguidade concreta.
 - Cada instrucao adicionada e especifica o bastante para orientar implementacao.
+- Cada mudanca em owner, `target_files` ou `scoped_write_domains` esta ligada a
+  evidencia concreta e nao amplia escopo sem gate.
 - Pesquisa externa foi realizada com fonte citada ou pulada com motivo.
 - Fonte externa nao substituiu evidencia local do projeto consumidor.
 - Toda duvida que mudaria escopo, ordem, human loop ou criterio de sucesso virou gate humano.

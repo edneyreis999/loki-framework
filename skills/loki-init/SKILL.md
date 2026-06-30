@@ -58,6 +58,9 @@ used_by:
    capability and use directed tool discovery for multi-agent/subagent tools.
    Treat discovered tool namespaces as adapter/session evidence, not universal
    Loki package contracts.
+   For `init_context_scoped_writer` agents, declare that each agent writes its
+   own exact `target_document`; do not ask the orchestrator to write the
+   document as a substitute handoff.
 7. Before selecting agents, run an explicit agent catalog preflight for the
    active adapter. Prefer the installed `manifest.yaml` as the structured
    catalog for `supported_project_types`, `agent_project_tag_policy` and
@@ -79,28 +82,29 @@ used_by:
    duplicates. Record `inventory_required_reasons` by agent. For
    `software-development`, selecting only `core` agents is valid until
    specialized agents receive that tag.
-11. Build an `agent_init_envelope` for each selected agent, including
-   `project_tags`, `selection_reason`, `target_document`, `target_inventory`,
-   `target_retrospective`, `allowed_sources`, `forbidden_writes`,
-   `context_budget` and `write_mode`.
-12. Keep current agents read-only or proposal-only. Prefer structured handoffs
-   from specialist agents and serial materialization by the orchestrator for
-   final documents and inventories.
-13. When per-agent technical retrospectives are required, the selected agent may
-   write only its exact `target_retrospective` under the active phase
-   retrospective directory. If the runtime cannot support that file-specific
-   exception, require `retrospective_handoff` and record the limitation.
-14. For Codex subagent fan-out, use conservative batches, prefer the configured
+11. Classify selected agents into `init_context_scoped_writer` and
+   `init_support_only` using the command contract.
+12. Build an `agent_init_envelope` for each selected
+   `init_context_scoped_writer`, including `project_tags`, `selection_reason`,
+   `target_document`, exact `allowed_writes`, `allowed_sources`,
+   `forbidden_writes`, `context_budget` and `write_mode`.
+13. Require each `init_context_scoped_writer` to write only its own exact
+   `target_document` under `docs/loki-init/`. If there is no useful content,
+   the agent writes a structured failure in that same `target_document`.
+14. Invoke `init_support_only` agents only when their read-only or proposal
+   result is needed. They do not receive a default `<perspective>-context.md`.
+15. For Codex subagent fan-out, use conservative batches, prefer the configured
     `agents.max_threads` when known, otherwise use the documented default of 6
     as an initial ceiling, record observed limits and close completed agents
     before opening a later batch.
-15. Require document, inventory and retrospective per selected agent, or a
-   structured failure artifact.
-16. Record `available`, `inventory_required`, `selected`, `planned`, `invoked`,
-    `blocked` and `skipped` agents with reasons before consolidation.
-17. Consolidate serially: conflicts, open questions, docs index, init README,
+16. Require a materialized `target_document` per selected
+   `init_context_scoped_writer`.
+17. Record `available`, `inventory_required`, `init_context_scoped_writers`,
+    `init_support_only_agents`, `selected`, `planned`, `invoked`, `blocked`
+    and `skipped` agents with reasons before consolidation.
+18. Consolidate serially: conflicts, open questions, docs index, init README,
     task state and next recommended Loki command.
-18. Run validators from the command contract and record evidence in
+19. Run validators from the command contract and record evidence in
     `planos/000-init-loki/builds/fase1/` when executing in a consumer project.
 
 ## Limits
@@ -114,9 +118,9 @@ used_by:
   classify the project against `supported_project_types`, derive required
   agents from `manifest.yaml` project tags, and justify every required skipped
   agent.
-- Do not let proposal-only agents write final docs, inventories, runtime,
-  assets, code or config. The only default write exception is the selected
-  agent's own exact technical retrospective path when the workflow requires it.
+- Do not let agents write outside the exact `target_document` granted by
+  `loki:init`, and do not let `init_support_only` agents write final docs,
+  runtime, assets, code or config.
 - Do not hardcode RPG Maker, Visual Novel, Unity, Unreal, Godot, Ren'Py or
   another engine into the core workflow.
 - Do not declare runtime, UI, gameplay, audio, build, save/load, integration or

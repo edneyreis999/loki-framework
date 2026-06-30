@@ -291,7 +291,7 @@ agents:
       - "core"
   - name: "runtime-qa"
     file: "agents/runtime-qa.md"
-    status: draft
+    status: draft-scoped-writer
     project_tags:
       - "core"
   - name: "execution-context-reader"
@@ -306,7 +306,7 @@ agents:
       - "core"
   - name: "technical-implementer"
     file: "agents/technical-implementer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "core"
   - name: "bibliotecario"
@@ -316,87 +316,87 @@ agents:
       - "core"
   - name: "catalogador"
     file: "agents/catalogador.md"
-    status: draft
+    status: draft-scoped-writer
     project_tags:
       - "core"
   - name: "game-product-owner"
     file: "agents/game-product-owner.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "game-business-analyst"
     file: "agents/game-business-analyst.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "game-designer"
     file: "agents/game-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "narrative-designer"
     file: "agents/narrative-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "ux-ui-designer"
     file: "agents/ux-ui-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "gameplay-engineer"
     file: "agents/gameplay-engineer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "narrative-qa"
     file: "agents/narrative-qa.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "level-designer"
     file: "agents/level-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "balance-economy-designer"
     file: "agents/balance-economy-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "branching-narrative-designer"
     file: "agents/branching-narrative-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "scene-presentation-designer"
     file: "agents/scene-presentation-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "audio-designer"
     file: "agents/audio-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "quest-content-designer"
     file: "agents/quest-content-designer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "dialogue-editor"
     file: "agents/dialogue-editor.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "tools-pipeline-engineer"
     file: "agents/tools-pipeline-engineer.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
   - name: "technical-artist"
     file: "agents/technical-artist.md"
-    status: draft-proposal-only
+    status: draft-scoped-writer
     project_tags:
       - "game-dev"
 
@@ -408,7 +408,7 @@ codex_agents:
   - name: "catalogador"
     file: "codex/agents/catalogador.toml"
     source_agent: "agents/catalogador.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "execution-context-reader"
     file: "codex/agents/execution-context-reader.toml"
     source_agent: "agents/execution-context-reader.md"
@@ -416,7 +416,7 @@ codex_agents:
   - name: "runtime-qa"
     file: "codex/agents/runtime-qa.toml"
     source_agent: "agents/runtime-qa.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "retrospective-digester"
     file: "codex/agents/retrospective-digester.toml"
     source_agent: "agents/retrospective-digester.md"
@@ -432,71 +432,71 @@ codex_agents:
   - name: "technical-implementer"
     file: "codex/agents/technical-implementer.toml"
     source_agent: "agents/technical-implementer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "game-product-owner"
     file: "codex/agents/game-product-owner.toml"
     source_agent: "agents/game-product-owner.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "game-business-analyst"
     file: "codex/agents/game-business-analyst.toml"
     source_agent: "agents/game-business-analyst.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "game-designer"
     file: "codex/agents/game-designer.toml"
     source_agent: "agents/game-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "narrative-designer"
     file: "codex/agents/narrative-designer.toml"
     source_agent: "agents/narrative-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "ux-ui-designer"
     file: "codex/agents/ux-ui-designer.toml"
     source_agent: "agents/ux-ui-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "gameplay-engineer"
     file: "codex/agents/gameplay-engineer.toml"
     source_agent: "agents/gameplay-engineer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "narrative-qa"
     file: "codex/agents/narrative-qa.toml"
     source_agent: "agents/narrative-qa.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "level-designer"
     file: "codex/agents/level-designer.toml"
     source_agent: "agents/level-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "balance-economy-designer"
     file: "codex/agents/balance-economy-designer.toml"
     source_agent: "agents/balance-economy-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "branching-narrative-designer"
     file: "codex/agents/branching-narrative-designer.toml"
     source_agent: "agents/branching-narrative-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "scene-presentation-designer"
     file: "codex/agents/scene-presentation-designer.toml"
     source_agent: "agents/scene-presentation-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "audio-designer"
     file: "codex/agents/audio-designer.toml"
     source_agent: "agents/audio-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "quest-content-designer"
     file: "codex/agents/quest-content-designer.toml"
     source_agent: "agents/quest-content-designer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "dialogue-editor"
     file: "codex/agents/dialogue-editor.toml"
     source_agent: "agents/dialogue-editor.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "tools-pipeline-engineer"
     file: "codex/agents/tools-pipeline-engineer.toml"
     source_agent: "agents/tools-pipeline-engineer.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
   - name: "technical-artist"
     file: "codex/agents/technical-artist.toml"
     source_agent: "agents/technical-artist.md"
-    status: draft-derived
+    status: draft-derived-scoped-writer
 
 templates:
   - name: "command-contract-template"

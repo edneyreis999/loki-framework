@@ -42,6 +42,8 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 ## Outputs
 
 - Tasks atualizadas ou proposta de patch.
+- `Scoped Write Plan` preservado ou enriquecido com owner, `target_files`,
+  `allowed_writes` e `scoped_write_domains` quando isso reduzir risco real.
 - Registro de decisoes e pendencias humanas.
 - Resultado do research gate: nao necessario, pulado com motivo ou realizado com fontes citadas.
 - Registro local de observacao ou atrito resolvido para consolidacao posterior na `loki:retrospectiva-tecnica`.
@@ -70,7 +72,9 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 1. Confirmar `FASE_ATUAL`, `TASKS_MD`, fontes transitorias, escopo permitido e forbidden writes.
 2. Carregar `loki-enrich-tasks` antes de analisar ou editar tasks.
 3. Ler `TASKS_MD`, identificar tasks da fase alvo e localizar `task-N.M.md` correspondentes.
-4. Entender objetivo, arquivos provaveis, riscos, dependencias, criterios de sucesso, validators e human loops da fase antes de ler aprendizados antigos.
+4. Entender objetivo, arquivos provaveis, write owner, `target_files`, riscos,
+   dependencias, criterios de sucesso, validators e human loops da fase antes
+   de ler aprendizados antigos.
 5. Analisar retrospectivas, builds e interactions em paralelo por arquivo ou lote pequeno quando o ambiente permitir.
 6. Consolidar achados em uma visao interna com relacao com a fase, tasks afetadas, instrucao concreta, necessidade de leitura adicional e confianca.
 7. Aplicar research gate condicionado somente depois do contexto local:
@@ -79,7 +83,7 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
    - registrar fonte, versao/data quando relevante, fato extraido e impacto;
    - nunca deixar pesquisa externa substituir o estado local do projeto consumidor.
 8. Resolver ambiguidades antes de editar: use aprendizado validado por execucao quando ele corrigir claramente a task no mesmo escopo; pergunte ao usuario apenas quando fontes aplicaveis e plausiveis exigirem decisoes incompativeis.
-9. Editar somente `tasks.md`, `task-N.M.md` da fase alvo ou `interaction/faseN/`, preservando estrutura, evitando duplicacao e transformando aprendizados em diretrizes tecnicas objetivas.
+9. Editar somente `tasks.md`, `task-N.M.md` da fase alvo ou `interaction/faseN/`, preservando estrutura, evitando duplicacao e transformando aprendizados em diretrizes tecnicas objetivas, incluindo owner e `target_files` quando necessario.
 10. Rodar checklist final: fase certa, texto sem fonte interna sensivel, nenhuma reescrita cosmetica, instrucao especifica, nenhuma duvida pendente que exija gate humano.
 
 ## Handoffs
@@ -98,6 +102,8 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 - O enriquecimento reduz ambiguidade ou risco real da fase atual.
 - Tasks corretas nao foram reescritas por estilo, reorganizacao ou preferencia de redacao.
 - Aprendizados foram convertidos em instrucao direta, restricao tecnica, validator, cuidado de implementacao, criterio de aceite ou nota de compatibilidade.
+- Owner, `target_files`, `allowed_writes` e `scoped_write_domains` foram
+  preservados ou enriquecidos apenas quando havia evidencia concreta.
 - Qualquer aprendizado que pareca duradouro fica apenas registrado como observacao local para consolidacao posterior na `loki:retrospectiva-tecnica`, nao como candidato normativo direto.
 - As fontes usadas ficam registradas em alto nivel, sem copiar material interno desnecessario.
 - Pesquisa externa foi realizada com fontes citadas ou pulada com motivo.

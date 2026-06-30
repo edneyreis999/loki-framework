@@ -43,6 +43,10 @@ downstream_execution_profile:
     context: "<execution-context-reader|none>"
     implementation: "<technical-implementer|none>"
     runtime_validation: "<runtime-qa|none>"
+  scoped_writers:
+    - agent: "<agent-name>"
+      domains: []
+      target_files: []
   validator_effort: "<low|medium|high>"
 ```
 
@@ -57,9 +61,9 @@ para notas locais, validadores simples ou documentacao transiente.
 **Objective:** <resultado da fase>
 **Observable Validation:** <o que humano, teste, log, output ou runtime deve demonstrar>
 
-| Task | Title | Dependencies | Estimate | Human Loop | Validators | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| task-1.1 | <task-title> | none | 2-4h | <none/interview/approval/human-validation> | <validator> | pending |
+| Task | Title | Dependencies | Write Owner | Estimate | Human Loop | Validators | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| task-1.1 | <task-title> | none | <orchestrator/agent-name> | 2-4h | <none/interview/approval/human-validation> | <validator> | pending |
 
 ## Execution Order
 
