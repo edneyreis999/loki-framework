@@ -4,8 +4,7 @@ nickname_candidates = ["narrative-designer", "story-designer"]
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 approval_policy = "never"
-developer_instructions = '''
-This Codex custom agent was generated from the Loki Framework Markdown agent contract.
+developer_instructions = '''This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Source agent contract: agents/narrative-designer.md
 Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
@@ -31,6 +30,7 @@ disallowedTools:
   - NotebookEdit
 required_skills:
   - "<technology_required_skills>"
+  - "loki-rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
 required_gates:
   - technical-review
   - "<human_validation_gate>"
@@ -79,6 +79,10 @@ consistencia ficcional, sem escrever runtime do consumidor.
   IDs, route IDs, flag IDs ou outros identificadores de dominio.
 - `<technology_required_skills>` apenas quando narrativa depender de flags,
   variaveis, cenas, eventos ou pipeline de texto reais.
+
+- Para RPG Maker MZ, use `loki-rpg-maker-mz-project-inventory` quando o
+  inventario comum estiver ausente, parcial ou insuficiente para o handoff do
+  agente.
 
 ## Outputs
 
@@ -147,5 +151,4 @@ parallel_agent_response:
   continuidade jogada, aceitacao narrativa, dialogo ou compreensao do jogador.
 - `approval` se uma execucao futura tentar promover proposta narrativa para
   politica duradoura, instalacao ou escrita sensivel.
-
 '''

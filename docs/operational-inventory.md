@@ -184,6 +184,7 @@ projeto consumidor declarar RPG Maker MZ.
 | --- | --- | --- |
 | `loki-rpg-maker-mz-data-json` | `optional-extension` | Skill especializada para superficies de dados, Database, Common Events ou mapas RPG Maker MZ. |
 | `loki-rpg-maker-mz-plugin-workflow` | `optional-extension` | Skill especializada para criar, editar, validar ou ativar plugins RPG Maker MZ. |
+| `loki-rpg-maker-mz-project-inventory` | `optional-extension` | Skill especializada para agentes game-dev inventariarem projeto RPG Maker MZ antes de handoff, analise tecnica ou planejamento de runtime/dados/plugins. |
 | `notetag-filler` | `optional-extension` | Apoio futuro para notetags RPG Maker MZ/VisuStella. |
 | `visustella-analyst` | `optional-extension` | Apoio futuro para analise tecnica/debug em projetos com VisuStella. |
 

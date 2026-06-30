@@ -91,6 +91,7 @@
       "loki-retrospectiva-tecnica": "both",
       "loki-rpg-maker-mz-data-json": "consumer-only",
       "loki-rpg-maker-mz-plugin-workflow": "consumer-only",
+      "loki-rpg-maker-mz-project-inventory": "consumer-only",
       "loki-run-plan": "both",
       "loki-run-plan-execution": "both",
       "loki-self-healing": "internal-only",

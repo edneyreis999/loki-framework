@@ -97,8 +97,8 @@ sobrescrever silenciosamente.
 
 - `loki-init` para executar este workflow no Codex.
 - `loki-index-navigator` quando `docs/index.xml` existir e precisar ser lido.
-- `<technology_required_skills>` somente quando o inventario ou o usuario
-  declararem uma tecnologia especifica.
+- `<technology_required_skills>` somente quando o inventario, o usuario ou um
+  agente especialista declararem uma tecnologia especifica.
 - `loki-retrospectiva-tecnica` para retrospectiva por agente selecionado.
 
 ## Workflow
@@ -113,6 +113,13 @@ sobrescrever silenciosamente.
      capacidade multi-agent/subagent, por exemplo via `tool_search`; tratar
      namespaces concretos de ferramenta como evidencia da sessao atual, nao
      como contrato universal do pacote;
+   - executar tambem preflight de catalogo de agentes antes da selecao:
+     listar agentes disponiveis/instalados nas superficies aprovadas do
+     adaptador quando existirem, como `.codex/agents`, `.agents/agents`,
+     `agents/`, `codex/agents/` ou inventario equivalente de agentes;
+   - registrar fonte do catalogo de agentes, agentes disponiveis e limitacoes
+     de descoberta; leitura de `.codex/**` ou `.agents/**` nao autoriza escrita
+     nesses caminhos;
    - criar ou auditar `docs/` e `planos/000-init-loki/`;
    - criar ou auditar `interaction/fase1`, `builds/fase1` e
      `retrospetivas/fase1`;
@@ -129,11 +136,18 @@ sobrescrever silenciosamente.
    - detectar ou aplicar hints de tipo de projeto, engine e framework;
    - registrar evidencia, confianca, skills tecnicas sugeridas, superficies
      sensiveis, validators e human gates;
+   - registrar skills tecnicas candidatas como contexto para os agentes
+     especialistas, sem executar regras de engine no workflow core;
    - produzir `docs/loki-init/technology-context.md` ou
      `docs/loki-init/engine-context.md`.
 4. Fan-out paralelo por `agent_init_envelope`:
-   - selecionar agentes por perfil detectado, nao por hardcode de engine;
-   - registrar agentes planejados, invocados, bloqueados e pulados com motivo;
+   - selecionar agentes pelo perfil detectado cruzado com o catalogo
+     disponivel, nao por memoria nem por hardcode de engine;
+   - quando um perfil amplo como game-dev for detectado, considerar todos os
+     agentes aplicaveis do catalogo disponivel; se algum agente aplicavel nao
+     for invocado, registrar `skipped` com motivo concreto;
+   - registrar matriz `available -> selected -> invoked | blocked | skipped`
+     com motivo, documento alvo, inventario alvo e retrospectiva alvo;
    - se houver limite pratico ou configurado de concorrencia, executar fan-out
      em lotes conservadores; em Codex, quando nenhum limite menor for conhecido,
      usar `agents.max_threads` quando disponivel ou o default documentado de 6
@@ -242,7 +256,12 @@ conteudo util, mas nunca podem desaparecer silenciosamente.
 - Contexto de tecnologia registra evidencia, confianca e skills sugeridas sem
   hardcode de engine.
 - Agent fan-out registra preflight de capacidade, metodo de descoberta,
-  agentes planejados, invocados, bloqueados e pulados, com motivos.
+  catalogo de agentes usado, agentes disponiveis, planejados, invocados,
+  bloqueados e pulados, com motivos.
+- Para perfis amplos como game-dev, todo agente aplicavel no catalogo
+  disponivel esta em `selected`, `invoked`, `blocked` ou `skipped` com motivo;
+  `skipped: []` so e valido quando o catalogo foi auditado e nenhum agente
+  aplicavel ficou fora.
 - Cada agente selecionado tem documento, inventario e retrospectiva, ou falha
   estruturada equivalente.
 - Retrospectivas escritas por agentes `proposal-only` ficam restritas ao
@@ -304,11 +323,18 @@ loki_init_state:
   agent_fanout:
     capability_preflight: ""
     discovery_method: ""
+    agent_catalog_source: []
     compatible_tools_found: []
+    available: []
+    selected: []
     planned: []
     invoked: []
     blocked: []
     skipped: []
+    skipped_reasons: {}
+    target_documents: {}
+    target_inventories: {}
+    target_retrospectives: {}
     batch_limit_configured: null
     batch_limit_observed: null
     write_mode_by_agent: {}

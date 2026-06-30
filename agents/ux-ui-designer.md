@@ -20,6 +20,7 @@ disallowedTools:
   - NotebookEdit
 required_skills:
   - "<technology_required_skills>"
+  - "loki-rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
 required_gates:
   - technical-review
   - "<human_validation_gate>"
@@ -71,6 +72,10 @@ editar runtime do consumidor.
   quest IDs, UI state IDs ou outros identificadores de dominio.
 - `<technology_required_skills>` apenas quando UX/UI depender de componentes,
   input, resolucao, sistema de texto, save/load ou constraints reais da engine.
+
+- Para RPG Maker MZ, use `loki-rpg-maker-mz-project-inventory` quando o
+  inventario comum estiver ausente, parcial ou insuficiente para o handoff do
+  agente.
 
 ## Outputs
 

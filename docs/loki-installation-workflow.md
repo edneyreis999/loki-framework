@@ -23,6 +23,12 @@ consumidor. O fluxo sempre passa por leitura da politica local, dry-run,
 approval explicito do destino, aplicacao controlada, validacao pos-instalacao e
 registro claro do que ficou instalado.
 
+Instalar tambem nao ativa regras de engine. Skills opcionais de tecnologia,
+como extensoes RPG Maker MZ, podem ficar disponiveis no perfil `consumer`, mas
+o workflow core continua agnostico: `loki:init` registra tecnologia detectada e
+skills candidatas nos envelopes; agentes especialistas decidem se precisam
+invocar uma skill tecnica para concluir o proprio handoff.
+
 ![[loki-installation-workflow.excalidraw.md]]
 
 ## Fluxo
@@ -118,6 +124,12 @@ git -C "$DEST" status --short .agents .codex
 | `.codex/agents/<agent>.toml` | Symlink para `codex/agents/<agent>.toml`. |
 | `.agents/loki-installation-manifest.json` | Manifest gerado com origem, destino, perfil, escopo e status dos links. |
 
+Skills `consumer-only` de tecnologia sao destinos de instalacao, nao passos
+automaticos da instalacao nem do `loki:init`. Por exemplo, uma skill de
+inventario RPG Maker MZ deve ser chamada por agentes game-dev somente quando o
+projeto consumidor for RPG Maker MZ e o agente precisar desse inventario para
+seu handoff.
+
 ## Gates e pontos de parada
 
 - Pare se o destino nao foi aprovado explicitamente.
@@ -150,6 +162,9 @@ Uma instalacao bem-sucedida deve demonstrar:
   revisao humana;
 - nenhum arquivo de runtime ou contexto duradouro do consumidor foi alterado
   sem pedido separado.
+- skills opcionais de tecnologia instaladas no perfil escolhido aparecem apenas
+  como symlinks/manifest entries; nenhuma regra de engine foi executada como
+  efeito colateral da instalacao.
 
 ## Resultado esperado
 

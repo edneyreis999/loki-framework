@@ -192,7 +192,12 @@ Events ou mapas.
 Use `loki-rpg-maker-mz-plugin-workflow` somente quando o projeto consumidor
 exigir criar, editar, validar ou ativar plugins RPG Maker MZ.
 
-Essas duas skills sao extensoes especializadas opcionais. Elas nao sao
+Use `loki-rpg-maker-mz-project-inventory` quando um agente game-dev atuar sobre
+um projeto RPG Maker MZ e precisar de inventario compartilhado antes de handoff,
+analise tecnica ou planejamento que dependa de Common Events, mapas, plugins,
+assets ou save/load.
+
+Essas skills sao extensoes especializadas opcionais. Elas nao sao
 obrigatorias para feedback, analise tecnica, plano de acao, execucao de plano,
 retrospectiva ou melhoria continua do core Loki.
 
