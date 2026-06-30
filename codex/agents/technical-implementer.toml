@@ -3,11 +3,6 @@ description = "Propor ou aplicar mudancas tecnicas em codigo, runtime ou integra
 nickname_candidates = ["technical-implementer", "implementation-proposer"]
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
-init_write_mode = "init_context_scoped_writer"
-scoped_write_modes = ["init_context_scoped_writer", "task_scoped_writer"]
-task_write_mode = "task_scoped_writer"
-task_allowed_writes = ["<task_allowed_files>"]
-scoped_write_domains = ["implementation-code", "configuration", "integration-code", "validators", "task-approved-runtime-surfaces"]
 approval_policy = "never"
 developer_instructions = '''
 This Codex custom agent was generated from the Loki Framework Markdown agent contract.

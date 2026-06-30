@@ -3,11 +3,6 @@ description = 'Propor QA narrativo para rotas, flags, escolhas, endings, continu
 nickname_candidates = ["narrative-qa", "story-qa"]
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
-init_write_mode = "init_context_scoped_writer"
-scoped_write_modes = ["init_context_scoped_writer", "task_scoped_writer"]
-task_write_mode = "task_scoped_writer"
-task_allowed_writes = ["<task_allowed_files>"]
-scoped_write_domains = ["narrative-qa-reports", "continuity-fixes", "task-local-evidence"]
 approval_policy = "never"
 developer_instructions = '''This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Source agent contract: agents/narrative-qa.md

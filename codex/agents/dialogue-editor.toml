@@ -3,11 +3,6 @@ description = 'Revisar ou escrever dialogos, voz, clareza, ritmo, tom, subtexto 
 nickname_candidates = ['dialogue-editor', 'character-voice-editor']
 model_reasoning_effort = 'high'
 sandbox_mode = "workspace-write"
-init_write_mode = "init_context_scoped_writer"
-scoped_write_modes = ["init_context_scoped_writer", "task_scoped_writer"]
-task_write_mode = "task_scoped_writer"
-task_allowed_writes = ["<task_allowed_files>"]
-scoped_write_domains = ["character-dialogue", "choice-text", "barks", "localization-source-text"]
 approval_policy = 'never'
 developer_instructions = '''This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Source agent contract: agents/dialogue-editor.md
