@@ -4,7 +4,7 @@ type: command
 status: draft
 domain: planning
 required_skills:
-  - loki-action-plan-authoring
+  - lf-action-plan-authoring
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -67,9 +67,9 @@ estrutura de artefatos Loki.
 
 ## Required Skills
 
-- `loki-action-plan-authoring` para contrato de plano, templates, validadores e
+- `lf-action-plan-authoring` para contrato de plano, templates, validadores e
   regras de granularidade.
-- `loki-index-navigator` quando o plano depender de documentacao duradoura em
+- `lf-index-navigator` quando o plano depender de documentacao duradoura em
   `/docs` do consumidor.
 - `<technology_required_skills>` somente quando o escopo aprovado ou a analise
   tecnica exigir detalhes de uma tecnologia especifica.

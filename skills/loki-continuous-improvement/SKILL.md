@@ -49,8 +49,8 @@ used_by:
    required skills, handoffs, validators, gates, stop conditions, and resume
    contract.
 3. Load the relevant Loki skills named by the command contract, especially
-   `loki-retrospectiva-tecnica`, `loki-command-creator`,
-   `loki-agent-creator`, and `loki-skill-creator`.
+   `loki-retrospectiva-tecnica`, `lf-command-creator`,
+   `lf-agent-creator`, and `lf-skill-creator`.
 4. If the input is a retrospective directory or multiple retrospective files,
    run an adapter capability preflight before choosing fallback serial. In
    Codex, use directed tool discovery for multi-agent, subagent, delegation, or
@@ -119,7 +119,7 @@ used_by:
   any durable update.
 - If the destination is consumer docs, update `docs/index.xml` in the same
   promotion and use `catalogador` when appropriate.
-- If the destination is a skill, load `loki-skill-creator` and keep
+- If the destination is a skill, load `lf-skill-creator` and keep
   technology-specific rules out of core package skills unless they belong to a
   specialized skill.
 

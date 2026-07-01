@@ -43,8 +43,8 @@ disallowedTools:
   - NotebookEdit
 required_skills:
   - "<technology_required_skills>"
-  - "loki-rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
-  - "loki-rpg-maker-mz-data-json quando o contexto aprovado exigir animacoes, tilesets, imagens referenciadas por dados ou superficies RPG Maker MZ"
+  - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
+  - "rpg-maker-mz-data-json quando o contexto aprovado exigir animacoes, tilesets, imagens referenciadas por dados ou superficies RPG Maker MZ"
 required_gates:
   - technical-review
   - "<human_validation_gate>"
@@ -95,7 +95,7 @@ plugins, dados ou runtime.
 - `<technology_required_skills>` apenas quando formatos, importacao, assets,
   dados, renderer, memoria, plugins ou validadores reais forem citados.
 
-- Para RPG Maker MZ, use `loki-rpg-maker-mz-project-inventory` quando o
+- Para RPG Maker MZ, use `rpg-maker-mz-project-inventory` quando o
   inventario comum estiver ausente, parcial ou insuficiente para o handoff do
   agente.
 

@@ -25,6 +25,7 @@ SUSPICIOUS_BOTH_TERMS = (
     "prefer these sources",
     "if this skill",
 )
+LOKI_SKILL_NAMESPACE_EXCEPTIONS: set[str] = set()
 
 
 def load_scopes(package_root: Path) -> dict:
@@ -137,6 +138,28 @@ def validate_toml(package_root: Path) -> None:
     for path in sorted((package_root / "codex" / "agents").glob("*.toml")):
         with path.open("rb") as handle:
             tomllib.load(handle)
+
+
+def validate_loki_skill_namespace(
+    skill_names: set[str], command_names: set[str]
+) -> None:
+    command_wrapper_names = {
+        Path(name).stem
+        for name in command_names
+        if name.startswith("loki-") and name.endswith(".md")
+    }
+    unexpected = sorted(
+        name
+        for name in skill_names
+        if name.startswith("loki-")
+        and name not in command_wrapper_names
+        and name not in LOKI_SKILL_NAMESPACE_EXCEPTIONS
+    )
+    if unexpected:
+        raise ValueError(
+            "loki skill namespace failures:\n- skills/loki-* without matching "
+            "commands/loki-*.md: " + ", ".join(unexpected)
+        )
 
 
 def validate_manifest_entries(package_root: Path) -> None:
@@ -368,6 +391,7 @@ def main() -> int:
         assert_exact_keys("command", set(command_scopes), command_names)
         assert_exact_keys("agent", set(agent_scopes), agent_names)
         assert_exact_keys("Codex agent", set(codex_agent_scopes), codex_agent_names)
+        validate_loki_skill_namespace(skill_names, command_names)
 
         mismatched_agent_scopes = []
         for agent_name, scope in sorted(agent_scopes.items()):

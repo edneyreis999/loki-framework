@@ -43,7 +43,7 @@ whole:
   adapter projection appears in scope;
 - command contracts in `commands/`;
 - wrapper skills and references in `skills/`;
-- `skills/loki-command-workflows/SKILL.md` for invocable commands;
+- `skills/lf-command-workflows/SKILL.md` for invocable commands;
 - `scripts/install-loki-symlinks.py` when skills, commands, agents, templates,
   or Codex installation surfaces are affected.
 
@@ -133,7 +133,7 @@ depends on a broader workflow decision.
 This checklist is only for internal Loki artifacts. Do not use self-healing to
 learn directly from external artifacts; when external material is relevant, rely
 on the output of `loki:knowledge-extraction-analysis` or
-`loki-framework-impact-audit` and then classify whether the internal package
+`lf-framework-impact-audit` and then classify whether the internal package
 should adopt, adapt, reject, or recognize the behavior as already covered.
 
 Check each applicable artifact for:
@@ -206,7 +206,7 @@ Apply only `corrigir agora`.
 - For `both` artifacts, apply only corrections that pass the shared-artifact
   neutrality checklist or have been rewritten by the decision table.
 - Update related metadata when required: `manifest.yaml`,
-  `docs/operational-inventory.md`, `skills/loki-command-workflows/SKILL.md`,
+  `docs/operational-inventory.md`, `skills/lf-command-workflows/SKILL.md`,
   `scripts/install-loki-symlinks.py`, command references, and wrapper skill
   references.
 - After any change under `commands/` or `skills/`, run

@@ -44,7 +44,7 @@ referencia sem copiar sua estrutura literalmente.
 - `source-researcher`: identifica lacunas, conflitos e evidencias multi-fonte
   que podem exigir documentacao duradoura, sem escrever ou promover contexto por
   conta propria.
-- `loki-index-navigator`: procedimento tecnico para navegar no catalogo XML.
+- `lf-index-navigator`: procedimento tecnico para navegar no catalogo XML.
 
 ## Regra de Promocao
 

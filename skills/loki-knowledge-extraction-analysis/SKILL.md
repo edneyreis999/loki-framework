@@ -38,8 +38,8 @@ status: draft
 used_by:
   - loki:knowledge-extraction-analysis
   - loki:continuous-improvement
-  - loki-external-knowledge-extraction
-  - loki-framework-impact-audit
+  - lf-external-knowledge-extraction
+  - lf-framework-impact-audit
 ---
 
 # loki-knowledge-extraction-analysis
@@ -57,9 +57,9 @@ used_by:
 4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    required skills, handoffs, validators, gates, stop conditions, and resume
    contract.
-5. Load `loki-external-knowledge-extraction` and produce an
+5. Load `lf-external-knowledge-extraction` and produce an
    `external_extraction` handoff before auditing Loki impact.
-6. Load `loki-framework-impact-audit` with the `external_extraction` handoff.
+6. Load `lf-framework-impact-audit` with the `external_extraction` handoff.
    That skill reads `docs/operational-inventory.md`, selects impacted Loki
    artifacts, audits them individually, and returns `impact_audit`.
 7. Consolidate `external_extraction` and `impact_audit` into the final report.
@@ -76,8 +76,8 @@ used_by:
 
 - External artifacts: frameworks, commands, skills, instruction documents,
   operational rules, examples, prompt artifacts, or documentation.
-- `external_extraction` from `loki-external-knowledge-extraction`.
-- `impact_audit` from `loki-framework-impact-audit`.
+- `external_extraction` from `lf-external-knowledge-extraction`.
+- `impact_audit` from `lf-framework-impact-audit`.
 - Optional destination for the generated analysis.
 
 ## Outputs

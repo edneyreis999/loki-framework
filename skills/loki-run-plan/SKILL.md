@@ -47,7 +47,7 @@ used_by:
 2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    required skills, handoffs, validators, gates, stop conditions, and resume
    contract.
-3. Load `loki-run-plan-execution` before planning or applying phase execution.
+3. Load `lf-run-plan-execution` before planning or applying phase execution.
 4. Use runtime-supported subagent delegation only when the user asks for
    delegation or parallel agent work.
 5. Treat this skill as the Codex entrypoint for the command name

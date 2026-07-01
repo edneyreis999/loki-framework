@@ -195,14 +195,14 @@ skills:
   - name: "obsidian-markdown"
     file: "skills/obsidian-markdown/SKILL.md"
     status: draft
-  - name: "loki-command-workflows"
-    file: "skills/loki-command-workflows/SKILL.md"
+  - name: "lf-command-workflows"
+    file: "skills/lf-command-workflows/SKILL.md"
     status: draft
   - name: "loki-init"
     file: "skills/loki-init/SKILL.md"
     status: draft
-  - name: "loki-internal-command-workflows"
-    file: "skills/loki-internal-command-workflows/SKILL.md"
+  - name: "lf-internal-command-workflows"
+    file: "skills/lf-internal-command-workflows/SKILL.md"
     status: draft
   - name: "loki-feedback"
     file: "skills/loki-feedback/SKILL.md"
@@ -219,8 +219,8 @@ skills:
   - name: "loki-run-plan"
     file: "skills/loki-run-plan/SKILL.md"
     status: draft
-  - name: "loki-run-plan-execution"
-    file: "skills/loki-run-plan-execution/SKILL.md"
+  - name: "lf-run-plan-execution"
+    file: "skills/lf-run-plan-execution/SKILL.md"
     status: draft
   - name: "loki-retrospectiva-tecnica"
     file: "skills/loki-retrospectiva-tecnica/SKILL.md"
@@ -231,51 +231,51 @@ skills:
   - name: "loki-knowledge-extraction-analysis"
     file: "skills/loki-knowledge-extraction-analysis/SKILL.md"
     status: draft
-  - name: "loki-external-knowledge-extraction"
-    file: "skills/loki-external-knowledge-extraction/SKILL.md"
+  - name: "lf-external-knowledge-extraction"
+    file: "skills/lf-external-knowledge-extraction/SKILL.md"
     status: draft
-  - name: "loki-framework-impact-audit"
-    file: "skills/loki-framework-impact-audit/SKILL.md"
+  - name: "lf-framework-impact-audit"
+    file: "skills/lf-framework-impact-audit/SKILL.md"
     status: draft
   - name: "loki-self-healing"
     file: "skills/loki-self-healing/SKILL.md"
     status: draft
-  - name: "loki-template-library"
-    file: "skills/loki-template-library/SKILL.md"
+  - name: "lf-template-library"
+    file: "skills/lf-template-library/SKILL.md"
     status: draft
-  - name: "loki-command-creator"
-    file: "skills/loki-command-creator/SKILL.md"
+  - name: "lf-command-creator"
+    file: "skills/lf-command-creator/SKILL.md"
     status: draft
-  - name: "loki-agent-creator"
-    file: "skills/loki-agent-creator/SKILL.md"
+  - name: "lf-agent-creator"
+    file: "skills/lf-agent-creator/SKILL.md"
     status: draft
-  - name: "loki-skill-creator"
-    file: "skills/loki-skill-creator/SKILL.md"
+  - name: "lf-skill-creator"
+    file: "skills/lf-skill-creator/SKILL.md"
     status: draft
-  - name: "loki-documentation-writing"
-    file: "skills/loki-documentation-writing/SKILL.md"
+  - name: "lf-documentation-writing"
+    file: "skills/lf-documentation-writing/SKILL.md"
     status: draft
-  - name: "loki-index-navigator"
-    file: "skills/loki-index-navigator/SKILL.md"
+  - name: "lf-index-navigator"
+    file: "skills/lf-index-navigator/SKILL.md"
     status: draft
-  - name: "loki-action-plan-authoring"
-    file: "skills/loki-action-plan-authoring/SKILL.md"
+  - name: "lf-action-plan-authoring"
+    file: "skills/lf-action-plan-authoring/SKILL.md"
     status: draft
-  - name: "loki-tech-analysis-authoring"
-    file: "skills/loki-tech-analysis-authoring/SKILL.md"
+  - name: "lf-tech-analysis-authoring"
+    file: "skills/lf-tech-analysis-authoring/SKILL.md"
     status: draft
-  - name: "loki-rpg-maker-mz-data-json"
-    file: "skills/loki-rpg-maker-mz-data-json/SKILL.md"
+  - name: "rpg-maker-mz-data-json"
+    file: "skills/rpg-maker-mz-data-json/SKILL.md"
     status: optional-extension
     optional: true
     extension: "RPG Maker MZ"
-  - name: "loki-rpg-maker-mz-plugin-workflow"
-    file: "skills/loki-rpg-maker-mz-plugin-workflow/SKILL.md"
+  - name: "rpg-maker-mz-plugin-workflow"
+    file: "skills/rpg-maker-mz-plugin-workflow/SKILL.md"
     status: optional-extension
     optional: true
     extension: "RPG Maker MZ"
-  - name: "loki-rpg-maker-mz-project-inventory"
-    file: "skills/loki-rpg-maker-mz-project-inventory/SKILL.md"
+  - name: "rpg-maker-mz-project-inventory"
+    file: "skills/rpg-maker-mz-project-inventory/SKILL.md"
     status: optional-extension
     optional: true
     extension: "RPG Maker MZ"
@@ -559,6 +559,6 @@ optional_extensions:
     status: optional
     activation: "Use somente quando o projeto consumidor declarar essa engine ou quando o usuario pedir trabalho nessa tecnologia."
     skills:
-      - "loki-rpg-maker-mz-data-json"
-      - "loki-rpg-maker-mz-plugin-workflow"
-      - "loki-rpg-maker-mz-project-inventory"
+      - "rpg-maker-mz-data-json"
+      - "rpg-maker-mz-plugin-workflow"
+      - "rpg-maker-mz-project-inventory"

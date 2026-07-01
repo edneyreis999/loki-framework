@@ -5,8 +5,8 @@ status: draft
 domain: continuous-improvement
 required_skills:
   - loki-knowledge-extraction-analysis
-  - loki-external-knowledge-extraction
-  - loki-framework-impact-audit
+  - lf-external-knowledge-extraction
+  - lf-framework-impact-audit
   - loki-continuous-improvement
 execution_profile:
   model_class: frontier_reasoning
@@ -84,9 +84,9 @@ Este comando produz uma analise estruturada para consumo posterior por
 
 - `loki-knowledge-extraction-analysis` para orquestrar as etapas, consolidar os
   handoffs e produzir a saida final.
-- `loki-external-knowledge-extraction` para extrair aprendizados dos artefatos
+- `lf-external-knowledge-extraction` para extrair aprendizados dos artefatos
   externos sem decidir mudancas no Loki.
-- `loki-framework-impact-audit` para auditar o impacto dos aprendizados
+- `lf-framework-impact-audit` para auditar o impacto dos aprendizados
   externos em artefatos, workflows e contratos do Loki.
 - `loki-continuous-improvement` somente depois da analise, quando houver
   aprendizados validados a promover.
@@ -105,9 +105,9 @@ independente.
 ## Workflow
 
 1. Carregar `loki-knowledge-extraction-analysis`.
-2. Carregar `loki-external-knowledge-extraction` para mapear artefatos externos
+2. Carregar `lf-external-knowledge-extraction` para mapear artefatos externos
    e produzir `external_extraction`.
-3. Carregar `loki-framework-impact-audit` para ler
+3. Carregar `lf-framework-impact-audit` para ler
    `docs/operational-inventory.md`, selecionar artefatos Loki afetados e
    produzir `impact_audit`.
 4. Consolidar os handoffs sem duplicar recomendacoes equivalentes.

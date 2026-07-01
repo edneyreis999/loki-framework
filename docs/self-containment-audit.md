@@ -38,7 +38,7 @@ O pacote deve operar com os arquivos presentes neste diretorio. Blueprint, plano
 - `docs/project-context-catalog.md` separa pacote Loki de documentacao duradoura
   do consumidor.
 - Skills especializadas por tecnologia usam caminhos relativos ao projeto consumidor, sem nome de engine, framework ou projeto fixo.
-- `loki-index-navigator` e `bibliotecario` tratam `docs/index.xml` como alvo de
+- `lf-index-navigator` e `bibliotecario` tratam `docs/index.xml` como alvo de
   navegacao do consumidor, nao como fonte normativa do pacote.
 - Templates de agentes e comandos usam superficies genericas do projeto consumidor.
 - README usa `PACKAGE_ROOT` para exemplos de instalacao portaveis.

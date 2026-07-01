@@ -5,9 +5,9 @@ status: draft
 domain: package-maintenance
 required_skills:
   - loki-self-healing
-  - loki-framework-impact-audit
-  - loki-command-creator
-  - loki-skill-creator
+  - lf-framework-impact-audit
+  - lf-command-creator
+  - lf-skill-creator
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -64,7 +64,7 @@ quando o runtime permitir, consolida achados e aplica correcoes serialmente.
   `docs/**`, `README.md`, `index.md`, `manifest.yaml` e `scripts/**`.
 - Arquivos relacionados obrigatorios quando a correcao exigir consistencia de
   pacote, como `manifest.yaml`, `docs/operational-inventory.md`,
-  `skills/loki-command-workflows/SKILL.md` ou
+  `skills/lf-command-workflows/SKILL.md` ou
   `scripts/install-loki-symlinks.py`.
 
 ## Forbidden Writes
@@ -82,12 +82,12 @@ quando o runtime permitir, consolida achados e aplica correcoes serialmente.
 
 - `loki-self-healing` para o procedimento de auditoria interna, correcao
   serializada e relatorio.
-- `loki-framework-impact-audit` como referencia de selecao de artefatos,
+- `lf-framework-impact-audit` como referencia de selecao de artefatos,
   auditoria individual, deltas, lacunas, redundancias e conflitos quando a
   correcao envolver workflows ou multiplos artefatos.
-- `loki-command-creator` quando a correcao tocar `commands/**`,
-  `skills/loki-command-workflows/**` ou contrato de workflow invocavel.
-- `loki-skill-creator` quando a correcao tocar `skills/**`, layout de skill,
+- `lf-command-creator` quando a correcao tocar `commands/**`,
+  `skills/lf-command-workflows/**` ou contrato de workflow invocavel.
+- `lf-skill-creator` quando a correcao tocar `skills/**`, layout de skill,
   frontmatter, progressive disclosure ou referencias de skill.
 
 ## Handoffs

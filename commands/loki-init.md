@@ -99,7 +99,7 @@ sobrescrever silenciosamente.
 - `loki-init` para executar este workflow no Codex.
 - `loki-retrospectiva-tecnica` para cada agente invocado registrar a propria
   retrospectiva antes de encerrar.
-- `loki-index-navigator` quando `docs/index.xml` existir e precisar ser lido.
+- `lf-index-navigator` quando `docs/index.xml` existir e precisar ser lido.
 - `<technology_required_skills>` somente quando o inventario, o usuario ou um
   agente especialista declararem uma tecnologia especifica.
 

@@ -156,9 +156,9 @@ esse comportamento for necessario.
 ## Skills Core e Extensoes
 
 As skills Loki (`loki-init`, `loki-feedback`, `loki-enrich-tasks`,
-`loki-run-plan-execution`, `loki-retrospectiva-tecnica`, `loki-command-creator`,
-`loki-agent-creator`, `loki-skill-creator`, `loki-index-navigator`,
-`loki-tech-analysis-authoring` e `loki-action-plan-authoring`) governam
+`lf-run-plan-execution`, `loki-retrospectiva-tecnica`, `lf-command-creator`,
+`lf-agent-creator`, `lf-skill-creator`, `lf-index-navigator`,
+`lf-tech-analysis-authoring` e `lf-action-plan-authoring`) governam
 entrevista, autoria de analises e planos, enriquecimento de tasks, execucao de fase,
 retrospectiva, navegacao de documentacao e evolucao controlada de commands,
 agents e skills.
@@ -191,14 +191,14 @@ human-validation posterior.
 
 ### Extensao Opcional: RPG Maker MZ
 
-Use `loki-rpg-maker-mz-data-json` somente quando o projeto consumidor exigir
+Use `rpg-maker-mz-data-json` somente quando o projeto consumidor exigir
 edicao ou revisao de superficies de dados RPG Maker MZ, como Database, Common
 Events ou mapas.
 
-Use `loki-rpg-maker-mz-plugin-workflow` somente quando o projeto consumidor
+Use `rpg-maker-mz-plugin-workflow` somente quando o projeto consumidor
 exigir criar, editar, validar ou ativar plugins RPG Maker MZ.
 
-Use `loki-rpg-maker-mz-project-inventory` quando um agente game-dev atuar sobre
+Use `rpg-maker-mz-project-inventory` quando um agente game-dev atuar sobre
 um projeto RPG Maker MZ e precisar de inventario compartilhado antes de handoff,
 analise tecnica ou planejamento que dependa de Common Events, mapas, plugins,
 assets ou save/load.
@@ -247,7 +247,7 @@ duradoura e backlog.
 - Regras de negocio, lore, fluxo funcional e terminologia do projeto consumidor
   devem morar em `docs/**/*.md`.
 - `docs/index.xml` e o catalogo preferencial para `bibliotecario` e
-  `loki-index-navigator`.
+  `lf-index-navigator`.
 - `AGENTS.md` e `CLAUDE.md` do consumidor recebem apenas roteamento minimo para
   dizer quando a LLM deve consultar `/docs`.
 

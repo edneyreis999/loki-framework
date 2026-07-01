@@ -62,7 +62,7 @@ confianca, lacunas e caminhos minimos recomendados.
 Este agente nao decide promocao normativa final, nao aplica patch, nao escreve
 docs, nao cria skills e nao atualiza backlog diretamente. O orquestrador
 consolida os digests, deduplica, resolve conflitos e chama
-`standards-curator`, `catalogador`, `loki-skill-creator` ou outro destino
+`standards-curator`, `catalogador`, `lf-skill-creator` ou outro destino
 quando apropriado.
 
 ## When To Trigger
@@ -207,7 +207,7 @@ retrospective_digest:
   conflicts_or_weak_evidence:
     - description: ""
       affected_candidates: []
-      needed_resolution: "orchestrator-review | standards-curator | source-researcher | catalogador | loki-skill-creator | human-interview | validator | backlog"
+      needed_resolution: "orchestrator-review | standards-curator | source-researcher | catalogador | lf-skill-creator | human-interview | validator | backlog"
   human_decisions: []
   gates_and_validations: []
   minimum_next_paths: []

@@ -4,7 +4,7 @@ type: command
 status: draft
 domain: spec-driven
 required_skills:
-  - loki-tech-analysis-authoring
+  - lf-tech-analysis-authoring
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -63,9 +63,9 @@ riscos, validators, gates humanos e handoff para planejamento.
 
 ## Required Skills
 
-- `loki-tech-analysis-authoring` para contrato de evidencia, pesquisa,
+- `lf-tech-analysis-authoring` para contrato de evidencia, pesquisa,
   matriz de decisao, validators e handoff.
-- `loki-index-navigator` quando a analise depender de documentacao duradoura em
+- `lf-index-navigator` quando a analise depender de documentacao duradoura em
   `/docs` do consumidor.
 - `<technology_required_skills>` por pedido do usuario, contexto detectado ou
   retrospectiva que tenha criado ou indicado skill especializada aprovada.
@@ -96,7 +96,7 @@ ele entrega evidencia para a analise.
 
 1. Confirmar objetivo, insumos, escopo, fora de escopo, destino do artefato e
    forbidden writes.
-2. Carregar `loki-tech-analysis-authoring` e qualquer skill tecnica exigida
+2. Carregar `lf-tech-analysis-authoring` e qualquer skill tecnica exigida
    pelo contexto. Nao tornar skills de tecnologia obrigatorias por default.
 3. Ler instrucoes de roteamento do consumidor quando entrar em um projeto
    (`AGENTS.md`, `CLAUDE.md` ou equivalente).

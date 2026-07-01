@@ -63,13 +63,13 @@ formal ou auditoria interna de conformidade do pacote.
 | `loki-retrospectiva-tecnica` | Estrutura fonte, objetivo, decisao, validacao, risco residual e candidatos de melhoria. |
 | `loki-continuous-improvement` | Classifica candidatos, executa fase de causa raiz quando requerida e preserva gates antes de promocao. |
 | `loki-knowledge-extraction-analysis` | Orquestra extracao externa, auditoria de impacto no Loki e consolidacao para melhoria continua. |
-| `loki-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
-| `loki-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
+| `lf-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
+| `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
 | `loki-self-healing` | Executa auditoria interna de conformidade do pacote e limita correcoes a achados claros e verificaveis. |
-| `loki-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
-| `loki-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
-| `loki-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
-| `loki-skill-creator` | Ajuda quando o aprendizado deve virar procedimento reutilizavel com trigger e progressive disclosure. |
+| `lf-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
+| `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
+| `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
+| `lf-skill-creator` | Ajuda quando o aprendizado deve virar procedimento reutilizavel com trigger e progressive disclosure. |
 
 ### Agents
 

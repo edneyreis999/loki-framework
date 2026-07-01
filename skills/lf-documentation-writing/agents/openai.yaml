@@ -1,0 +1,8 @@
+interface:
+  display_name: "Loki Documentation Writing"
+  short_description: "Classify and write Loki documents by audience, lifetime, and density."
+  default_prompt: "Use $lf-documentation-writing to classify the requested document and write it with the right Loki document mode, density, structure, and validation."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

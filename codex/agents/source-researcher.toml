@@ -135,7 +135,7 @@ Nenhuma. Este agente e read-only.
    (`AGENTS.md`, `CLAUDE.md` ou equivalente), sem transforma-las em fonte
    normativa do pacote.
 3. Para documentacao duradoura do consumidor, preferir `docs/index.xml` via
-   `loki-index-navigator` ou handoff do `bibliotecario` quando a busca for
+   `lf-index-navigator` ou handoff do `bibliotecario` quando a busca for
    documental.
 4. Ler fontes locais primarias antes de docs interpretativos: arquivos alvo,
    configuracao, schemas, dados, contratos, logs, artefatos de plano ou pontos

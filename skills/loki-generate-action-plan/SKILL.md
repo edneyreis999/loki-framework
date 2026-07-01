@@ -46,8 +46,8 @@ used_by:
 2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    required skills, handoffs, validators, gates, stop conditions, and resume
    contract.
-3. Load `loki-action-plan-authoring` before creating or reviewing plan files.
-4. Use `loki-template-library` when writing `tasks.md` or `task-N.M.md`.
+3. Load `lf-action-plan-authoring` before creating or reviewing plan files.
+4. Use `lf-template-library` when writing `tasks.md` or `task-N.M.md`.
 5. Treat this skill as the Codex entrypoint for the command name
    `loki:generate-action-plan`.
 

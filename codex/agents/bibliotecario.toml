@@ -45,7 +45,7 @@ nickname_candidates:
   - bibliotecario
   - doc-lookup
 required_skills:
-  - loki-index-navigator
+  - lf-index-navigator
 ---
 
 # bibliotecario
@@ -97,7 +97,7 @@ Nenhuma.
 
 ## Dependencies
 
-- `loki-index-navigator`
+- `lf-index-navigator`
 - `docs/project-context-catalog.md`
 
 ## Response Format

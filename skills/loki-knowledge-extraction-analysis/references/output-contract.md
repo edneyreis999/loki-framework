@@ -1,7 +1,7 @@
 # Knowledge Extraction Analysis Output Contract
 
-Use this reference after `loki-external-knowledge-extraction` and
-`loki-framework-impact-audit` have produced their handoffs.
+Use this reference after `lf-external-knowledge-extraction` and
+`lf-framework-impact-audit` have produced their handoffs.
 
 ## Consolidation Rules
 

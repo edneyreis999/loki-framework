@@ -71,7 +71,12 @@ Antes de escrever:
 
 - Toda skill empacotada deve morar em `skills/<skill-name>/SKILL.md`.
 - O nome da pasta deve ser igual ao `name` no frontmatter.
-- Skills do pacote Loki devem usar prefixo `loki-` quando fizerem parte do namespace do pacote.
+- Em `skills/`, o prefixo `loki-` e reservado para wrappers de comandos Loki.
+  Cada `skills/loki-*/SKILL.md` deve ter um `commands/loki-*.md` correspondente
+  com o mesmo stem.
+- Helpers internas do framework devem usar o prefixo `lf-*`.
+- Skills opcionais de tecnologia ou dominio devem usar namespace proprio, como
+  `rpg-maker-mz-*`, e nao `loki-*` salvo quando forem wrappers de comandos.
 - `name` e `description` sao obrigatorios no frontmatter top-level.
 - O `description` deve carregar o principal contexto de trigger. `When To Use` no corpo nao substitui isso.
 - Quando a skill orientar roteamento de modelo, use a semantica provider-neutral
@@ -89,7 +94,8 @@ Antes de escrever:
 - Quando o comando processar aprendizados de fase, ele deve separar claramente fonte transitoria de destino duradouro.
 - Se o comando evoluir o proprio pacote, ele deve listar validacoes de pacote e artefatos normativos impactados.
 - Quando um comando Loki precisar ser invocavel diretamente no Codex, mantenha
-  um wrapper correspondente em `skills/` e atualize `manifest.yaml`.
+  um wrapper correspondente em `skills/loki-<command-stem>/SKILL.md` e atualize
+  `manifest.yaml`.
 
 ### Agents
 
@@ -235,8 +241,8 @@ aplicaveis. Esse scan focado e o decisor para a mudanca escopada:
 find commands skills agents codex scripts templates docs README.md index.md manifest.yaml install-scopes.json -type f \
   ! -path 'docs/package-authoring-guardrails.md' \
   ! -path '*/docs/package-authoring-guardrails.md' \
-  ! -path 'skills/loki-skill-creator/references/validation-and-forward-testing.md' \
-  ! -path '*/skills/loki-skill-creator/references/validation-and-forward-testing.md' \
+  ! -path 'skills/lf-skill-creator/references/validation-and-forward-testing.md' \
+  ! -path '*/skills/lf-skill-creator/references/validation-and-forward-testing.md' \
   -print0 | xargs -0 rg -n "(Jhonny/|docs/05-Loki-Framework/001-blueprint-aprovado|/Users/|~/|source_plan|canonical_blueprint|operational_plan|historical_reference)"
 ```
 
@@ -249,8 +255,8 @@ validacao da mudanca pelo scan focado nas superficies duraveis afetadas.
 find "$PACKAGE_ROOT" -type f \
   ! -path 'docs/package-authoring-guardrails.md' \
   ! -path '*/docs/package-authoring-guardrails.md' \
-  ! -path 'skills/loki-skill-creator/references/validation-and-forward-testing.md' \
-  ! -path '*/skills/loki-skill-creator/references/validation-and-forward-testing.md' \
+  ! -path 'skills/lf-skill-creator/references/validation-and-forward-testing.md' \
+  ! -path '*/skills/lf-skill-creator/references/validation-and-forward-testing.md' \
   -print0 | xargs -0 rg -n "(Jhonny/|docs/05-Loki-Framework/001-blueprint-aprovado|/Users/|~/|source_plan|canonical_blueprint|operational_plan|historical_reference)"
 ```
 
@@ -258,6 +264,10 @@ Tambem validar YAML/frontmatter e paths do manifesto. Quando a mudanca tocar
 guidance de modelo ou effort, validar que `docs/model-effort-guidance.md`
 continua sendo a referencia central e que IDs concretos de modelos nao foram
 duplicados como regra canonica espalhada.
+
+`scripts/validate-install-scopes.py` tambem valida a politica de namespace:
+qualquer `skills/loki-*` sem `commands/loki-*.md` correspondente deve falhar,
+salvo excecao explicita registrada no proprio validador e neste documento.
 
 Para superficies Codex do pacote, validar tambem:
 

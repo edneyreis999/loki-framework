@@ -53,30 +53,30 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
 | `loki-init` | `mvp` | Wrapper Codex para executar o workflow `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
-| `loki-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
+| `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
 | `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
 | `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
 | `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |
-| `loki-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
+| `lf-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
 | `loki-retrospectiva-tecnica` | `mvp` | Procedimento de retrospectiva tecnica apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Wrapper Codex para executar o workflow `loki:continuous-improvement`. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Wrapper Codex para executar `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
-| `loki-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
-| `loki-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
+| `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
+| `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `loki-self-healing` | `mvp` | Wrapper Codex para executar `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
-| `loki-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
+| `lf-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
-| `loki-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
-| `loki-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
-| `loki-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
-| `loki-command-creator` | `mvp` | Skill compartilhada para criar ou revisar commands com estado, gates, outputs, limites e validadores. |
-| `loki-agent-creator` | `mvp` | Skill compartilhada para criar ou revisar agents especialistas com julgamento proprio, ferramentas restritas e handoff claro. |
-| `loki-skill-creator` | `mvp` | Skill compartilhada para criar ou revisar skills com trigger, progressive disclosure, referencias e validacao estrutural. |
-| `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `loki-run-plan-execution`. |
+| `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
+| `lf-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
+| `lf-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
+| `lf-command-creator` | `mvp` | Skill compartilhada para criar ou revisar commands com estado, gates, outputs, limites e validadores. |
+| `lf-agent-creator` | `mvp` | Skill compartilhada para criar ou revisar agents especialistas com julgamento proprio, ferramentas restritas e handoff claro. |
+| `lf-skill-creator` | `mvp` | Skill compartilhada para criar ou revisar skills com trigger, progressive disclosure, referencias e validacao estrutural. |
+| `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `lf-run-plan-execution`. |
 | `brainstorm-character` | `backlog` | Apoio futuro para design de personagens e bosses. |
 
 ## Agents
@@ -183,9 +183,9 @@ projeto consumidor declarar RPG Maker MZ.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki-rpg-maker-mz-data-json` | `optional-extension` | Skill especializada para superficies de dados, Database, Common Events ou mapas RPG Maker MZ. |
-| `loki-rpg-maker-mz-plugin-workflow` | `optional-extension` | Skill especializada para criar, editar, validar ou ativar plugins RPG Maker MZ. |
-| `loki-rpg-maker-mz-project-inventory` | `optional-extension` | Skill especializada para agentes game-dev inventariarem projeto RPG Maker MZ antes de handoff, analise tecnica ou planejamento de runtime/dados/plugins. |
+| `rpg-maker-mz-data-json` | `optional-extension` | Skill especializada para superficies de dados, Database, Common Events ou mapas RPG Maker MZ. |
+| `rpg-maker-mz-plugin-workflow` | `optional-extension` | Skill especializada para criar, editar, validar ou ativar plugins RPG Maker MZ. |
+| `rpg-maker-mz-project-inventory` | `optional-extension` | Skill especializada para agentes game-dev inventariarem projeto RPG Maker MZ antes de handoff, analise tecnica ou planejamento de runtime/dados/plugins. |
 | `notetag-filler` | `optional-extension` | Apoio futuro para notetags RPG Maker MZ/VisuStella. |
 | `visustella-analyst` | `optional-extension` | Apoio futuro para analise tecnica/debug em projetos com VisuStella. |
 

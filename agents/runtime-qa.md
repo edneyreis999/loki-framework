@@ -35,8 +35,8 @@ required_gates:
   - approval
 required_skills:
   - "<technology_required_skills>"
-  - "loki-rpg-maker-mz-data-json quando o contexto aprovado exigir dados, mapas, eventos, switches, variables ou database RPG Maker MZ"
-  - "loki-rpg-maker-mz-plugin-workflow quando o contexto aprovado exigir plugins RPG Maker MZ"
+  - "rpg-maker-mz-data-json quando o contexto aprovado exigir dados, mapas, eventos, switches, variables ou database RPG Maker MZ"
+  - "rpg-maker-mz-plugin-workflow quando o contexto aprovado exigir plugins RPG Maker MZ"
 risks:
   - "Evidencia automatica pode nao cobrir experiencia perceptivel."
   - "Nao pode marcar validacao humana como concluida sem resposta explicita."

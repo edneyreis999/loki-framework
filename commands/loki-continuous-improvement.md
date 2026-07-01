@@ -5,9 +5,9 @@ status: draft
 domain: continuous-improvement
 required_skills:
   - loki-retrospectiva-tecnica
-  - loki-command-creator
-  - loki-agent-creator
-  - loki-skill-creator
+  - lf-command-creator
+  - lf-agent-creator
+  - lf-skill-creator
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -85,9 +85,9 @@ commands, skills, agents, templates, validators, docs normativos,
 ## Required Skills
 
 - `loki-retrospectiva-tecnica` para ler retrospectivas como fonte auditavel de aprendizado.
-- `loki-command-creator` quando o destino duradouro for command, template de command ou contrato de orquestracao.
-- `loki-agent-creator` quando o destino duradouro for agent ou quando houver duvida entre agent, skill e command.
-- `loki-skill-creator` quando o destino duradouro for skill, layout de skill ou contrato de trigger/progressive disclosure.
+- `lf-command-creator` quando o destino duradouro for command, template de command ou contrato de orquestracao.
+- `lf-agent-creator` quando o destino duradouro for agent ou quando houver duvida entre agent, skill e command.
+- `lf-skill-creator` quando o destino duradouro for skill, layout de skill ou contrato de trigger/progressive disclosure.
 
 ## Handoffs
 
@@ -136,8 +136,8 @@ Quando a entrada for um diretorio ou lista de retrospectivas:
 7. Deduplicar aprendizados por fonte, destino provavel, evidencia e superficie
    que teria prevenido repeticao.
 8. Detectar conflitos e evidencia fraca antes de chamar `standards-curator`,
-   `catalogador`, `loki-skill-creator`, `loki-command-creator` ou
-   `loki-agent-creator`.
+   `catalogador`, `lf-skill-creator`, `lf-command-creator` ou
+   `lf-agent-creator`.
 9. Marcar `root_cause_learning.required` por candidato. Quando for `true`,
    executar a fase read-only de causa raiz por handoff antes de fechar destino,
    proposta ou patch. A main thread nao deve carregar fontes brutas extensas

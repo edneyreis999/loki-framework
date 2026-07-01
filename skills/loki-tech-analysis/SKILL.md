@@ -47,9 +47,9 @@ used_by:
 2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    required skills, handoffs, validators, gates, stop conditions, and resume
    contract.
-3. Load `loki-tech-analysis-authoring` before creating or reviewing the
+3. Load `lf-tech-analysis-authoring` before creating or reviewing the
    analysis artifact.
-4. Use `loki-template-library` when writing a technical analysis file.
+4. Use `lf-template-library` when writing a technical analysis file.
 5. Treat this skill as the Codex entrypoint for the command name
    `loki:tech-analysis`.
 

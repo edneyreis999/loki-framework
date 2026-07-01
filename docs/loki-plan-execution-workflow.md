@@ -43,7 +43,7 @@ ele passa pelo workflow de aprendizado.
    atual. Pesquisa externa continua condicionada: a frase exata deve ser
    mostrada ao usuario antes da busca.
 6. Use `loki:run-plan` para executar uma fase ou task aprovada. Ele carrega
-   `loki-run-plan-execution`, monta um `Execution Brief`, resolve contexto e
+   `lf-run-plan-execution`, monta um `Execution Brief`, resolve contexto e
    bloqueia escrita quando faltar decisao, validator, approval ou gate humano.
 7. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
    locais em modo read-only para extrair apenas o que afeta a fase alvo. Quando
@@ -89,10 +89,10 @@ ele passa pelo workflow de aprendizado.
 | Skill | Contribuicao no workflow |
 | --- | --- |
 | `loki-feedback` | Define o protocolo de uma pergunta por vez, hipoteses com evidencia e proposta so depois de contexto suficiente. |
-| `loki-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
-| `loki-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
+| `lf-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
+| `lf-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
 | `loki-enrich-tasks` | Injeta aprendizados na task certa do plano ativo, preservando fontes sensiveis e sem criar norma duradoura. |
-| `loki-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |
+| `lf-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |
 | Skills tecnicas opcionais | Entram apenas quando a superficie exige tecnologia especifica, como runtime, engine, framework, dados ou plugins. |
 
 ### Agents

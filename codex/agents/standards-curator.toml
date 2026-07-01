@@ -103,7 +103,7 @@ standard_proposal:
   artifact_type: "AGENTS.md | CLAUDE.md | project-doc | project-doc-index | command | skill | agent | template | validator | doc | manifest | backlog"
   destination: ""
   destination_scope: "package | consumer-context | backlog"
-  recommended_delegate: "catalogador | loki-skill-creator | loki-command-creator | loki-agent-creator | none"
+  recommended_delegate: "catalogador | lf-skill-creator | lf-command-creator | lf-agent-creator | none"
   required_gates:
     - "technical-review"
     - "approval"
