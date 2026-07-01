@@ -52,9 +52,13 @@ used_by:
    `loki-retrospectiva-tecnica`, `loki-command-creator`,
    `loki-agent-creator`, and `loki-skill-creator`.
 4. If the input is a retrospective directory or multiple retrospective files,
-   fan out read-only digestion with `retrospective-digester` by file when the
-   runtime allows it. If fan-out is unavailable, process files serially using
-   the same `retrospective_digest` schema.
+   run an adapter capability preflight before choosing fallback serial. In
+   Codex, use directed tool discovery for multi-agent, subagent, delegation, or
+   `retrospective-digester` tools; do not infer absence from the initial tool
+   surface alone. Fan out read-only digestion with `retrospective-digester` by
+   file when the runtime allows it. If fan-out remains unavailable after the
+   preflight, record the concrete evidence and process files serially using the
+   same `retrospective_digest` schema.
 5. Consolidate digests in the main context before classification. Do not load
    all raw retrospectives into the main context unless resolving conflict or
    weak evidence requires it.

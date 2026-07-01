@@ -92,7 +92,7 @@ commands, skills, agents, templates, validators, docs normativos,
 ## Handoffs
 
 - `standards-curator` em modo `proposal-only` para classificar o aprendizado como `universal`, `probable-universal`, `project-specific` ou `backlog`, recomendar destino e gate.
-- `retrospective-digester` em modo read-only quando a entrada for um diretorio, multiplas retrospectivas independentes, ou uma retrospectiva longa/ruidosa. Usar fan-out por arquivo quando o runtime permitir; cada instancia retorna digest estruturado para o orquestrador.
+- `retrospective-digester` em modo read-only quando a entrada for um diretorio, multiplas retrospectivas independentes, ou uma retrospectiva longa/ruidosa. Antes de decidir fallback serial, executar preflight de capacidade do adaptador; em Codex, usar descoberta direcionada de ferramentas para multi-agent, subagent, delegation ou `retrospective-digester`, porque ferramentas podem estar diferidas e ausentes da superficie inicial. Usar fan-out por arquivo quando o runtime permitir; cada instancia retorna digest estruturado para o orquestrador.
 - `source-researcher` em modo read-only quando a evidencia de um candidato
   precisar ser conferida em varias fontes, houver conflito de origem, risco de
   duplicidade, necessidade de distinguir fato local de referencia externa, ou
@@ -113,28 +113,37 @@ Quando a entrada for um diretorio ou lista de retrospectivas:
 
 1. Enumerar arquivos elegiveis de retrospectiva tecnica antes de carregar
    conteudo completo no contexto principal.
-2. Criar um handoff read-only independente para `retrospective-digester` por
+2. Executar preflight explicito de capacidade antes de escolher o modo de
+   ingestao:
+   - em Codex, chamar descoberta direcionada de ferramentas para
+     multi-agent/subagent/delegation/`retrospective-digester`;
+   - tratar namespaces descobertos como evidencia da sessao/adaptador, nao como
+     contrato universal do pacote;
+   - nao declarar fan-out indisponivel apenas porque a lista inicial de
+     ferramentas nao mostrou subagentes;
+   - registrar a evidencia concreta quando o fallback serial for necessario.
+3. Criar um handoff read-only independente para `retrospective-digester` por
    arquivo, ou por lote pequeno quando os arquivos forem curtos e do mesmo
    escopo.
-3. Cada digest deve retornar candidatos para `/docs`, skills, commands,
+4. Cada digest deve retornar candidatos para `/docs`, skills, commands,
    templates, validators, package policy e backlog, alem de atritos de execucao,
    evidencias, confianca e caminho minimo recomendado.
-4. Rodar handoffs em paralelo quando o ambiente permitir. Se o runtime nao
-   suportar subagentes ou fan-out, processar serialmente usando o mesmo formato
-   de digest.
-5. Consolidar todos os `retrospective_digest` no contexto principal antes de
+5. Rodar handoffs em paralelo quando o ambiente permitir. Se o preflight
+   confirmar que o runtime nao suporta subagentes ou fan-out, processar
+   serialmente usando o mesmo formato de digest e citar a evidencia no output.
+6. Consolidar todos os `retrospective_digest` no contexto principal antes de
    classificar promocao duradoura.
-6. Deduplicar aprendizados por fonte, destino provavel, evidencia e superficie
+7. Deduplicar aprendizados por fonte, destino provavel, evidencia e superficie
    que teria prevenido repeticao.
-7. Detectar conflitos e evidencia fraca antes de chamar `standards-curator`,
+8. Detectar conflitos e evidencia fraca antes de chamar `standards-curator`,
    `catalogador`, `loki-skill-creator`, `loki-command-creator` ou
    `loki-agent-creator`.
-8. Marcar `root_cause_learning.required` por candidato. Quando for `true`,
+9. Marcar `root_cause_learning.required` por candidato. Quando for `true`,
    executar a fase read-only de causa raiz por handoff antes de fechar destino,
    proposta ou patch. A main thread nao deve carregar fontes brutas extensas
    para essa fase; use `source-researcher` e, quando houver lote de
    retrospectivas, `retrospective-digester`.
-9. Nao escrever em paralelo. Toda promocao, patch, catalogacao ou atualizacao de
+10. Nao escrever em paralelo. Toda promocao, patch, catalogacao ou atualizacao de
    skill/command/template/validator acontece serialmente pelo orquestrador apos
    gates.
 
@@ -225,6 +234,9 @@ A main thread deve manter esta fase compacta:
 - O destino proposto e concreto: arquivo, artefato ou categoria instalavel especifica.
 - A proposta explica por que a superficie escolhida teria prevenido o erro ou reduzido a repeticao.
 - Quando a fonte incluir atrito de execucao, a proposta preserva categoria, evidencia, caminho minimo e como a superficie proposta reduziria tokens, ferramentas, buscas ou interacoes futuras.
+- Quando a entrada for diretorio ou multiplas retrospectivas, a proposta cita a
+  evidencia de fan-out usado ou o preflight concreto que justificou fallback
+  serial.
 - Todo candidato declara `root_cause_learning.required`. Quando for `true`, a
   proposta inclui fontes checadas, causa raiz e regra preventiva fortalecida,
   ou registra explicitamente por que a fase ficou bloqueada.
