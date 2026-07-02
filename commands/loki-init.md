@@ -291,6 +291,11 @@ agente escreve a propria pasta autorizada e a propria retrospectiva autorizada.
      de `docs/loki-init-inventory-contracts.md`;
    - validar existencia de `target_retrospective` escrito por cada agente
      invocado;
+   - tratar inventarios de fan-out como snapshots: antes de consolidar uma
+     conclusao duradoura que dependa de frescor, reabrir os documentos comuns
+     atuais ou as fontes locais atuais que sustentam aquela conclusao; nao
+     transformar isso em re-scan amplo quando a conclusao nao depender de
+     frescor;
    - invocar `catalogador` uma vez como `init_final_cataloger`, usando as pastas
      de inventario validadas como fontes e somente os destinos exatos de
      catalogacao declarados no proprio envelope;
@@ -444,6 +449,9 @@ da execucao de qualquer agente invocado devem tambem ser registrados no proprio
   `target_inventory_dir`.
 - Cada `target_inventory_dir` foi validado contra
   `docs/loki-init-inventory-contracts.md`.
+- Conclusoes duradouras freshness-sensitive foram rechecadas contra documentos
+  comuns atuais ou fontes locais atuais antes da sintese final, sem exigir
+  re-scan amplo para conclusoes que nao dependem de frescor.
 - `catalogador` foi invocado no maximo uma vez, somente depois da validacao das
   pastas de inventario.
 - Cada agente invocado escreveu o proprio `target_retrospective` usando

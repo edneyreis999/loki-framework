@@ -43,6 +43,47 @@ Do not rely on ad hoc regex for semantic claims. Text search is acceptable for
 candidate discovery, but confirm important ownership with structured data or
 local source inspection.
 
+### `js/plugins.js` Parser Recipe
+
+Treat `js/plugins.js` as generated JavaScript, not JSON. For read-only
+inspection, execute it in a single Node `vm` context and read `ctx.$plugins`.
+Print only compact selected fields first, such as order, `name`, `status`, and
+focused parameter keys, before deeper inspection.
+
+Do not use `JSON.parse`, direct `require("js/plugins.js")`, broad `sed` dumps,
+or raw `rg` output for semantic extraction from `js/plugins.js`. Those tools may
+still help locate the file or candidate strings, but plugin status, order,
+duplicates, and parameters must come from structured extraction.
+
+Example read-only extraction pattern:
+
+```js
+const fs = require("fs");
+const vm = require("vm");
+
+const ctx = {};
+vm.createContext(ctx);
+vm.runInContext(fs.readFileSync("js/plugins.js", "utf8"), ctx, {
+  filename: "js/plugins.js",
+});
+
+console.log(
+  JSON.stringify(
+    ctx.$plugins.map((plugin, index) => ({
+      order: index + 1,
+      name: plugin.name,
+      status: plugin.status,
+      parameterKeys: Object.keys(plugin.parameters || {}),
+    })),
+    null,
+    2
+  )
+);
+```
+
+This recipe is only an inventory/read path. It does not authorize editing
+`js/plugins.js` or treating runtime/plugin behavior as validated.
+
 ## System Inventory
 
 From `data/System.json`, capture only fields relevant to the mode:

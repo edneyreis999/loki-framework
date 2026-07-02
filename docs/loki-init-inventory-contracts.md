@@ -40,6 +40,18 @@ Validadores devem avaliar a pasta inteira. Nomes como `index.md`,
 `source-map.md` ou `coverage.md` podem ser usados quando ajudarem a leitura, mas
 nao sao obrigatorios.
 
+## Frescor Dos Inventarios
+
+Inventarios produzidos em fan-out sao snapshots do momento em que cada agente
+leu suas fontes. Durante a consolidacao final do `loki:init`, qualquer conclusao
+duradoura que dependa de frescor deve ser rechecada contra os documentos comuns
+atuais ou contra as fontes locais atuais que sustentam a conclusao.
+
+Essa regra nao exige re-scan amplo do projeto. Ela se aplica somente quando a
+conclusao pode ter mudado durante a execucao, quando agentes observaram estados
+temporais diferentes, ou quando a sintese final depende de um documento comum
+que foi criado ou atualizado depois do fan-out.
+
 ## Relacao Com Skills Tecnicas
 
 O core do `loki:init` define o que precisa ser inventariado. Skills tecnicas
