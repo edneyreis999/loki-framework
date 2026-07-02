@@ -45,6 +45,10 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir switches, variables, common events, mapas, eventos, itens ou database RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando quest RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-events-presentation quando quest tocar eventos, movimento, mensagens, pictures, busts, labels, popups, options, save/debug ou apresentacao VisuStella"
+  - "rpg-maker-mz-visustella-progression-economy quando quest tocar recompensas, custos, shops, moedas, skills, itens, equipamentos, AP/SP ou requisitos VisuStella"
+  - "rpg-maker-mz-visustella-notetags quando quest depender de note fields, comment tags, requisitos, custos, states, traits ou inheritance VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"
@@ -57,7 +61,7 @@ escalation_signals:
   - "validacao depende de percurso jogado, estado, flags, recompensas, dialogo ou runtime"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/quest-content-designer.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/quest-content-designer.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - quest-content-designer
   - quest-designer
@@ -114,8 +118,9 @@ com mapa, economia, dialogo e branching, escrevendo dados ou texto final somente
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
+  `docs/loki-init-inventory-contracts.md`.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
@@ -183,4 +188,5 @@ parallel_agent_response:
   recompensas, leitura, flags, estado ou comportamento perceptivel.
 - `approval` antes de qualquer escrita sensivel futura em dados, mapas, eventos
   ou runtime.
+
 '''

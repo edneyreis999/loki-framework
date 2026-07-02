@@ -32,6 +32,10 @@ tools:
 disallowedTools:
   - MultiEdit
   - NotebookEdit
+required_skills:
+  - "<technology_required_skills>"
+  - "rpg-maker-mz-visustella-plugin-index quando um projeto RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers, parametros, notetags, plugin commands, Action Sequences ou dominio VisuStella incerto"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando a mudanca ou diagnostico envolver dependencias, load order, conflitos, sintomas runtime, performance, notetags sem efeito, Action Sequences, save/options/debug ou incompatibilidade VisuStella"
 required_gates:
   - approval
   - human-validation

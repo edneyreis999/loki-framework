@@ -4,8 +4,7 @@ nickname_candidates = ["technical-implementer", "implementation-proposer"]
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 approval_policy = "never"
-developer_instructions = '''
-This Codex custom agent was generated from the Loki Framework Markdown agent contract.
+developer_instructions = '''This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Source agent contract: agents/technical-implementer.md
 Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
@@ -43,6 +42,10 @@ tools:
 disallowedTools:
   - MultiEdit
   - NotebookEdit
+required_skills:
+  - "<technology_required_skills>"
+  - "rpg-maker-mz-visustella-plugin-index quando um projeto RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers, parametros, notetags, plugin commands, Action Sequences ou dominio VisuStella incerto"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando a mudanca ou diagnostico envolver dependencias, load order, conflitos, sintomas runtime, performance, notetags sem efeito, Action Sequences, save/options/debug ou incompatibilidade VisuStella"
 required_gates:
   - approval
   - human-validation
@@ -55,7 +58,7 @@ escalation_signals:
   - "validacao automatica nao cobre comportamento perceptivel"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/technical-implementer.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/technical-implementer.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - technical-implementer
   - implementation-proposer
@@ -114,8 +117,9 @@ skills quando o projeto declarar necessidade.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
+  `docs/loki-init-inventory-contracts.md`.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.

@@ -4,8 +4,7 @@ nickname_candidates = ["runtime-qa", "qa-checklist"]
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 approval_policy = "never"
-developer_instructions = '''
-This Codex custom agent was generated from the Loki Framework Markdown agent contract.
+developer_instructions = '''This Codex custom agent was generated from the Loki Framework Markdown agent contract.
 Source agent contract: agents/runtime-qa.md
 Original Loki mode and model/effort guidance are declared in the YAML frontmatter below.
 
@@ -13,7 +12,7 @@ Original Loki mode and model/effort guidance are declared in the YAML frontmatte
 name: runtime-qa
 type: agent
 status: draft-scoped-writer
-description: Definir checklist, evidencias e human-validation gate para QA de comportamento perceptivel, incluindo persona game-dev contextual, sem validar runtime por conta propria e escrevendo apenas o target_document quando acionado por loki:init.
+description: Definir checklist, evidencias e human-validation gate para QA de comportamento perceptivel, incluindo persona game-dev contextual, sem validar runtime por conta propria e escrevendo apenas no proprio target_inventory_dir autorizado quando acionado por loki:init.
 mode: scoped-writer
 confidence: medium
 model: inherit
@@ -48,6 +47,11 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir dados, mapas, eventos, switches, variables ou database RPG Maker MZ"
   - "rpg-maker-mz-plugin-workflow quando o contexto aprovado exigir plugins RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando QA runtime de RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers ou plugin incerto"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando QA investigar conflitos, dependencias, load order, performance, sintomas runtime, no-effect tags, save/options/debug ou incompatibilidade VisuStella"
+  - "rpg-maker-mz-visustella-events-presentation quando QA tocar mensagens, busts, pictures, DragonBones, movement, options, save, debugger, UI visual ou input VisuStella"
+  - "rpg-maker-mz-visustella-action-sequences quando QA tocar Battle Core Action Sequences, Action Effect, camera, timing, movement, impact ou cleanup visual"
+  - "rpg-maker-mz-visustella-battle-mechanics quando QA tocar ATB, TP, AI, Aggro, states, passives, targeting, dano, gauges ou UI de combate VisuStella"
 risks:
   - "Evidencia automatica pode nao cobrir experiencia perceptivel."
   - "Nao pode marcar validacao humana como concluida sem resposta explicita."
@@ -56,7 +60,7 @@ escalation_signals:
   - "validators automaticos nao cobrem comportamento observado"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/runtime-qa.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/runtime-qa.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - runtime-qa
   - qa-checklist
@@ -116,8 +120,9 @@ geral do agente.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
+  `docs/loki-init-inventory-contracts.md`.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.

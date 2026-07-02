@@ -285,6 +285,51 @@ skills:
     status: optional-extension
     optional: true
     extension: "RPG Maker MZ"
+  - name: "rpg-maker-mz-visustella-plugin-index"
+    file: "skills/rpg-maker-mz-visustella-plugin-index/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-plugin-parameters"
+    file: "skills/rpg-maker-mz-visustella-plugin-parameters/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-notetags"
+    file: "skills/rpg-maker-mz-visustella-notetags/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-plugin-commands"
+    file: "skills/rpg-maker-mz-visustella-plugin-commands/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-action-sequences"
+    file: "skills/rpg-maker-mz-visustella-action-sequences/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-battle-mechanics"
+    file: "skills/rpg-maker-mz-visustella-battle-mechanics/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-progression-economy"
+    file: "skills/rpg-maker-mz-visustella-progression-economy/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-events-presentation"
+    file: "skills/rpg-maker-mz-visustella-events-presentation/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-compat-diagnostics"
+    file: "skills/rpg-maker-mz-visustella-compat-diagnostics/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
 
 agents:
   - name: "standards-curator"
@@ -568,3 +613,12 @@ optional_extensions:
       - "rpg-maker-mz-data-json"
       - "rpg-maker-mz-plugin-workflow"
       - "rpg-maker-mz-project-inventory"
+      - "rpg-maker-mz-visustella-plugin-index"
+      - "rpg-maker-mz-visustella-plugin-parameters"
+      - "rpg-maker-mz-visustella-notetags"
+      - "rpg-maker-mz-visustella-plugin-commands"
+      - "rpg-maker-mz-visustella-action-sequences"
+      - "rpg-maker-mz-visustella-battle-mechanics"
+      - "rpg-maker-mz-visustella-progression-economy"
+      - "rpg-maker-mz-visustella-events-presentation"
+      - "rpg-maker-mz-visustella-compat-diagnostics"

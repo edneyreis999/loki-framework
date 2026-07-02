@@ -34,6 +34,10 @@ disallowedTools:
 required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
+  - "rpg-maker-mz-visustella-plugin-index quando design RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers ou recurso VisuStella sem dominio claro"
+  - "rpg-maker-mz-visustella-battle-mechanics quando o design tocar combate, ATB, TP, AI, Aggro, targeting, states, passives, dano ou UI de combate VisuStella"
+  - "rpg-maker-mz-visustella-progression-economy quando o design tocar progressao, AP/SP, skills, lojas, moedas, custos, requisitos, itens, equipamentos ou economia VisuStella"
+  - "rpg-maker-mz-visustella-events-presentation quando o design tocar eventos, mensagens, pictures, busts, movimento, options, save/debug ou apresentacao VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

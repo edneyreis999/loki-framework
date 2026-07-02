@@ -35,6 +35,10 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir animacoes, tilesets, imagens referenciadas por dados ou superficies RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando arte tecnica RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-events-presentation quando assets, pictures, DragonBones, busts, animations, UI visual, options ou apresentacao forem VisuStella"
+  - "rpg-maker-mz-visustella-plugin-parameters quando comportamento visual depender de parametros VisuStella em Plugin Manager ou js/plugins.js"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando arte tecnica investigar visual glitches, camera, performance, order, dependencia ou conflito VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

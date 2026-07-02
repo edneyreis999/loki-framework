@@ -43,6 +43,10 @@ disallowedTools:
 required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
+  - "rpg-maker-mz-visustella-plugin-index quando valor, escopo ou criterio de aceite de RPG Maker MZ depender de recurso VisuStella, VisuMZ_, tier, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-battle-mechanics quando a promessa de produto depender de combate, ATB, TP, AI, Aggro ou feedback de batalha VisuStella"
+  - "rpg-maker-mz-visustella-progression-economy quando a promessa de produto depender de progressao, AP/SP, lojas, moedas, skills, itens ou equipamentos VisuStella"
+  - "rpg-maker-mz-visustella-events-presentation quando a promessa de produto depender de mensagem, Visual Novel, busts, pictures, options, save ou apresentacao VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"
@@ -55,7 +59,7 @@ escalation_signals:
   - "criterio de sucesso depende de gameplay feel, leitura, audio, UI ou comportamento perceptivel"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/game-product-owner.toml com sandbox workspace-write; escrita limitada por contrato ao target_document de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/game-product-owner.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
 nickname_candidates:
   - game-product-owner
   - game-po
@@ -115,8 +119,9 @@ consumidor.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente o proprio `target_document` em
-  `docs/loki-init/<perspective>-context.md`.
+- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
+  `docs/loki-init-inventory-contracts.md`.
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
@@ -184,4 +189,5 @@ parallel_agent_response:
   perceptivel.
 - `approval` se uma execucao futura tentar promover decisao de produto para
   politica duradoura, instalacao ou escrita sensivel.
+
 '''

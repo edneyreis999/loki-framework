@@ -36,6 +36,10 @@ required_skills:
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir dados, mapas, eventos, switches, variables ou database RPG Maker MZ"
   - "rpg-maker-mz-plugin-workflow quando o contexto aprovado exigir plugins RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando um projeto RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers ou dominio VisuStella incerto"
+  - "rpg-maker-mz-visustella-battle-mechanics quando gameplay tocar Battle Core, ATB, TP, Battle AI, Aggro, targeting, states, passives, dano ou UI de combate VisuStella"
+  - "rpg-maker-mz-visustella-action-sequences quando a mecanica usar Battle Core Action Sequences, Custom Action Sequence, MECH Action Effect, Common Events de acao ou timing de impacto"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando sintomas runtime, conflitos, load order, performance, no-effect tags ou cleanup de Action Sequence forem parte do problema"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

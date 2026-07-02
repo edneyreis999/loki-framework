@@ -188,8 +188,15 @@ projeto consumidor declarar RPG Maker MZ.
 | `rpg-maker-mz-data-json` | `optional-extension` | Skill especializada para superficies de dados, Database, Common Events ou mapas RPG Maker MZ. |
 | `rpg-maker-mz-plugin-workflow` | `optional-extension` | Skill especializada para criar, editar, validar ou ativar plugins RPG Maker MZ. |
 | `rpg-maker-mz-project-inventory` | `optional-extension` | Skill especializada para agentes game-dev inventariarem projeto RPG Maker MZ antes de handoff, analise tecnica ou planejamento de runtime/dados/plugins. |
-| `notetag-filler` | `optional-extension` | Apoio futuro para notetags RPG Maker MZ/VisuStella. |
-| `visustella-analyst` | `optional-extension` | Apoio futuro para analise tecnica/debug em projetos com VisuStella. |
+| `rpg-maker-mz-visustella-plugin-index` | `optional-extension` | Skill roteadora para escolher referencias e skills VisuStella por plugin, tier, dependencia, familia, load order e superficie sem autorizar escrita em dados/plugins/runtime. |
+| `rpg-maker-mz-visustella-plugin-parameters` | `optional-extension` | Skill para semantica de parametros VisuStella no Plugin Manager e valores em `js/plugins.js`, preservando o gate `rpg-maker-mz-plugin-workflow`. |
+| `rpg-maker-mz-visustella-notetags` | `optional-extension` | Skill para sintaxe, alvo correto e validacao de notetags/comment tags VisuStella, preservando o gate `rpg-maker-mz-data-json`. |
+| `rpg-maker-mz-visustella-plugin-commands` | `optional-extension` | Skill para comandos VisuStella em map events, troop events, Common Events e payloads PluginManager, preservando gates de dados e plugins. |
+| `rpg-maker-mz-visustella-action-sequences` | `optional-extension` | Skill para Battle Core Action Sequences, `<Custom Action Sequence>`, Common Events, `MECH: Action Effect`, padroes e indice XML com Playtest gate. |
+| `rpg-maker-mz-visustella-battle-mechanics` | `optional-extension` | Skill de dominio para Battle Core, ATB, TP, Battle AI, Aggro, passives, estados, dano, targeting, gauges e UI de combate, roteando para MVP surfaces e Playtest gate. |
+| `rpg-maker-mz-visustella-progression-economy` | `optional-extension` | Skill de dominio para progressao, AP/SP, Skill Shop, More Currencies, Database Inherit, Items and Equips, equip passives, custos, requisitos, shops e inheritance com gate `rpg-maker-mz-data-json`. |
+| `rpg-maker-mz-visustella-events-presentation` | `optional-extension` | Skill de dominio para Message Core, Picture Busts, eventos, movimento, DragonBones, options, save/debug, text codes, localization e apresentacao com `human-validation` para runtime visual/input/save. |
+| `rpg-maker-mz-visustella-compat-diagnostics` | `optional-extension` | Skill de diagnostico para order, tiers, dependencias, compatibilidade, performance, conflitos, sintomas runtime, notetags sem efeito, Action Sequence cleanup, visuals e save/options/debug issues. |
 
 ## Pendencias Futuras Registradas
 

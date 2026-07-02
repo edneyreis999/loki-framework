@@ -34,6 +34,10 @@ disallowedTools:
 required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
+  - "rpg-maker-mz-visustella-plugin-index quando UX/UI RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-events-presentation quando UX/UI tocar Message Core, text codes, busts, pictures, options, save, debug, UI visual, input ou apresentacao VisuStella"
+  - "rpg-maker-mz-visustella-plugin-parameters quando menus, options, save, message defaults, UI layout ou parametros globais dependerem do Plugin Manager VisuStella"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando UX/UI falhar por conflito, load order, dependencia, visual glitch, save/options/debug ou sintoma runtime VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

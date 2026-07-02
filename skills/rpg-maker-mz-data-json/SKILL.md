@@ -50,28 +50,43 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 - `references/json-write-style-and-diff.md` antes de qualquer escrita automatizada em `data/*.json`.
 - `references/common-event-merge-and-editor-slots.md` quando criar, mover, renumerar ou mesclar Common Events.
 - `references/historical-migration-scripts.md` quando revisar, adaptar ou considerar executar scripts historicos que alteram `data/*.json`.
+- `rpg-maker-mz-visustella-notetags` quando a task interpretar, gerar,
+  revisar ou editar sintaxe VisuStella em note fields ou comment tags.
+- `rpg-maker-mz-visustella-plugin-commands` quando comandos de evento,
+  troop events, Common Events ou payloads de `PluginManager` forem
+  especificos de VisuStella.
+- `rpg-maker-mz-visustella-action-sequences` quando skills, items ou Common
+  Events envolverem `<Custom Action Sequence>`, Battle Core Action Sequences,
+  `MECH: Action Effect`, setup/finish flow ou target loops.
 
 ## Procedure
 
 1. Confirme arquivo alvo, IDs e nomes no JSON real do projeto consumidor.
 2. Use parser JSON estruturado; nao use substituicao textual para alterar comandos, arrays ou Database entries.
 3. Quando houver `code` de evento, confirme a semantica no engine da versao alvo antes de escrever ou auditar.
-4. Preserve estilo de escrita do arquivo alvo e pare se o diff virar reflow massivo.
-5. Para Common Events novos ou movidos, valide se o editor reconhece os slots e remapeie callers `code:117`.
-6. Para scripts historicos ou geradores de fase, classifique `read-only` versus mutador e confirme precondicoes atuais antes de qualquer execucao.
-7. Rode parse JSON depois da escrita, revise diff restrito e exija Playtest quando runtime for afetado.
+4. Quando note fields, comment tags, comandos de evento, Common Events,
+   skills, items, troops, maps ou eventos dependerem de semantica VisuStella,
+   carregue a skill VisuStella especifica antes de propor ou escrever payloads.
+   Esta skill continua sendo o gate de estrutura, parse e diff para
+   `data/*.json`; a skill VisuStella fornece somente sintaxe e semantica.
+5. Preserve estilo de escrita do arquivo alvo e pare se o diff virar reflow massivo.
+6. Para Common Events novos ou movidos, valide se o editor reconhece os slots e remapeie callers `code:117`.
+7. Para scripts historicos ou geradores de fase, classifique `read-only` versus mutador e confirme precondicoes atuais antes de qualquer execucao.
+8. Rode parse JSON depois da escrita, revise diff restrito e exija Playtest quando runtime for afetado.
 
 ## Inputs
 
 - Arquivo JSON alvo.
 - IDs ou superficies afetadas.
 - Plano de alteracao.
-- Critérios de validacao.
+- Criterios de validacao.
 
 ## Outputs Expected By Loki
 
 - Plano de edicao estruturada.
 - Lista de arquivos e IDs afetados.
+- Skills VisuStella carregadas quando a mudanca depender de sintaxe, payload
+  ou Action Sequence especifica de plugin.
 - Evidencia de parse JSON depois da escrita.
 - Diff restrito ao escopo.
 - Classificacao de validacao: `structural_validation`, `runtime_pending` ou `playtest_validated`.
@@ -85,6 +100,8 @@ Nenhuma escrita e autorizada por este arquivo. A permissao real vem da task ativ
 
 - Escrita manual ad hoc que quebre estrutura JSON.
 - Alteracao de IDs nao planejados.
+- Tratar uma skill VisuStella semantica como permissao de escrita sem este
+  gate de dados e sem task ativa autorizando o arquivo alvo.
 - Validar runtime sem Playtest humano.
 - Executar script mutador historico sem preflight, precondicoes atuais e autorizacao explicita.
 

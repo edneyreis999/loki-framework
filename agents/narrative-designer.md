@@ -34,6 +34,9 @@ disallowedTools:
 required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
+  - "rpg-maker-mz-visustella-plugin-index quando narrativa RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-events-presentation quando narrativa tocar cenas, mensagens, choices, busts, pictures, movement, text codes, localization ou apresentacao VisuStella"
+  - "rpg-maker-mz-visustella-notetags quando narrativa depender de note fields, comment tags, requisitos, estados, traits, inheritance ou tags VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

@@ -35,6 +35,10 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir switches, variables, common events, mapas, eventos, itens ou database RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando quest RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
+  - "rpg-maker-mz-visustella-events-presentation quando quest tocar eventos, movimento, mensagens, pictures, busts, labels, popups, options, save/debug ou apresentacao VisuStella"
+  - "rpg-maker-mz-visustella-progression-economy quando quest tocar recompensas, custos, shops, moedas, skills, itens, equipamentos, AP/SP ou requisitos VisuStella"
+  - "rpg-maker-mz-visustella-notetags quando quest depender de note fields, comment tags, requisitos, custos, states, traits ou inheritance VisuStella"
 required_gates:
   - technical-review
   - "<human_validation_gate>"

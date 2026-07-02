@@ -37,6 +37,11 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-data-json quando o contexto aprovado exigir dados, mapas, eventos, switches, variables ou database RPG Maker MZ"
   - "rpg-maker-mz-plugin-workflow quando o contexto aprovado exigir plugins RPG Maker MZ"
+  - "rpg-maker-mz-visustella-plugin-index quando QA runtime de RPG Maker MZ mencionar VisuStella, VisuMZ_, plugin order, tiers ou plugin incerto"
+  - "rpg-maker-mz-visustella-compat-diagnostics quando QA investigar conflitos, dependencias, load order, performance, sintomas runtime, no-effect tags, save/options/debug ou incompatibilidade VisuStella"
+  - "rpg-maker-mz-visustella-events-presentation quando QA tocar mensagens, busts, pictures, DragonBones, movement, options, save, debugger, UI visual ou input VisuStella"
+  - "rpg-maker-mz-visustella-action-sequences quando QA tocar Battle Core Action Sequences, Action Effect, camera, timing, movement, impact ou cleanup visual"
+  - "rpg-maker-mz-visustella-battle-mechanics quando QA tocar ATB, TP, AI, Aggro, states, passives, targeting, dano, gauges ou UI de combate VisuStella"
 risks:
   - "Evidencia automatica pode nao cobrir experiencia perceptivel."
   - "Nao pode marcar validacao humana como concluida sem resposta explicita."

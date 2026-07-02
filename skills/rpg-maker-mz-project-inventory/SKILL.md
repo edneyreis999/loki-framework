@@ -75,31 +75,40 @@ editor/runtime access, or `loki:tech-analysis`.
      `data/MapInfos.json`, `js/plugins.js`, and local `js/rmmz_*.js`;
    - database JSON, selected maps, plugin files, asset roots, save/local state,
      and local pipeline scripts when they affect understanding.
-5. Parse structured surfaces with structured parsing, not regex, when the data
+5. When the user request, local docs, plugin list, plugin filenames, or
+   `js/plugins.js` mention VisuStella, `VisuMZ_`, VisuStella plugin families,
+   tiers, dependencies, load order, notetags, plugin commands, or Action
+   Sequences, use `rpg-maker-mz-visustella-plugin-index` before drawing
+   conclusions from RPG Maker MZ engine source alone.
+   - Treat VisuStella skills as semantic routing only; they do not authorize
+     inventory writes or consumer runtime changes.
+   - Keep the inventory mode as small as possible and route only the relevant
+     plugin, family, tier, or surface.
+6. Parse structured surfaces with structured parsing, not regex, when the data
    matters: RPG Maker data JSON, `js/plugins.js`, plugin metadata, and event
    command lists.
-6. Build only the ownership map needed for the mode:
+7. Build only the ownership map needed for the mode:
    - switches, variables, Common Events, map/event callers, plugin commands,
-     plugin parameters, helper-plugin logic, assets, save/load state, docs,
-     validators, and human gates;
+     plugin parameters, VisuStella plugin route, helper-plugin logic, assets,
+     save/load state, docs, validators, and human gates;
    - for `focus_area`, `complete` requires required ownership columns to be
      mapped or explicitly out of scope.
-7. Use local engine source when command semantics matter.
+8. Use local engine source when command semantics matter.
    - Prefer relevant local `js/rmmz_*.js` interpreter, manager, scene, window,
      and storage methods over memory.
    - Use external or official RPG Maker documentation only when allowed and
      needed to resolve semantics not clear from local sources.
-8. Classify evidence and confidence:
+9. Classify evidence and confidence:
    - `parse-valid`, `editor-structural`, `engine-semantic`,
      `static-risk`, `runtime-pending`, `runtime-validated`;
    - list important sources not read because they were out of scope, too large,
      unavailable, unsafe, or required runtime/editor access.
-9. Separate observations, interpretations, hypotheses, and recommendations.
+10. Separate observations, interpretations, hypotheses, and recommendations.
    Inventory evidence can suggest a next action, but it is not a decision to
    promote standards, rewrite design, or implement fixes.
-10. Preserve the active agent's response format. Add inventory findings only as
+11. Preserve the active agent's response format. Add inventory findings only as
     the active task needs them; do not force a fixed Markdown section list.
-11. When ownership crosses docs, maps, Common Events, plugins, assets, save/load
+12. When ownership crosses docs, maps, Common Events, plugins, assets, save/load
     or runtime behavior, and the active agent cannot finish safely, recommend
     `loki:tech-analysis` with a concrete focus, source list, unresolved
     boundary, and required validator or human gate.
