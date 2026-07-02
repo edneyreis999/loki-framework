@@ -40,7 +40,7 @@ escalation_signals:
   - "proposta altera contexto duradouro do consumidor"
 adapter_projection:
   claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/catalogador.toml com sandbox workspace-write; escrita limitada por contrato ao envelope init_final_cataloger de loki:init ou aos target_files da task aprovada."
+  codex: "Projetado em codex/agents/catalogador.toml com sandbox workspace-write; escrita limitada por contrato aos envelopes aprovados de loki:init, loki:run-plan ou loki:catalogar-docs."
 nickname_candidates:
   - catalogador
   - docs-cataloger
@@ -91,6 +91,14 @@ Escrita escopada permitida somente quando o workflow entregar envelope com
 - `loki:run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
+- `loki:catalogar-docs`: operar somente sob envelope explicito de catalogacao,
+  com `target_files`, `allowed_writes`, `write_mode`,
+  `scoped_write_domains`, validators e gates. O comando define validacao de
+  path, mapeamento de arvore, limites, confirmacao por volume, ordem
+  bottom-up, fan-out e resumo final. Paralelismo so e permitido quando o
+  comando provar `target_files` disjuntos; qualquer escrita em
+  `docs/index.xml` ou indice pai deve voltar para consolidacao serial pelo
+  comando.
 - Runtime, engine, dados, assets, config, scripts ou artefatos gerados exigem
   plano aprovado, skill tecnica aplicavel quando houver tecnologia especifica,
   validators e gates humanos definidos pela task.

@@ -8,6 +8,7 @@
   "artifacts": {
     "commands": {
       "loki-init.md": "both",
+      "loki-catalogar-docs.md": "both",
       "loki-continuous-improvement.md": "both",
       "loki-enrich-tasks.md": "both",
       "loki-feedback.md": "both",
@@ -80,6 +81,7 @@
       "lf-agent-creator": "both",
       "lf-command-creator": "both",
       "lf-command-workflows": "both",
+      "loki-catalogar-docs": "both",
       "loki-continuous-improvement": "both",
       "lf-documentation-writing": "both",
       "loki-enrich-tasks": "both",
