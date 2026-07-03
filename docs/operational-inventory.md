@@ -34,6 +34,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki:catalogar-docs` | `mvp` | Catalogar documentacao duradoura do consumidor em `/docs` com validacao de caminho, limites de recursao, bottom-up e fan-out disjunto via envelopes do `catalogador`, consolidando `docs/index.xml` de forma serial. |
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
+| `loki:human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
 | `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
 | `loki:enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki:run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
@@ -60,6 +61,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
+| `loki-human-decision-preflight` | `mvp` | Wrapper Codex para executar o workflow `loki:human-decision-preflight`. |
 | `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
 | `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
 | `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |

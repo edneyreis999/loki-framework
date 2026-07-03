@@ -35,37 +35,42 @@ ele passa pelo workflow de aprendizado.
    riscos, superficies afetadas, pesquisa condicionada, validators ou gates.
    Quando as fontes forem ruidosas, desconhecidas ou multi-fonte, acione
    `source-researcher` em modo read-only antes da matriz de decisao.
-4. Use `loki:generate-action-plan` para transformar a analise aprovada em
+4. Use `loki:human-decision-preflight` quando a analise ou brief tiver
+   perguntas humanas pendentes antes do plano. Ele separa `must_ask_now`,
+   `can_delegate_to_plan`, `can_validate_later` e
+   `do_not_ask_llm_can_determine`.
+5. Use `loki:generate-action-plan` para transformar a analise aprovada e as
+   decisoes humanas registradas em
    `tasks.md`, `task-N.M.md`, dependencias, human loops, validators e estado de
    retomada.
-5. Antes da execucao, use `loki:enrich-tasks` quando retrospectivas, builds,
+6. Antes da execucao, use `loki:enrich-tasks` quando retrospectivas, builds,
    interactions ou aprendizados locais puderem reduzir ambiguidade da fase
    atual. Pesquisa externa continua condicionada: a frase exata deve ser
    mostrada ao usuario antes da busca.
-6. Use `loki:run-plan` para executar uma fase ou task aprovada. Ele carrega
+7. Use `loki:run-plan` para executar uma fase ou task aprovada. Ele carrega
    `lf-run-plan-execution`, monta um `Execution Brief`, resolve contexto e
    bloqueia escrita quando faltar decisao, validator, approval ou gate humano.
-7. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
+8. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
    locais em modo read-only para extrair apenas o que afeta a fase alvo. Quando
    nao houver `DIR_ANALISE` e as referencias da task forem insuficientes, ele
    faz uma pre-analise local minima antes da primeira escrita.
-8. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
+9. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
    a fase de execucao, pause antes de escrever e use `source-researcher` para
    produzir evidencia que revise ou complemente o `Execution Brief`.
-9. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
+10. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
    retrospectiva aprovada exigir aquela tecnologia.
-10. A implementacao acontece task por task, em ordem segura. Leitura pode ser
+11. A implementacao acontece task por task, em ordem segura. Leitura pode ser
    paralela; escrita fica serializada por owner e arquivo. O owner pode ser o
    orquestrador ou um agente `scoped-writer` quando a task aprovada declarar
    `target_files`, validators e gates.
-11. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
+12. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
-12. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
+13. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
     `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
     task, arquivos afetados, validations, human loops, blockers e proximo
     passo.
-13. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+14. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki:retrospectiva-tecnica` e siga o
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
@@ -79,6 +84,7 @@ ele passa pelo workflow de aprendizado.
 | --- | --- |
 | `loki:feedback` | Normaliza feedback humano, investiga causas e evita escrever com premissas fracas. |
 | `loki:tech-analysis` | Converte demanda em analise baseada em evidencias, riscos, alternativas, validators e gates. |
+| `loki:human-decision-preflight` | Classifica decisoes humanas pendentes antes do plano e evita perguntar o que a LLM deve resolver por fonte local. |
 | `loki:generate-action-plan` | Cria plano faseado retomavel com `tasks.md`, tasks individuais, dependencias e human loops. |
 | `loki:enrich-tasks` | Melhora apenas a fase atual usando aprendizados transitorios, sem promover regra duradoura. |
 | `loki:run-plan` | Orquestra a execucao da fase aprovada, serializa escrita, registra estado e valida evidencias. |
@@ -90,6 +96,7 @@ ele passa pelo workflow de aprendizado.
 | --- | --- |
 | `loki-feedback` | Define o protocolo de uma pergunta por vez, hipoteses com evidencia e proposta so depois de contexto suficiente. |
 | `lf-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
+| `loki-human-decision-preflight` | Classifica perguntas humanas antes do plano e registra quando o proximo passo ja pode seguir para action planning. |
 | `lf-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
 | `loki-enrich-tasks` | Injeta aprendizados na task certa do plano ativo, preservando fontes sensiveis e sem criar norma duradoura. |
 | `lf-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |

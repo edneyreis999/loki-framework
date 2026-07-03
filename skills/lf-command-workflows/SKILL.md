@@ -1,9 +1,9 @@
 ---
 name: lf-command-workflows
-description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:catalogar-docs`, `loki:feedback`, `loki:tech-analysis`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
+description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:catalogar-docs`, `loki:feedback`, `loki:tech-analysis`, `loki:human-decision-preflight`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
 when_to_use:
   - "Use when the user invokes a shared Loki command workflow from Codex."
-  - "Use when routing loki:init, init-loki, loki:catalogar-docs, loki:feedback, loki:tech-analysis, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
+  - "Use when routing loki:init, init-loki, loki:catalogar-docs, loki:feedback, loki:tech-analysis, loki:human-decision-preflight, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
 argument-hint: "[loki command name, command arguments]"
 arguments:
   required: []
@@ -36,6 +36,7 @@ used_by:
   - loki:catalogar-docs
   - loki:feedback
   - loki:tech-analysis
+  - loki:human-decision-preflight
   - loki:generate-action-plan
   - loki:enrich-tasks
   - loki:run-plan
@@ -62,6 +63,9 @@ installation profile.
 - `loki:tech-analysis`: read
   `.agents/commands/loki/loki-tech-analysis.md`, then use
   `lf-tech-analysis-authoring`.
+- `loki:human-decision-preflight`: read
+  `.agents/commands/loki/loki-human-decision-preflight.md`,
+  then use `loki-human-decision-preflight`.
 - `loki:generate-action-plan`: read
   `.agents/commands/loki/loki-generate-action-plan.md`,
   then use `lf-action-plan-authoring`.

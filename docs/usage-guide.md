@@ -40,8 +40,8 @@ Use estes documentos como fonte principal do ciclo operacional:
   descreve dry-run, approval, aplicacao por symlink, perfis, validacao e
   rollback antes de usar Loki em um projeto alvo.
 - [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md):
-  descreve como uma descricao curta vira analise, plano, tasks, escrita
-  serializada, validacao e evidencia.
+  descreve como uma descricao curta vira analise, preflight de decisoes
+  humanas, plano, tasks, escrita serializada, validacao e evidencia.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   resultados, bugs, feedbacks e retrospectivas viram ajuste local, candidato,
   regra duradoura ou backlog.
@@ -155,13 +155,14 @@ esse comportamento for necessario.
 
 ## Skills Core e Extensoes
 
-As skills Loki (`loki-init`, `loki-feedback`, `loki-enrich-tasks`,
+As skills Loki (`loki-init`, `loki-feedback`,
+`loki-human-decision-preflight`, `loki-enrich-tasks`,
 `lf-run-plan-execution`, `loki-retrospectiva-tecnica`, `lf-command-creator`,
 `lf-agent-creator`, `lf-skill-creator`, `lf-index-navigator`,
 `lf-tech-analysis-authoring` e `lf-action-plan-authoring`) governam
-entrevista, autoria de analises e planos, enriquecimento de tasks, execucao de fase,
-retrospectiva, navegacao de documentacao e evolucao controlada de commands,
-agents e skills.
+entrevista, autoria de analises, preflight de decisoes humanas, planos,
+enriquecimento de tasks, execucao de fase, retrospectiva, navegacao de
+documentacao e evolucao controlada de commands, agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.

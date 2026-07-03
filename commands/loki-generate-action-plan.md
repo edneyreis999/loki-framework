@@ -35,6 +35,8 @@ estrutura de artefatos Loki.
 ## Inputs
 
 - Analise tecnica, brief, feedback ou objetivo aprovado.
+- Registro de `loki:human-decision-preflight`, quando houver perguntas humanas
+  pendentes antes do plano.
 - Escopo permitido, fora de escopo e superficies proibidas.
 - Decisoes humanas ja registradas.
 - Diretorio base candidato para o plano.
@@ -85,17 +87,20 @@ estrutura de artefatos Loki.
 
 ## Workflow
 
-1. Fazer scan das entradas, decisoes humanas e limites de escrita.
-2. Planejar antes de escrever: fases, tasks, dependencias, referencias,
+1. Fazer scan das entradas, decisoes humanas, registro de
+   `loki:human-decision-preflight` quando existir, e limites de escrita.
+2. Parar se houver `must_ask_now` sem resposta ou se o registro declarar
+   `ready_for_next_phase: false`.
+3. Planejar antes de escrever: fases, tasks, dependencias, referencias,
    validators, human loops, write owners e ordem topologica.
-3. Se faltar referencia concreta, usar `TODO: localizar`; se a lacuna impedir
+4. Se faltar referencia concreta, usar `TODO: localizar`; se a lacuna impedir
    task executavel, parar e perguntar.
-4. Propor diretorio de destino com nome simples baseado no escopo e aguardar
+5. Propor diretorio de destino com nome simples baseado no escopo e aguardar
    confirmacao explicita.
-5. Criar `tasks.md`, `task-N.M.md` e as subpastas por fase usando:
+6. Criar `tasks.md`, `task-N.M.md` e as subpastas por fase usando:
    - `templates/tasks-template.md`
    - `templates/task-template.md`
-6. Rodar validadores estruturais antes de declarar o plano pronto.
+7. Rodar validadores estruturais antes de declarar o plano pronto.
 
 ## Artifact Structure
 
@@ -149,6 +154,7 @@ resume notes.
 
 - O objetivo nao tem escopo verificavel.
 - O diretorio de plano ainda nao foi confirmado.
+- `loki:human-decision-preflight` declarou `must_ask_now` sem resposta.
 - A ordem de execucao depende de decisao humana ainda nao tomada.
 - Referencias ausentes tornam uma task inexequivel.
 - O plano exigiria escrita fora do escopo aprovado.

@@ -1,9 +1,9 @@
 ---
 name: loki-tech-analysis
-description: Run the Loki `loki:tech-analysis` command workflow in Codex. Use when producing evidence-based technical analyses from briefs, feedback, specs, source paths, runtime questions, source maps, decision matrices, validators, gates, and handoff to action planning.
+description: Run the Loki `loki:tech-analysis` command workflow in Codex. Use when producing evidence-based technical analyses from briefs, feedback, specs, source paths, runtime questions, source maps, decision matrices, validators, gates, and handoff to decision preflight or action planning.
 when_to_use:
   - "Use when running loki:tech-analysis to produce evidence-based technical analysis."
-  - "Use when the output needs source maps, fact/hypothesis separation, decision matrices, validators, gates, and action-plan handoff."
+  - "Use when the output needs source maps, fact/hypothesis separation, decision matrices, validators, gates, and handoff to decision preflight or action planning."
 argument-hint: "[brief, source paths, scope, destination]"
 arguments:
   required: []

@@ -60,7 +60,8 @@ Use quando o usuario trouxer feedback, bug visual, validacao humana, sensacao de
     validators, manifest, runtime ou contexto duradouro como parte de
     `loki:feedback`.
 12. Se o feedback revelar mudanca necessaria, encaminhe para
-    `loki:tech-analysis`, `loki:generate-action-plan`, `loki:run-plan`,
+    `loki:tech-analysis`, `loki:human-decision-preflight`,
+    `loki:generate-action-plan`, `loki:run-plan`,
     `loki:retrospectiva-tecnica` ou `loki:continuous-improvement`.
 13. A unica escrita permitida por este workflow e criar ou complementar um
     artefato autorizado de `loki:retrospectiva-tecnica`, quando o objetivo for

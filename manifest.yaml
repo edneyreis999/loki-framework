@@ -160,6 +160,9 @@ commands:
   - name: "loki:tech-analysis"
     file: "commands/loki-tech-analysis.md"
     status: draft
+  - name: "loki:human-decision-preflight"
+    file: "commands/loki-human-decision-preflight.md"
+    status: draft
   - name: "loki:generate-action-plan"
     file: "commands/loki-generate-action-plan.md"
     status: draft
@@ -215,6 +218,9 @@ skills:
     status: draft
   - name: "loki-tech-analysis"
     file: "skills/loki-tech-analysis/SKILL.md"
+    status: draft
+  - name: "loki-human-decision-preflight"
+    file: "skills/loki-human-decision-preflight/SKILL.md"
     status: draft
   - name: "loki-generate-action-plan"
     file: "skills/loki-generate-action-plan/SKILL.md"

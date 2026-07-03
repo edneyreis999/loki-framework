@@ -39,8 +39,9 @@ shell: {}
 
 ## Procedure
 
-1. Confirm the planning input: technical analysis, brief, feedback, approved
-   objective, scope boundaries, forbidden surfaces, and known human decisions.
+1. Confirm the planning input: technical analysis, brief, feedback,
+   `loki:human-decision-preflight` record when present, approved objective,
+   scope boundaries, forbidden surfaces, and known human decisions.
 2. Read only the sources required to plan safely. Use `lf-index-navigator`
    when durable consumer documentation in `/docs` is relevant.
 3. Build the phase model before writing files:
@@ -68,6 +69,8 @@ shell: {}
   concrete actions with an expected 2-4 hour implementation range.
 - Do not skip phases. If phase N is required before phase N+1, declare the
   dependency explicitly.
+- Do not plan past an unresolved `must_ask_now` decision from
+  `loki:human-decision-preflight`.
 - Do not write outside the approved plan directory.
 - Do not declare runtime, integration, UI, data persistence, or generated output
   validated without the required human or automated gate.

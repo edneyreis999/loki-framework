@@ -89,7 +89,8 @@ passos, sem aplicar alteracoes no projeto ou no pacote.
     pendente.
 11. Nao aplicar a correcao proposta. Se o feedback revelar uma mudanca
     necessaria, encaminhar para o comando apropriado (`loki:tech-analysis`,
-    `loki:generate-action-plan`, `loki:run-plan`,
+    `loki:human-decision-preflight`, `loki:generate-action-plan`,
+    `loki:run-plan`,
     `loki:retrospectiva-tecnica` ou `loki:continuous-improvement`) em vez de
     editar diretamente.
 12. Se for necessario registrar aprendizado operacional, criar ou complementar

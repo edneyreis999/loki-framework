@@ -48,7 +48,8 @@ riscos, validators, gates humanos e handoff para planejamento.
   estado, validators, gates humanos e docs possivelmente afetados.
 - Resultado do research gate: nao necessario, pulado com motivo ou realizado com
   fontes citadas.
-- Recomendacao de plano, investigacao adicional ou bloqueio.
+- Recomendacao de `loki:human-decision-preflight`,
+  `loki:generate-action-plan`, investigacao adicional ou bloqueio.
 
 ## Allowed Writes
 
@@ -119,7 +120,10 @@ ele entrega evidencia para a analise.
 8. Declarar superficies afetadas, pontos de integracao, contratos de estado,
    validators, gates humanos, riscos, docs afetados e recomendacao.
 9. Escrever a analise com `templates/technical-analysis-template.md`.
-10. Rodar validators antes de recomendar `loki:generate-action-plan`.
+10. Quando houver perguntas humanas pendentes antes do plano, recomendar
+    `loki:human-decision-preflight`; caso contrario, recomendar
+    `loki:generate-action-plan`.
+11. Rodar validators antes de recomendar o proximo comando.
 
 ## Validators
 
@@ -129,8 +133,8 @@ ele entrega evidencia para a analise.
   declarados.
 - Pesquisa externa foi realizada com fontes citadas ou pulada com motivo.
 - Fontes externas nao substituem evidencias locais do consumidor.
-- A analise e suficiente para alimentar `loki:generate-action-plan` sem memoria
-  da conversa.
+- A analise e suficiente para alimentar `loki:human-decision-preflight` ou
+  `loki:generate-action-plan` sem memoria da conversa.
 - Mudancas no proprio pacote declaram impacto em `manifest.yaml`, docs,
   templates ou skills quando aplicavel.
 
