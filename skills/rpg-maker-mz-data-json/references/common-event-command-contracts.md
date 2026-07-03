@@ -15,6 +15,22 @@ Do not rely on memory, old task text, or an implementation audit that repeats th
 5. If an audit checks only that the JSON contains the same code the task wrote, reject the audit as tautological.
 6. When a command references an asset by name, verify the physical asset path for the target channel before claiming semantic validation.
 
+## Control Switches Range Validation
+
+`Control Switches` (`121`) stores parameters as
+`[startId,endId,operation]`. In RPG Maker MZ, `command121` applies the
+operation to every switch from `startId` through `endId`, inclusive.
+
+Treat `startId !== endId` as an intentional range operation. For a single
+switch, require `[id,id,operation]`. For several distinct narrative, quest, or
+progression flags, prefer separate unit commands and assert each command shape
+unless the task explicitly declares a contiguous range.
+
+A validator for `code:121` must compare the expected command shape, not only the
+final set of switch IDs that could be affected. Classify the expected shape as
+`unit-switch`, `multiple-unit-switches`, or `explicit-range`; reject ranges when
+the requirement names individual flags or a singular state.
+
 ## Branch And Indent Validation
 
 RPG Maker MZ event commands use `indent` as runtime structure, not formatting.
@@ -68,7 +84,7 @@ These commands are common in RPG Maker MZ event work. Treat this as a lookup che
 | --- | --- | --- | --- |
 | 111 | `command111` | Conditional Branch | Verify branch parameter shape before generation. |
 | 117 | `command117` | Call Common Event | Verify child-interpreter behavior before calling looping or parallel logic. |
-| 121 | `command121` | Control Switches | Verify ON/OFF parameter semantics in the target engine. |
+| 121 | `command121` | Control Switches | Verify inclusive range and ON/OFF parameter semantics in the target engine. |
 | 122 | `command122` | Control Variables | Verify operation and operand encoding. |
 | 223 | `command223` | Tint Screen | Validate visible runtime effect. |
 | 225 | `command225` | Shake Screen | Validate visible runtime effect. |
