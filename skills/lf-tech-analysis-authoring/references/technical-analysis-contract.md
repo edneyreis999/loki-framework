@@ -38,7 +38,9 @@ condition.
 5. Apply the research gate only after local context is known.
 6. Compare alternatives with explicit tradeoffs.
 7. Define validators and human gates before recommending execution.
-8. Produce a handoff that can feed `loki:generate-action-plan`.
+8. Produce a handoff that either feeds `loki:human-decision-preflight` when
+   human decisions remain open, or feeds `loki:generate-action-plan` directly
+   when no pre-plan human decision is needed.
 
 Convergence means the recommendation, risks, validators, human gates and next
 action are grounded in sources another agent can inspect.
@@ -59,7 +61,10 @@ model_class: frontier_reasoning
 escalation_reason: "conflicting evidence, architecture, security, current external research or irreversible decision"
 recommended_handoffs:
   research: "source-researcher read-only for multi-source or current evidence"
-  planning: "loki:generate-action-plan after recommendation is grounded"
+  planning: "loki:human-decision-preflight when human decisions remain open, otherwise loki:generate-action-plan"
+human_decision_preflight:
+  required: false
+  reason: "Set true when must_ask_now decisions remain before action planning."
 validator_effort: medium
 ```
 
@@ -107,7 +112,11 @@ The analysis must include:
 - human gates;
 - affected docs;
 - stop conditions;
-- handoff to `loki:generate-action-plan`;
+- explicit human decision preflight decision:
+  `human_decision_preflight.required`, reason and blocking questions when any;
+- recommended next command:
+  `loki:human-decision-preflight`, `loki:generate-action-plan` or blocked;
+- handoff to the recommended next command;
 - downstream execution profile for the action plan;
 - resume state.
 
@@ -135,7 +144,13 @@ Before declaring the analysis ready, check:
 - validators and human gates match the affected surfaces;
 - research was either performed with cited sources or skipped with a reason;
 - external sources do not replace local consumer evidence;
-- the handoff is specific enough for `loki:generate-action-plan`;
+- the artifact states whether `loki:human-decision-preflight` is required
+  before planning;
+- when preflight is required, the handoff includes the open human decisions or
+  questions that need classification;
+- when preflight is not required, the handoff explains why action planning can
+  proceed directly;
+- the handoff is specific enough for the recommended next command;
 - the artifact can be resumed without chat memory.
 
 ## Stop Conditions
@@ -145,6 +160,8 @@ Stop before recommending execution if:
 - the source request is not verifiable;
 - local primary sources required for safety are missing;
 - a material decision belongs to the user;
+- `loki:generate-action-plan` would be recommended directly while a pre-plan
+  human decision remains unresolved;
 - research reveals a blocker without a safe alternative;
 - the requested next step would require unauthorized writes;
 - validators or human gates cannot be defined for the affected surfaces.

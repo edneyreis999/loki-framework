@@ -98,4 +98,6 @@ The analysis must be useful as direct input to
 `loki:generate-action-plan` when the planning handoff is already clear. Another
 agent should be able to inspect the sources, understand the chosen approach,
 see unresolved questions, and convert the recommendation into executable tasks
-without relying on conversation memory.
+without relying on conversation memory. The artifact must explicitly state
+whether `human_decision_preflight.required` is `true` or `false`, and name the
+recommended next command.

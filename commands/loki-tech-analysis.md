@@ -48,6 +48,8 @@ riscos, validators, gates humanos e handoff para planejamento.
   estado, validators, gates humanos e docs possivelmente afetados.
 - Resultado do research gate: nao necessario, pulado com motivo ou realizado com
   fontes citadas.
+- Decisao explicita `human_decision_preflight.required` com motivo e perguntas
+  bloqueantes quando existirem.
 - Recomendacao de `loki:human-decision-preflight`,
   `loki:generate-action-plan`, investigacao adicional ou bloqueio.
 
@@ -135,6 +137,9 @@ ele entrega evidencia para a analise.
 - Fontes externas nao substituem evidencias locais do consumidor.
 - A analise e suficiente para alimentar `loki:human-decision-preflight` ou
   `loki:generate-action-plan` sem memoria da conversa.
+- A analise declara se `loki:human-decision-preflight` e necessario antes do
+  plano; quando nao for necessario, explica por que pode seguir direto para
+  `loki:generate-action-plan`.
 - Mudancas no proprio pacote declaram impacto em `manifest.yaml`, docs,
   templates ou skills quando aplicavel.
 
