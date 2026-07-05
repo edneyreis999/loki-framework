@@ -137,17 +137,25 @@ substituir `loki:run-plan` como executor manual.
    um POV ou conflito material.
 7. Consolidar `analise/sintese.xml`, registrando fatos, divergencias,
    decision gates, plano recomendado, validators e stop conditions.
-8. Se houver decision gate material antes do plano, executar
+8. Registrar checkpoint pos-MVP `experience_juice_needed` antes de gerar o
+   plano. Se a sintese apontar lacunas materiais de experiencia, apresentacao,
+   narrativa, audio, UX, balanceamento, onboarding, feedback, acessibilidade,
+   performance, risco tecnico ou outra superficie relevante, abrir uma ou mais
+   waves adicionais read-only/proposal-only com o menor conjunto util de
+   agentes escolhido por lacuna, superficie e risco da demanda atual. Cada wave
+   registra `selection_reason`, pergunta de analise, superficie afetada, risco,
+   validator esperado e criterio de parada. Nao usar lista fixa de agentes.
+9. Se houver decision gate material antes do plano, executar
    `loki:human-decision-preflight`. Prosseguir somente quando nao houver
    `must_ask_now` pendente.
-9. Executar `loki:generate-action-plan` usando a sintese aprovada como fonte.
-10. Executar as fases do plano por `loki:run-plan`, uma fase por vez, sem
+10. Executar `loki:generate-action-plan` usando a sintese aprovada como fonte.
+11. Executar as fases do plano por `loki:run-plan`, uma fase por vez, sem
     perguntar ao humano durante a execucao autonoma.
-11. Durante a execucao, converter limites nao resolviveis automaticamente em
+12. Durante a execucao, converter limites nao resolviveis automaticamente em
     blockers ou itens de backlog para a fase humana posterior.
-12. Registrar validators, evidencias, completion reports, retrospectivas
+13. Registrar validators, evidencias, completion reports, retrospectivas
     exigidas e digest integrado.
-13. Encerrar com status retomavel: completed, blocked, pending-human-validation
+14. Encerrar com status retomavel: completed, blocked, pending-human-validation
     ou outro status concreto, sempre com proximo passo.
 
 ## Validators
@@ -157,6 +165,8 @@ substituir `loki:run-plan` como executor manual.
 - Todo handoff possui `handoff_id`, owner, modo, inputs, expected output e
   status.
 - Todo writer possui `target_files`, `allowed_writes`, validators e gates.
+- A sintese registra `experience_juice_needed`, decisao, criterio de parada e
+  waves adicionais quando houver lacunas materiais pos-MVP.
 - Nenhum `must_ask_now` segue pendente antes de gerar o plano.
 - Nenhum grupo paralelo compartilha `target_files` sem serializacao.
 - `loki:generate-action-plan` produziu tasks com dependencias, validators,
@@ -194,6 +204,9 @@ substituir `loki:run-plan` como executor manual.
 - Decision gate `must_ask_now` pendente antes de gerar o plano.
 - Sintese de analise nao consegue produzir plano executavel sem inventar
   referencia, approval, validator ou decisao humana.
+- Checkpoint `experience_juice_needed` aponta lacunas materiais, mas o fluxo nao
+  consegue selecionar wave adicional sem inventar agente, gate, validator ou
+  superficie.
 - `loki:generate-action-plan` falha ou gera plano sem dependencias,
   validators, human loops ou resume state suficientes.
 - `loki:run-plan` reporta validator blocker ou escrita fora de escopo.
@@ -206,6 +219,6 @@ substituir `loki:run-plan` como executor manual.
 
 Registrar no estado integrado: demanda, diretorio de execucao, agentes
 selecionados e pulados, `selection_reason`, handoffs, decision gates, caminho
-da sintese, plano gerado, fase atual, task atual, agent runs, target files,
-validators, evidencias, retrospectivas, blockers, backlog, status final e
-proximo passo.
+da sintese, checkpoint `experience_juice_needed`, waves adicionais pos-MVP,
+plano gerado, fase atual, task atual, agent runs, target files, validators,
+evidencias, retrospectivas, blockers, backlog, status final e proximo passo.

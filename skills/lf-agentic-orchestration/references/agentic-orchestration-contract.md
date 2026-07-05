@@ -16,13 +16,17 @@ resumable XML state.
 4. Cross-review: run a first review round when outputs conflict materially or
    the risk profile justifies a second perspective.
 5. Synthesis: consolidate facts, conflicts, gates and plan handoff inputs.
-6. Decision preflight: stop before action planning while unresolved
+6. Post-MVP wave checkpoint: record whether material gaps remain after the MVP
+   synthesis. When gaps exist, compose additional read-only/proposal-only waves
+   from the smallest useful set of agents selected by the current demand's
+   gaps, surfaces and risks. Do not use a fixed agent list.
+7. Decision preflight: stop before action planning while unresolved
    `must_ask_now` gates remain.
-7. Planning handoff: generate an executable plan only after analysis state is
+8. Planning handoff: generate an executable plan only after analysis state is
    complete enough for autonomous execution.
-8. Execution: call the active plan executor for each approved phase or task,
+9. Execution: call the active plan executor for each approved phase or task,
    preserving serialized writes and validators.
-9. Completion: collect reports, evidence, blockers, digest, backlog and
+10. Completion: collect reports, evidence, blockers, digest, backlog and
    retrospective requirements.
 
 ## Agent Selection
@@ -45,6 +49,18 @@ Record this for every selected agent:
 
 Record skipped agents only when the skip affects review, traceability or later
 debugging.
+
+For additional waves after synthesis, record this for each wave:
+
+- `wave_id`
+- `selection_reason`
+- analysis question
+- affected surface
+- selected agents
+- `agentic_mode`
+- risk
+- expected validator
+- stop criterion
 
 ## Fan-Out Rules
 
@@ -72,7 +88,8 @@ Use split state to keep files reviewable and resumable:
   reviews, synthesis and decision gates.
 - `analise/agentes/<agent-name>.xml`: POV from one selected agent.
 - `analise/agentes/<agent-name>-review.xml`: optional cross-review result.
-- `analise/sintese.xml`: orchestrator synthesis and plan handoff.
+- `analise/sintese.xml`: orchestrator synthesis, post-MVP wave checkpoint and
+  plan handoff.
 - `agent-runs/faseN/<agent-run-id>.xml`: execution handoff, owner, writes,
   validators, gates, evidence, completion and blockers.
 - `digest.xml`: integrated run summary for review.

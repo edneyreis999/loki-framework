@@ -26,6 +26,22 @@
       <description>{{blocker_description}}</description>
     </blocker>
   </open_blockers>
+  <post_mvp_wave_checkpoint>
+    <experience_juice_needed>{{experience_juice_needed}}</experience_juice_needed>
+    <decision>{{experience_juice_decision}}</decision>
+    <stop_criterion>{{experience_juice_stop_criterion}}</stop_criterion>
+    <additional_waves>
+      <wave id="{{wave_id}}">
+        <selection_reason>{{wave_selection_reason}}</selection_reason>
+        <analysis_question>{{wave_analysis_question}}</analysis_question>
+        <affected_surface>{{wave_affected_surface}}</affected_surface>
+        <agent>{{wave_agent}}</agent>
+        <agentic_mode>{{wave_agentic_mode}}</agentic_mode>
+        <risk>{{wave_risk}}</risk>
+        <expected_validator>{{wave_expected_validator}}</expected_validator>
+      </wave>
+    </additional_waves>
+  </post_mvp_wave_checkpoint>
   <plan_handoff>
     <ready_for_plan>{{ready_for_plan}}</ready_for_plan>
     <recommended_plan_scope>{{recommended_plan_scope}}</recommended_plan_scope>
