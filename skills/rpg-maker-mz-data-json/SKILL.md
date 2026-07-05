@@ -47,6 +47,9 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 
 - `references/common-event-command-contracts.md` quando a task interpretar, gerar ou auditar `code`/`parameters` de comandos de evento.
 - `references/common-event-lifecycle.md` quando Common Events paralelos, switches de trigger, `command117`, input lock ou handoffs forem afetados.
+- `references/quest-state-machine.md` quando criar, migrar ou revisar quest,
+  progressao narrativa, objetivos encadeados, flags de rota, falas por etapa,
+  page conditions ou gates persistidos por switches/variables.
 - `references/json-write-style-and-diff.md` antes de qualquer escrita automatizada em `data/*.json`.
 - `references/common-event-merge-and-editor-slots.md` quando criar, mover, renumerar ou mesclar Common Events.
 - `references/historical-migration-scripts.md` quando revisar, adaptar ou considerar executar scripts historicos que alteram `data/*.json`.

@@ -18,6 +18,7 @@ human-validation gates.
 | Events and Movement Core | map tags, event tags, page comment tags, custom page conditions, event templates, spawn/morph/location, event labels/icons/popups, event timers, auto movement, dash, call event, region/terrain rules, VS8 sprites | notetags, plugin commands, parameters, data-json |
 | DragonBones Union | DragonBones armatures, battlers, map sprites, pictures, general/battler/map sprite settings, runtime DragonBones commands, asset naming and setup | notetags, plugin commands, parameters, diagnostics |
 | Message Core | advanced text codes, auto-color, macros, word wrap, choice window behavior, language switching, picture text, select windows, message/choice/picture/select commands | plugin commands, parameters, data-json, human-validation |
+| Gab Window | non-blocking gab notifications, queued message snippets, item/key-item feedback, top-corner presentation timing | plugin commands, parameters, data-json, human-validation |
 | Visual Novel Picture Busts | bust enter/exit, graphic change, mirror, origin, movement, fade, scale, tone/tint, animation, anchor/position defaults | plugin commands, parameters, human-validation |
 | Options Core | option categories, keyboard/gamepad rebind, basic/accessibility/function/data options, audio/UI/playtest categories, master volume shortcut | parameters, diagnostics, human-validation |
 | Save Core | autosave, save commands, current slot, save description/picture, global switches/variables, save styles, confirmation windows, actor graphics | plugin commands, parameters, data-json, human-validation |
@@ -31,6 +32,7 @@ human-validation gates.
 | event template, spawn, morph, event location, event label, event icon, event popup, event timer | `rpg-maker-mz-visustella-plugin-commands` | `rpg-maker-mz-data-json` |
 | map/event/page notetag or page comment condition | `rpg-maker-mz-visustella-notetags` | `rpg-maker-mz-data-json` |
 | message text code, macro, word wrap, choice command, select command | plugin commands or parameters | data-json or plugin-workflow |
+| gab notification, queued item feedback, `GabTextOnly`, GabWindow timing override | `rpg-maker-mz-visustella-plugin-commands` | data-json for event payloads; human-validation |
 | visual novel bust command, picture text, fade, movement, scale, tone/tint | plugin commands | data-json for event payloads; human-validation |
 | DragonBones battler/map sprite/picture setup | notetags, plugin commands, parameters | data-json, plugin-workflow, asset validation as task requires |
 | options categories, controls, volume shortcut, playtest options | parameters and diagnostics | plugin-workflow; human-validation |

@@ -30,6 +30,12 @@ event and presentation workflows.
   select windows.
 - Confirm whether the behavior is stored in plugin parameters or event command
   payloads.
+- For Gab Window notifications, distinguish queued sequential messages from
+  forced replacement behavior. When a single event spends and grants key items
+  or otherwise fires two player-facing gabs in the same flow, prefer keeping
+  messages queued with `ForceGab:false` and reducing per-call timing through
+  the command override, such as `WaitTime:num` and `TimePerCharacter:num`,
+  instead of forcing simultaneous or interrupting display.
 - Treat readability, wrapping, input, and localization display as
   human-validation pending.
 
