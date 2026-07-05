@@ -119,6 +119,214 @@ agent_project_tag_policy:
   base_tag: "core"
   selection_rule: "inventory_required = agents tagged core + agents tagged selected_project_type"
 
+agentic_selection_policy:
+  catalog_source: "manifest.yaml"
+  selection_reason_required: true
+  parallel_safe_required: true
+  conflict_rule: "Agent runs in the same parallel group must not share target_files unless a serialized owner is recorded."
+  required_fields:
+    - "capability_tags"
+    - "phase_roles"
+    - "agentic_modes"
+    - "write_classes"
+    - "risk_tags"
+    - "parallel_safe"
+    - "technology_skill_routes"
+
+agentic_agent_metadata:
+  standards-curator:
+    capability_tags: ["standards", "learning", "governance"]
+    phase_roles: ["review", "improvement"]
+    agentic_modes: ["read-only", "proposal"]
+    write_classes: []
+    risk_tags: ["durable-policy"]
+    parallel_safe: true
+    technology_skill_routes: []
+  retrospective-digester:
+    capability_tags: ["retrospective", "learning", "evidence-digest"]
+    phase_roles: ["digest", "improvement"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["learning-promotion"]
+    parallel_safe: true
+    technology_skill_routes: []
+  runtime-qa:
+    capability_tags: ["runtime-validation", "human-validation", "evidence"]
+    phase_roles: ["validation", "qa"]
+    agentic_modes: ["scoped-writer", "report"]
+    write_classes: ["validation-report", "plan-evidence"]
+    risk_tags: ["runtime", "human-validation"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+  execution-context-reader:
+    capability_tags: ["context-extraction", "source-map", "preflight"]
+    phase_roles: ["analysis", "execution-context"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["context-drift"]
+    parallel_safe: true
+    technology_skill_routes: []
+  source-researcher:
+    capability_tags: ["research", "conflict-map", "source-validation"]
+    phase_roles: ["pre-analysis", "research-gate"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["source-conflict"]
+    parallel_safe: true
+    technology_skill_routes: []
+  technical-implementer:
+    capability_tags: ["implementation", "code-change", "validator"]
+    phase_roles: ["implementation", "fix"]
+    agentic_modes: ["scoped-writer", "proposal"]
+    write_classes: ["code", "config", "scripts", "docs"]
+    risk_tags: ["write-conflict", "integration"]
+    parallel_safe: false
+    technology_skill_routes: ["<technology_required_skills>"]
+  bibliotecario:
+    capability_tags: ["documentation-navigation", "context-routing"]
+    phase_roles: ["context", "lookup"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["stale-index"]
+    parallel_safe: true
+    technology_skill_routes: []
+  catalogador:
+    capability_tags: ["documentation-catalog", "indexing"]
+    phase_roles: ["documentation", "catalog"]
+    agentic_modes: ["scoped-writer"]
+    write_classes: ["docs-index", "docs"]
+    risk_tags: ["shared-index-write"]
+    parallel_safe: false
+    technology_skill_routes: []
+  game-product-owner:
+    capability_tags: ["product", "acceptance", "priority"]
+    phase_roles: ["analysis", "acceptance"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["spec", "plan-evidence"]
+    risk_tags: ["scope"]
+    parallel_safe: true
+    technology_skill_routes: []
+  game-business-analyst:
+    capability_tags: ["requirements", "rules", "gap-analysis"]
+    phase_roles: ["analysis", "requirements"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["requirements", "spec"]
+    risk_tags: ["requirement-ambiguity"]
+    parallel_safe: true
+    technology_skill_routes: []
+  game-designer:
+    capability_tags: ["game-design", "mechanics", "tuning"]
+    phase_roles: ["analysis", "design", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["spec", "tuning", "content"]
+    risk_tags: ["gameplay-balance"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+  narrative-designer:
+    capability_tags: ["narrative", "characters", "scenes"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["narrative", "dialogue", "spec"]
+    risk_tags: ["continuity"]
+    parallel_safe: true
+    technology_skill_routes: []
+  ux-ui-designer:
+    capability_tags: ["ux", "ui", "interaction"]
+    phase_roles: ["analysis", "design-review"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["ux-spec", "ui-copy", "plan-evidence"]
+    risk_tags: ["perceptible-behavior"]
+    parallel_safe: true
+    technology_skill_routes: []
+  gameplay-engineer:
+    capability_tags: ["gameplay-code", "mechanics", "runtime"]
+    phase_roles: ["implementation", "validation"]
+    agentic_modes: ["scoped-writer", "proposal"]
+    write_classes: ["code", "data", "config"]
+    risk_tags: ["runtime", "integration", "write-conflict"]
+    parallel_safe: false
+    technology_skill_routes: ["<technology_required_skills>"]
+  narrative-qa:
+    capability_tags: ["narrative-qa", "continuity", "regression"]
+    phase_roles: ["validation", "review"]
+    agentic_modes: ["read-only", "report"]
+    write_classes: ["validation-report"]
+    risk_tags: ["content-regression"]
+    parallel_safe: true
+    technology_skill_routes: []
+  level-designer:
+    capability_tags: ["level-design", "encounters", "navigation"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["level-spec", "content"]
+    risk_tags: ["spatial-flow"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+  balance-economy-designer:
+    capability_tags: ["balance", "economy", "progression"]
+    phase_roles: ["analysis", "tuning"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["tuning", "economy-spec"]
+    risk_tags: ["balance-regression"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+  branching-narrative-designer:
+    capability_tags: ["branching-narrative", "choices", "flags"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["narrative", "quest-spec"]
+    risk_tags: ["state-branching"]
+    parallel_safe: true
+    technology_skill_routes: []
+  scene-presentation-designer:
+    capability_tags: ["scene-presentation", "beats", "visual-flow"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["scene-spec", "presentation-notes"]
+    risk_tags: ["perceptible-behavior"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+  audio-designer:
+    capability_tags: ["audio", "music", "sfx"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["audio-spec", "content"]
+    risk_tags: ["perceptible-behavior"]
+    parallel_safe: true
+    technology_skill_routes: []
+  quest-content-designer:
+    capability_tags: ["quest", "objectives", "rewards"]
+    phase_roles: ["analysis", "content"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["quest-spec", "content"]
+    risk_tags: ["quest-state"]
+    parallel_safe: true
+    technology_skill_routes: []
+  dialogue-editor:
+    capability_tags: ["dialogue", "copy", "localization-source"]
+    phase_roles: ["content", "review"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["dialogue", "text"]
+    risk_tags: ["copy-regression"]
+    parallel_safe: true
+    technology_skill_routes: []
+  tools-pipeline-engineer:
+    capability_tags: ["tools", "pipeline", "automation"]
+    phase_roles: ["implementation", "validation"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["scripts", "config", "tools"]
+    risk_tags: ["pipeline", "write-conflict"]
+    parallel_safe: false
+    technology_skill_routes: ["<technology_required_skills>"]
+  technical-artist:
+    capability_tags: ["technical-art", "assets", "presentation"]
+    phase_roles: ["analysis", "validation"]
+    agentic_modes: ["proposal", "scoped-writer"]
+    write_classes: ["asset-spec", "pipeline-notes"]
+    risk_tags: ["asset-pipeline", "perceptible-behavior"]
+    parallel_safe: true
+    technology_skill_routes: ["<technology_required_skills>"]
+
 layout:
   agents: "agents/"
   codex_agents: "codex/agents/"
@@ -138,6 +346,10 @@ scripts:
     file: "scripts/validate-install-scopes.py"
     status: draft
     purpose: "Validate installer scope metadata, shared-artifact neutrality, command dependencies, Codex agent TOML and agent project tags."
+  - name: "validate-agentic-run-state"
+    file: "scripts/validate-agentic-run-state.py"
+    status: draft
+    purpose: "Validate Loki agentic v2 XML run state, handoff IDs, gates, writer contracts, parallel target conflicts and completion reports."
 
 install_scope_sources:
   - name: "install-scopes"
@@ -162,6 +374,9 @@ commands:
     status: draft
   - name: "loki:human-decision-preflight"
     file: "commands/loki-human-decision-preflight.md"
+    status: draft
+  - name: "loki:agentic-development"
+    file: "commands/loki-agentic-development.md"
     status: draft
   - name: "loki:generate-action-plan"
     file: "commands/loki-generate-action-plan.md"
@@ -221,6 +436,12 @@ skills:
     status: draft
   - name: "loki-human-decision-preflight"
     file: "skills/loki-human-decision-preflight/SKILL.md"
+    status: draft
+  - name: "loki-agentic-development"
+    file: "skills/loki-agentic-development/SKILL.md"
+    status: draft
+  - name: "lf-agentic-orchestration"
+    file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
   - name: "loki-generate-action-plan"
     file: "skills/loki-generate-action-plan/SKILL.md"
@@ -558,6 +779,30 @@ codex_agents:
     status: draft-derived-scoped-writer
 
 templates:
+  - name: "agentic-run-manifest-template"
+    file: "templates/agentic-run-manifest-template.xml"
+    status: draft
+  - name: "agentic-analysis-manifest-template"
+    file: "templates/agentic-analysis-manifest-template.xml"
+    status: draft
+  - name: "agentic-agent-pov-template"
+    file: "templates/agentic-agent-pov-template.xml"
+    status: draft
+  - name: "agentic-agent-review-template"
+    file: "templates/agentic-agent-review-template.xml"
+    status: draft
+  - name: "agentic-synthesis-template"
+    file: "templates/agentic-synthesis-template.xml"
+    status: draft
+  - name: "agent-run-report-template"
+    file: "templates/agent-run-report-template.xml"
+    status: draft
+  - name: "agentic-run-digest-template"
+    file: "templates/agentic-run-digest-template.xml"
+    status: draft
+  - name: "agentic-backlog-template"
+    file: "templates/agentic-backlog-template.md"
+    status: draft
   - name: "command-contract-template"
     file: "templates/command-contract-template.md"
     status: draft

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<documentation-catalog version="1.0">
+  <metadata>
+    <scope>project-docs</scope>
+    <summary>Catalogo navegavel da documentacao duradoura do projeto consumidor.</summary>
+    <owner>catalogador</owner>
+    <updated_at>YYYY-MM-DD</updated_at>
+  </metadata>
+  <documents>
+    <document
+      id="doc-001"
+      path="docs/domain/example.md"
+      type="domain-rule"
+      priority="high"
+    >
+      <summary>Resumo curto do documento.</summary>
+      <use_when>Quando a task precisar desta regra de negocio.</use_when>
+      <not_covered>O que este documento nao cobre.</not_covered>
+      <keywords>
+        <keyword>example</keyword>
+      </keywords>
+      <sections>
+        <section
+          anchor="overview"
+          tokens="120"
+          purpose="Visao geral do assunto."
+        />
+      </sections>
+    </document>
+  </documents>
+</documentation-catalog>

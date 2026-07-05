@@ -51,6 +51,9 @@ estrutura de artefatos Loki.
 - Lista explicita de human loops, validators e stop conditions.
 - Owner de escrita por task, com `target_files`, `allowed_writes` e
   `scoped_write_domains` quando a execucao puder usar agente `scoped-writer`.
+- Justificativa explicita quando uma task com `target_files` claros e escrita
+  pesada ou sensivel permanecer com o orquestrador como owner, em vez de um
+  agente `scoped-writer` aplicavel.
 - Estado de retomada suficiente para `loki:run-plan`.
 
 ## Allowed Writes
@@ -92,7 +95,12 @@ estrutura de artefatos Loki.
 2. Parar se houver `must_ask_now` sem resposta ou se o registro declarar
    `ready_for_next_phase: false`.
 3. Planejar antes de escrever: fases, tasks, dependencias, referencias,
-   validators, human loops, write owners e ordem topologica.
+   validators, human loops, write owners e ordem topologica. Quando
+   `target_files` exatos forem conhecidos e a task envolver escrita pesada ou
+   sensivel em dados, runtime, config, conteudo gerado ou grandes superficies
+   de comandos/eventos, preferir agente `scoped-writer` aplicavel como owner
+   serializado; se escolher o orquestrador, registrar a justificativa no perfil
+   de execucao ou no `scoped_write_plan`.
 4. Se faltar referencia concreta, usar `TODO: localizar`; se a lacuna impedir
    task executavel, parar e perguntar.
 5. Propor diretorio de destino com nome simples baseado no escopo e aguardar
@@ -134,6 +142,9 @@ resume notes.
 - Escritas sensiveis futuras possuem gate humano e validator correspondente.
 - Tasks com agente `scoped-writer` possuem owner, `target_files`,
   `allowed_writes`, `scoped_write_domains`, validators e gates.
+- Tasks de escrita pesada ou sensivel com `target_files` claros usam agente
+  `scoped-writer` aplicavel, ou explicam por que o orquestrador e o owner
+  correto.
 - As pastas `interaction/`, `builds/` e `retrospetivas/` possuem subpasta para
   cada fase.
 - O plano pode ser retomado por `tasks.md` e `task-N.M.md` sem memoria da

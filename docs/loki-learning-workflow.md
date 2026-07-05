@@ -21,6 +21,11 @@ O Loki nao aprende por memoria magica da conversa. Ele aprende por evidencia: um
 
 Tasks, builds, interactions e validacoes sao fontes transitorias. Elas ajudam a entender o que aconteceu, mas nao sao o lugar final de uma regra duradoura.
 
+O fluxo integrado `loki:agentic-development` pode gerar digest, backlog,
+completion reports e retrospectivas por agente. Esses artefatos tambem sao
+fontes de evidencia, nao promocao automatica. Qualquer aprendizado duradouro
+continua passando por `loki:continuous-improvement` e pelos gates aplicaveis.
+
 O fluxo normalmente comeca depois do
 [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md), mas
 tambem pode ser acionado por feedback humano, bug, playtest, validacao manual,
@@ -34,14 +39,15 @@ formal ou auditoria interna de conformidade do pacote.
 3. Primeiro resolva o problema de fato. Nao transforme tentativa promissora em regra.
 4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki:retrospectiva-tecnica`.
 5. A retrospectiva registra objetivo, artefatos, validacoes, decisoes humanas, evidencia do que resolveu, riscos e candidatos de melhoria.
-6. Quando o sinal vier de artefatos externos, use `loki:knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki:continuous-improvement`, sem aplicar mudancas duradouras diretamente.
-7. So depois use `loki:continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
-8. Todo candidato declara `root_cause_learning.required`. Quando for `true`, rode a fase read-only de causa raiz antes de escolher destino, diff ou patch: normalmente `source-researcher` para fonte de verdade/conflitos e `retrospective-digester` para padroes em retros. Pesquisa externa continua exigindo consentimento explicito.
-9. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
-10. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
-11. Quando o escopo for auditoria interna de conformidade do pacote, `loki:self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
-12. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
-13. A promocao termina com diff, validacao e registro do risco residual.
+6. Quando o sinal vier de `loki:agentic-development`, trate digest, backlog e completion reports como evidencia de entrada. Nao promova nada so porque apareceu no digest.
+7. Quando o sinal vier de artefatos externos, use `loki:knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki:continuous-improvement`, sem aplicar mudancas duradouras diretamente.
+8. So depois use `loki:continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
+9. Todo candidato declara `root_cause_learning.required`. Quando for `true`, rode a fase read-only de causa raiz antes de escolher destino, diff ou patch: normalmente `source-researcher` para fonte de verdade/conflitos e `retrospective-digester` para padroes em retros. Pesquisa externa continua exigindo consentimento explicito.
+10. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
+11. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
+12. Quando o escopo for auditoria interna de conformidade do pacote, `loki:self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
+13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
+14. A promocao termina com diff, validacao e registro do risco residual.
 
 ## Artefatos participantes
 
@@ -52,6 +58,7 @@ formal ou auditoria interna de conformidade do pacote.
 | `loki:enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
 | `loki:retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
 | `loki:continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
+| `loki:agentic-development` | Pode produzir digest, backlog, completion reports e retrospectivas por agente como evidencia para melhoria futura, sem promocao automatica. |
 | `loki:knowledge-extraction-analysis` | Analisa artefatos externos e entrega aprendizados rastreaveis para `loki:continuous-improvement`, sem promover mudanca diretamente. |
 | `loki:self-healing` | Audita artefatos internos do pacote e aplica correcoes escopadas no working tree, sem stage ou commit automatico. |
 

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_run_digest schema_version="1">
+  <digest>
+    <run_id>{{run_id}}</run_id>
+    <status>draft</status>
+    <created_at>{{created_at}}</created_at>
+  </digest>
+  <summary>{{summary}}</summary>
+  <agent_runs>
+    <agent_run>
+      <agent_run_id>{{agent_run_id}}</agent_run_id>
+      <handoff_id>{{handoff_id}}</handoff_id>
+      <agent_name>{{agent_name}}</agent_name>
+      <status>{{status}}</status>
+      <report_path>{{report_path}}</report_path>
+    </agent_run>
+  </agent_runs>
+  <validators>
+    <validator name="{{validator_name}}">
+      <status>{{validator_status}}</status>
+      <evidence>{{validator_evidence}}</evidence>
+    </validator>
+  </validators>
+  <human_gates>
+    <gate type="{{gate_type}}">
+      <status>{{gate_status}}</status>
+      <required_decision>{{required_decision}}</required_decision>
+    </gate>
+  </human_gates>
+  <backlog_path>backlog.md</backlog_path>
+  <next_action>{{next_action}}</next_action>
+</agentic_run_digest>

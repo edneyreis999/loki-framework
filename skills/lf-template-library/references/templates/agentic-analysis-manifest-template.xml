@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_analysis_manifest schema_version="1">
+  <analysis>
+    <analysis_id>{{analysis_id}}</analysis_id>
+    <run_id>{{run_id}}</run_id>
+    <status>draft</status>
+    <created_at>{{created_at}}</created_at>
+    <updated_at>{{updated_at}}</updated_at>
+  </analysis>
+  <selected_agents>
+    <selected_agent name="{{agent_name}}">
+      <selection_reason>{{selection_reason}}</selection_reason>
+      <pov_path>analise/agentes/{{agent_name}}.xml</pov_path>
+      <review_path optional="true">analise/agentes/{{agent_name}}-review.xml</review_path>
+    </selected_agent>
+  </selected_agents>
+  <skipped_agents>
+    <skipped_agent name="{{skipped_agent_name}}">
+      <skip_reason>{{skip_reason}}</skip_reason>
+    </skipped_agent>
+  </skipped_agents>
+  <decision_gates>
+    <decision_gate id="{{decision_gate_id}}">
+      <category>{{decision_gate_category}}</category>
+      <status>resolved</status>
+      <question>{{decision_gate_question}}</question>
+      <resolution>{{decision_gate_resolution}}</resolution>
+    </decision_gate>
+  </decision_gates>
+  <outputs>
+    <synthesis_path>analise/sintese.xml</synthesis_path>
+    <plan_handoff_status>pending</plan_handoff_status>
+  </outputs>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
+  </freshness_signature>
+</agentic_analysis_manifest>

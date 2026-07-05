@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_synthesis schema_version="1">
+  <synthesis>
+    <run_id>{{run_id}}</run_id>
+    <analysis_id>{{analysis_id}}</analysis_id>
+    <status>draft</status>
+    <author>orchestrator</author>
+  </synthesis>
+  <summary>{{summary}}</summary>
+  <facts>
+    <fact id="{{fact_id}}">
+      <statement>{{fact_statement}}</statement>
+      <source>{{fact_source}}</source>
+    </fact>
+  </facts>
+  <resolved_gates>
+    <decision_gate id="{{decision_gate_id}}">
+      <category>{{decision_gate_category}}</category>
+      <status>resolved</status>
+      <resolution>{{resolution}}</resolution>
+    </decision_gate>
+  </resolved_gates>
+  <open_blockers>
+    <blocker id="{{blocker_id}}">
+      <status>none</status>
+      <description>{{blocker_description}}</description>
+    </blocker>
+  </open_blockers>
+  <plan_handoff>
+    <ready_for_plan>{{ready_for_plan}}</ready_for_plan>
+    <recommended_plan_scope>{{recommended_plan_scope}}</recommended_plan_scope>
+    <required_validators>
+      <validator>{{validator}}</validator>
+    </required_validators>
+  </plan_handoff>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <upstream_output>{{upstream_output}}</upstream_output>
+    <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
+  </freshness_signature>
+</agentic_synthesis>

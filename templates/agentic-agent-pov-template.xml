@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_agent_pov schema_version="1">
+  <pov>
+    <run_id>{{run_id}}</run_id>
+    <analysis_id>{{analysis_id}}</analysis_id>
+    <agent_name>{{agent_name}}</agent_name>
+    <status>draft</status>
+  </pov>
+  <selection>
+    <selection_reason>{{selection_reason}}</selection_reason>
+    <capability_tags>
+      <tag>{{capability_tag}}</tag>
+    </capability_tags>
+  </selection>
+  <findings>
+    <finding id="{{finding_id}}">
+      <claim>{{claim}}</claim>
+      <evidence>{{evidence}}</evidence>
+      <confidence>{{confidence}}</confidence>
+    </finding>
+  </findings>
+  <risks>
+    <risk id="{{risk_id}}">
+      <description>{{risk_description}}</description>
+      <mitigation>{{mitigation}}</mitigation>
+    </risk>
+  </risks>
+  <gates>
+    <decision_gate id="{{decision_gate_id}}">
+      <category>{{decision_gate_category}}</category>
+      <status>resolved</status>
+      <question>{{question}}</question>
+    </decision_gate>
+  </gates>
+  <plan_handoff>
+    <ready_for_plan>{{ready_for_plan}}</ready_for_plan>
+    <notes>{{handoff_notes}}</notes>
+  </plan_handoff>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
+  </freshness_signature>
+</agentic_agent_pov>

@@ -1,8 +1,8 @@
 ---
 name: lf-template-library
-description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, or project documentation indexes that should follow the package templates.
+description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, or agentic v2 XML state artifacts that should follow the package templates.
 when_to_use:
-  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, or project documentation indexes."
+  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, or agentic v2 XML state artifacts."
   - "Use when an installed package template should be loaded before writing an artifact."
 argument-hint: "[template kind, artifact destination]"
 arguments:
@@ -61,6 +61,22 @@ inspection mirror.
   [component-contract-template.md](references/templates/component-contract-template.md)
 - Project docs index:
   [project-doc-index-template.xml](references/templates/project-doc-index-template.xml)
+- Agentic run manifest:
+  [agentic-run-manifest-template.xml](references/templates/agentic-run-manifest-template.xml)
+- Agentic analysis manifest:
+  [agentic-analysis-manifest-template.xml](references/templates/agentic-analysis-manifest-template.xml)
+- Agentic agent POV:
+  [agentic-agent-pov-template.xml](references/templates/agentic-agent-pov-template.xml)
+- Agentic agent review:
+  [agentic-agent-review-template.xml](references/templates/agentic-agent-review-template.xml)
+- Agentic synthesis:
+  [agentic-synthesis-template.xml](references/templates/agentic-synthesis-template.xml)
+- Agent run report:
+  [agent-run-report-template.xml](references/templates/agent-run-report-template.xml)
+- Agentic run digest:
+  [agentic-run-digest-template.xml](references/templates/agentic-run-digest-template.xml)
+- Agentic backlog:
+  [agentic-backlog-template.md](references/templates/agentic-backlog-template.md)
 
 ## Procedure
 

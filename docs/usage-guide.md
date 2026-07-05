@@ -40,8 +40,9 @@ Use estes documentos como fonte principal do ciclo operacional:
   descreve dry-run, approval, aplicacao por symlink, perfis, validacao e
   rollback antes de usar Loki em um projeto alvo.
 - [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md):
-  descreve como uma descricao curta vira analise, preflight de decisoes
-  humanas, plano, tasks, escrita serializada, validacao e evidencia.
+  descreve o caminho manual e o caminho integrado v2 para transformar uma
+  descricao curta em analise, preflight de decisoes humanas, plano, tasks,
+  escrita serializada, validacao e evidencia.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   resultados, bugs, feedbacks e retrospectivas viram ajuste local, candidato,
   regra duradoura ou backlog.
@@ -52,6 +53,23 @@ Use estes documentos como fonte principal do ciclo operacional:
 Quando a melhoria atingir o proprio pacote, aplique
 `docs/package-authoring-guardrails.md` depois de identificar o destino pelo
 workflow de aprendizado.
+
+## Caminho Integrado v2
+
+Use `loki:agentic-development` quando a demanda deve seguir o caminho completo:
+demanda simples, analise agentica, gates humanos materiais antes do plano,
+action plan, execucao autonoma, completion reports, digest e backlog.
+
+Use o caminho manual quando precisar controlar cada etapa separadamente:
+`loki:tech-analysis`, `loki:human-decision-preflight`,
+`loki:generate-action-plan`, `loki:enrich-tasks` quando aplicavel e
+`loki:run-plan` por fase ou task.
+
+O fluxo integrado nao substitui `loki:run-plan`; ele o preserva como executor
+manual e pode usa-lo como executor delegado depois que o plano existir. O fluxo
+integrado tambem nao promove aprendizado duradouro automaticamente. Digest,
+backlog, reports e retrospectivas viram entrada para
+`loki:continuous-improvement` somente por decisao posterior.
 
 ## Gates Humanos
 
@@ -156,13 +174,16 @@ esse comportamento for necessario.
 ## Skills Core e Extensoes
 
 As skills Loki (`loki-init`, `loki-feedback`,
-`loki-human-decision-preflight`, `loki-enrich-tasks`,
+`loki-human-decision-preflight`, `loki-agentic-development`,
+`lf-agentic-orchestration`, `loki-enrich-tasks`,
 `lf-run-plan-execution`, `loki-retrospectiva-tecnica`, `lf-command-creator`,
 `lf-agent-creator`, `lf-skill-creator`, `lf-index-navigator`,
-`lf-tech-analysis-authoring` e `lf-action-plan-authoring`) governam
+`lf-tech-analysis-authoring`, `lf-action-plan-authoring` e
+`lf-template-library`) governam
 entrevista, autoria de analises, preflight de decisoes humanas, planos,
-enriquecimento de tasks, execucao de fase, retrospectiva, navegacao de
-documentacao e evolucao controlada de commands, agents e skills.
+orquestracao agentica, templates, enriquecimento de tasks, execucao de fase,
+retrospectiva, navegacao de documentacao e evolucao controlada de commands,
+agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.

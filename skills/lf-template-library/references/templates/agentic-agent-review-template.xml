@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_agent_review schema_version="1">
+  <review>
+    <run_id>{{run_id}}</run_id>
+    <analysis_id>{{analysis_id}}</analysis_id>
+    <reviewer_agent>{{reviewer_agent}}</reviewer_agent>
+    <reviewed_agent>{{reviewed_agent}}</reviewed_agent>
+    <status>draft</status>
+  </review>
+  <review_scope>{{review_scope}}</review_scope>
+  <agreements>
+    <agreement>{{agreement}}</agreement>
+  </agreements>
+  <material_conflicts>
+    <conflict id="{{conflict_id}}">
+      <description>{{conflict_description}}</description>
+      <recommended_resolution>{{recommended_resolution}}</recommended_resolution>
+      <gate_required>{{gate_required}}</gate_required>
+    </conflict>
+  </material_conflicts>
+  <validator_notes>
+    <validator_note>{{validator_note}}</validator_note>
+  </validator_notes>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <upstream_output>{{upstream_output}}</upstream_output>
+  </freshness_signature>
+</agentic_agent_review>

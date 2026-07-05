@@ -64,6 +64,11 @@ Resolva todos os caminhos no filesystem. Se algum caminho obrigatorio nao existi
 3. Entenda objetivo, escopo tecnico, arquivos provavelmente impactados, write
    owner, `target_files`, riscos, dependencias, decisoes ja documentadas,
    validators, criterios de sucesso e human loops.
+   Quando a task tiver `target_files` claros, escrita pesada ou sensivel, e
+   evidencia de retrospectiva/build indicar desperdicio ou risco por concentrar
+   escrita no orquestrador, trate a escolha de owner como ponto de
+   enriquecimento: usar um agente `scoped-writer` aplicavel ou registrar
+   justificativa explicita para manter o orquestrador.
 4. Analise retrospectivas, builds e interactions por arquivo ou lote pequeno. Quando houver suporte, paralelize a leitura e consolide apenas depois que todas as analises retornarem.
 5. Para cada fonte transitoria, produza internamente: aprendizados tecnicos, relacao possivel com `FASE_ATUAL`, tasks afetadas, instrucoes concretas sugeridas, arquivos adicionais a investigar e nivel de confianca.
 6. Investigue arquivos locais adicionais quando um aprendizado parecer aplicavel, mas depender do escopo atual.
@@ -161,6 +166,9 @@ Antes de finalizar, valide:
 - Cada instrucao adicionada e especifica o bastante para orientar implementacao.
 - Cada mudanca em owner, `target_files` ou `scoped_write_domains` esta ligada a
   evidencia concreta e nao amplia escopo sem gate.
+- Tasks com escrita pesada ou sensivel e `target_files` claros nao permanecem
+  com owner orquestrador sem justificativa registrada quando ha agente
+  `scoped-writer` aplicavel.
 - Pesquisa externa foi realizada com fonte citada ou pulada com motivo.
 - Fonte externa nao substituiu evidencia local do projeto consumidor.
 - Toda duvida que mudaria escopo, ordem, human loop ou criterio de sucesso virou gate humano.

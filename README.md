@@ -22,6 +22,15 @@ Conhecimento especifico do projeto consumidor nao pertence ao pacote. O destino
 duradouro desse tipo de contexto e `/docs` do consumidor, com `docs/index.xml`
 como catalogo navegavel.
 
+Fluxos principais:
+
+- `loki:agentic-development`: caminho integrado v2 de demanda para analise
+  agentica, gates antes do plano, action plan, execucao autonoma, digest e
+  backlog.
+- `loki:run-plan`: executor manual por fase ou task planejada.
+- `loki:continuous-improvement`: promocao posterior e controlada de
+  aprendizados validados.
+
 Os exemplos abaixo usam `PACKAGE_ROOT` para manter o pacote portavel entre projetos:
 
 ```bash
@@ -108,6 +117,10 @@ Perfis:
 
 `install-scopes.json` e a fonte machine-readable dos escopos. O perfil default
 do script e `consumer`.
+
+O comando `loki:agentic-development` e instalado nos perfis que incluem
+artefatos `both`. Ele nao autoriza instalacao nem escrita em destino consumidor
+por si so; as regras de dry-run, approval e validacao continuam as mesmas.
 
 Dry-run recomendado:
 

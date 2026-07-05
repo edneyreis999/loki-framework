@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agentic_run_manifest schema_version="1">
+  <run>
+    <run_id>{{run_id}}</run_id>
+    <command>loki:agentic-development</command>
+    <status>draft</status>
+    <current_phase>{{current_phase}}</current_phase>
+    <created_at>{{created_at}}</created_at>
+    <updated_at>{{updated_at}}</updated_at>
+  </run>
+  <demand>
+    <source>{{demand_source}}</source>
+    <summary>{{demand_summary}}</summary>
+    <scope>{{scope}}</scope>
+  </demand>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <input_mtime>{{input_mtime}}</input_mtime>
+    <input_hash optional="true">{{input_hash}}</input_hash>
+    <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
+  </freshness_signature>
+  <selected_agents>
+    <selected_agent name="{{agent_name}}">
+      <selection_reason>{{selection_reason}}</selection_reason>
+      <capability_tags>
+        <tag>{{capability_tag}}</tag>
+      </capability_tags>
+      <phase_roles>
+        <role>{{phase_role}}</role>
+      </phase_roles>
+      <agentic_modes>
+        <mode>{{agentic_mode}}</mode>
+      </agentic_modes>
+      <write_class>{{write_class}}</write_class>
+      <parallel_safe>{{parallel_safe}}</parallel_safe>
+      <risk_tags>
+        <tag>{{risk_tag}}</tag>
+      </risk_tags>
+    </selected_agent>
+  </selected_agents>
+  <handoffs>
+    <handoff>
+      <handoff_id>{{handoff_id}}</handoff_id>
+      <agent_run_id>{{agent_run_id}}</agent_run_id>
+      <agent_name>{{agent_name}}</agent_name>
+      <phase>{{phase}}</phase>
+      <owner>{{owner}}</owner>
+      <parallel_group_id>{{parallel_group_id}}</parallel_group_id>
+      <target_files>
+        <target_file>{{target_file}}</target_file>
+      </target_files>
+      <status>planned</status>
+    </handoff>
+  </handoffs>
+  <decision_gates>
+    <decision_gate id="{{decision_gate_id}}">
+      <category>{{decision_gate_category}}</category>
+      <status>resolved</status>
+      <question>{{decision_gate_question}}</question>
+      <resolution>{{decision_gate_resolution}}</resolution>
+      <affected_outputs>
+        <output>{{affected_output}}</output>
+      </affected_outputs>
+    </decision_gate>
+  </decision_gates>
+  <validators>
+    <validator name="validate-agentic-run-state">
+      <command>python3 scripts/validate-agentic-run-state.py {{run_directory}}</command>
+      <status>pending</status>
+    </validator>
+  </validators>
+  <next_action>{{next_action}}</next_action>
+</agentic_run_manifest>

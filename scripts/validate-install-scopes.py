@@ -26,6 +26,15 @@ SUSPICIOUS_BOTH_TERMS = (
     "if this skill",
 )
 LOKI_SKILL_NAMESPACE_EXCEPTIONS: set[str] = set()
+REQUIRED_AGENTIC_METADATA_FIELDS = {
+    "capability_tags",
+    "phase_roles",
+    "agentic_modes",
+    "write_classes",
+    "risk_tags",
+    "parallel_safe",
+    "technology_skill_routes",
+}
 
 
 def load_scopes(package_root: Path) -> dict:
@@ -369,6 +378,74 @@ def validate_agent_project_tags(package_root: Path) -> None:
         raise ValueError("agent project tag failures:\n- " + "\n- ".join(failures))
 
 
+def parse_agentic_agent_metadata(package_root: Path) -> dict[str, dict[str, str]]:
+    lines = (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines()
+    section = ""
+    current_agent = ""
+    metadata: dict[str, dict[str, str]] = {}
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        if indent == 0 and stripped.endswith(":"):
+            section = stripped[:-1]
+            current_agent = ""
+            continue
+
+        if section != "agentic_agent_metadata":
+            continue
+
+        if indent == 2 and stripped.endswith(":"):
+            current_agent = stripped[:-1]
+            metadata[current_agent] = {}
+            continue
+
+        if current_agent and indent == 4 and ":" in stripped:
+            key, value = stripped.split(":", 1)
+            metadata[current_agent][key.strip()] = value.strip()
+
+    return metadata
+
+
+def validate_agentic_agent_metadata(package_root: Path) -> None:
+    catalog = parse_manifest_agent_catalog(package_root)
+    agent_names = {agent.get("name", "") for agent in catalog["agents"]}
+    metadata = parse_agentic_agent_metadata(package_root)
+    manifest_text = (package_root / "manifest.yaml").read_text(encoding="utf-8")
+
+    failures: list[str] = []
+    if "selection_reason_required: true" not in manifest_text:
+        failures.append("agentic_selection_policy.selection_reason_required must be true")
+    if "parallel_safe_required: true" not in manifest_text:
+        failures.append("agentic_selection_policy.parallel_safe_required must be true")
+
+    missing_agents = sorted(agent_names - set(metadata))
+    extra_agents = sorted(set(metadata) - agent_names)
+    if missing_agents:
+        failures.append("agentic metadata missing agents: " + ", ".join(missing_agents))
+    if extra_agents:
+        failures.append("agentic metadata extra agents: " + ", ".join(extra_agents))
+
+    for agent_name, fields in sorted(metadata.items()):
+        missing_fields = sorted(REQUIRED_AGENTIC_METADATA_FIELDS - set(fields))
+        if missing_fields:
+            failures.append(
+                f"agentic metadata for {agent_name} missing: "
+                + ", ".join(missing_fields)
+            )
+        parallel_safe = fields.get("parallel_safe", "").lower()
+        if parallel_safe not in {"true", "false"}:
+            failures.append(
+                f"agentic metadata for {agent_name} parallel_safe must be true or false"
+            )
+
+    if failures:
+        raise ValueError("agentic agent metadata failures:\n- " + "\n- ".join(failures))
+
+
 def main() -> int:
     package_root = Path(__file__).resolve().parent.parent
     try:
@@ -411,6 +488,7 @@ def main() -> int:
         validate_toml(package_root)
         validate_manifest_entries(package_root)
         validate_agent_project_tags(package_root)
+        validate_agentic_agent_metadata(package_root)
     except (OSError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

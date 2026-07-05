@@ -74,7 +74,11 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 3. Ler `TASKS_MD`, identificar tasks da fase alvo e localizar `task-N.M.md` correspondentes.
 4. Entender objetivo, arquivos provaveis, write owner, `target_files`, riscos,
    dependencias, criterios de sucesso, validators e human loops da fase antes
-   de ler aprendizados antigos.
+   de ler aprendizados antigos. Se a task tem `target_files` claros, escrita
+   pesada ou sensivel, e evidencia de retrospectiva/build indicar desperdicio
+   ou risco por concentrar escrita no orquestrador, enriquecer o owner para um
+   agente `scoped-writer` aplicavel ou exigir justificativa explicita para
+   manter o orquestrador.
 5. Analisar retrospectivas, builds e interactions em paralelo por arquivo ou lote pequeno quando o ambiente permitir.
 6. Consolidar achados em uma visao interna com relacao com a fase, tasks afetadas, instrucao concreta, necessidade de leitura adicional e confianca.
 7. Aplicar research gate condicionado somente depois do contexto local:
@@ -104,6 +108,9 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 - Aprendizados foram convertidos em instrucao direta, restricao tecnica, validator, cuidado de implementacao, criterio de aceite ou nota de compatibilidade.
 - Owner, `target_files`, `allowed_writes` e `scoped_write_domains` foram
   preservados ou enriquecidos apenas quando havia evidencia concreta.
+- Tasks com escrita pesada ou sensivel e `target_files` claros nao permanecem
+  com owner orquestrador sem justificativa registrada quando ha agente
+  `scoped-writer` aplicavel.
 - Qualquer aprendizado que pareca duradouro fica apenas registrado como observacao local para consolidacao posterior na `loki:retrospectiva-tecnica`, nao como candidato normativo direto.
 - As fontes usadas ficam registradas em alto nivel, sem copiar material interno desnecessario.
 - Pesquisa externa foi realizada com fontes citadas ou pulada com motivo.

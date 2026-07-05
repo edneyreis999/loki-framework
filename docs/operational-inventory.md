@@ -35,6 +35,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki:human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
+| `loki:agentic-development` | `mvp` | Executar o caminho integrado v2: receber demanda simples, conduzir analise agentica, resolver gates materiais antes do plano, gerar plano, executar fases autonomamente, registrar evidencias, digest e backlog, preservando `loki:run-plan` como executor manual. |
 | `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
 | `loki:enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki:run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
@@ -62,6 +63,8 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
 | `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
 | `loki-human-decision-preflight` | `mvp` | Wrapper Codex para executar o workflow `loki:human-decision-preflight`. |
+| `loki-agentic-development` | `mvp` | Wrapper Codex para executar o workflow integrado `loki:agentic-development`. |
+| `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
 | `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
 | `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
 | `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |
@@ -126,6 +129,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | --- | --- | --- |
 | `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
 | `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex e tags de tipo de projeto dos agentes no `manifest.yaml`. |
+| `scripts/validate-agentic-run-state.py` | `mvp` | Validar estado XML do fluxo v2, incluindo parse, IDs, `selection_reason`, gates `must_ask_now`, contratos de escrita, conflitos de `target_files` e completion reports. |
 
 ## Install Scope Source
 
@@ -146,6 +150,14 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `command-contract-template.md` | `mvp` | Padronizar frontmatter, entradas, saidas, skills, gates e handoffs de comandos. |
 | `component-contract-template.md` | `mvp` | Padronizar descricao operacional de agents, commands e skills. |
 | `project-doc-index-template.xml` | `mvp` | Base para criar `docs/index.xml` no projeto consumidor e catalogar documentacao duradoura. |
+| `agentic-run-manifest-template.xml` | `mvp` | Modelo de estado principal da rodada v2, com demanda, agentes selecionados, handoffs, gates, invalidacao, validators e proxima acao. |
+| `agentic-analysis-manifest-template.xml` | `mvp` | Modelo de estado da analise agentica, agentes selecionados ou pulados, POVs, reviews, sintese e gates. |
+| `agentic-agent-pov-template.xml` | `mvp` | Modelo de POV por agente selecionado, com evidencias, riscos, gates e handoff para sintese. |
+| `agentic-agent-review-template.xml` | `mvp` | Modelo de cross-review agentico para acordos, conflitos materiais, resolucao recomendada e notas de validator. |
+| `agentic-synthesis-template.xml` | `mvp` | Modelo de sintese do orquestrador com fatos, gates resolvidos, blockers e handoff para plano. |
+| `agent-run-report-template.xml` | `mvp` | Modelo de completion report por handoff, com `agent_run_id`, `handoff_id`, owner, target files, validators, gates, evidencia e status. |
+| `agentic-run-digest-template.xml` | `mvp` | Modelo de digest final da rodada v2 para consolidar resultados, validators, gates pendentes, backlog e proxima acao. |
+| `agentic-backlog-template.md` | `mvp` | Modelo Markdown para pendencias, blockers e follow-ups nao bloqueantes do fluxo agentic. |
 | `templates-xml-zord` | `reference-only` | Referencia estrutural, sem formato obrigatorio no MVP Loki. |
 
 ## Docs
@@ -206,6 +218,7 @@ projeto consumidor declarar RPG Maker MZ.
 | --- | --- | --- |
 | Politica fina de concorrencia multi-agent em runtime | `backlog` | O scoped-writer atual exige ownership exclusivo por `target_file`; concorrencia mais granular por AST, evento ou recurso exigira politica futura. |
 | Politica de alocacao em superficies runtime especializadas | `backlog` | Nao necessaria para pacote documental; exigira decisao antes de alterar runtime. |
+| Skill ou referencia `rpg-maker-mz-quest-state-modeling` | `backlog` | Definir guideline especializada para modelar progresso linear de quests RPG Maker MZ com variavel numerica de etapa e switches apenas para flags ortogonais, antes de promover essa preferencia como regra universal. |
 | Renomeacao de namespaces antigos | `backlog` | Nao renomear comandos historicos automaticamente. |
 
 ## Conclusao

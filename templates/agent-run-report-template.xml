@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agent_run_report schema_version="1">
+  <identity>
+    <run_id>{{run_id}}</run_id>
+    <phase>{{phase}}</phase>
+    <agent_run_id>{{agent_run_id}}</agent_run_id>
+    <handoff_id>{{handoff_id}}</handoff_id>
+    <agent_name>{{agent_name}}</agent_name>
+    <owner>{{owner}}</owner>
+    <parallel_group_id>{{parallel_group_id}}</parallel_group_id>
+  </identity>
+  <selection>
+    <selection_reason>{{selection_reason}}</selection_reason>
+  </selection>
+  <write_contract>
+    <write_mode>{{write_mode}}</write_mode>
+    <target_files>
+      <target_file>{{target_file}}</target_file>
+    </target_files>
+    <allowed_writes>
+      <allowed_write>{{allowed_write}}</allowed_write>
+    </allowed_writes>
+    <forbidden_writes>
+      <forbidden_write>{{forbidden_write}}</forbidden_write>
+    </forbidden_writes>
+  </write_contract>
+  <validators>
+    <validator name="{{validator_name}}">
+      <command>{{validator_command}}</command>
+      <status>pending</status>
+    </validator>
+  </validators>
+  <gates>
+    <gate type="{{gate_type}}">
+      <status>pending</status>
+      <notes>{{gate_notes}}</notes>
+    </gate>
+  </gates>
+  <freshness_signature>
+    <input_path>{{input_path}}</input_path>
+    <upstream_output>{{upstream_output}}</upstream_output>
+    <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
+  </freshness_signature>
+  <completion>
+    <status>pending</status>
+    <report_path>{{report_path}}</report_path>
+    <evidence>
+      <item>{{evidence_item}}</item>
+    </evidence>
+    <blockers>
+      <blocker>{{blocker}}</blocker>
+    </blockers>
+    <retrospective_required>{{retrospective_required}}</retrospective_required>
+  </completion>
+</agent_run_report>

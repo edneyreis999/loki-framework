@@ -52,6 +52,14 @@ shell: {}
    - every task declares write owner, `target_files`, `allowed_writes` and
      `scoped_write_domains` when a specialist agent may execute as
      `task_scoped_writer`;
+   - when exact `target_files` are known and the task involves heavy or
+     sensitive writes to data, runtime, config, generated content, or large
+     command/event surfaces, prefer a specialist `scoped-writer` as write owner
+     when one is applicable; keep the orchestrator responsible for synthesis,
+     review, gates, validation, and integration;
+   - if the plan keeps the orchestrator as write owner for that kind of heavy
+     scoped write, record the reason in the task execution profile or scoped
+     write plan;
    - future sensitive writes are represented as gates, not hidden permission.
 4. Propose the plan directory name and wait for explicit approval before
    creating files.
