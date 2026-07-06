@@ -103,6 +103,7 @@
       "rpg-maker-mz-plugin-workflow": "consumer-only",
       "rpg-maker-mz-project-inventory": "consumer-only",
       "rpg-maker-mz-visustella-plugin-index": "consumer-only",
+      "rpg-maker-mz-visustella-message-core-localization": "consumer-only",
       "rpg-maker-mz-visustella-plugin-parameters": "consumer-only",
       "rpg-maker-mz-visustella-notetags": "consumer-only",
       "rpg-maker-mz-visustella-plugin-commands": "consumer-only",

@@ -517,6 +517,11 @@ skills:
     status: optional-extension
     optional: true
     extension: "RPG Maker MZ VisuStella"
+  - name: "rpg-maker-mz-visustella-message-core-localization"
+    file: "skills/rpg-maker-mz-visustella-message-core-localization/SKILL.md"
+    status: optional-extension
+    optional: true
+    extension: "RPG Maker MZ VisuStella"
   - name: "rpg-maker-mz-visustella-plugin-parameters"
     file: "skills/rpg-maker-mz-visustella-plugin-parameters/SKILL.md"
     status: optional-extension
@@ -865,6 +870,7 @@ optional_extensions:
       - "rpg-maker-mz-plugin-workflow"
       - "rpg-maker-mz-project-inventory"
       - "rpg-maker-mz-visustella-plugin-index"
+      - "rpg-maker-mz-visustella-message-core-localization"
       - "rpg-maker-mz-visustella-plugin-parameters"
       - "rpg-maker-mz-visustella-notetags"
       - "rpg-maker-mz-visustella-plugin-commands"

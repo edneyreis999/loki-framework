@@ -15,6 +15,9 @@ smallest useful next context and preserve Loki write gates.
    - Read `plugin-map.md` and route by family.
 4. Is the target surface known?
    - Parameters -> `rpg-maker-mz-visustella-plugin-parameters`.
+   - Message Core localization, `Localization:struct`, language CSV/TSV,
+     `LangFiletype:str`, or `\tl{...}` coverage ->
+     `rpg-maker-mz-visustella-message-core-localization`.
    - Notetags/comment tags -> `rpg-maker-mz-visustella-notetags`.
    - Plugin commands -> `rpg-maker-mz-visustella-plugin-commands`.
    - Action Sequences -> `rpg-maker-mz-visustella-action-sequences`.
