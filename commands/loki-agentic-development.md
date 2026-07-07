@@ -87,8 +87,9 @@ substituir `loki:run-plan` como executor manual.
 
 ## Required Skills
 
-- `lf-agentic-orchestration` para preflight de agentes, fan-out condicionado,
-  estado XML, decision gates, cross-review, liveness, invalidacao,
+- `lf-agentic-orchestration` para preflight de agentes, delegacao obrigatoria de
+  trabalho material, fan-out condicionado, estado XML, decision gates,
+  cross-review, liveness, invalidacao,
   completion reports, digest e retrospectivas.
 - `loki-human-decision-preflight` quando a analise gerar decision gates
   materiais antes do plano.
@@ -119,6 +120,11 @@ substituir `loki:run-plan` como executor manual.
   tecnica sem escrita.
 - Agentes `scoped-writer` somente quando uma task aprovada declarar owner,
   `target_files`, `allowed_writes`, `scoped_write_domains`, validators e gates.
+- Agentes especialistas obrigatorios para leitura multi-fonte nao trivial,
+  trabalho de tecnologia especifica, escrita sensivel/runtime, validacao
+  material ou qualquer etapa que ameace consumir contexto substancial da main
+  thread. Tarefas triviais, single-source e de baixo risco podem ficar no
+  orquestrador somente com excecao registrada.
 - `runtime-qa` quando a execucao depender de comportamento perceptivel,
   integracoes, estado persistido ou artefatos gerados.
 
@@ -130,8 +136,13 @@ substituir `loki:run-plan` como executor manual.
 3. Executar preflight de agentes: listar agentes disponiveis, registrar
    `selection_reason`, modo, owner permitido, riscos, paralelismo e motivos de
    skip.
-4. Selecionar o menor conjunto util de agentes. Abrir fan-out real somente
-   quando mais de um agente relevante ou risco material justificar.
+4. Selecionar o menor conjunto util de agentes. Delegar trabalho material para
+   agentes especialistas sempre que houver leitura multi-fonte nao trivial,
+   escrita sensivel/runtime, tecnologia especifica, validacao material ou risco
+   de budget de contexto. Abrir fan-out real quando os agentes puderem trabalhar
+   com contexto de leitura independente ou `target_files` disjuntos. Se o
+   orquestrador mantiver trabalho material, registrar excecao com motivo
+   concreto, escopo, risco aceito e owner de validacao.
 5. Coletar POVs de analise em arquivos separados sob `analise/agentes/`.
 6. Executar no maximo uma rodada inicial de cross-review quando houver mais de
    um POV ou conflito material.
@@ -165,6 +176,8 @@ substituir `loki:run-plan` como executor manual.
 - Todo handoff possui `handoff_id`, owner, modo, inputs, expected output e
   status.
 - Todo writer possui `target_files`, `allowed_writes`, validators e gates.
+- Todo trabalho material possui agente owner ou excecao explicita do
+  orquestrador com motivo, escopo, risco e owner de validacao.
 - A sintese registra `experience_juice_needed`, decisao, criterio de parada e
   waves adicionais quando houver lacunas materiais pos-MVP.
 - Nenhum `must_ask_now` segue pendente antes de gerar o plano.
@@ -211,6 +224,8 @@ substituir `loki:run-plan` como executor manual.
   validators, human loops ou resume state suficientes.
 - `loki:run-plan` reporta validator blocker ou escrita fora de escopo.
 - Agentes paralelos compartilham `target_files` sem serializacao.
+- Trabalho material permanece na main thread sem excecao registrada e sem owner
+  de validacao.
 - Execucao autonoma exigiria nova pergunta humana no meio do plano.
 - `scripts/validate-agentic-run-state.py` ainda nao existe quando um fixture ou
   execucao declarar estado v2 como validado.

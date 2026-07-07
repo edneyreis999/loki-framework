@@ -233,6 +233,13 @@ find "$PACKAGE_ROOT"/skills -maxdepth 2 -name SKILL.md | sort
 find "$PACKAGE_ROOT"/skills -maxdepth 1 -type f -name '*.md'
 ```
 
+Quando `SKILL.md` apontar para arquivos locais em `references/`, `commands/`,
+`docs/`, `templates/`, `scripts/` ou outro caminho relativo do pacote, valide
+que o alvo existe a partir do arquivo que contem o link. Referencias quebradas
+em wrappers de comando sao falha de empacotamento: corrija o link, adicione o
+arquivo ausente ou registre backlog tecnico antes de tratar o pacote como
+instalavel.
+
 Quando a mudanca tocar superficies duraveis do pacote, rode primeiro um scan
 focado nos artefatos duraveis alterados ou nas superficies consolidadas
 aplicaveis. Esse scan focado e o decisor para a mudanca escopada:

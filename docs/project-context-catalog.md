@@ -76,6 +76,14 @@ Campos minimos esperados por documento:
 - `keywords`
 - `sections` com `anchor`, `tokens` e `purpose`
 
+Campos de descoberta usados para decidir leitura (`summary`, `use_when`,
+`not_covered`, `keywords/keyword` e `sections/@purpose`) devem ser
+self-contained em cold start. Eles precisam descrever o conteudo duradouro e
+quando ler o documento sem depender de IDs transitorios de plano, CI, task,
+build, delegacao ou run local. IDs estaveis de dominio, documento, path,
+anchor ou fonte versionada podem aparecer quando vierem acompanhados de
+descricao textual suficiente.
+
 Exemplo minimo:
 
 ```xml
@@ -88,14 +96,14 @@ Exemplo minimo:
   </metadata>
   <documents>
     <document id="doc-001" path="docs/domain/example.md" type="domain-rule" priority="high">
-      <summary>Resumo curto.</summary>
-      <use_when>Quando a task precisar desta regra.</use_when>
-      <not_covered>O que este documento nao cobre.</not_covered>
+      <summary>Regra de dominio para validar pedidos antes de alterar o fluxo principal.</summary>
+      <use_when>Use ao revisar comportamento de pedidos, validacao de entrada ou condicoes de bloqueio do fluxo principal.</use_when>
+      <not_covered>Nao cobre integracoes externas, layout de interface ou validacao runtime.</not_covered>
       <keywords>
-        <keyword>example</keyword>
+        <keyword>pedido validacao dominio</keyword>
       </keywords>
       <sections>
-        <section anchor="overview" tokens="120" purpose="Visao geral." />
+        <section anchor="overview" tokens="120" purpose="Resumo da regra de dominio e dos casos em que ela bloqueia o fluxo principal." />
       </sections>
     </document>
   </documents>

@@ -9,10 +9,12 @@ resumable XML state.
 1. Demand intake: capture the user's demand, requested scope, known constraints
    and forbidden writes.
 2. Agent preflight: inspect the active agent catalog and select the minimum
-   useful set of agents. Each selected agent needs a concrete
-   `selection_reason`.
+   useful set of agents required by the work. Each selected agent needs a
+   concrete `selection_reason`.
 3. Analysis fan-out: create agent POV outputs only for selected agents. Fan-out
-   is useful when perspectives are independent, domain-specific or risk-bearing.
+   is required for material work when perspectives are independent,
+   domain-specific or risk-bearing, and it is allowed only when context or write
+   targets are safe to split.
 4. Cross-review: run a first review round when outputs conflict materially or
    the risk profile justifies a second perspective.
 5. Synthesis: consolidate facts, conflicts, gates and plan handoff inputs.
@@ -50,6 +52,26 @@ Record this for every selected agent:
 Record skipped agents only when the skip affects review, traceability or later
 debugging.
 
+## Main Thread Boundary
+
+The main thread orchestrates intake, preflight, routing, compact synthesis,
+state, gate handling and final reporting. It should not perform material
+specialist work when an applicable agent exists.
+
+Delegate material work when at least one trigger applies:
+
+- nontrivial multi-source reading or noisy research;
+- technology-specific interpretation, implementation or validation;
+- sensitive or runtime-facing writes;
+- material validation, QA, review or independent reproduction;
+- broad file inspection that would consume substantial main-thread context;
+- conflicting evidence that needs an isolated second judgment.
+
+The orchestrator may keep work local only when it is trivial, single-source,
+low-risk, and cheaper than a handoff. Record that exception with reason, scope,
+risk accepted and validation owner. If the exception cannot be stated clearly,
+delegate.
+
 For additional waves after synthesis, record this for each wave:
 
 - `wave_id`
@@ -64,19 +86,23 @@ For additional waves after synthesis, record this for each wave:
 
 ## Fan-Out Rules
 
-Fan-out is allowed when:
+Fan-out is required for material work and allowed when:
 
 - agents answer independent questions;
 - target files are absent, read-only or disjoint;
 - the active state has a unique owner for each planned write;
 - validators and gates are known before write execution.
 
-Fan-out should be avoided when:
+Fan-out should be avoided, with the exception recorded when work stays local,
+when:
 
 - the demand is trivial;
 - every useful answer depends on a single source;
 - multiple agents would write the same target file;
 - a material gate blocks analysis or planning.
+
+When fan-out is avoided for material work, the state must still record why the
+orchestrator kept the work and who validates the result.
 
 ## XML State Shape
 
@@ -124,6 +150,11 @@ Each agent run report should include:
 - next action;
 - whether retrospective is required.
 
+Treat main-thread context pressure as a liveness signal. When the next step
+requires loading broad raw sources, long data files, multiple retrospectives or
+large diffs, prefer read-only digests or isolated agent handoffs. Do not wait
+for context exhaustion before delegating.
+
 ## Completion and Retrospectives
 
 Use compact completion reports for read-only lookups, trivial proposals or
@@ -151,3 +182,5 @@ workflow with its own gate.
 - Parallel runs sharing target files without serialization.
 - Validator failure that affects resumability or write safety.
 - Autonomous execution would need a new human question mid-run.
+- Material analysis, writing or validation remains in the main thread without a
+  recorded exception and validation owner.

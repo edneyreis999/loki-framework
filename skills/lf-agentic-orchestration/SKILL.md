@@ -59,8 +59,13 @@ parallel writes, hand off to planning and execution, and record completion.
 4. Create or update split XML state for the run: run manifest, analysis
    manifest, agent POVs, reviews, synthesis, agent run reports and digest.
 5. Stop before action planning if any unresolved `must_ask_now` gate remains.
-6. Use fan-out only when selected agents have disjoint read context or disjoint
-   write targets. Shared `target_files` require serialized ownership.
+6. Treat specialist delegation as required for material work: nontrivial
+   multi-source reading, technology-specific execution, sensitive/runtime
+   writes, material validation, or work that would consume substantial main
+   thread context. Fan-out only when selected agents have disjoint read context
+   or disjoint write targets. Shared `target_files` require serialized
+   ownership. Keep trivial, single-source, low-risk work local only with a
+   recorded exception.
 7. Run one cross-review round when material conflict or risk is present. Convert
    unresolved material conflict into a gate, targeted read or stop condition.
 8. Hand off to action planning only after analysis state is complete enough to
@@ -98,6 +103,9 @@ parallel writes, hand off to planning and execution, and record completion.
 ## Limits
 
 - Do not invoke every available agent by default.
+- Do not let the main thread absorb material analysis, writing or validation
+  when an applicable agent exists, unless the invoking workflow records a
+  concrete exception, scope, risk and validation owner.
 - Do not treat file existence as a valid skip signal without freshness data.
 - Do not allow parallel agent runs to share `target_files` unless ownership is
   serialized before writing.
@@ -125,6 +133,8 @@ parallel writes, hand off to planning and execution, and record completion.
 - Every agent run has unique `agent_run_id` and `handoff_id`.
 - Writers declare owner, `target_files`, `allowed_writes`, validators and
   gates.
+- Material work declares an agent owner or an explicit orchestrator exception
+  with reason, scope, risk and validation owner.
 - No unresolved `must_ask_now` gate exists before plan generation.
 - Parallel groups have no target-file conflict.
 - Completed agent runs include status, report path and evidence.

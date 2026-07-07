@@ -45,7 +45,9 @@ Dependencia obrigatoria para qualquer revisao ou edicao de `data/*.json` no proj
 
 ## Required References
 
-- `references/common-event-command-contracts.md` quando a task interpretar, gerar ou auditar `code`/`parameters` de comandos de evento.
+- `references/common-event-command-contracts.md` quando a task interpretar,
+  gerar ou auditar `code`/`parameters` de comandos de evento, choices
+  aninhadas, transfers terminais ou rewrites amplos de command lists.
 - `references/common-event-lifecycle.md` quando Common Events paralelos, switches de trigger, `command117`, input lock ou handoffs forem afetados.
 - `references/quest-state-machine.md` quando criar, migrar ou revisar quest,
   progressao narrativa, objetivos encadeados, flags de rota, falas por etapa,

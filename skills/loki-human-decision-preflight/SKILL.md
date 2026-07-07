@@ -44,7 +44,7 @@ used_by:
 ## Procedure
 
 1. Read the installed command contract:
-   [loki-human-decision-preflight.md](references/command.md).
+   [loki-human-decision-preflight.md](../../commands/loki-human-decision-preflight.md).
 2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    required skills, handoffs, validators, gates, stop conditions and resume
    contract.

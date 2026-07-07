@@ -31,6 +31,7 @@ recommended_handoffs:
 scoped_write_owner: "<orchestrator|agent-name|none>"
 scoped_write_mode: "<none|task_scoped_writer>"
 scoped_write_domains: []
+orchestrator_exception_reason: "<none ou motivo concreto para manter trabalho material na main thread>"
 escalation_reason: "<none ou motivo verificavel>"
 ```
 
@@ -70,6 +71,8 @@ scoped_write:
   required_skills: []
   validators: []
   human_gates: []
+  orchestrator_exception_reason: "<none ou motivo concreto>"
+  validation_owner: "<agent-name|orchestrator|human-gate>"
 ```
 
 Use `task_scoped_writer` quando a task atribuir escrita a um agente
@@ -80,6 +83,11 @@ Para escrita pesada ou sensivel com `target_files` claros, prefira um agente
 `scoped-writer` aplicavel como owner serializado. Mantenha o orquestrador como
 owner apenas quando houver motivo concreto, registrado no `Execution Profile`
 ou neste `Scoped Write Plan`.
+
+Trabalho material inclui leitura multi-fonte nao trivial, tecnologia
+especializada, escrita sensivel/runtime, validacao material ou risco de budget
+de contexto. Nesses casos, `scoped_write_owner: "orchestrator"` exige
+`orchestrator_exception_reason`, risco aceito e owner de validacao.
 
 ## Validators
 
@@ -110,6 +118,8 @@ loki_task_state:
   files_expected: []
   write_owner: "<orchestrator|agent-name|none>"
   target_files: []
+  orchestrator_exception_reason: ""
+  validation_owner: ""
   validations: []
   next_action: ""
   blocked_by: []

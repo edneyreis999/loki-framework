@@ -13,17 +13,17 @@
       type="domain-rule"
       priority="high"
     >
-      <summary>Resumo curto do documento.</summary>
-      <use_when>Quando a task precisar desta regra de negocio.</use_when>
-      <not_covered>O que este documento nao cobre.</not_covered>
+      <summary>Regra de dominio para validar pedidos antes de alterar o fluxo principal.</summary>
+      <use_when>Use ao revisar comportamento de pedidos, validacao de entrada ou condicoes de bloqueio do fluxo principal.</use_when>
+      <not_covered>Nao cobre integracoes externas, layout de interface ou validacao runtime.</not_covered>
       <keywords>
-        <keyword>example</keyword>
+        <keyword>pedido validacao dominio</keyword>
       </keywords>
       <sections>
         <section
           anchor="overview"
           tokens="120"
-          purpose="Visao geral do assunto."
+          purpose="Resumo da regra de dominio e dos casos em que ela bloqueia o fluxo principal."
         />
       </sections>
     </document>

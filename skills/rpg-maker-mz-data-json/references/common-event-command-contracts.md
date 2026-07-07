@@ -57,6 +57,56 @@ When a list includes branching or scoped outcomes, report
 Visible behavior remains `runtime_pending` until a runtime or Playtest gate
 confirms the intended flow.
 
+## Choice Path Enumeration
+
+For maps or Common Events with nested choices, do not infer complete routes from
+apparent leaves, repeated labels or visible indentation alone. Enumerate paths
+through the event command structure:
+
+- `Show Choices` (`102`) opens the choice group.
+- `When` (`402`) and `When Cancel` (`403`) define branch entries at the choice
+  indent.
+- `Choice End` (`404`) closes the group.
+
+For route counts, record the parser rule used, the first and final transfer or
+state mutation for each path, and any branch that reaches termination without
+the expected command. Treat text duplication as a content signal only; it is not
+proof that a block can be extracted or merged safely.
+
+## Terminal Transfer And Exit Validation
+
+`Transfer Player` (`201`) changes map/location, but a transfer command in the
+event list is not by itself proof that the interpreter branch has no further
+observable work. When a branch is intended to be terminal, correlate the
+transfer with `Exit Event Processing` (`115`) or an equivalent terminal flow
+confirmed in the target engine/source.
+
+Report terminal-transfer validation separately from JSON parse and route count:
+
+- `terminal_transfer_checked`: transfer commands were found and classified.
+- `explicit_exit_checked`: expected exits or equivalent termination were
+  confirmed.
+- `runtime_pending`: Playtest or runtime evidence is still required for
+  perceptible behavior after transfer.
+
+Avoid wording that implies every transfer must always be followed immediately by
+`115`; the reusable rule is to prove termination for branches that are claimed
+to be terminal.
+
+## Large Command-List Rewrite Split
+
+For broad map or Common Event rewrites, split responsibilities before mutation:
+
+1. Read-only extraction identifies current ranges from the latest file state.
+2. A single serialized writer applies scoped changes to approved `target_files`.
+3. Independent QA reproduces or audits route counts, branch structure, command
+   targets and restricted diff.
+
+Never apply stale range indices from an earlier snapshot without recomputing or
+shifting them against the current file. A successful static equivalence check
+proves structure only; message timing, child-interpreter feel, visual state,
+audio, input and route perception remain runtime or Playtest gates.
+
 ## Audio Asset Validation
 
 Audio play commands reference a logical audio object name; JSON parse and command
@@ -82,10 +132,13 @@ These commands are common in RPG Maker MZ event work. Treat this as a lookup che
 
 | Code | Engine method | Typical purpose | Gate |
 | --- | --- | --- | --- |
+| 102 | `command102` | Show Choices | Enumerate choice paths with matching `402`/`403`/`404`. |
 | 111 | `command111` | Conditional Branch | Verify branch parameter shape before generation. |
+| 115 | `command115` | Exit Event Processing | Use as explicit branch termination when required by the flow. |
 | 117 | `command117` | Call Common Event | Verify child-interpreter behavior before calling looping or parallel logic. |
 | 121 | `command121` | Control Switches | Verify inclusive range and ON/OFF parameter semantics in the target engine. |
 | 122 | `command122` | Control Variables | Verify operation and operand encoding. |
+| 201 | `command201` | Transfer Player | Verify destination and terminal-flow expectations separately. |
 | 223 | `command223` | Tint Screen | Validate visible runtime effect. |
 | 225 | `command225` | Shake Screen | Validate visible runtime effect. |
 | 231 | `command231` | Show Picture | Validate picture name, origin, position, opacity and asset existence. |
@@ -98,6 +151,9 @@ These commands are common in RPG Maker MZ event work. Treat this as a lookup che
 | 249 | `command249` | Play ME | Do not confuse with BGS fadeout. |
 | 250 | `command250` | Play SE | Validate audio asset and runtime route. |
 | 357 | `command357` | Plugin Command | Schema is plugin-specific; prefer editor-confirmed or engine-confirmed generation. |
+| 402 | branch entry | Choice branch | Validate pairing with `102` and `404`, plus indent. |
+| 403 | cancel branch | Choice cancel | Validate cancel behavior and indent when present. |
+| 404 | choice end | End of choices | Validate it closes the intended choice group. |
 | 657 | continuation entry | Plugin-command continuation in MZ data | Preserve structure unless the plugin schema is known. |
 
 ## Common Failure Mode

@@ -45,6 +45,13 @@ O documento deve seguir esta ideia minima:
 - `sections/section/@tokens`
 - `sections/section/@purpose`
 
+Esses campos de descoberta devem ser compreensiveis em cold start:
+`summary`, `use_when`, `not_covered`, `keywords/keyword` e
+`sections/section/@purpose` precisam descrever o conteudo e o escopo duradouro
+sem exigir memoria de IDs transitorios de plano, CI, task, build, delegacao ou
+run local. IDs estaveis de dominio, documento, path, anchor ou fonte versionada
+podem aparecer quando tambem houver descricao textual suficiente.
+
 ## Fallback Policy
 
 - Preferir `docs/index.xml` sempre que existir.
@@ -55,6 +62,9 @@ O documento deve seguir esta ideia minima:
 ## Catalog Quality Rules
 
 - Todo documento duradouro novo em `/docs` deve aparecer no catalogo.
+- Campos de descoberta do catalogo devem carregar significado proprio; nao use
+  IDs transitorios como unica explicacao de `summary`, `use_when`,
+  `not_covered`, `keywords` ou `purpose`.
 - Se um documento mudar de escopo, `use_when`, `not_covered` e `sections`
   precisam ser revisados.
 - `AGENTS.md` e `CLAUDE.md` podem apontar para o catalogo, mas nao substituem o
