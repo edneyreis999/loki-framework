@@ -396,6 +396,9 @@ commands:
   - name: "loki:knowledge-extraction-analysis"
     file: "commands/loki-knowledge-extraction-analysis.md"
     status: draft
+  - name: "loki:deep-research"
+    file: "commands/loki-deep-research.md"
+    status: draft
   - name: "loki:self-healing"
     file: "commands/loki-self-healing.md"
     status: draft
@@ -469,6 +472,12 @@ skills:
     status: draft
   - name: "lf-framework-impact-audit"
     file: "skills/lf-framework-impact-audit/SKILL.md"
+    status: draft
+  - name: "loki-deep-research"
+    file: "skills/loki-deep-research/SKILL.md"
+    status: draft
+  - name: "lf-web-deep-research"
+    file: "skills/lf-web-deep-research/SKILL.md"
     status: draft
   - name: "loki-self-healing"
     file: "skills/loki-self-healing/SKILL.md"

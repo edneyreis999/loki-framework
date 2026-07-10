@@ -27,6 +27,8 @@ Fluxos principais:
 - `loki:agentic-development`: caminho integrado v2 de demanda para analise
   agentica, gates antes do plano, action plan, execucao autonoma, digest e
   backlog.
+- `loki:deep-research`: pesquisa profunda na internet com fontes citadas,
+  verificacao cruzada, contradicoes e handoff para analise ou plano.
 - `loki:run-plan`: executor manual por fase ou task planejada.
 - `loki:continuous-improvement`: promocao posterior e controlada de
   aprendizados validados.

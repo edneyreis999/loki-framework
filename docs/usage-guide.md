@@ -61,6 +61,7 @@ demanda simples, analise agentica, gates humanos materiais antes do plano,
 action plan, execucao autonoma, completion reports, digest e backlog.
 
 Use o caminho manual quando precisar controlar cada etapa separadamente:
+`loki:deep-research` quando depender de pesquisa web citada,
 `loki:tech-analysis`, `loki:human-decision-preflight`,
 `loki:generate-action-plan`, `loki:enrich-tasks` quando aplicavel e
 `loki:run-plan` por fase ou task.
@@ -94,8 +95,9 @@ como `frontier_reasoning`, `coding`, `generalist`, `long_context` e
 
 Documentacao duravel, politicas, contratos, templates e mudancas normativas do
 pacote usam effort alto por padrao. Documentacao transiente de execucao pode
-usar effort baixo ou medio, exceto analises de `loki:tech-analysis` e planos de
-`loki:generate-action-plan`, que continuam high effort. Implementacao de codigo
+usar effort baixo ou medio, exceto pesquisas de `loki:deep-research`, analises
+de `loki:tech-analysis` e planos de `loki:generate-action-plan`, que continuam
+high effort. Implementacao de codigo
 usa modelo de codificacao e effort medio por padrao, escalando quando houver
 risco tecnico, integracao, arquitetura ou validacao dificil.
 

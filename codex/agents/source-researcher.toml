@@ -74,6 +74,9 @@ tasks e nao escreve artefatos. O comando chamador decide como usar o resultado.
   pre-analise local minima do `execution-context-reader`.
 - `loki:enrich-tasks` precisa verificar compatibilidade, contrato upstream ou
   conflito entre fontes antes de editar tasks da fase ativa.
+- `loki:deep-research` precisa executar uma trilha isolada de pesquisa web,
+  lendo fontes longas sem gastar contexto da main thread e retornando handoff
+  compacto para consolidacao.
 - `loki:continuous-improvement` precisa conferir evidencia, duplicidade ou
   destino antes de propor promocao duradoura.
 
@@ -93,8 +96,8 @@ restrita a uma fase/task de `loki:run-plan`.
 ## Inputs
 
 - Pergunta de pesquisa ou hipotese material.
-- Objetivo downstream: `tech-analysis`, `feedback`, `action-plan`,
-  `run-plan`, `enrich-tasks` ou `continuous-improvement`.
+- Objetivo downstream: `deep-research`, `tech-analysis`, `feedback`,
+  `action-plan`, `run-plan`, `enrich-tasks` ou `continuous-improvement`.
 - Fontes candidatas, caminhos iniciais ou motivo documentado para descobri-las.
 - Escopo permitido, out of scope, forbidden writes e superficies sensiveis.
 - Status do research gate externo: `not-needed`, `pending-consent`,
@@ -156,7 +159,7 @@ Nenhuma. Este agente e read-only.
 source_research:
   agent: "source-researcher"
   mode: "read-only"
-  downstream_use: "tech-analysis | feedback | action-plan | run-plan | enrich-tasks | continuous-improvement"
+  downstream_use: "deep-research | tech-analysis | feedback | action-plan | run-plan | enrich-tasks | continuous-improvement"
   research_question: ""
   research_gate:
     external_status: "not-needed | pending-consent | approved | forbidden"
