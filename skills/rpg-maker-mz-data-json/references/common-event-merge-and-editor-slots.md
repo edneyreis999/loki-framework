@@ -15,6 +15,17 @@ The RPG Maker MZ editor may reject or ignore slots created only by script even w
 5. Remap every caller that uses `code:117` to the new ids.
 6. Parse JSON, open/validate in editor when required, then Playtest affected routes.
 
+Before writing into a newly approved slot, parse the current
+`CommonEvents.json` from disk and confirm the target ID already exists. If the
+slot is missing, stop and ask for the RPG Maker editor state to be saved or for
+an explicit editor-slot creation step. Do not infer that a user-approved slot is
+available until it exists in the saved JSON.
+
+When the slot exists, confirm it is empty or exactly in the expected pre-write
+state before overwriting contents. If it already contains unexpected commands,
+names, triggers or switches, stop for a merge decision instead of replacing it
+silently.
+
 ## Remap Audit
 
 Search all maps and Common Events for Common Event calls, not only the file being edited. A partial remap can leave maps calling the wrong behavior while the edited CE looks correct in isolation.
