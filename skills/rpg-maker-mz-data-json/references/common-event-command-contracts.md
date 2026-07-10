@@ -73,6 +73,26 @@ state mutation for each path, and any branch that reaches termination without
 the expected command. Treat text duplication as a content signal only; it is not
 proof that a block can be extracted or merged safely.
 
+## Repeated Choice Coverage
+
+For repeated choice structures, do not treat the first matching `402` branch as
+complete coverage. Before writing, enumerate every target branch by a stable key
+or structural signature and record expected occurrence counts.
+
+Good stable keys include localization keys, exact choice parameters, plugin
+comment tags, branch path, surrounding `102` group, or a parser-derived command
+signature. Prefer structured JSON scans over broad text search in large map or
+Common Event command lists.
+
+After writing, validate before/after counts and confirm every targeted `402`
+branch has the expected child command at the correct indent. When routing a
+choice branch through `Call Common Event` (`117`), verify that the `117` command
+is inside the branch, normally at `indent = branch.indent + 1`, and that the
+called Common Event is finite and suitable for child-interpreter execution.
+
+Keep project-specific map names, Common Event IDs, asset names and choice text
+out of this reusable checklist.
+
 ## Terminal Transfer And Exit Validation
 
 `Transfer Player` (`201`) changes map/location, but a transfer command in the
