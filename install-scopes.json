@@ -9,6 +9,9 @@
     "commands": {
       "loki-init.md": "both",
       "loki-catalogar-docs.md": "both",
+      "loki-criar-branch.md": "both",
+      "loki-commit.md": "both",
+      "loki-abrir-pr.md": "both",
       "loki-continuous-improvement.md": "both",
       "loki-enrich-tasks.md": "both",
       "loki-feedback.md": "both",
@@ -75,7 +78,8 @@
       "ux-ui-designer.toml": "consumer-only"
     },
     "docs": {
-      "loki-init-inventory-contracts.md": "both"
+      "loki-init-inventory-contracts.md": "both",
+      "loki-git-workflow.md": "both"
     },
     "skills": {
       "excalidraw-diagram-generator": "both",
@@ -85,12 +89,16 @@
       "lf-command-creator": "both",
       "lf-command-workflows": "both",
       "loki-catalogar-docs": "both",
+      "loki-criar-branch": "both",
+      "loki-commit": "both",
+      "loki-abrir-pr": "both",
       "loki-continuous-improvement": "both",
       "lf-documentation-writing": "both",
       "loki-enrich-tasks": "both",
       "lf-external-knowledge-extraction": "internal-only",
       "loki-feedback": "both",
       "lf-framework-impact-audit": "internal-only",
+      "lf-git-workflow": "both",
       "loki-deep-research": "both",
       "lf-web-deep-research": "both",
       "loki-generate-action-plan": "both",

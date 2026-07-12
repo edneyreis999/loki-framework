@@ -366,6 +366,15 @@ commands:
   - name: "loki:catalogar-docs"
     file: "commands/loki-catalogar-docs.md"
     status: draft
+  - name: "loki:criar-branch"
+    file: "commands/loki-criar-branch.md"
+    status: draft
+  - name: "loki:commit"
+    file: "commands/loki-commit.md"
+    status: draft
+  - name: "loki:abrir-pr"
+    file: "commands/loki-abrir-pr.md"
+    status: draft
   - name: "loki:feedback"
     file: "commands/loki-feedback.md"
     status: draft
@@ -425,6 +434,15 @@ skills:
   - name: "loki-catalogar-docs"
     file: "skills/loki-catalogar-docs/SKILL.md"
     status: draft
+  - name: "loki-criar-branch"
+    file: "skills/loki-criar-branch/SKILL.md"
+    status: draft
+  - name: "loki-commit"
+    file: "skills/loki-commit/SKILL.md"
+    status: draft
+  - name: "loki-abrir-pr"
+    file: "skills/loki-abrir-pr/SKILL.md"
+    status: draft
   - name: "loki-init"
     file: "skills/loki-init/SKILL.md"
     status: draft
@@ -472,6 +490,9 @@ skills:
     status: draft
   - name: "lf-framework-impact-audit"
     file: "skills/lf-framework-impact-audit/SKILL.md"
+    status: draft
+  - name: "lf-git-workflow"
+    file: "skills/lf-git-workflow/SKILL.md"
     status: draft
   - name: "loki-deep-research"
     file: "skills/loki-deep-research/SKILL.md"
@@ -846,6 +867,8 @@ docs:
   - file: "docs/usage-guide.md"
     status: draft
   - file: "docs/loki-installation-workflow.md"
+    status: draft
+  - file: "docs/loki-git-workflow.md"
     status: draft
   - file: "docs/loki-installation-workflow.excalidraw.md"
     status: draft

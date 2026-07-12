@@ -1,9 +1,9 @@
 ---
 name: lf-command-workflows
-description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:catalogar-docs`, `loki:feedback`, `loki:tech-analysis`, `loki:deep-research`, `loki:human-decision-preflight`, `loki:agentic-development`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
+description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:catalogar-docs`, `loki:criar-branch`, `loki:commit`, `loki:abrir-pr`, `loki:feedback`, `loki:tech-analysis`, `loki:deep-research`, `loki:human-decision-preflight`, `loki:agentic-development`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
 when_to_use:
   - "Use when the user invokes a shared Loki command workflow from Codex."
-  - "Use when routing loki:init, init-loki, loki:catalogar-docs, loki:feedback, loki:tech-analysis, loki:deep-research, loki:human-decision-preflight, loki:agentic-development, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
+  - "Use when routing loki:init, init-loki, loki:catalogar-docs, loki:criar-branch, loki:commit, loki:abrir-pr, loki:feedback, loki:tech-analysis, loki:deep-research, loki:human-decision-preflight, loki:agentic-development, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
 argument-hint: "[loki command name, command arguments]"
 arguments:
   required: []
@@ -34,6 +34,9 @@ status: draft
 used_by:
   - loki:init
   - loki:catalogar-docs
+  - loki:criar-branch
+  - loki:commit
+  - loki:abrir-pr
   - loki:feedback
   - loki:tech-analysis
   - loki:deep-research
@@ -60,6 +63,13 @@ installation profile.
 - `loki:catalogar-docs`: read
   `.agents/commands/loki/loki-catalogar-docs.md`, then use
   `loki-catalogar-docs`.
+- `loki:criar-branch`: read
+  `.agents/commands/loki/loki-criar-branch.md`, then use
+  `loki-criar-branch`.
+- `loki:commit`: read
+  `.agents/commands/loki/loki-commit.md`, then use `loki-commit`.
+- `loki:abrir-pr`: read
+  `.agents/commands/loki/loki-abrir-pr.md`, then use `loki-abrir-pr`.
 - `loki:feedback`: read
   `.agents/commands/loki/loki-feedback.md`, then use `loki-feedback`.
 - `loki:tech-analysis`: read

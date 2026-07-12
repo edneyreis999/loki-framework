@@ -173,6 +173,18 @@ manifest parseavel e impacto visivel no git do consumidor. Eles nao substituem
 validacao funcional de um workflow Loki dentro do projeto consumidor quando
 esse comportamento for necessario.
 
+## Git Flow
+
+O Loki inclui tres comandos de Git flow:
+
+- `loki:criar-branch` para criar branch local com base e nome aprovados.
+- `loki:commit` para stage explicito e commit local.
+- `loki:abrir-pr` para publicar a branch e abrir PR.
+
+`loki:abrir-pr` prefere GitHub MCP quando disponivel e usa `gh` autenticado
+como fallback. Sem GitHub MCP nem `gh`, o comando deve parar apos montar a
+proposta de PR. Consulte `docs/loki-git-workflow.md`.
+
 ## Skills Core e Extensoes
 
 As skills Loki (`loki-init`, `loki-feedback`,

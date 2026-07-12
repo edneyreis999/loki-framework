@@ -32,6 +32,9 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | --- | --- | --- |
 | `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, pastas de inventario por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
 | `loki:catalogar-docs` | `mvp` | Catalogar documentacao duradoura do consumidor em `/docs` com validacao de caminho, limites de recursao, bottom-up e fan-out disjunto via envelopes do `catalogador`, consolidando `docs/index.xml` de forma serial. |
+| `loki:criar-branch` | `mvp` | Criar branch Git local com base, nome, colisao e mudancas locais validadas antes de qualquer escrita. |
+| `loki:commit` | `mvp` | Criar commit local com staging explicito, mensagem convencional, bloqueio de branch default e validacao de diff/status. |
+| `loki:abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
 | `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki:human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
@@ -59,6 +62,9 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | --- | --- | --- |
 | `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
 | `loki-catalogar-docs` | `mvp` | Wrapper Codex para executar o workflow `loki:catalogar-docs`, validando alvo documental, limites de recursao, gates de escrita e estado retomavel. |
+| `loki-criar-branch` | `mvp` | Wrapper Codex para executar `loki:criar-branch`. |
+| `loki-commit` | `mvp` | Wrapper Codex para executar `loki:commit`. |
+| `loki-abrir-pr` | `mvp` | Wrapper Codex para executar `loki:abrir-pr`. |
 | `loki-init` | `mvp` | Wrapper Codex para executar o workflow `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
 | `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
@@ -75,6 +81,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `loki-knowledge-extraction-analysis` | `mvp` | Wrapper Codex para executar `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
+| `lf-git-workflow` | `mvp` | Procedimento compartilhado para branch, commit e PR com preflight Git, staging seguro, gates humanos e GitHub MCP/`gh` fallback. |
 | `loki-deep-research` | `mvp` | Wrapper Codex para executar `loki:deep-research` e produzir relatorio de pesquisa web profunda com citacoes, metodologia e limites. |
 | `lf-web-deep-research` | `mvp` | Procedimento reutilizavel de pesquisa profunda na internet com ondas de busca, avaliacao de fontes, contradicoes, assumptions, lacunas e output estruturado. |
 | `loki-self-healing` | `mvp` | Wrapper Codex para executar `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
@@ -171,6 +178,7 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `docs/operational-inventory.md` | `mvp` | Listar componentes operacionais a gerar. |
 | `docs/usage-guide.md` | `mvp` | Explicar uso do framework em ate 2000 tokens. |
 | `docs/loki-installation-workflow.md` | `mvp` | Explicar o workflow canonico de instalacao do Loki em projetos consumidores, do dry-run ao rollback por manifest. |
+| `docs/loki-git-workflow.md` | `mvp` | Registrar comandos Git flow do Loki e dependencias minimas de Git, GitHub MCP e `gh`. |
 | `docs/loki-installation-workflow.excalidraw.md` | `mvp` | Ilustrar o workflow canonico de instalacao do Loki em projetos consumidores. |
 | `docs/loki-plan-execution-workflow.md` | `mvp` | Explicar o workflow canonico de execucao de plano, da descricao curta ate codigo, validacao e handoff para aprendizado. |
 | `docs/loki-plan-execution-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de execucao. |
