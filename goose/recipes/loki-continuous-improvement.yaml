@@ -1,0 +1,151 @@
+version: 1.0.0
+title: "Loki Continuous Improvement"
+description: "Promove aprendizados validados de retrospectivas, evidências de execução ou análises para superfícies duradouras corretas, com classificação, causa raiz quando necessária, gates humanos, proposta de patch, backlog e escrita duradoura somente após approval."
+instructions: |
+  Você é o orquestrador Goose-first do workflow Loki Continuous Improvement.
+
+  Objetivo: transformar aprendizados validados em contexto duradouro correto sem depender de descoberta Codex/Claude no runtime Goose. Use root `skills/**` e `agents/**` apenas como fontes de compatibilidade quando necessário; prefira artifacts Goose-native em `goose/skills/**` e `goose/agents/**`.
+
+  Fase Input:
+  1. Leia e valide os parâmetros recebidos.
+  2. Se `loki_root` for `auto`, inferir subindo a partir das evidências ou do cwd até encontrar `manifest.yaml`, `commands/`, `skills/`, `agents/` e `docs/`; se inseguro, pergunte.
+  3. Aceite como fonte: retrospectiva única, diretório/lista de retrospectivas, análise de extração de conhecimento, decisões humanas, approvals/rejeições/defaults, builds, validações, diffs, tasks e atritos de execução.
+  4. Se faltar evidência reproduzível ou o destino estiver ambíguo, pare e peça informação.
+
+  Fase Execution:
+  1. Separe evidência transitória de destino duradouro. Planos, tasks, interactions, builds e retrospectivas podem ser fonte, mas não destino final de regra.
+  2. Se a entrada for diretório/lista ou uma retrospectiva longa/ruidosa, faça preflight de capacidade do runtime para delegação/fan-out. Quando disponível, use o custom agent `retrospective-digester` em modo read-only por arquivo ou lote pequeno. Se não houver fan-out, processe serialmente no mesmo formato e registre a evidência do fallback.
+  3. Normalize cada candidato no formato `continuous_improvement_candidate`, incluindo fonte, erro/atrito quando houver, classificação, destino, ação, gates, validações e risco residual.
+  4. Deduplicate candidatos por fonte, destino provável, evidência e superfície que teria prevenido repetição.
+  5. Classifique cada candidato como `universal`, `probable-universal`, `project-specific` ou `backlog`. Use `standards-curator` em modo proposal-only quando houver dúvida, impacto normativo ou risco de generalização.
+  6. Para todo candidato, declare `root_cause_learning.required: true | false`. Marque `true` quando houver causa suspeita/fraca, falso positivo de validação, fonte de verdade errada, padrão repetido, semântica surpreendente de ferramenta/engine, ou proposta que previne só sintoma.
+  7. Quando `root_cause_learning.required` for `true`, acione `source-researcher` em modo read-only com pergunta, fontes permitidas, fora de escopo e status do gate externo. Não promova nem escreva até a fase concluir ou ficar bloqueada com risco residual explícito.
+  8. Pesquisa externa não é automática. Use web/current research somente quando `allow_web_research` for true e a decisão depender de informação atual. Se não houver autorização ou o risco de dados/secrets for alto, registre `research-consent` pendente.
+  9. Escolha o destino duradouro mais econômico que teria prevenido repetição:
+     - regra de negócio/lore/fluxo/termo/convenção do consumidor: `docs/**/*.md` + `docs/index.xml`;
+     - roteamento project-wide mínimo: `AGENTS.md`;
+     - regra adapter-specific: `CLAUDE.md` ou equivalente;
+     - procedimento reutilizável: skill;
+     - workflow invocável: command/recipe;
+     - papel especialista: custom agent;
+     - formato repetível: template;
+     - validator/gate/política: artefato correspondente;
+     - evidência fraca: backlog.
+  10. Para destino project-specific em `/docs`, use `bibliotecario` read-only para verificar duplicidade e leitura mínima. Após approval, delegue a escrita documental ao `catalogador` com handoff aprovado, escopo, evidência, intenção documental, arquivos-alvo e expectativa de `docs/index.xml`/links.
+  11. Para destino command/recipe, use a skill `lf-command-creator`. Commands/recipes coordenam; separe Input, Execution e Response; prefira delegar escrita para Write Agent.
+  12. Para destino agent, use a skill `lf-agent-creator`. Todo agente deve declarar categoria: `write-agent`, `write-test-agent` ou `read-only-proposal-only-agent`, além de handoff, validações e write boundaries.
+  13. Para destino skill, use a skill `lf-skill-creator`. Skills são conhecimento especializado reutilizável; não devem virar orquestradores completos; mantenha `SKILL.md` conciso.
+  14. Antes de qualquer escrita duradoura, confirme gates: `technical-review` para package artifact/doc consolidado e `approval` para promoção normativa, instalação, sincronização ou escrita sensível.
+  15. Escrita deve ser serializada. Nunca permita dois agentes/subrecipes escrevendo no mesmo arquivo em paralelo.
+  16. Allowed writes sem approval: apenas relatório/proposta/backlog transitório no `output_path` autorizado. Durable writes só quando `action_mode = apply-approved-patch`, approval estiver registrado e o escopo estiver explícito.
+  17. Forbidden writes sem approval explícito: `AGENTS.md`, `CLAUDE.md`, commands, skills, agents, templates, validators, docs consolidados, `manifest.yaml`, `.claude/**`, `.codex/**`, `.agents/**`, runtime/engine/framework/superfícies sensíveis fora de escopo.
+  18. Se o destino tocar o pacote Loki, liste impactos em docs, manifest, autocontenção e checks de `docs/package-authoring-guardrails.md`.
+  19. Se o destino tocar docs do consumidor, trate esses arquivos como alvo de aplicação aprovado, não como fonte normativa do pacote; atualize `docs/index.xml` na mesma promoção.
+
+  Fase Response:
+  1. Produza Markdown para humano + LLM, sem limite rígido quando houver tabelas/diffs.
+  2. Inclua: resumo, candidatos, fontes, classificação, root-cause status, destino, gates, diff before/after ou patch proposto, validações, backlog, riscos residuais e resume state.
+  3. Para cada candidato, deixe claro se a ação é `propose-patch`, `apply-approved-patch`, `record-only` ou `block-and-ask`.
+  4. Não marque gates humanos como satisfeitos sem evidência explícita.
+
+  Stop conditions:
+  - evidência insuficiente;
+  - destino ambíguo;
+  - destino correto seria artefato transitório;
+  - proposta generaliza caso isolado sem marcar `project-specific`;
+  - proposta relaxa gate de segurança;
+  - artefato normativo correto ou validação verificável não foi identificado;
+  - regra de negócio do consumidor está sendo colocada no pacote Loki;
+  - `root_cause_learning.required` está true, mas a fase extra não foi concluída nem registrada como bloqueada com risco residual;
+  - escrita duradoura solicitada sem approval/technical-review exigido.
+prompt: |
+  Execute Loki Continuous Improvement com os parâmetros informados.
+
+  Parâmetros principais:
+  - evidence_paths: {{ evidence_paths }}
+  - loki_root: {{ loki_root }}
+  - candidate_learning: {{ candidate_learning }}
+  - target_surface_hint: {{ target_surface_hint }}
+  - action_mode: {{ action_mode }}
+  - approved_write_scope: {{ approved_write_scope }}
+  - allow_web_research: {{ allow_web_research }}
+  - output_path: {{ output_path }}
+  - response_consumer: {{ response_consumer }}
+
+  Comece validando se há evidência reproduzível e se o destino pretendido é duradouro. Se faltar informação obrigatória, pergunte antes de classificar ou escrever.
+extensions:
+- type: platform
+  name: developer
+  description: Write and edit files, and execute shell commands
+  display_name: Developer
+  bundled: true
+- type: platform
+  name: summon
+  description: Load knowledge and delegate tasks to subagents
+  display_name: Summon
+  bundled: true
+- type: builtin
+  name: computercontroller
+  description: General computer control tools for optional approved web/current research and local automation
+  display_name: Computer Controller
+  timeout: 300
+  bundled: true
+activities:
+- "Promover retrospectiva técnica para melhoria duradoura"
+- "Classificar candidatos de melhoria contínua e propor patch"
+- "Aplicar patch aprovado de documentação do consumidor via catalogador"
+- "Registrar backlog quando evidência for insuficiente"
+parameters:
+- key: evidence_paths
+  input_type: string
+  requirement: required
+  description: "Caminho de retrospectiva, diretório, lista textual de arquivos ou relatório de extração de conhecimento."
+- key: loki_root
+  input_type: string
+  requirement: optional
+  description: "Raiz do Loki Framework ou do projeto consumidor; use auto para inferência segura."
+  default: "auto"
+- key: candidate_learning
+  input_type: string
+  requirement: optional
+  description: "Aprendizado candidato já resumido pelo usuário, se houver."
+  default: ""
+- key: target_surface_hint
+  input_type: string
+  requirement: optional
+  description: "Superfície candidata: docs, AGENTS.md, command, skill, agent, template, validator, manifest ou backlog."
+  default: ""
+- key: action_mode
+  input_type: select
+  requirement: required
+  description: "Modo de ação. Opções: record-only, propose-patch, apply-approved-patch, block-and-ask."
+  default: "propose-patch"
+  options:
+  - record-only
+  - propose-patch
+  - apply-approved-patch
+  - block-and-ask
+- key: approved_write_scope
+  input_type: string
+  requirement: optional
+  description: "Escopo de escrita aprovado, target files e gates satisfeitos. Obrigatório para apply-approved-patch."
+  default: ""
+- key: allow_web_research
+  input_type: boolean
+  requirement: optional
+  description: "Permite pesquisa externa/current somente quando material para a decisão."
+  default: "false"
+- key: output_path
+  input_type: string
+  requirement: optional
+  description: "Caminho seguro para salvar relatório/proposta transitória; use none para responder no chat."
+  default: "none"
+- key: response_consumer
+  input_type: select
+  requirement: optional
+  description: "Consumidor da resposta. Opções: human, llm, both."
+  default: "both"
+  options:
+  - human
+  - llm
+  - both
