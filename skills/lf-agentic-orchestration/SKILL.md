@@ -35,7 +35,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:agentic-development
+  - loki-agentic-development
 ---
 
 # lf-agentic-orchestration
@@ -111,7 +111,7 @@ parallel writes, hand off to planning and execution, and record completion.
   serialized before writing.
 - Do not mark runtime behavior, integrations, persisted state or perceptible
   output as validated without the relevant human gate.
-- Do not replace `loki:run-plan`; use it as the manual or delegated executor
+- Do not replace `loki-run-plan`; use it as the manual or delegated executor
   when the invoking workflow reaches planned execution.
 - Do not promote learnings into durable rules automatically. Record digest and
   backlog items for a later improvement workflow.

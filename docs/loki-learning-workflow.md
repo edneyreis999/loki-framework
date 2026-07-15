@@ -21,10 +21,10 @@ O Loki nao aprende por memoria magica da conversa. Ele aprende por evidencia: um
 
 Tasks, builds, interactions e validacoes sao fontes transitorias. Elas ajudam a entender o que aconteceu, mas nao sao o lugar final de uma regra duradoura.
 
-O fluxo integrado `loki:agentic-development` pode gerar digest, backlog,
+O fluxo integrado `loki-agentic-development` pode gerar digest, backlog,
 completion reports e retrospectivas por agente. Esses artefatos tambem sao
 fontes de evidencia, nao promocao automatica. Qualquer aprendizado duradouro
-continua passando por `loki:continuous-improvement` e pelos gates aplicaveis.
+continua passando por `loki-continuous-improvement` e pelos gates aplicaveis.
 
 O fluxo normalmente comeca depois do
 [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md), mas
@@ -35,44 +35,39 @@ formal ou auditoria interna de conformidade do pacote.
 ## Fluxo
 
 1. Um sinal aparece: feedback humano, bug, dificuldade tecnica, decisao de produto, build, validacao, artefato externo, auditoria interna ou repeticao de erro.
-2. Se a fase ainda esta em execucao, use `loki:enrich-tasks` apenas para melhorar o plano atual. O aprendizado fica local: `tasks.md`, `task-N.M.md` ou `interaction/faseN/`.
+2. Se a fase ainda esta em execucao, use `loki-enrich-tasks` apenas para melhorar o plano atual. O aprendizado fica local: `tasks.md`, `task-N.M.md` ou `interaction/faseN/`.
 3. Primeiro resolva o problema de fato. Nao transforme tentativa promissora em regra.
-4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki:retrospectiva-tecnica`.
+4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki-retrospectiva-tecnica`.
 5. A retrospectiva registra objetivo, artefatos, validacoes, decisoes humanas, evidencia do que resolveu, riscos e candidatos de melhoria.
-6. Quando o sinal vier de `loki:agentic-development`, trate digest, backlog e completion reports como evidencia de entrada. Nao promova nada so porque apareceu no digest.
-7. Quando o sinal vier de artefatos externos, use `loki:knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki:continuous-improvement`, sem aplicar mudancas duradouras diretamente.
-8. So depois use `loki:continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
+6. Quando o sinal vier de `loki-agentic-development`, trate digest, backlog e completion reports como evidencia de entrada. Nao promova nada so porque apareceu no digest.
+7. Quando o sinal vier de artefatos externos, use `loki-knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki-continuous-improvement`, sem aplicar mudancas duradouras diretamente.
+8. So depois use `loki-continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
 9. Todo candidato declara `root_cause_learning.required`. Quando for `true`, rode a fase read-only de causa raiz antes de escolher destino, diff ou patch: normalmente `source-researcher` para fonte de verdade/conflitos e `retrospective-digester` para padroes em retros. Pesquisa externa continua exigindo consentimento explicito.
 10. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
 11. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
-12. Quando o escopo for auditoria interna de conformidade do pacote, `loki:self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
+12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
 13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
 14. A promocao termina com diff, validacao e registro do risco residual.
 
 ## Artefatos participantes
 
-### Commands
+### Command bundles
 
 | Command | Contribuicao no workflow |
 | --- | --- |
-| `loki:enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
-| `loki:retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
-| `loki:continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
-| `loki:agentic-development` | Pode produzir digest, backlog, completion reports e retrospectivas por agente como evidencia para melhoria futura, sem promocao automatica. |
-| `loki:knowledge-extraction-analysis` | Analisa artefatos externos e entrega aprendizados rastreaveis para `loki:continuous-improvement`, sem promover mudanca diretamente. |
-| `loki:self-healing` | Audita artefatos internos do pacote e aplica correcoes escopadas no working tree, sem stage ou commit automatico. |
+| `loki-enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
+| `loki-retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
+| `loki-continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
+| `loki-agentic-development` | Pode produzir digest, backlog, completion reports e retrospectivas por agente como evidencia para melhoria futura, sem promocao automatica. |
+| `loki-knowledge-extraction-analysis` | Analisa artefatos externos e entrega aprendizados rastreaveis para `loki-continuous-improvement`, sem promover mudanca diretamente. |
+| `loki-self-healing` | Audita artefatos internos do pacote e aplica correcoes escopadas no working tree, sem stage ou commit automatico. |
 
-### Skills
+### Knowledge and support skills
 
 | Skill | Contribuicao no workflow |
 | --- | --- |
-| `loki-enrich-tasks` | Preserva o limite entre ajuste local da task e promocao normativa futura. |
-| `loki-retrospectiva-tecnica` | Estrutura fonte, objetivo, decisao, validacao, risco residual e candidatos de melhoria. |
-| `loki-continuous-improvement` | Classifica candidatos, executa fase de causa raiz quando requerida e preserva gates antes de promocao. |
-| `loki-knowledge-extraction-analysis` | Orquestra extracao externa, auditoria de impacto no Loki e consolidacao para melhoria continua. |
 | `lf-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
-| `loki-self-healing` | Executa auditoria interna de conformidade do pacote e limita correcoes a achados claros e verificaveis. |
 | `lf-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
 | `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
 | `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
@@ -99,7 +94,7 @@ Use esta regra simples:
 | Regra project-wide para toda LLM do consumidor | `AGENTS.md` com roteamento minimo |
 | Regra especifica de Claude Code, Codex ou adaptador | `CLAUDE.md` ou equivalente |
 | Procedimento tecnico reutilizavel | `skills/` |
-| Workflow invocavel com estado, outputs e gates | `commands/` |
+| Workflow invocavel com estado, outputs e gates | command bundle em `skills/loki-*/` |
 | Papel especialista com julgamento proprio | `agents/` |
 | Formato repetivel | `templates/` |
 | Evidencia insuficiente ou caso isolado | backlog |

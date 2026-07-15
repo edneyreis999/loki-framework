@@ -1,10 +1,10 @@
 ---
 name: lf-action-plan-authoring
-description: Create or review executable Loki action plans from technical analysis, briefs, feedback, or approved objectives. Use when generating `tasks.md`, `task-N.M.md`, phase folders, dependencies, human loops, concrete references, observable validation, or when improving `loki:generate-action-plan` outputs.
+description: Create or review executable Loki action plans from technical analysis, briefs, feedback, or approved objectives. Use when generating `tasks.md`, `task-N.M.md`, phase folders, dependencies, human loops, concrete references, observable validation, or when improving `loki-generate-action-plan` outputs.
 when_to_use:
   - "Use when creating or reviewing executable Loki action plans from analysis, briefs, feedback, or approved objectives."
   - "Use when generating tasks.md, task-N.M.md, phase folders, dependencies, human loops, references, or observable validation."
-  - "Use when improving outputs from loki:generate-action-plan."
+  - "Use when improving outputs from loki-generate-action-plan."
 argument-hint: "[analysis path, scope, plan directory, gates]"
 arguments:
   required: []
@@ -41,7 +41,7 @@ type: skill
 ## Procedure
 
 1. Confirm the planning input: technical analysis, brief, feedback,
-   `loki:human-decision-preflight` record when present, approved objective,
+   `loki-human-decision-preflight` record when present, approved objective,
    scope boundaries, forbidden surfaces, and known human decisions.
 2. Read only the sources required to plan safely. Use `lf-index-navigator`
    when durable consumer documentation in `/docs` is relevant.
@@ -79,7 +79,7 @@ type: skill
 - Do not skip phases. If phase N is required before phase N+1, declare the
   dependency explicitly.
 - Do not plan past an unresolved `must_ask_now` decision from
-  `loki:human-decision-preflight`.
+  `loki-human-decision-preflight`.
 - Do not write outside the approved plan directory.
 - Do not declare runtime, integration, UI, data persistence, or generated output
   validated without the required human or automated gate.
@@ -97,7 +97,7 @@ Use these package-root templates when writing artifacts:
 
 ## Output Standard
 
-The final plan must let `loki:run-plan` or another agent resume from disk
+The final plan must let `loki-run-plan` or another agent resume from disk
 without conversation memory. Include the next action, blocked decisions, human
 loops, write owner, target files, validators, and expected observable result in
 the files themselves.

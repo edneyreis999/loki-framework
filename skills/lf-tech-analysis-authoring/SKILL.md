@@ -1,10 +1,10 @@
 ---
 name: lf-tech-analysis-authoring
-description: Create or review evidence-based Loki technical analyses from briefs, feedback, specs, source paths, or runtime questions. Use when producing or improving `loki:tech-analysis` outputs, source maps, fact/hypothesis separation, decision matrices, external research gates, validators, human gates, and handoff to `loki:human-decision-preflight` or `loki:generate-action-plan`.
+description: Create or review evidence-based Loki technical analyses from briefs, feedback, specs, source paths, or runtime questions. Use when producing or improving `loki-tech-analysis` outputs, source maps, fact/hypothesis separation, decision matrices, external research gates, validators, human gates, and handoff to `loki-human-decision-preflight` or `loki-generate-action-plan`.
 when_to_use:
   - "Use when creating or reviewing evidence-based Loki technical analyses."
   - "Use when producing source maps, fact/hypothesis separation, decision matrices, research gates, validators, or planning handoff."
-  - "Use when improving outputs from loki:tech-analysis."
+  - "Use when improving outputs from loki-tech-analysis."
 argument-hint: "[brief, source paths, scope, forbidden writes, destination]"
 arguments:
   required: []
@@ -95,8 +95,8 @@ Use this package-root template when writing the artifact:
 ## Output Standard
 
 The analysis must be useful as direct input to
-`loki:human-decision-preflight` when human decisions remain open, or
-`loki:generate-action-plan` when the planning handoff is already clear. Another
+`loki-human-decision-preflight` when human decisions remain open, or
+`loki-generate-action-plan` when the planning handoff is already clear. Another
 agent should be able to inspect the sources, understand the chosen approach,
 see unresolved questions, and convert the recommendation into executable tasks
 without relying on conversation memory. The artifact must explicitly state

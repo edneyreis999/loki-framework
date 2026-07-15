@@ -8,7 +8,7 @@ instructions: |
 
   Fase Input:
   1. Leia e valide os parâmetros recebidos.
-  2. Se `loki_root` for `auto`, inferir subindo a partir das evidências ou do cwd até encontrar `manifest.yaml`, `commands/`, `skills/`, `agents/` e `docs/`; se inseguro, pergunte.
+  2. Se `loki_root` for `auto`, inferir subindo a partir das evidências ou do cwd até encontrar `manifest.yaml`, `skills/`, `agents/` e `docs/`; se inseguro, pergunte.
   3. Aceite como fonte: retrospectiva única, diretório/lista de retrospectivas, análise de extração de conhecimento, decisões humanas, approvals/rejeições/defaults, builds, validações, diffs, tasks e atritos de execução.
   4. Se faltar evidência reproduzível ou o destino estiver ambíguo, pare e peça informação.
 

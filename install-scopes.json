@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "profiles": {
     "all": ["both", "consumer-only", "internal-only"],
     "consumer": ["both", "consumer-only"],
@@ -8,33 +8,18 @@
   "artifact_identity_policy": {
     "skills/loki-*/SKILL.md": {
       "operational_role": "command",
-      "projection": "installable-skill",
-      "paired_contract": "commands/loki-*.md"
+      "serialization": "skill-bundle",
+      "required_resources": [
+        "references/execution.md",
+        "references/response.md",
+        "assets/response-template.md"
+      ]
     },
     "skills/lf-*/SKILL.md": {
       "operational_role": "skill"
     }
   },
   "artifacts": {
-    "commands": {
-      "loki-init.md": "both",
-      "loki-catalogar-docs.md": "both",
-      "loki-criar-branch.md": "both",
-      "loki-commit.md": "both",
-      "loki-abrir-pr.md": "both",
-      "loki-continuous-improvement.md": "both",
-      "loki-enrich-tasks.md": "both",
-      "loki-feedback.md": "both",
-      "loki-generate-action-plan.md": "both",
-      "loki-human-decision-preflight.md": "both",
-      "loki-agentic-development.md": "both",
-      "loki-knowledge-extraction-analysis.md": "internal-only",
-      "loki-deep-research.md": "both",
-      "loki-retrospectiva-tecnica.md": "both",
-      "loki-run-plan.md": "both",
-      "loki-self-healing.md": "internal-only",
-      "loki-tech-analysis.md": "both"
-    },
     "agents": {
       "audio-designer.md": "consumer-only",
       "balance-economy-designer.md": "consumer-only",

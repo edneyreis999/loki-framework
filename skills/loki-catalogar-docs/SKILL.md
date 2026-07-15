@@ -1,18 +1,19 @@
 ---
 name: loki-catalogar-docs
-description: Run the Loki `loki:catalogar-docs` command workflow in Codex. Use when cataloging durable consumer documentation under `/docs`, validating directory paths, applying recursion limits, coordinating safe bottom-up fan-out, invoking `catalogador` with explicit scoped-write envelopes, and producing a summarized catalog update.
+description: Run the Loki `loki-catalogar-docs` command workflow in Codex. Use when cataloging durable consumer documentation under `/docs`, validating directory paths, applying recursion limits, coordinating safe bottom-up fan-out, invoking `catalogador` with explicit scoped-write envelopes, and producing a summarized catalog update.
 when_to_use:
-  - "Use when running loki:catalogar-docs to catalog durable consumer documentation under /docs."
+  - "Use when running loki-catalogar-docs to catalog durable consumer documentation under /docs."
   - "Use when a user asks to catalog docs, refresh docs/index.xml, validate documentation directory scope, or run bottom-up cataloging with catalogador."
   - "Use when safe fan-out, recursion limits, target_files ownership, approval gates, validators, and resumable catalog state are required."
-argument-hint: "[docs directory, recursive flag, approval context]"
+argument-hint: "[DOCS_DIR, RECURSIVE, approval context]"
 arguments:
   required:
-    - docs_directory
+    - DOCS_DIR
   optional:
-    - recursive
-    - large_tree_confirmation
-    - out_of_docs_approval
+    - RECURSIVE
+    - LARGE_TREE_CONFIRMATION
+    - OUT_OF_DOCS_APPROVAL
+    - recorded_decisions
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -30,50 +31,79 @@ escalation_signals:
   - durable consumer documentation changes without recorded approval
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-catalogar-docs/SKILL.md"
-  command_contract: "commands/loki-catalogar-docs.md"
-shell: {}
+  package_bundle: "skills/loki-catalogar-docs/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:catalogar-docs
+serialization: skill-bundle
+domain: documentation
+required_skills: []
+required_commands: []
 status: draft
 used_by:
-  - loki:catalogar-docs
+  - loki-catalogar-docs
 ---
 
 # loki-catalogar-docs
 
-## Procedure
+## Input
 
-1. Read the installed command contract:
-   [loki-catalogar-docs.md](references/command.md).
-2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   required skills, handoffs, validators, human gates, stop conditions,
-   packaging checks and resume contract.
-3. Validate `DOCS_DIR` before discovery: it must exist, be a directory, stay
-   inside the workspace and belong to durable consumer documentation unless an
-   explicit out-of-`/docs` approval is already recorded.
-4. Apply the command's deterministic exclusions and recursion limits before
-   invoking `catalogador`.
-5. Build bottom-up batches and allow fan-out only when `target_files` are
-   provably disjoint. Serialize every write to `docs/index.xml` or a parent
-   index.
-6. Invoke `catalogador` only through the explicit scoped-write envelope declared
-   by the command contract.
-7. Treat this command projection as the Codex entrypoint for the command name
-   `loki:catalogar-docs`.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Limits
+```yaml
+parameters:
+  - key: DOCS_DIR
+    input_type: path
+    requirement: required
+    description: Diretorio de documentacao duradoura do consumidor a catalogar, preferencialmente relativo ao workspace.
+  - key: RECURSIVE
+    input_type: boolean
+    requirement: optional
+    default: true
+    description: Quando true, descobre a arvore ate os limites do command; quando false, processa apenas DOCS_DIR.
+  - key: LARGE_TREE_CONFIRMATION
+    input_type: approval_record
+    requirement: optional
+    default: null
+    description: Confirmacao humana exigida se a descoberta encontrar mais de 20 e no maximo 100 diretorios.
+  - key: OUT_OF_DOCS_APPROVAL
+    input_type: approval_record
+    requirement: optional
+    default: null
+    description: Approval explicito exigido para um alvo documental fora de /docs.
+  - key: recorded_decisions
+    input_type: list[mapping]
+    requirement: optional
+    default: []
+    description: Decisoes humanas ja registradas por um plano ou workflow retomavel, com fonte e escopo.
+```
 
-- Do not write outside the active command envelope.
-- Do not use this command for generic source-code, runtime, build, generated
-  artifact, engine, data, asset or configuration directories.
-- Do not create per-directory `index.md` files by default; the first supported
-  catalog target is `docs/index.xml`.
-- Do not treat `.claude/**`, `.agents/**` or `.codex/**` as normative sources
-  or write targets without later explicit installation approval.
-- Do not mark approval, technical review or human validation as satisfied unless
-  the decision is present in the current command context, an approved plan, or a
-  recorded human interaction.
+Valide que `DOCS_DIR` foi informado, possui formato de path, existe, e um
+diretorio, resolve dentro do workspace real e nao atravessa symlink ou traversal
+para fora dele. Valide `RECURSIVE` como boolean, os approvals como registros
+com decisao, fonte e escopo, e `recorded_decisions` como lista. Nao trate um
+approval generico como autorizacao para alvo fora de `/docs` ou para escrita.
+
+Identifique cada informacao obrigatoria ausente ou invalida, explique como
+corrigi-la e solicite-a ao usuario antes de avancar. Nao invente paths,
+decisoes, approvals, escopo ou defaults alem dos declarados acima.
+
+Normalize a entrada em um registro com objetivo, parametros validados,
+workspace e `DOCS_DIR` resolvidos, escopo, restricoes, exclusoes previstas,
+destinos de saida, approvals, gates e lacunas. Durante Input nao descubra a
+arvore, catalogue documentos, invoque agentes, altere arquivos, execute a
+tarefa principal nem declare sucesso.
+
+## Execution
+
+Leia integralmente [references/execution.md](references/execution.md) antes de
+agir e siga todas as referencias adicionais que esse arquivo ordenar.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e, na
+resposta terminal, preencha [assets/response-template.md](assets/response-template.md).

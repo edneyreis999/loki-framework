@@ -1,6 +1,6 @@
 # Diagnostic Output and Forward-Test Contract
 
-Read this reference only when the `loki:feedback` command needs explicit
+Read this reference only when the `loki-feedback` command needs explicit
 response states or when validating a revision of its adapter projection.
 
 ## Response States

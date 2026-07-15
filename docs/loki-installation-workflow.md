@@ -15,7 +15,7 @@ geradas de volta para o pacote e sem misturar perfis de instalacao.
 ## Ideia central
 
 O Loki e instalado em um consumidor como superficie documental e operacional:
-commands, skills, agents, templates e projecoes Codex ficam disponiveis no
+command bundles, skills, agents, templates e projecoes Codex ficam disponiveis no
 projeto alvo, mas a fonte auditavel continua sendo este pacote.
 
 Instalar nao e escrever no runtime, engine, framework, assets ou dados do
@@ -25,7 +25,7 @@ registro claro do que ficou instalado.
 
 Instalar tambem nao ativa regras de engine. Skills opcionais de tecnologia,
 como extensoes RPG Maker MZ, podem ficar disponiveis no perfil `consumer`, mas
-o workflow core continua agnostico: `loki:init` registra tecnologia detectada e
+o workflow core continua agnostico: `loki-init` registra tecnologia detectada e
 skills candidatas nos envelopes; agentes especialistas decidem se precisam
 invocar uma skill tecnica para concluir o proprio handoff.
 
@@ -60,6 +60,8 @@ invocar uma skill tecnica para concluir o proprio handoff.
    artefato fora do perfil solicitado, pare. Corrija manualmente o destino
    aprovado, normalmente usando o manifest anterior como guia de rollback, e
    rode novo dry-run antes de aplicar.
+   Links de command de instalações anteriores só podem ser removidos depois que
+   o dry-run os classificar como symlink exato para este pacote.
 8. Aplique somente depois de approval explicito para o caminho do destino e o
    modo de execucao:
 
@@ -69,6 +71,9 @@ invocar uma skill tecnica para concluir o proprio handoff.
 
 9. Use `--replace` somente com approval separado, escopado ao destino e ao
    modo. Sem `--replace`, conflitos devem bloquear a instalacao.
+   Para aplicar o cleanup legado já revisado, use adicionalmente
+   `--cleanup-legacy-commands`; a flag é inválida sem `--yes` e nunca remove
+   arquivo real, link divergente ou caminho sob parent symlink.
 10. Depois da aplicacao, valide a instalacao.
 
 Validacao pos-instalacao:
@@ -76,7 +81,6 @@ Validacao pos-instalacao:
 ```bash
 python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
-find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
 find "$DEST/.agents/agents" -maxdepth 1 -type l -name '*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
@@ -88,6 +92,7 @@ manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
 data = json.loads(manifest.read_text(encoding="utf-8"))
 print(f"profile={data.get('install_profile')} links={len(data.get('links', []))}")
 assert all("install_scope" in link for link in data.get("links", []))
+assert all(link.get("type") != "command" for link in data.get("links", []))
 PY
 git -C "$DEST" status --short .agents .codex
 ```
@@ -109,7 +114,7 @@ git -C "$DEST" status --short .agents .codex
 | `README.md` | Define a politica local de instalacao, destinos, comandos de dry-run, apply e rollback. |
 | `docs/usage-guide.md` | Explica o uso operacional do instalador, perfis, validacao e limites. |
 | `manifest.yaml` | Declara politica de instalacao, destinos Codex, gates e arquivos do pacote. |
-| `install-scopes.json` | Define quais comandos, skills e agentes pertencem a cada escopo instalavel. |
+| `install-scopes.json` | Define quais bundles, skills e agentes pertencem a cada escopo instalavel. |
 | `scripts/install-loki-symlinks.py` | Planeja e aplica symlinks por perfil, gera manifest e bloqueia conflitos. |
 | `scripts/validate-install-scopes.py` | Valida escopos, neutralidade de artefatos `both`, TOMLs Codex e metadados. |
 
@@ -118,14 +123,13 @@ git -C "$DEST" status --short .agents .codex
 | Destino | Conteudo esperado |
 | --- | --- |
 | `.agents/skills/<skill-name>` | Symlink para `skills/<skill-name>`. |
-| `.agents/commands/loki/<command>.md` | Symlink para `commands/<command>.md`. |
 | `.agents/agents/<agent>.md` | Symlink para `agents/<agent>.md`. |
 | `.agents/templates` | Symlink para `templates`. |
 | `.codex/agents/<agent>.toml` | Symlink para `codex/agents/<agent>.toml`. |
 | `.agents/loki-installation-manifest.json` | Manifest gerado com origem, destino, perfil, escopo e status dos links. |
 
 Skills `consumer-only` de tecnologia sao destinos de instalacao, nao passos
-automaticos da instalacao nem do `loki:init`. Por exemplo, uma skill de
+automaticos da instalacao nem do `loki-init`. Por exemplo, uma skill de
 inventario RPG Maker MZ deve ser chamada por agentes game-dev somente quando o
 projeto consumidor for RPG Maker MZ e o agente precisar desse inventario para
 seu handoff.
@@ -154,7 +158,8 @@ Uma instalacao bem-sucedida deve demonstrar:
 
 - `scripts/validate-install-scopes.py` passa no package root;
 - os entrypoints `SKILL.md` resolvem via `find -L`;
-- comandos Loki instalados correspondem ao perfil escolhido;
+- command bundles `loki-*` instalados em `.agents/skills` correspondem ao perfil escolhido;
+- nenhum link novo de tipo `command` foi criado;
 - agentes Markdown e TOMLs Codex existem como symlinks;
 - `.agents/loki-installation-manifest.json` e JSON parseavel e registra
   `install_profile`, `install_scope` e `links`;

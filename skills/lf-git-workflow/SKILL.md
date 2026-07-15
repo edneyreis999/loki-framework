@@ -38,9 +38,9 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:criar-branch
-  - loki:commit
-  - loki:abrir-pr
+  - loki-criar-branch
+  - loki-commit
+  - loki-abrir-pr
 ---
 
 # lf-git-workflow

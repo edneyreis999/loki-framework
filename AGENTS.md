@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is a self-contained Loki Framework package, not an application runtime. `manifest.yaml` is the operational inventory for artifact paths, status, install targets, and guardrails. `commands/` contains invokable Loki workflows, `skills/` contains installable skill folders with `SKILL.md`, `agents/` contains specialist role definitions, `templates/` contains reusable contract templates, and `docs/` contains package policy, workflows, and usage guidance. `README.md` documents local installation and staging expectations.
+This repository is a self-contained Loki Framework package, not an application runtime. `manifest.yaml` is the operational inventory for artifact paths, status, install targets, and guardrails. `skills/loki-*/` contains invokable command bundles, other `skills/` folders contain reusable knowledge, `agents/` contains specialist role definitions, `templates/` contains reusable contract templates, and `docs/` contains package policy, workflows, and usage guidance. `README.md` documents local installation and staging expectations.
 
 ## Build, Test, and Development Commands
 
@@ -15,7 +15,7 @@ There is no root package manager, build script, or automated test suite. Use she
 
 ## Coding Style & Naming Conventions
 
-Write Markdown with concise YAML frontmatter where existing artifacts use it. Commands use the `loki:` namespace and should declare purpose, inputs, outputs, write boundaries, validators, human gates, stop conditions, and resume contract. Skills live at `skills/<skill-name>/SKILL.md`; Loki package skills use the `loki-` prefix and require frontmatter `name` and trigger-focused `description`. Put long examples or conditional guidance in `references/`, not in the main `SKILL.md`. Keep agents narrow and read-only or proposal-only unless a package decision changes that model.
+Write Markdown with concise YAML frontmatter where existing artifacts use it. Commands use the `loki-` namespace, live at `skills/loki-<stem>/`, declare `type: command` and `serialization: skill-bundle`, and split Input, Execution and Response across the bundle. Knowledge skills use `lf-` or a domain prefix. Every skill folder requires frontmatter `name` and trigger-focused `description`. Put long examples or conditional guidance in `references/`, not in the main `SKILL.md`. Keep agents narrow and read-only or proposal-only unless a package decision changes that model.
 
 ## Testing Guidelines
 

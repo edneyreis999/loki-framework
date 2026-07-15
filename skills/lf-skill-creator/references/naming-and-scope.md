@@ -12,9 +12,9 @@ Use this reference when naming a skill or deciding whether the requested artifac
 
 ## Loki Package Namespace And Operational Identity
 
-- Reserve `loki-*` under `skills/` for installable command projections backed
-  by a matching `commands/loki-*.md` file. Classify them operationally as
-  commands, not skills.
+- Reserve `loki-*` under `skills/` for command bundles with `type: command` and
+  `serialization: skill-bundle`. Classify them operationally as commands, not
+  skills; the bundle is the sole source.
 - Use `lf-*` for internal Loki Framework helper skills that must remain
   installable for consumers but should not appear under the `$loki-` command
   filter.
@@ -22,8 +22,8 @@ Use this reference when naming a skill or deciding whether the requested artifac
   `rpg-maker-mz-*`, instead of `loki-*`.
 - Keep the folder name and top-level `name` equal after every rename.
 - Treat storage under `skills/**` and serialization as `SKILL.md` as adapter
-  details; they do not override the operational identity declared by the
-  namespace and paired command.
+  details; they do not override the operational identity declared by
+  `name: loki-<stem>` and `type: command`.
 
 ## Skill Versus Other Artifacts
 

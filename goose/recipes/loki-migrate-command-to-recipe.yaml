@@ -1,21 +1,21 @@
 version: 1.0.0
 title: Loki Migrate Command to Recipe
-description: Analisa um comando Loki e gera um guia para migrá-lo manualmente para Goose Recipe.
+description: Analisa um command bundle Loki e gera um guia para migrá-lo manualmente para Goose Recipe.
 instructions: |
-  Você é o orquestrador de migração Loki → Goose para comandos individuais.
+  Você é o orquestrador de migração Loki → Goose para command bundles individuais.
 
   Objetivo:
-  - Receber um comando Loki em Markdown.
-  - Analisar comando, skills, agentes, gates, validators, outputs, write boundaries, stop conditions e dependências.
+  - Receber o caminho de `SKILL.md` de um command bundle Loki.
+  - Analisar o bundle inteiro, skills, agentes, gates, validators, outputs, write boundaries, stop conditions e dependências.
   - Estender a análise de migração para skills e agents materialmente referenciados pelo comando, recomendando quando devem ser reutilizados, inlinados, descartados ou reescritos como artefatos otimizados para Goose.
   - Tratar a migração como Goose-first: o objetivo estratégico é tornar o workflow executável no Goose sem depender de descoberta Codex/Claude, preservando artefatos root apenas como fontes de compatibilidade até depreciação aprovada.
   - Produzir um guia para recriar esse comando manualmente como Goose Recipe no Goose Desktop, incluindo recomendações de skills e custom agents Goose-native quando necessárias.
   - Não criar o recipe automaticamente.
-  - Não editar `commands/**`, root `skills/**`, root `agents/**`, `manifest.yaml`, `.agents/**`, `.codex/**` ou `.claude/**`, exceto se houver autorização explícita em `output_guide_path`.
+  - Não editar root `skills/**`, root `agents/**`, `manifest.yaml`, `.agents/**`, `.codex/**` ou `.claude/**`, exceto se houver autorização explícita em `output_guide_path`.
   - Quando `output_guide_path` for real e seguro, e a análise concluir que uma skill ou agente precisa sobreviver como artefato Goose-native, gere ou atualize custom agents em `goose/agents/**` e skills em `goose/skills/**`, mantendo-os separados dos artefatos otimizados para Codex/Claude.
 
   Fontes obrigatórias:
-  1. Leia o arquivo indicado em `command_file_path`; não peça conteúdo colado.
+  1. Leia o `SKILL.md` indicado em `command_bundle_path` e todos os arquivos roteados por `paths.execution`, `paths.response` e `paths.response_template`; não peça conteúdo colado.
   2. Identifique `required_skills`, skills citadas e agentes/subagentes citados.
   3. Leia o necessário em `skills/<skill>/SKILL.md`, `skills/<skill>/references/**`, `agents/<agent>.md`, `manifest.yaml` e `migration_reference_path`.
   4. Antes de propor ou gravar artefatos Goose-native, verifique conflitos existentes em `goose/skills/**` e `goose/agents/**` para não sobrescrever trabalho manual sem necessidade.
@@ -65,9 +65,9 @@ instructions: |
   - Não grave artefatos Goose-native fora de `goose/agents/**` e `goose/skills/**`.
   - Não remova nem altere root `skills/**`, root `agents/**`, `.agents/**`, `.codex/**` ou `.claude/**` como parte da depreciação; registre somente a condição de depreciação e o próximo passo aprovado necessário.
 prompt: |
-  Analise este comando Loki e gere um guia hands-on para migrá-lo manualmente para Goose Recipe.
+  Analise este command bundle Loki e gere um guia hands-on para migrá-lo manualmente para Goose Recipe.
 
-  - Caminho do comando: {{ command_file_path }}
+  - Caminho do SKILL.md do command bundle: {{ command_bundle_path }}
   - Diretório raiz do Loki Framework: {{ loki_root }}
   - Referência durável de migração: {{ migration_reference_path }}
   - Profundidade de análise: {{ analysis_depth }}
@@ -75,7 +75,7 @@ prompt: |
   - Idioma do guia: {{ language }}
   - Caminho para salvar o guia, se autorizado: {{ output_guide_path }}
 
-  Leia `command_file_path`. Se `loki_root` for `auto`, vazio ou ausente, infira a raiz subindo diretórios até encontrar `manifest.yaml` e `commands/`, `skills/`, `agents/` e `docs/`. Se não conseguir, peça `loki_root`. Depois valide o comando, leia skills/agentes locais e gere o guia.
+  Leia `command_bundle_path` e os três recursos que seu frontmatter roteia. Se `loki_root` for `auto`, vazio ou ausente, infira a raiz subindo diretórios até encontrar `manifest.yaml`, `skills/`, `agents/` e `docs/`. Se não conseguir, peça `loki_root`. Valide `type: command`, `serialization: skill-bundle`, a árvore mínima e as dependências antes de ler skills/agentes locais e gerar o guia.
 
   Se `output_guide_path` for um caminho real e a escrita for segura, salve o guia nesse caminho. Se a arquitetura exigir mais de uma recipe e `output_guide_path` for diretório, salve um arquivo Markdown separado para a recipe principal e para cada subrecipe/recipe companheira. Se `output_guide_path` for arquivo, salve o principal nesse caminho e crie arquivos irmãos para os demais quando for seguro. Se a migração exigir skills ou agents Goose-native, grave-os em `goose/skills/**` e `goose/agents/**` quando seguro e liste os caminhos. Se uma skill for inlinada ou convertida em subrecipe, inclua a seção de depreciação candidata. Se estiver vazio ou `none`, entregue o guia e os conteúdos propostos apenas na conversa, com divisórias claras por arquivo/recipe/artefato.
 extensions:
@@ -96,17 +96,17 @@ extensions:
   display_name: Summon
   bundled: true
 activities:
-- message:**Migrate Command to Recipe** gera um guia manual para recriar um comando Loki como Goose Recipe.
+- message:**Migrate Command to Recipe** gera um guia manual para recriar um command bundle Loki como Goose Recipe.
 - Gerar guia de migração do comando informado
 parameters:
-- key: command_file_path
+- key: command_bundle_path
   input_type: string
   requirement: required
-  description: Caminho absoluto ou relativo do comando
+  description: Caminho absoluto ou relativo do SKILL.md do command bundle Loki.
 - key: loki_root
   input_type: string
   requirement: optional
-  description: Raiz do Loki Framework; use auto para inferir pelo caminho do comando.
+  description: Raiz do Loki Framework; use auto para inferir pelo caminho do bundle.
   default: auto
 - key: migration_reference_path
   input_type: string

@@ -1,8 +1,8 @@
 ---
 name: lf-run-plan-execution
-description: Execute approved Loki action-plan phases from `tasks.md` and `task-N.M.md` files. Use for `loki:run-plan` preflight, phase/task onboarding, execution briefs, dependency checks, read-only context extraction routing, serialized writes, validators, human gates, build evidence, and resumable task state.
+description: Execute approved Loki action-plan phases from `tasks.md` and `task-N.M.md` files. Use for `loki-run-plan` preflight, phase/task onboarding, execution briefs, dependency checks, read-only context extraction routing, serialized writes, validators, human gates, build evidence, and resumable task state.
 when_to_use:
-  - "Use for loki:run-plan preflight and phase execution from approved tasks.md and task-N.M.md files."
+  - "Use for loki-run-plan preflight and phase execution from approved tasks.md and task-N.M.md files."
   - "Use when checking dependencies, execution briefs, read-only context routing, serialized writes, validators, gates, build evidence, and resumable state."
 argument-hint: "[phase, tasks.md, task target, analysis directory]"
 arguments:
@@ -35,7 +35,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:run-plan
+  - loki-run-plan
 ---
 
 # lf-run-plan-execution
@@ -107,7 +107,7 @@ decisoes humanas e validators em uma execucao rastreavel.
     - Confirmar ...
     - Responder ...
     ```
-16. Ao concluir a fase, recomendar `loki:retrospectiva-tecnica` com resumo de
+16. Ao concluir a fase, recomendar `loki-retrospectiva-tecnica` com resumo de
     arquivos afetados, validators, gates humanos, riscos residuais, comandos e
     scripts executados, outputs inesperados, inferencias uteis e incorretas,
     mismatches de ambiente, correcoes do usuario e desperdicios que a proxima

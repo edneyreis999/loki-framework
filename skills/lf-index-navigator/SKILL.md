@@ -35,7 +35,7 @@ status: draft
 used_by:
   - bibliotecario
   - catalogador
-  - loki:continuous-improvement
+  - loki-continuous-improvement
 ---
 
 # lf-index-navigator

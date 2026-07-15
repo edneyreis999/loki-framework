@@ -12,7 +12,7 @@ instructions: |
 
   Classificação operacional:
   - Workflow híbrido de auditoria, correção serializada e orquestração opcional por handoffs read-only.
-  - Use modelo de raciocínio forte/frontier para escopos amplos, conflitos de pacote, mudanças em commands/skills/agents/templates/docs/scripts/manifest ou divergência entre staged e working tree.
+  - Use modelo de raciocínio forte/frontier para escopos amplos, conflitos de pacote, mudanças em command bundles/skills/agents/templates/docs/scripts/manifest ou divergência entre staged e working tree.
 
   Separação de responsabilidades:
   - Trate esta Goose Recipe como o Command/orquestrador: ela coordena Input, Execution e Response.
@@ -30,7 +30,7 @@ instructions: |
 
   1. Resolver entrada e package root
   - Receba `scope_input` como arquivo, diretório, workflow Loki ou `staged`.
-  - Se `loki_root` for `auto`, vazio ou ausente, infira subindo a partir do escopo até encontrar `manifest.yaml`, `commands/`, `skills/`, `agents/` e `docs/`.
+  - Se `loki_root` for `auto`, vazio ou ausente, infira subindo a partir do escopo até encontrar `manifest.yaml`, `skills/`, `agents/` e `docs/`.
   - Se não conseguir inferir com segurança, pergunte pelo `loki_root`.
   - Se não houver escopo e não houver staged files, pare e peça escopo.
   - Se o escopo apontar para fora do package root, pare.
@@ -38,7 +38,7 @@ instructions: |
   2. Resolver escopo
   - Para arquivo: selecione o arquivo e metadados obrigatórios relacionados.
   - Para diretório: enumere arquivos do pacote sob o diretório.
-  - Para workflow: mapeie command, wrapper skill, helper skills, referências, templates, docs, manifest, inventário, command router e instalador relacionados.
+  - Para workflow: mapeie o command bundle, helper skills, referências, assets, templates, docs, manifest, inventário, router e instalador relacionados.
   - Para `staged`: use `git diff --cached --name-only --diff-filter=ACMR` somente para selecionar arquivos; aplique correções apenas aos arquivos no working tree.
   - Aplique `scope_exclusions` se fornecido.
 
@@ -52,7 +52,7 @@ instructions: |
   - comandos, skills, referências, templates, docs, scripts, agents e instalador relacionados ao escopo.
 
   4. Classificar install scope
-  - Antes de qualquer escrita em `commands/**` ou `skills/**`, leia `install-scopes.json`.
+  - Antes de qualquer escrita em command bundles ou `skills/**`, leia `install-scopes.json`.
   - Classifique cada comando/skill selecionado como `internal-only`, `both`, `consumer-only` ou `unclassified-blocker`.
   - Não edite arquivo `unclassified-blocker`; registre como bloqueado.
   - Para artefatos `both`, aplique checklist de neutralidade antes de qualquer correção.
@@ -91,7 +91,7 @@ instructions: |
   - Não amplie silenciosamente o escopo, exceto arquivos de consistência obrigatória quando `allow_required_consistency_files` for verdadeiro.
 
   Allowed writes:
-  - dentro do package root e do escopo explícito: `commands/**`, `skills/**`, `agents/**`, `codex/agents/**`, `templates/**`, `docs/**`, `README.md`, `index.md`, `manifest.yaml`, `scripts/**`;
+  - dentro do package root e do escopo explícito: `skills/**`, `agents/**`, `codex/agents/**`, `templates/**`, `docs/**`, `README.md`, `index.md`, `manifest.yaml`, `scripts/**`;
   - arquivos obrigatórios de consistência do pacote, como manifest, inventário, command workflow skill ou instalador, quando a correção exigir.
 
   Forbidden writes:
@@ -107,8 +107,8 @@ instructions: |
   - `find skills -maxdepth 1 -type f -name '*.md'`;
   - validação de frontmatter de skills quando skills forem tocadas;
   - validação de paths do `manifest.yaml` quando manifest/inventário forem tocados;
-  - `python3 scripts/validate-install-scopes.py` quando tocar commands, skills ou superfícies instaláveis;
-  - `python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile package-source` quando tocar skills, commands, agents, templates, scripts ou instalador;
+  - `python3 scripts/validate-install-scopes.py` quando tocar command bundles, skills ou superfícies instaláveis;
+  - `python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile package-source` quando tocar bundles/skills, agents, templates, scripts ou instalador;
   - validadores específicos do artefato corrigido.
 
   10. Stop conditions
@@ -118,7 +118,7 @@ instructions: |
   - a única correção possível exigir forbidden write;
   - a correção depender de informação externa atual, web research ou decisão de produto ausente;
   - houver conflito interno sem critério claro;
-  - uma edição em `commands/**` ou `skills/**` depender de install scope ausente.
+  - uma edição em command bundle ou `skills/**` depender de install scope ausente.
 
   11. Relatório final
   Responda em Markdown com:

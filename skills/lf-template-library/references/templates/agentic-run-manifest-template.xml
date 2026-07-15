@@ -2,7 +2,7 @@
 <agentic_run_manifest schema_version="1">
   <run>
     <run_id>{{run_id}}</run_id>
-    <command>loki:agentic-development</command>
+    <command>loki-agentic-development</command>
     <status>draft</status>
     <current_phase>{{current_phase}}</current_phase>
     <created_at>{{created_at}}</created_at>

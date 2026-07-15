@@ -8,7 +8,7 @@ technical retrospectives.
 
 ```yaml
 command_contract:
-  name: "loki:example"
+  name: "loki-example"
   purpose: ""
   inputs:
     required: []
@@ -52,6 +52,24 @@ command_contract:
   stop_conditions: []
   resume_contract: ""
 ```
+
+## Loki Skill-Bundle Serialization
+
+No estado final do pacote, serialize um command Loki em um unico bundle:
+
+```text
+skills/loki-<stem>/
+├── SKILL.md
+├── references/execution.md
+├── references/response.md
+└── assets/response-template.md
+```
+
+`SKILL.md` conserva Input e metadata; `execution.md` conserva o contrato
+operacional completo; `response.md` declara consumidor e formato; o asset
+materializa a resposta. Use `type: command` e `serialization: skill-bundle`.
+Mantenha `required_commands` separado de `required_skills`. Nao crie contrato
+pareado nem campos de projection.
 
 ## Execution Profile Rules
 

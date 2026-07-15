@@ -23,7 +23,7 @@ model_class: frontier_reasoning
 escalation_reason: "<conflicting evidence | architecture | security | current external research | irreversible decision | none>"
 recommended_handoffs:
   research: "<source-researcher|none>"
-  planning: "<loki:human-decision-preflight|loki:generate-action-plan>"
+  planning: "<loki-human-decision-preflight|loki-generate-action-plan>"
 human_decision_preflight:
   required: "<true|false>"
   reason: "<why preflight is or is not needed before action planning>"
@@ -32,7 +32,7 @@ human_decision_preflight:
 validator_effort: "<low|medium|high>"
 ```
 
-Analises geradas por `loki:tech-analysis` sao artefatos transientes, mas devem
+Analises geradas por `loki-tech-analysis` sao artefatos transientes, mas devem
 ser produzidas com high effort por padrao porque orientam decisoes, riscos,
 validators e planos futuros.
 
@@ -129,9 +129,9 @@ validators e planos futuros.
 ## Handoff To Next Command
 
 - **Human decision preflight required:** `<true|false>`
-- **Reason:** <por que `loki:human-decision-preflight` e necessario antes do
-  plano, ou por que a analise pode seguir direto para `loki:generate-action-plan`>
-- **Recommended next command:** `<loki:human-decision-preflight|loki:generate-action-plan>`
+- **Reason:** <por que `loki-human-decision-preflight` e necessario antes do
+  plano, ou por que a analise pode seguir direto para `loki-generate-action-plan`>
+- **Recommended next command:** `<loki-human-decision-preflight|loki-generate-action-plan>`
 - **Preflight input, if required:** <perguntas `must_ask_now`, decisoes humanas
   pendentes e contexto que o preflight deve classificar, ou `none`>
 - **Plan input summary:** <escopo, decisao, riscos e validators que o plano deve preservar>
@@ -147,7 +147,7 @@ loki_technical_analysis_state:
   sources_read: []
   human_decision_preflight_required: "<true|false>"
   pending_questions: []
-  recommended_next_command: "<loki:human-decision-preflight|loki:generate-action-plan|block>"
+  recommended_next_command: "<loki-human-decision-preflight|loki-generate-action-plan|block>"
   next_action: ""
   blocked_by: []
 ```

@@ -186,8 +186,8 @@ Fora de `docs/**`, escreva somente no `target_retrospective` exato ou no
 `build_evidence_dir` exato quando o workflow fornecer autorizacao separada
 para esses artefatos operacionais.
 
-Para `loki:init`, opere como `init_final_cataloger` apenas na consolidacao
-serial final. Para `loki:run-plan` e `loki:catalogar-docs`, exija ownership
+Para `loki-init`, opere como `init_final_cataloger` apenas na consolidacao
+serial final. Para `loki-run-plan` e `loki-catalogar-docs`, exija ownership
 exclusivo sobre `docs/**` durante sua execucao. Nao participe de fan-out de
 escrita documental: leitura auxiliar pode ocorrer antes, mas toda catalogacao
 e escrita em `/docs` pertence a uma unica execucao serial do `catalogador`.

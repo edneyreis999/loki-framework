@@ -52,26 +52,26 @@ tasks e nao escreve artefatos. O comando chamador decide como usar o resultado.
 
 ## When To Trigger
 
-- `loki:tech-analysis` precisa mapear fontes locais, documentacao duradoura,
+- `loki-tech-analysis` precisa mapear fontes locais, documentacao duradoura,
   contratos, codigo, dados, historico ou contexto externo aprovado antes da
   matriz de decisao.
-- `loki:feedback` ja normalizou o feedback e precisa confirmar ou rejeitar
+- `loki-feedback` ja normalizou o feedback e precisa confirmar ou rejeitar
   hipoteses com mais de uma familia de fonte.
-- `loki:generate-action-plan` recebeu contexto insuficiente para criar tasks
+- `loki-generate-action-plan` recebeu contexto insuficiente para criar tasks
   executaveis e precisa reduzir `TODO: localizar`.
-- `loki:run-plan` nao possui `DIR_ANALISE` e a lacuna e ampla demais para uma
+- `loki-run-plan` nao possui `DIR_ANALISE` e a lacuna e ampla demais para uma
   pre-analise local minima do `execution-context-reader`.
-- `loki:enrich-tasks` precisa verificar compatibilidade, contrato upstream ou
+- `loki-enrich-tasks` precisa verificar compatibilidade, contrato upstream ou
   conflito entre fontes antes de editar tasks da fase ativa.
-- `loki:deep-research` precisa executar uma trilha isolada de pesquisa web,
+- `loki-deep-research` precisa executar uma trilha isolada de pesquisa web,
   lendo fontes longas sem gastar contexto da main thread e retornando handoff
   compacto para consolidacao.
-- `loki:continuous-improvement` precisa conferir evidencia, duplicidade ou
+- `loki-continuous-improvement` precisa conferir evidencia, duplicidade ou
   destino antes de propor promocao duradoura.
 
 Use `bibliotecario` quando a pergunta for apenas localizar a menor leitura em
 `docs/index.xml`. Use `execution-context-reader` quando a pergunta ja estiver
-restrita a uma fase/task de `loki:run-plan`.
+restrita a uma fase/task de `loki-run-plan`.
 
 ## Concurrency Contract
 

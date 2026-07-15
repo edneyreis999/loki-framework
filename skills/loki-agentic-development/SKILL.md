@@ -1,16 +1,13 @@
 ---
 name: loki-agentic-development
-description: Run the Loki `loki:agentic-development` integrated workflow in Codex. Use when turning a simple demand into agentic analysis, material decision gates, action planning, autonomous phase execution, evidence, retrospectives, digest, and backlog while preserving `loki:run-plan` for manual execution.
+description: Run the Loki `loki-agentic-development` command bundle. Turn a demand into agentic analysis, material decision gates, an executable plan, autonomous phase execution, evidence, retrospectives, digest and backlog.
 when_to_use:
-  - "Use when running loki:agentic-development from Codex."
-  - "Use when a demand should go through agentic analysis, plan generation, autonomous execution, evidence, retrospectives, digest, and backlog."
-argument-hint: "[demand path or text, run directory, optional scope]"
+  - "Use when a demand should pass through multi-agent analysis, planning and autonomous Loki plan execution."
+  - "Use when the run requires resumable XML state, scoped writers, validators, human gates, retrospectives and digest."
+argument-hint: "[demand, run_directory, allowed_scope, optional out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
 arguments:
-  required: []
-  optional:
-    - demand
-    - run_directory
-    - scope
+  required: [demand, run_directory, allowed_scope]
+  optional: [out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -26,48 +23,79 @@ escalation_signals:
   - autonomous execution across multiple planned phases
   - unresolved decision gates before action planning
   - target file conflicts between agent runs
-  - high-risk runtime or integration work delegated by a generated plan
+  - high-risk runtime or integration work
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-agentic-development/SKILL.md"
-  command_contract: "commands/loki-agentic-development.md"
-shell: {}
+  package_bundle: "skills/loki-agentic-development/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:agentic-development
+serialization: skill-bundle
+domain: orchestration
+required_skills: [lf-agentic-orchestration]
+required_commands: [loki-human-decision-preflight, loki-generate-action-plan, loki-run-plan, loki-retrospectiva-tecnica]
 status: draft
-used_by:
-  - loki:agentic-development
+used_by: [loki-agentic-development]
 ---
 
 # loki-agentic-development
 
-## Procedure
+## Input
 
-1. Read the installed command contract:
-   [loki-agentic-development.md](references/command.md).
-2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   required skills, handoffs, validators, gates, stop conditions, and resume
-   contract.
-3. Load `lf-agentic-orchestration` before selecting agents, writing XML state,
-   running fan-out, processing decision gates, or producing digest/backlog.
-4. Use `loki-human-decision-preflight`, `loki-generate-action-plan`,
-   `loki-run-plan`, and `loki-retrospectiva-tecnica` only as directed by the
-   command contract and active run state.
-5. Treat this command projection as the Codex entrypoint for the command name
-   `loki:agentic-development`.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Limits
+```yaml
+parameters:
+  - key: demand
+    input_type: text_or_path[file]
+    requirement: required
+    description: Demanda que iniciará o fluxo integrado.
+  - key: run_directory
+    input_type: path[directory]
+    requirement: required
+    description: Diretório aprovado para estado e evidências transitórias.
+  - key: allowed_scope
+    input_type: list[path_or_domain]
+    requirement: required
+    description: Superfícies permitidas para análise, plano e tasks.
+  - key: out_of_scope
+    input_type: list[path_or_domain]
+    requirement: optional
+    default: []
+    description: Limites negativos explícitos.
+  - key: forbidden_surfaces
+    input_type: list[path_or_pattern]
+    requirement: optional
+    default: []
+    description: Escritas e superfícies proibidas além das regras do pacote.
+  - key: recorded_decisions
+    input_type: list[path_or_mapping]
+    requirement: optional
+    default: []
+    description: Decisões humanas já resolvidas e rastreáveis.
+  - key: agent_catalog
+    input_type: path_or_mapping
+    requirement: optional
+    default: null
+    description: Catálogo de agentes disponível na instalação ativa.
+```
 
-- Do not replace or mutate `loki:run-plan`; use it as the manual and autonomous
-  phase executor.
-- Do not continue if `lf-agentic-orchestration` is unavailable in the active
-  skill set.
-- Do not ask new human questions during autonomous plan execution. Record
-  blockers or post-execution backlog items instead.
-- Do not install or write into `.agents/**`, `.codex/**`, or `.claude/**`
-  without explicit approval.
-- Do not declare runtime, integration, persisted state, perceptible behavior or
-  generated output validated without the required validator and human gate.
+Valide presença, tipos, paths, destino aprovado, escopo e ausência de conflito
+entre superfícies permitidas/proibidas. Solicite cada obrigatório ausente e não
+invente destino, agente, decisão, approval, validator ou permissão. Normalize
+objetivo, parâmetros, escopo, restrições, decisões, gates, fontes e lacunas.
+Durante Input não crie estado, selecione agentes, gere plano, execute task,
+escreva no projeto nem declare sucesso.
+
+## Execution
+
+Leia integralmente [references/execution.md](references/execution.md) antes de agir.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e preencha
+[assets/response-template.md](assets/response-template.md) na resposta terminal.

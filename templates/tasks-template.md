@@ -50,7 +50,7 @@ downstream_execution_profile:
   validator_effort: "<low|medium|high>"
 ```
 
-Planos gerados por `loki:generate-action-plan` sao transientes, mas devem usar
+Planos gerados por `loki-generate-action-plan` sao transientes, mas devem usar
 `execution_effort: high` por padrao. Ajustes task-level podem reduzir effort
 para notas locais, validadores simples ou documentacao transiente.
 

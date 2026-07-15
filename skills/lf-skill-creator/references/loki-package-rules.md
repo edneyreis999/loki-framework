@@ -16,8 +16,8 @@ For Loki-packaged skills:
 
 - use `skills/<skill-name>/SKILL.md`;
 - keep the folder name equal to top-level `name`;
-- reserve `loki-` for installable command projections backed by a matching
-  `commands/loki-*.md` file; classify these projections as commands;
+- reserve `loki-` for command bundles with `type: command` and
+  `serialization: skill-bundle`; the bundle is the sole source;
 - use `lf-` for internal framework helper skills that stay installable for
   consumers;
 - use domain or technology prefixes, such as `rpg-maker-mz-*`, for optional

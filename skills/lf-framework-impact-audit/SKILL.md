@@ -35,7 +35,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:knowledge-extraction-analysis
+  - loki-knowledge-extraction-analysis
 ---
 
 # lf-framework-impact-audit

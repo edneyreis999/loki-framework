@@ -1,6 +1,6 @@
 ---
 name: lf-web-deep-research
-description: Conduct reusable Loki web deep research with internet searches, source selection, credibility checks, citations, contradiction mapping, assumptions, gaps, and a structured handoff for `loki:deep-research`, technical analysis, planning, or human decisions.
+description: Conduct reusable Loki web deep research with internet searches, source selection, credibility checks, citations, contradiction mapping, assumptions, gaps, and a structured handoff for `loki-deep-research`, technical analysis, planning, or human decisions.
 when_to_use:
   - "Use when a Loki workflow needs deep research on the internet or web sources."
   - "Use when producing a sourced research report with methodology, citations, credibility assessment, contradictions, and gaps."
@@ -37,10 +37,10 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:deep-research
-  - loki:tech-analysis
-  - loki:human-decision-preflight
-  - loki:generate-action-plan
+  - loki-deep-research
+  - loki-tech-analysis
+  - loki-human-decision-preflight
+  - loki-generate-action-plan
 ---
 
 # lf-web-deep-research

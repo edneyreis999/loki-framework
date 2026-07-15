@@ -1,1 +1,0 @@
-../../../commands/loki-run-plan.md

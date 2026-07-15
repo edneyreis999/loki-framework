@@ -2,7 +2,7 @@
 name: runtime-qa
 type: agent
 status: draft-scoped-writer
-description: Definir checklist, evidencias e human-validation gate para QA de comportamento perceptivel, incluindo persona game-dev contextual, sem validar runtime por conta propria e escrevendo apenas no proprio target_inventory_dir autorizado quando acionado por loki:init.
+description: Definir checklist, evidencias e human-validation gate para QA de comportamento perceptivel, incluindo persona game-dev contextual, sem validar runtime por conta propria e escrevendo apenas no proprio target_inventory_dir autorizado quando acionado por loki-init.
 mode: scoped-writer
 confidence: medium
 model: inherit
@@ -49,8 +49,8 @@ escalation_signals:
   - "mudanca afeta UI, input, audio, timing, persistencia, gameplay, save/load ou integracao ativa"
   - "validators automaticos nao cobrem comportamento observado"
 adapter_projection:
-  claude_code: "Pode ser projetado como subagent scoped-writer para loki:init e loki:run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/runtime-qa.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki:init ou aos target_files da task aprovada."
+  claude_code: "Pode ser projetado como subagent scoped-writer para loki-init e loki-run-plan quando houver envelope de escrita escopada aprovado."
+  codex: "Projetado em codex/agents/runtime-qa.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki-init ou aos target_files da task aprovada."
 nickname_candidates:
   - runtime-qa
   - qa-checklist
@@ -110,10 +110,10 @@ geral do agente.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki:init`: escrever somente dentro do proprio `target_inventory_dir`
+- `loki-init`: escrever somente dentro do proprio `target_inventory_dir`
   autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
   `docs/loki-init-inventory-contracts.md`.
-- `loki:run-plan`: escrever somente os `target_files` da task aprovada que
+- `loki-run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
 - Runtime, engine, dados, assets, config, scripts ou artefatos gerados exigem

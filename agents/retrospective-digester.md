@@ -2,7 +2,7 @@
 name: retrospective-digester
 type: agent
 status: draft-read-only
-description: Digerir uma retrospectiva tecnica ou lote pequeno de retrospectivas em modo read-only, extraindo aprendizados, atritos, candidatos de destino e evidencias para o orquestrador do loki:continuous-improvement, sem classificar promocao final nem escrever.
+description: Digerir uma retrospectiva tecnica ou lote pequeno de retrospectivas em modo read-only, extraindo aprendizados, atritos, candidatos de destino e evidencias para o orquestrador do loki-continuous-improvement, sem classificar promocao final nem escrever.
 mode: read-only
 confidence: high
 model: inherit
@@ -43,7 +43,7 @@ nickname_candidates:
 ## Purpose
 
 Digerir uma retrospectiva tecnica, ou um lote pequeno de retrospectivas, em um
-handoff estruturado para `loki:continuous-improvement`. O agente extrai o
+handoff estruturado para `loki-continuous-improvement`. O agente extrai o
 maximo de informacao util sem despejar conversa bruta no contexto principal:
 aprendizados validados, atritos de execucao, candidatos de destino, evidencias,
 confianca, lacunas e caminhos minimos recomendados.
@@ -56,8 +56,8 @@ quando apropriado.
 
 ## When To Trigger
 
-- `loki:continuous-improvement` recebe um diretorio com varias retrospectivas.
-- `loki:continuous-improvement` recebe multiplas retrospectivas independentes.
+- `loki-continuous-improvement` recebe um diretorio com varias retrospectivas.
+- `loki-continuous-improvement` recebe multiplas retrospectivas independentes.
 - Uma retrospectiva e longa, ruidosa ou contem muitos atritos de execucao.
 - O orquestrador precisa paralelizar leitura read-only por arquivo antes de
   consolidar candidatos duradouros.
@@ -81,7 +81,7 @@ documentacao duradoura, criar skill, alterar command ou validar runtime.
 ## Inputs
 
 - Caminho de uma retrospectiva tecnica ou lote pequeno de retrospectivas.
-- Objetivo downstream: normalmente `loki:continuous-improvement`.
+- Objetivo downstream: normalmente `loki-continuous-improvement`.
 - Escopo permitido, fora de escopo e forbidden writes.
 - Opcional: foco de extracao, como `project-docs`, `skills`,
   `execution-friction`, `validators` ou `backlog`.

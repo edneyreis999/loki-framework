@@ -1,10 +1,10 @@
 ---
 name: loki-init
-description: Run the Loki `loki:init` command workflow in Codex to bootstrap consumer documentation under `docs/**` and operational state under `planos/000-init-loki/**`, using controlled discovery, agent envelopes, per-agent technical retrospectives, output contracts, validators, human gates, and resumable state.
+description: Run the Loki `loki-init` command bundle in Codex. Bootstrap or audit consumer documentation under docs/** and resumable operational state under planos/000-init-loki/** through controlled discovery, domain inventory writers, one final catalogador pass, per-agent retrospectives, validators, gates, and strict write boundaries.
 when_to_use:
-  - "Use when the user invokes `loki:init` or `init-loki` after installing Loki in a consumer project."
-  - "Use when bootstrapping consumer docs and `planos/000-init-loki` without touching runtime, mirrors, AGENTS.md, or CLAUDE.md."
-argument-hint: "[consumer_project_root, docs_root, plan_root, mode, engine_hint]"
+  - "Use when bootstrapping or auditing Loki consumer documentation and planos/000-init-loki state."
+  - "Use when initialization requires project classification, domain inventory fan-out, final cataloging, per-agent retrospectives, validators, and resumable state without touching consumer runtime."
+argument-hint: "[consumer_project_root, docs_root, plan_root, mode, engine_hint, project_type_hint, max_scan_depth, include_patterns, exclude_patterns]"
 arguments:
   required: []
   optional:
@@ -13,6 +13,10 @@ arguments:
     - plan_root
     - mode
     - engine_hint
+    - project_type_hint
+    - max_scan_depth
+    - include_patterns
+    - exclude_patterns
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -22,140 +26,113 @@ effort: high
 model_class: frontier_reasoning
 adapter_projection:
   codex: "Advisory unless projected through config, profile or custom agent."
-  claude_code: "May map to model/effort frontmatter where supported."
+  claude_code: "May map to command frontmatter where supported."
 escalation_signals:
   - consumer documentation bootstrap
   - multi-agent fan-out and serial consolidation
   - consumer write boundary ambiguity
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-init/SKILL.md"
-  command_contract: "commands/loki-init.md"
-  command_contract: "commands/loki-init.md"
-shell: {}
+  package_bundle: "skills/loki-init/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:init
+serialization: skill-bundle
+domain: consumer-bootstrap
+aliases:
+  - init-loki
+required_skills: []
+required_commands:
+  - loki-retrospectiva-tecnica
 status: draft
 used_by:
-  - loki:init
+  - loki-init
 ---
 
 # loki-init
 
-## Procedure
+## Input
 
-1. Read the installed command contract for `loki:init`.
-2. Confirm `consumer_project_root`, `docs_root`, `plan_root`, mode and optional
-   hints. Default to current directory, `docs` and `planos/000-init-loki`.
-3. Declare allowed writes before writing: only `docs/**` and
-   `planos/000-init-loki/**` in the consumer project.
-4. Preserve forbidden writes: runtime, engine, assets, generated data,
-   `.agents/**`, `.codex/**`, `.claude/**`, `AGENTS.md` and `CLAUDE.md`.
-5. Produce or audit the common inventory and technology context before any
-   agent fan-out.
-6. Read `docs/loki-init-inventory-contracts.md` and use it as the shared
-   inventory content contract for domain writer folders.
-7. Before falling back from agent fan-out, run an explicit capability preflight
-   for the active adapter. In Codex, explicitly request subagent/delegation
-   capability and use directed tool discovery for multi-agent/subagent tools.
-   Treat discovered tool namespaces as adapter/session evidence, not universal
-   Loki package contracts.
-   For `init_inventory_domain_writer` agents, declare that each agent writes
-   only inside its own exact `target_inventory_dir`; do not ask the orchestrator
-   to write the folder as a substitute handoff.
-   For `catalogador`, declare that it is `init_final_cataloger`, runs once in
-   serial consolidation after domain inventory folders are complete, and does
-   not receive a `target_inventory_dir`.
-   For every invoked agent, declare that the agent must run
-   `loki:retrospectiva-tecnica` before completion and write only its own exact
-   `target_retrospective` under `planos/000-init-loki/retrospetivas/fase1/`.
-   Verify the adapter can grant scoped write access to each invoked agent's own
-   `target_retrospective`; if not, record the agent as `blocked` or `skipped`
-   with a concrete reason before fan-out.
-8. Before selecting agents, run an explicit agent catalog preflight for the
-   active adapter. Prefer the installed `manifest.yaml` as the structured
-   catalog for `supported_project_types`, `agent_project_tag_policy` and
-   `agents[].project_tags`. Read approved adapter surfaces when present, such
-   as `.codex/agents`, `.agents/agents`, `agents/`, `codex/agents` or an
-   equivalent adapter role list only as availability/capability evidence.
-   Record the catalog source, supported project types, base tag, project tags,
-   available agents and discovery limits; reading install mirrors does not
-   permit writing them.
-9. Pass detected technology and candidate technology-specific skills into the
-   selected agent envelopes without executing engine-specific rules in the core
-   init workflow. Specialist agents decide whether a technology skill is needed.
-10. Classify the project into exactly one `selected_project_type` from
-   `supported_project_types`; `core` is not classifiable, it is the base tag
-   that is always included. If `project_type_hint` is outside the supported
-   list, record a conflict/open question before fan-out.
-11. Build `inventory_required` from the ordered union of agents tagged with the
-   base tag `core` plus agents tagged with `selected_project_type`, with no
-   duplicates. Record `inventory_required_reasons` by agent. For
-   `software-development`, selecting only `core` agents is valid until
-   specialized agents receive that tag.
-12. Classify selected agents into `init_inventory_domain_writer`,
-   `init_final_cataloger` and `init_support_only` using the command contract.
-   Keep `catalogador` out of the parallel domain inventory fan-out even when it
-   is present in `inventory_required`.
-13. Build an `agent_init_envelope` for each selected
-   `init_inventory_domain_writer`, including `project_tags`,
-   `selection_reason`, `target_inventory_dir`, `inventory_contract`, exact
-   `allowed_writes`, `allowed_sources`, `forbidden_writes`,
-   `target_retrospective`, `completion_retrospective` and `write_mode`.
-14. Require each `init_inventory_domain_writer` to write only inside
-   `docs/loki-init/<agent-name>/**`. If there is no useful content, the agent
-   writes a structured failure inside that same `target_inventory_dir`.
-15. Invoke `init_support_only` agents only when their read-only or proposal
-   result is needed. They do not receive a `target_inventory_dir`,
-   but they do receive `target_retrospective`, `completion_retrospective` and
-   allowed write only for their own retrospective.
-16. Require every invoked agent to execute `loki:retrospectiva-tecnica` after
-   its assigned work and before agent completion, writing
-   `planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md`
-   with its own material execution frictions, validations, blockers, useful and
-   bad inferences, residual risks and minimum next path.
-17. For Codex subagent fan-out, use conservative batches, prefer the configured
-    `agents.max_threads` when known, otherwise use the documented default of 6
-    as an initial ceiling, record observed limits and close completed agents
-    before opening a later batch.
-18. Require a materialized `target_inventory_dir` per selected
-   `init_inventory_domain_writer` and validate the folder against
-   `docs/loki-init-inventory-contracts.md`.
-19. Invoke `catalogador` once, after domain inventory validation, with an
-    `init_final_cataloger` envelope that lists validated inventory folders as
-    sources and exact cataloging writes as destinations.
-20. Require a materialized `target_retrospective` per invoked agent.
-21. Record `available`, `inventory_required`, `init_inventory_domain_writers`,
-    `init_final_cataloger`, `init_support_only_agents`, `selected`, `planned`,
-    `invoked`, `blocked` and `skipped` agents with reasons, plus
-    `target_inventory_dirs` and `target_retrospectives`, before consolidation.
-22. Consolidate serially: conflicts, open questions, docs index, init README,
-    task state and next recommended Loki command.
-23. Run validators from the command contract and record evidence in
-    `planos/000-init-loki/builds/fase1/` when executing in a consumer project.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Limits
+```yaml
+parameters:
+  - key: consumer_project_root
+    input_type: path[directory]
+    requirement: optional
+    default: "."
+    description: Raiz existente e legivel do projeto consumidor; o diretorio atual e o default.
+  - key: docs_root
+    input_type: relative_path[directory]
+    requirement: optional
+    default: "docs"
+    description: Destino de documentacao dentro do projeto consumidor.
+  - key: plan_root
+    input_type: relative_path[directory]
+    requirement: optional
+    default: "planos/000-init-loki"
+    description: Destino do estado operacional retomavel dentro do projeto consumidor.
+  - key: mode
+    input_type: enum_or_agent_mode
+    requirement: optional
+    default: "full-init"
+    description: full-init, refresh-docs, audit-only ou agent-only:<agent-name>.
+  - key: engine_hint
+    input_type: string
+    requirement: optional
+    default: null
+    description: Tecnologia ou engine sugerida, tratada como hint e nao como fato.
+  - key: project_type_hint
+    input_type: string
+    requirement: optional
+    default: null
+    description: Tipo de projeto candidato, validado contra supported_project_types do manifest.
+  - key: max_scan_depth
+    input_type: integer
+    requirement: optional
+    default: null
+    description: Profundidade maxima positiva para descoberta; null usa limite seguro inferido sem ampliar escopo.
+  - key: include_patterns
+    input_type: list[glob]
+    requirement: optional
+    default: []
+    description: Patterns adicionais permitidos na descoberta local.
+  - key: exclude_patterns
+    input_type: list[glob]
+    requirement: optional
+    default: []
+    description: Patterns a excluir, incluindo binarios, gerados e arquivos grandes quando aplicavel.
+```
 
-- Do not write outside `docs/**` and `planos/000-init-loki/**`.
-- Do not edit `.agents/**`, `.codex/**`, `.claude/**`, `AGENTS.md` or
-  `CLAUDE.md` during init.
-- Do not infer subagent capability absence from the initial tool surface alone;
-  run adapter-aware discovery before choosing serial fallback.
-- Do not infer a sufficient agent set from memory or from obvious role names;
-  classify the project against `supported_project_types`, derive required
-  agents from `manifest.yaml` project tags, and justify every required skipped
-  agent.
-- Do not let domain agents write outside the exact `target_inventory_dir` and
-  `target_retrospective` granted by `loki:init`; do not let
-  `init_support_only` agents write final docs, runtime, assets, code or config.
-- Do not run `catalogador` in the parallel inventory fan-out or give it a domain
-  inventory folder.
-- Do not use orchestrator handoff as a substitute for a per-agent retrospective
-  when the invoked agent has a `target_retrospective`.
-- Do not hardcode RPG Maker, Visual Novel, Unity, Unreal, Godot, Ren'Py or
-  another engine into the core workflow.
-- Do not declare runtime, UI, gameplay, audio, build, save/load, integration or
-  persisted state validated without a later human-validation gate.
+Resolva `consumer_project_root` como diretório existente e legível. Normalize
+`docs_root` e `plan_root` sem travessia, symlink divergente ou escape da raiz;
+eles devem resolver respectivamente dentro de `docs/**` e
+`planos/000-init-loki/**`. Valide `mode`, inteiro positivo para
+`max_scan_depth`, listas de globs e ausência de conflito entre includes e
+excludes. Trate hints como hipóteses e valide `project_type_hint` posteriormente
+contra o manifest. Se diretórios já existirem, selecione merge/audit e proíba
+sobrescrita silenciosa.
+
+Rejeite entrada inválida com correção acionável. Como não há parâmetro
+obrigatório sem default, peça informação somente quando ambiguidade de root,
+destino, modo ou conflito impedir execução segura; não invente path, tecnologia,
+tipo, approval ou escopo.
+
+Normalize objetivo, parâmetros, roots resolvidos, modo, hints, filtros, escopo,
+restrições, destinos, `allowed_writes`, `forbidden_writes`, approvals, gates e
+lacunas para Execution. Durante Input não faça inventário, fan-out, pesquisa,
+criação/auditoria de docs, alteração de arquivos nem declaração de sucesso.
+
+## Execution
+
+Leia integralmente [references/execution.md](references/execution.md) antes de
+agir e siga todas as referências adicionais que esse arquivo ordenar.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e, na
+resposta terminal, preencha [assets/response-template.md](assets/response-template.md).

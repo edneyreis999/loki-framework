@@ -43,13 +43,13 @@ nickname_candidates:
 Extrair contexto relevante para executar uma fase Loki sem escrever no projeto
 consumidor. O agente reduz ruido de `DIR_ANALISE`, `tasks.md`, `task-N.M.md`,
 docs permitidos e fontes locais primarias em um handoff curto para
-`loki:run-plan`.
+`loki-run-plan`.
 
 ## When To Trigger
 
-- `loki:run-plan` recebeu `DIR_ANALISE` e precisa extrair somente o que afeta
+- `loki-run-plan` recebeu `DIR_ANALISE` e precisa extrair somente o que afeta
   `FASE_ATUAL`.
-- `loki:run-plan` nao recebeu `DIR_ANALISE` e as referencias da task nao bastam
+- `loki-run-plan` nao recebeu `DIR_ANALISE` e as referencias da task nao bastam
   para executar com seguranca.
 - Uma fase tem muitas tasks, referencias ou arquivos provaveis e o orquestrador
   precisa de leitura paralela read-only.

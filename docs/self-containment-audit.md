@@ -27,7 +27,7 @@ O pacote deve operar com os arquivos presentes neste diretorio. Blueprint, plano
 - Caminhos para planos historicos fora deste diretorio.
 - Dependencia de uma skill local em `.agents/` para explicar uma skill do pacote.
 - Caminhos fixos de um projeto especifico, como um nome de jogo ou workspace local.
-- Regras de negocio do consumidor copiadas para `commands/`, `skills/`,
+- Regras de negocio do consumidor copiadas para command bundles, `skills/`,
   `agents/`, `templates/`, `docs/` ou `manifest.yaml` do pacote Loki.
 
 ## Checklist

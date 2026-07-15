@@ -4,7 +4,7 @@ description: Use when diagnosing VisuStella MZ plugin order, tiers, dependencies
 when_to_use:
   - "Use for VisuStella MZ plugin order, tiers, dependencies, compatibility, troubleshooting, performance, runtime symptoms, plugin conflicts, missing effects, notetags with no effect, Action Sequence cleanup, camera or visual glitches, save/options/debug issues, or unexplained behavior."
   - "Use when vanilla RPG Maker MZ source does not explain a symptom and active VisuStella plugins may override behavior."
-  - "Use with loki:feedback for user-observed symptoms; this skill supplies VisuStella technical checks and does not replace the feedback interview."
+  - "Use with loki-feedback for user-observed symptoms; this skill supplies VisuStella technical checks and does not replace the feedback interview."
 argument-hint: "[project_root, symptom, plugin_name, affected_surface]"
 arguments:
   required: []
@@ -26,7 +26,7 @@ adapter_projection:
 escalation_signals:
   - symptom could come from plugin order, dependency, inactive plugin, parameter, notetag, command payload, or runtime validation gap
   - runtime behavior, performance, save/options/debug, visuals, or Action Sequence playback is affected
-  - broad troubleshooting may need loki:feedback, project inventory, or technical analysis
+  - broad troubleshooting may need loki-feedback, project inventory, or technical analysis
 context: standard
 agent: main
 hooks: []
@@ -51,14 +51,14 @@ Sequences, performance, visuals, save/options/debug surfaces, or runtime
 symptoms may explain observed behavior.
 
 This skill supplies VisuStella technical checks. It does not replace
-`loki:feedback` for user-reported symptoms and does not authorize writes to
+`loki-feedback` for user-reported symptoms and does not authorize writes to
 consumer data, plugin files, Plugin Manager configuration, assets, save state,
 generated files, or runtime surfaces.
 
 ## Procedure
 
 1. If the user reports observed feedback or an unclear symptom, use
-   `loki:feedback` interview behavior when appropriate. Use this skill for the
+   `loki-feedback` interview behavior when appropriate. Use this skill for the
    VisuStella-specific technical checklist after the symptom is concrete enough
    to inspect.
 2. Confirm RPG Maker MZ and active VisuStella evidence. Use
@@ -122,7 +122,7 @@ generated files, or runtime surfaces.
 
 ## Limits
 
-- Do not replace `loki:feedback` when the symptom still requires a user
+- Do not replace `loki-feedback` when the symptom still requires a user
   interview.
 - Do not infer plugin behavior only from vanilla RPG Maker MZ source when active
   VisuStella plugins may override it.

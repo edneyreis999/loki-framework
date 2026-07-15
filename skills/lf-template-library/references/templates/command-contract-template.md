@@ -1,87 +1,86 @@
 ---
-name: "<namespace:command-name>"
+name: "loki-<stem>"
+description: "<trigger complete and concrete>"
+when_to_use: []
+argument-hint: "<arguments>"
+arguments:
+  required: []
+  optional: []
+disable-model-invocation: false
+user-invocable: true
+allowed-tools: []
+disallowed-tools: []
+model: inherit
+effort: "<low|medium|high>"
+model_class: "<provider-neutral class>"
+adapter_projection:
+  codex: "<advisory or enforced statement>"
+  claude_code: "<projection statement>"
+escalation_signals: []
+context: standard
+agent: main
+hooks: {}
+paths:
+  package_bundle: "skills/loki-<stem>/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-status: draft
+serialization: skill-bundle
 domain: "<domain>"
 required_skills: []
 required_commands: []
-execution_profile:
-  model_class: "<frontier_reasoning|coding|generalist|long_context|fast_low_cost|specialist_generalist_human_like>"
-  default_effort: "<low|medium|high>"
-  max_effort: "<medium|high|xhigh>"
-  escalation_signals: []
-  handoff_effort:
-    research: "<low|medium|high>"
-    coding: "<medium|high>"
-    documentation_transient: "<low|medium>"
-    documentation_durable: "<high>"
-    validator: "<low|medium>"
-  adapter_projection:
-    codex: "Advisory unless projected through config, profile or custom agent."
-    claude_code: "May map to model/effort frontmatter where supported."
+status: draft
+used_by: []
 ---
 
-# <namespace:command-name>
+# loki-<stem>
 
-## Purpose
+## Input
 
-<Resultado esperado em uma frase.>
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Inputs
+```yaml
+parameters:
+  - key: <required-key>
+    input_type: <type>
+    requirement: required
+    description: <description>
+  - key: <optional-key>
+    input_type: <type>
+    requirement: optional
+    default: <default>
+    description: <description>
+```
 
-- <Entrada obrigatoria 1>
-- <Entrada opcional ou contextual>
+<Validate presence, types, formats, paths and combinations. Request missing
+required data without invention. Normalize objective, parameters, scope,
+constraints, destinations, approvals, gates and gaps. Prohibit the main task
+and success declaration during Input.>
 
-## Outputs
+## Execution
 
-- <Artefato, decisao ou proposta produzida>
+Read `references/execution.md` completely before
+acting and follow every additional reference it requires.
 
-## Allowed Writes
+## Response
 
-- <Paths ou superficies permitidas>
+Read `references/response.md` completely and fill
+`assets/response-template.md` for the terminal
+response.
 
-## Forbidden Writes
+<!--
+Required bundle tree:
+skills/loki-<stem>/
+├── SKILL.md
+├── references/execution.md
+├── references/response.md
+└── assets/response-template.md
 
-- `.claude/**`
-- `.agents/**`
-- `.codex/**`
-- <Paths ou superficies proibidas>
-
-## Required Skills
-
-- <Skill obrigatoria quando aplicavel>
-
-## Execution Profile
-
-- `model_class`: <classe provider-neutral de `docs/model-effort-guidance.md`>
-- `default_effort`: <effort normal do comando>
-- `max_effort`: <maior effort permitido por sinais de escalamento>
-- `escalation_signals`: <quando subir effort/model class>
-- `handoff_effort`: <effort esperado por tipo de handoff>
-- `adapter_projection`: <como Codex, Claude Code ou outro adaptador deve tratar o metadado>
-
-Contratos canonicos devem preferir classes e effort a IDs fixos de modelo.
-
-## Handoffs
-
-- <Agente ou subprocesso em read-only/proposal-only>
-
-## Validators
-
-- <Check automatico exigido>
-
-## Human Gates
-
-- <interview | approval | human-validation | technical-review | domain-approval | visual-ux-confirmation>
-
-## Packaging Checks
-
-- <Se o comando fizer parte do pacote, declarar namespace, impacto em manifest/docs e validacoes de estrutura/autocontencao.>
-
-## Stop Conditions
-
-- <Situacao que pausa ou encerra a execucao>
-
-## Resume Contract
-
-<Onde salvar estado, pergunta pendente, arquivos afetados, validacoes e proximo passo.>
+execution.md preserves purpose/start/end/result, orchestrator role, writes,
+dependencies, handoffs and self-contained context, workflow/replanning, unique
+write owner, validators/gates/approvals, packaging, stop and resume.
+response.md declares primary consumer Both and the LLM/Humano/Both formats.
+Do not add projection, command_name, package_projection or command_contract.
+-->

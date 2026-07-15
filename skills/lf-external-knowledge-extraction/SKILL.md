@@ -1,9 +1,9 @@
 ---
 name: lf-external-knowledge-extraction
-description: Extract traceable, non-forced learnings from external frameworks, commands, skills, rules, instruction documents, examples, or prompt artifacts before comparing them against Loki. Use as the first analysis stage for loki:knowledge-extraction-analysis or when external artifact extraction is needed independently.
+description: Extract traceable, non-forced learnings from external frameworks, commands, skills, rules, instruction documents, examples, or prompt artifacts before comparing them against Loki. Use as the first analysis stage for loki-knowledge-extraction-analysis or when external artifact extraction is needed independently.
 when_to_use:
   - "Use when extracting observations, patterns, examples, rejection criteria, uncertainty, and candidate learnings from external artifacts."
-  - "Use before auditing Loki impact in loki:knowledge-extraction-analysis."
+  - "Use before auditing Loki impact in loki-knowledge-extraction-analysis."
   - "Use when the task should identify useful external knowledge without yet deciding Loki package changes."
 argument-hint: "[external artifact paths, scope, limitations]"
 arguments:
@@ -35,7 +35,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:knowledge-extraction-analysis
+  - loki-knowledge-extraction-analysis
 ---
 
 # lf-external-knowledge-extraction

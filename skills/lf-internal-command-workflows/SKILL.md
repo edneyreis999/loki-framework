@@ -1,15 +1,13 @@
 ---
 name: lf-internal-command-workflows
-description: Route internal-only Loki package command workflows in Codex. Use only inside the Loki Framework package when invoking maintenance, knowledge extraction, continuous improvement, or self-healing commands that are not installed for consumer projects.
+description: Route internal-only Loki package command bundles in Codex. Use inside the Loki Framework package for `loki-knowledge-extraction-analysis` or `loki-self-healing`, resolving the primary bundle directly.
 when_to_use:
-  - "Use inside the Loki Framework package when routing loki:continuous-improvement, loki:knowledge-extraction-analysis, or loki:self-healing."
-  - "Use when an internal package workflow must load internal-only Loki skills."
-argument-hint: "[internal loki command name, command arguments]"
+  - "Use inside the Loki package for internal knowledge extraction or self-healing."
+  - "Use as an internal catalog; the matching loki-* bundle remains authoritative."
+argument-hint: "[internal loki-* identity, arguments]"
 arguments:
   required: []
-  optional:
-    - command_name
-    - command_arguments
+  optional: [command_name, command_arguments]
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -20,10 +18,7 @@ model_class: generalist
 adapter_projection:
   codex: "Advisory unless projected through config, profile or custom agent."
   claude_code: "May map to model/effort frontmatter where supported."
-escalation_signals:
-  - internal package maintenance
-  - self-healing or continuous-improvement workflow
-  - command contract requires internal-only skills
+escalation_signals: [internal package maintenance, self-healing workflow]
 context: standard
 agent: main
 hooks: []
@@ -32,43 +27,25 @@ paths:
 shell: {}
 type: skill
 status: draft
-used_by:
-  - loki:continuous-improvement
-  - loki:knowledge-extraction-analysis
-  - loki:self-healing
+used_by: [loki-knowledge-extraction-analysis, loki-self-healing]
 ---
 
 # lf-internal-command-workflows
 
 ## Purpose
 
-Route Loki command workflows that maintain or audit the Loki Framework package
-itself. This skill is `internal-only` and must not be installed by the
-`consumer` profile.
+Catalog the two internal-only package command bundles without duplicating their
+contracts. This router is not installed by the consumer profile.
 
-## Command Map
+## Routing
 
-- `loki:continuous-improvement`: read `commands/loki-continuous-improvement.md`,
-  then execute the command projection `loki-continuous-improvement`.
-- `loki:knowledge-extraction-analysis`: read
-  `commands/loki-knowledge-extraction-analysis.md`, then execute the command
-  projection `loki-knowledge-extraction-analysis`.
-- `loki:self-healing`: read `commands/loki-self-healing.md`, then execute the
-  command projection `loki-self-healing`.
-
-## Procedure
-
-1. Match the request to one command in the command map.
-2. Read the matching command contract from `commands/`.
-3. Load only the required skills named by that command contract.
-   Execute `loki-*` dependencies as commands from `required_commands`; do not
-   reinterpret their installable projections as skills.
-4. Follow the command's inputs, outputs, write boundaries, validators, gates,
-   stop conditions, and resume contract.
-5. Keep all writes inside the approved package task or maintenance scope.
+Read [references/internal-command-routing.md](references/internal-command-routing.md),
+then read the matching primary bundle, its routed references/assets and its
+dependencies.
 
 ## Limits
 
-- Do not route consumer-facing commands from this skill.
-- Do not install this skill into consumer projects.
-- Do not treat generated installation targets as package source material.
+- Never read legacy command-contract locations or compatibility projections.
+- Do not route public consumer workflows here.
+- Do not treat a command bundle as a knowledge skill.
+- Keep writes inside the approved package maintenance scope.

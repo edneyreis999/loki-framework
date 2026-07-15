@@ -54,20 +54,23 @@ metadata. The active runtime can use the fields it supports and ignore the rest.
 - `paths`
 - `shell`
 
-For an installable Loki command projection stored as
-`skills/loki-<stem>/SKILL.md`, also declare:
+Use tipos aceitos pelo adapter: `hooks` e um mapping (`hooks: {}` quando
+vazio), enquanto `shell` e um scalar `bash` ou `powershell`. Nao use
+`hooks: []` nem `shell: {}`; Claude Code registra esses formatos como metadata
+invalida mesmo quando consegue carregar o restante da skill.
+
+For a final Loki command bundle stored as `skills/loki-<stem>/SKILL.md`, also
+declare:
 
 ```yaml
 type: command
-projection: installable-skill
-command_name: loki:<stem>
-paths:
-  package_projection: skills/loki-<stem>/SKILL.md
-  command_contract: commands/loki-<stem>.md
+serialization: skill-bundle
 ```
 
-These fields preserve the command's operational identity. Do not set
-`type: skill` on a `loki-*` projection with a matching command.
+The top-level `name: loki-<stem>` is the canonical identity. Do not retain
+`projection`, `command_name`, `paths.package_projection` or
+`paths.command_contract`. Never create a paired command or set `type: skill` on
+a `loki-*` command bundle.
 
 Codex app/plugin metadata belongs in `agents/openai.yaml`:
 

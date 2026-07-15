@@ -4,7 +4,7 @@ package:
   status: approved-for-local-installation
   created: "2026-06-24"
   scope: local-project-package
-  description: "Pacote documental local do Loki Framework dividido em agents, commands, skills, templates e docs, com roteamento explicito entre regras do pacote e documentacao duradoura do projeto consumidor."
+  description: "Pacote documental local do Loki Framework dividido em agents, command bundles, skills, templates e docs, com roteamento explicito entre regras do pacote e documentacao duradoura do projeto consumidor."
   human_approval: "Aprovado pelo usuario em 2026-06-24 na task-2.1 e aprovado como pacote operacional final em 2026-06-24 na task-4.3."
 
 source:
@@ -49,12 +49,10 @@ install_policy:
     replace_requires_scoped_approval: true
     source_root: "."
   claude_code_target:
-    commands: ".claude/commands/loki/"
     agents: ".claude/agents/"
     skills: ".claude/skills/"
   codex_target:
     skills: ".agents/skills/"
-    commands: ".agents/commands/loki/"
     agents: ".agents/agents/"
     templates: ".agents/templates/"
     custom_agents: ".codex/agents/"
@@ -330,7 +328,6 @@ agentic_agent_metadata:
 layout:
   agents: "agents/"
   codex_agents: "codex/agents/"
-  commands: "commands/"
   skills: "skills/"
   scripts: "scripts/"
   templates: "templates/"
@@ -339,11 +336,10 @@ layout:
 
 artifact_identity_policy:
   precedence: "Operational identity overrides storage directory, extension and adapter serialization."
-  command_projection:
+  command_bundle:
     path: "skills/loki-<stem>/SKILL.md"
-    paired_contract: "commands/loki-<stem>.md"
     type: command
-    projection: installable-skill
+    serialization: skill-bundle
   operational_skills:
     namespaces:
       - "lf-*"
@@ -353,11 +349,15 @@ scripts:
   - name: "install-loki-symlinks"
     file: "scripts/install-loki-symlinks.py"
     status: draft
-    purpose: "Install Loki Framework Codex destinations by symlink after approval, filtered by install profile."
+    purpose: "Install Loki command bundles, skills, agents, templates and Codex agents by symlink after approval, filtered by install profile."
   - name: "validate-install-scopes"
     file: "scripts/validate-install-scopes.py"
     status: draft
-    purpose: "Validate installer scope metadata, command-projection identity, shared-artifact neutrality, command dependencies, Codex agent TOML and agent project tags."
+    purpose: "Validate installer scope metadata, command-bundle identity, shared-artifact neutrality, bundle command dependencies, Codex agent TOML and agent project tags."
+  - name: "validate-install-loki-upgrade"
+    file: "scripts/validate-install-loki-upgrade.py"
+    status: draft
+    purpose: "Validate clean installer profile baselines and provide tempfile schema-v2 and legacy-cleanup fixtures without touching consumer destinations."
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
@@ -368,61 +368,6 @@ install_scope_sources:
     file: "install-scopes.json"
     status: draft
     purpose: "Machine-readable source for installer artifact scopes and profiles."
-
-commands:
-  - name: "loki:init"
-    file: "commands/loki-init.md"
-    status: draft
-    aliases:
-      - "init-loki"
-  - name: "loki:catalogar-docs"
-    file: "commands/loki-catalogar-docs.md"
-    status: draft
-  - name: "loki:criar-branch"
-    file: "commands/loki-criar-branch.md"
-    status: draft
-  - name: "loki:commit"
-    file: "commands/loki-commit.md"
-    status: draft
-  - name: "loki:abrir-pr"
-    file: "commands/loki-abrir-pr.md"
-    status: draft
-  - name: "loki:feedback"
-    file: "commands/loki-feedback.md"
-    status: draft
-  - name: "loki:tech-analysis"
-    file: "commands/loki-tech-analysis.md"
-    status: draft
-  - name: "loki:human-decision-preflight"
-    file: "commands/loki-human-decision-preflight.md"
-    status: draft
-  - name: "loki:agentic-development"
-    file: "commands/loki-agentic-development.md"
-    status: draft
-  - name: "loki:generate-action-plan"
-    file: "commands/loki-generate-action-plan.md"
-    status: draft
-  - name: "loki:enrich-tasks"
-    file: "commands/loki-enrich-tasks.md"
-    status: draft
-  - name: "loki:run-plan"
-    file: "commands/loki-run-plan.md"
-    status: draft
-  - name: "loki:retrospectiva-tecnica"
-    file: "commands/loki-retrospectiva-tecnica.md"
-    status: draft
-  - name: "loki:continuous-improvement"
-    file: "commands/loki-continuous-improvement.md"
-    status: draft
-  - name: "loki:knowledge-extraction-analysis"
-    file: "commands/loki-knowledge-extraction-analysis.md"
-    status: draft
-  - name: "loki:deep-research"
-    file: "commands/loki-deep-research.md"
-    status: draft
-  - name: "loki:self-healing"
-    file: "commands/loki-self-healing.md"
-    status: draft
 
 skills:
   - name: "excalidraw-diagram-generator"
@@ -447,27 +392,52 @@ skills:
     file: "skills/loki-catalogar-docs/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-criar-branch"
     file: "skills/loki-criar-branch/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-commit"
     file: "skills/loki-commit/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-abrir-pr"
     file: "skills/loki-abrir-pr/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-init"
     file: "skills/loki-init/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-internal-command-workflows"
     file: "skills/lf-internal-command-workflows/SKILL.md"
     status: draft
@@ -475,22 +445,42 @@ skills:
     file: "skills/loki-feedback/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-tech-analysis"
     file: "skills/loki-tech-analysis/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-human-decision-preflight"
     file: "skills/loki-human-decision-preflight/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-agentic-development"
     file: "skills/loki-agentic-development/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-agentic-orchestration"
     file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
@@ -498,17 +488,32 @@ skills:
     file: "skills/loki-generate-action-plan/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-enrich-tasks"
     file: "skills/loki-enrich-tasks/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-run-plan"
     file: "skills/loki-run-plan/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-run-plan-execution"
     file: "skills/lf-run-plan-execution/SKILL.md"
     status: draft
@@ -516,17 +521,32 @@ skills:
     file: "skills/loki-retrospectiva-tecnica/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-continuous-improvement"
     file: "skills/loki-continuous-improvement/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-knowledge-extraction-analysis"
     file: "skills/loki-knowledge-extraction-analysis/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-external-knowledge-extraction"
     file: "skills/lf-external-knowledge-extraction/SKILL.md"
     status: draft
@@ -540,7 +560,12 @@ skills:
     file: "skills/loki-deep-research/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-web-deep-research"
     file: "skills/lf-web-deep-research/SKILL.md"
     status: draft
@@ -548,7 +573,12 @@ skills:
     file: "skills/loki-self-healing/SKILL.md"
     status: draft
     operational_role: command
-    projection: installable-skill
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "lf-template-library"
     file: "skills/lf-template-library/SKILL.md"
     status: draft

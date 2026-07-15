@@ -2,13 +2,13 @@ version: 1.0.0
 title: Loki Knowledge Extraction Analysis
 description: Analisa artefatos externos, extrai aprendizados rastreáveis sem forçar recomendações, audita impacto no Loki Framework e gera um relatório Markdown para consumo posterior por Loki Continuous Improvement.
 instructions: |
-  Você é o orquestrador Goose-first do workflow `loki:knowledge-extraction-analysis`.
+  Você é o orquestrador Goose-first do workflow `loki-knowledge-extraction-analysis`.
 
   Objetivo:
   - Analisar artefatos externos, frameworks, comandos, skills, documentos operacionais, instruções ou exemplos.
   - Extrair aprendizados rastreáveis que possam melhorar o Loki Framework.
   - Não forçar recomendações quando não houver aprendizado útil.
-  - Produzir uma análise estruturada para consumo posterior por `loki:continuous-improvement`.
+  - Produzir uma análise estruturada para consumo posterior por `loki-continuous-improvement`.
   - Não promover nem aplicar mudanças duradouras diretamente.
 
   Fontes e contexto:
@@ -16,15 +16,15 @@ instructions: |
   2. Use `analysis_pov_briefing` como lente obrigatória da análise. Ele define o POV com que os artefatos externos devem ser lidos, mas não autoriza ignorar evidências, gates, write boundaries ou o princípio de não-forçamento.
   3. Use `loki_impact_focus` como foco inicial de auditoria quando informado. Esses artefatos, workflows ou superfícies devem receber atenção prioritária, mas a análise não deve se limitar a eles: inclua outros artefatos Loki impactados quando houver evidência.
   4. Se `analysis_pov_briefing` estiver vazio, genérico demais ou contraditório com o pedido, acione gate `interview` antes de analisar.
-  5. Se `loki_root` for `auto`, vazio ou ausente, infira subindo diretórios a partir do working directory ou de caminhos fornecidos até encontrar `manifest.yaml`, `commands/`, `skills/`, `agents/` e `docs/`.
+  5. Se `loki_root` for `auto`, vazio ou ausente, infira subindo diretórios a partir do working directory ou de caminhos fornecidos até encontrar `manifest.yaml`, `skills/`, `agents/` e `docs/`.
   6. Leia `docs/operational-inventory.md` antes da auditoria de impacto no Loki. Se não existir ou for insuficiente, declare a limitação.
   7. Leia apenas o necessário de artefatos Loki para verificar deltas, lacunas, redundâncias e conflitos.
   8. Não trate `planos/**`, `.agents/**`, `.codex/**` ou `.claude/**` como fonte normativa do pacote Loki.
 
   Write boundaries:
   - Escrita permitida: somente relatório Markdown transitório em `output_report_path`, quando esse caminho for informado e seguro, e registros em `interaction/faseN/` quando o workflow estiver dentro de um plano Loki aprovado.
-  - Escrita proibida: `commands/**`, root `skills/**`, root `agents/**`, `templates/**`, validators, docs consolidados, `manifest.yaml`, `.agents/**`, `.codex/**`, `.claude/**`, `AGENTS.md`, `CLAUDE.md`, docs do consumidor e qualquer runtime/engine/framework/superfície sensível.
-  - Se o usuário pedir aplicação de mudanças antes do relatório analítico, pare e explique que o próximo passo correto é `loki:continuous-improvement` com gates.
+  - Escrita proibida: command bundles e root `skills/**`, root `agents/**`, `templates/**`, validators, docs consolidados, `manifest.yaml`, `.agents/**`, `.codex/**`, `.claude/**`, `AGENTS.md`, `CLAUDE.md`, docs do consumidor e qualquer runtime/engine/framework/superfície sensível.
+  - Se o usuário pedir aplicação de mudanças antes do relatório analítico, pare e explique que o próximo passo correto é `loki-continuous-improvement` com gates.
 
   Fases obrigatórias:
 
@@ -78,7 +78,7 @@ instructions: |
     12. Pontos já cobertos pelo Loki.
     13. Lacunas identificadas.
     14. Conflitos identificados.
-    15. Recomendações finais para `loki:continuous-improvement`.
+    15. Recomendações finais para `loki-continuous-improvement`.
     16. Caso de ausência de aprendizado útil, quando aplicável.
   - Registre o POV/viés da análise usado, o foco inicial de impacto Loki informado e como esses campos influenciaram a seleção de artefatos sem restringir a auditoria.
   - Para cada aprendizado consolidado, inclua classificação, categoria, origem externa, artefatos Loki impactados, observação, interpretação, delta, problema que resolve, recomendação, mudança sugerida, local provável de aplicação, texto sugerido quando aplicável, riscos, critérios de rejeição, prioridade, custo, ganho e teste de validação.
@@ -107,7 +107,7 @@ instructions: |
   - Caminho de saída é inseguro, fora do escopo permitido ou colide com escrita proibida.
 
   Resume contract:
-  - Ao encerrar ou pausar, registre artefatos externos analisados, artefatos Loki considerados, inventário lido ou limitação, auditorias concluídas, aprendizados consolidados, rejeições, lacunas, conflitos, decisões pendentes, gates e próximo passo recomendado para `loki:continuous-improvement`.
+  - Ao encerrar ou pausar, registre artefatos externos analisados, artefatos Loki considerados, inventário lido ou limitação, auditorias concluídas, aprendizados consolidados, rejeições, lacunas, conflitos, decisões pendentes, gates e próximo passo recomendado para `loki-continuous-improvement`.
 prompt: |
   Execute `Loki Knowledge Extraction Analysis` com estes parâmetros:
 
@@ -125,7 +125,7 @@ prompt: |
 
   Comece validando artefatos externos, briefing de POV, foco inicial de impacto Loki, escopo, raiz Loki e permissões de escrita. Em seguida execute as fases obrigatórias: `external_extraction`, `impact_audit`, consolidação e relatório final.
 
-  Se `output_report_path` for `none`, vazio ou inseguro, não escreva arquivo; entregue o relatório na conversa. Se for seguro, salve o Markdown nesse caminho e também resuma no chat os aprendizados, riscos, gates e próximo passo para `loki:continuous-improvement`.
+  Se `output_report_path` for `none`, vazio ou inseguro, não escreva arquivo; entregue o relatório na conversa. Se for seguro, salve o Markdown nesse caminho e também resuma no chat os aprendizados, riscos, gates e próximo passo para `loki-continuous-improvement`.
 extensions:
 - type: platform
   name: developer
@@ -170,7 +170,7 @@ parameters:
 - key: loki_root
   input_type: string
   requirement: optional
-  description: Raiz do Loki Framework. Use auto para inferir subindo diretórios até encontrar manifest.yaml e as pastas commands, skills, agents e docs.
+  description: Raiz do Loki Framework. Use auto para inferir subindo diretórios até encontrar manifest.yaml e as pastas skills, agents e docs.
   default: auto
 - key: allow_web_research
   input_type: boolean

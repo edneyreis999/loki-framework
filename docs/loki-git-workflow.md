@@ -10,9 +10,9 @@ self_contained: true
 
 O Loki expõe três comandos pequenos para Git flow:
 
-- `loki:criar-branch`: cria branch local com base e nome aprovados.
-- `loki:commit`: faz staging explicito e cria um commit local.
-- `loki:abrir-pr`: publica a branch e abre Pull Request com approval.
+- `loki-criar-branch`: cria branch local com base e nome aprovados.
+- `loki-commit`: faz staging explicito e cria um commit local.
+- `loki-abrir-pr`: publica a branch e abre Pull Request com approval.
 
 ## Dependencias
 
@@ -25,7 +25,7 @@ Operacao GitHub completa usa, nesta ordem:
 2. `gh` CLI autenticado como fallback.
 
 O Loki nao instala nem configura MCP automaticamente. Se GitHub MCP e `gh` nao
-estiverem disponiveis, `loki:abrir-pr` deve parar apos gerar a proposta de PR.
+estiverem disponiveis, `loki-abrir-pr` deve parar apos gerar a proposta de PR.
 
 ## Capacidades Minimas
 

@@ -1,17 +1,17 @@
 ---
 name: loki-human-decision-preflight
-description: Run the Loki `loki:human-decision-preflight` command workflow in Codex. Use before action planning to classify open decisions as ask-now, delegate-to-plan, validate-later, or answer-from-local-sources.
+description: Run the Loki `loki-human-decision-preflight` command workflow in Codex. Use before action planning to classify open decisions as ask-now, delegate-to-plan, validate-later, or answer-from-local-sources through a strict one-question-at-a-time interview.
 when_to_use:
-  - "Use when running loki:human-decision-preflight before loki:generate-action-plan."
-  - "Use when an analysis, brief, feedback record, or retrospective has open human decisions that may block planning."
+  - "Use before loki-generate-action-plan when an analysis, brief, feedback record, or retrospective has open decisions."
   - "Use when deciding whether to ask the user now, delegate a detail to the plan, validate later, or answer from local sources."
-argument-hint: "[analysis path, brief, open questions, target decision record]"
+argument-hint: "[analysis or brief, open questions, scope, forbidden surfaces, target decision record]"
 arguments:
-  required: []
+  required:
+    - analysis_or_brief
   optional:
-    - analysis_path
-    - brief
     - open_questions
+    - scope
+    - forbidden_surfaces
     - target_decision_record
 disable-model-invocation: false
 user-invocable: true
@@ -25,49 +25,85 @@ adapter_projection:
   claude_code: "May map to model/effort frontmatter where supported."
 escalation_signals:
   - many open human decisions
-  - conflicting evidence
+  - conflicting local evidence
   - sensitive writes or irreversible product choices
+  - decision changes plan topology or acceptance criteria
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-human-decision-preflight/SKILL.md"
-  command_contract: "commands/loki-human-decision-preflight.md"
-shell: {}
+  package_bundle: "skills/loki-human-decision-preflight/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:human-decision-preflight
+serialization: skill-bundle
+domain: planning
+required_skills:
+  - lf-tech-analysis-authoring
+  - lf-action-plan-authoring
+required_commands: []
 status: draft
 used_by:
-  - loki:human-decision-preflight
+  - loki-human-decision-preflight
 ---
 
 # loki-human-decision-preflight
 
-## Procedure
+## Input
 
-1. Read the installed command contract:
-   [loki-human-decision-preflight.md](../../commands/loki-human-decision-preflight.md).
-2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   required skills, handoffs, validators, gates, stop conditions and resume
-   contract.
-3. Load `lf-tech-analysis-authoring` to separate facts, inferences, open
-   questions and gates.
-4. Load `lf-action-plan-authoring` to decide whether a pending decision can be
-   represented safely as a task, validator, human loop or stop condition.
-5. Classify every pending decision as `must_ask_now`, `can_delegate_to_plan`,
-   `can_validate_later` or `do_not_ask_llm_can_determine`.
-6. Ask at most one active `must_ask_now` question per turn.
-7. Treat this command projection as the Codex entrypoint for the command name
-   `loki:human-decision-preflight`.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Limits
+```yaml
+parameters:
+  - key: analysis_or_brief
+    input_type: path_or_string_or_mapping
+    requirement: required
+    description: Analise, brief, feedback, retrospectiva ou objetivo aprovado que contenha as decisoes a classificar.
+  - key: open_questions
+    input_type: list[string_or_mapping]
+    requirement: optional
+    default: []
+    description: Perguntas, assumptions, riscos ou gates ja identificados.
+  - key: scope
+    input_type: string_or_mapping
+    requirement: optional
+    default: null
+    description: Escopo permitido e limites relevantes para as decisoes.
+  - key: forbidden_surfaces
+    input_type: list[path_or_pattern]
+    requirement: optional
+    default: []
+    description: Superficies cuja leitura ou escrita nao esta autorizada.
+  - key: target_decision_record
+    input_type: path
+    requirement: optional
+    default: null
+    description: Destino transitorio exato e aprovado para registrar a preflight.
+```
 
-- Do not invent human decisions, approvals, validators, file targets or answers.
-- Do not write runtime, durable docs, commands, skills, agents, templates,
-  validators, `manifest.yaml` or `install-scopes.json` during ordinary command
-  execution.
-- Do not mark `ready_for_next_phase: true` while a `must_ask_now` decision is
-  unresolved.
-- Do not ask the user questions that local sources or structured validation can
-  answer.
+Valide presenca, tipo e conteudo nao vazio de `analysis_or_brief`. Quando ele ou
+`target_decision_record` for path, valide formato, existencia da fonte e se o
+destino pertence ao diretorio transitorio aprovado. Valide os tipos das listas
+e rejeite combinacoes que autorizem escrita em `forbidden_surfaces`. Explique
+como corrigir qualquer entrada invalida; nao altere silenciosamente a intencao.
+
+Identifique toda informacao obrigatoria ausente, solicite somente uma por turno
+e nao avance enquanto a lacuna impedir classificacao segura. Nao invente
+decisoes, fontes, approvals, escopo ou destino. Normalize objetivo, parametros,
+perguntas, escopo, restricoes, destino, approvals, gates e lacunas para a fase
+Execution.
+
+Durante Input nao classifique decisoes, pesquise, invoque agentes, altere
+arquivos, execute a tarefa principal nem declare sucesso.
+
+## Execution
+
+Leia integralmente [references/execution.md](references/execution.md) antes de
+agir e siga todas as referencias adicionais que esse arquivo ordenar.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e, na
+resposta terminal, preencha [assets/response-template.md](assets/response-template.md).

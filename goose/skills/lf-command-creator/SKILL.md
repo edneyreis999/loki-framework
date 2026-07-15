@@ -1,6 +1,6 @@
 ---
 name: lf-command-creator
-description: Use ao criar, revisar ou migrar workflows invocáveis Goose/Loki com entradas, saídas, gates, write boundaries, handoffs, validações e estado retomável; trate commands/recipes como orquestradores e separe Input, Execution e Response.
+description: Use ao criar, revisar ou migrar workflows invocáveis Goose/Loki com entradas, saídas, gates, write boundaries, handoffs, validações e estado retomável; trate command bundles/recipes como orquestradores e separe Input, Execution e Response.
 ---
 
 # lf-command-creator
@@ -40,5 +40,5 @@ Use também quando houver dúvida se uma melhoria deve virar command/recipe, ski
 
 ## Limites
 
-- Não editar `commands/**`, root `skills/**`, root `agents/**`, `manifest.yaml`, `.agents/**`, `.codex/**` ou `.claude/**` sem autorização explícita.
+- Não editar root `skills/**`, root `agents/**`, `manifest.yaml`, `.agents/**`, `.codex/**` ou `.claude/**` sem autorização explícita.
 - Não usar artefatos transitórios como fonte normativa final.

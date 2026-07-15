@@ -330,9 +330,9 @@ Use a compact snapshot only if it helps the active response:
 
 Do not convert this into a universal report format.
 
-## Escalation To loki:tech-analysis
+## Escalation To loki-tech-analysis
 
-Recommend `loki:tech-analysis` when:
+Recommend `loki-tech-analysis` when:
 
 - ownership crosses maps, Common Events, plugins, assets, docs, and save/load;
 - implementation differs from durable docs or product promise;

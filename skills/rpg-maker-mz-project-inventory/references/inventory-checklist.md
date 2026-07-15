@@ -57,7 +57,7 @@ runtime/editor access, user decision, Playtest, or a forbidden write.
 
 ## Escalation Packet
 
-When recommending `loki:tech-analysis`, include the smallest useful packet:
+When recommending `loki-tech-analysis`, include the smallest useful packet:
 
 - concrete focus;
 - source files and surfaces already inspected;

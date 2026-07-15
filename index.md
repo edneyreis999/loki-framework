@@ -14,9 +14,9 @@ Este diretorio contem o pacote operacional aprovado do Loki Framework. Ele deve 
 
 - `manifest.yaml`: indice operacional, politica de instalacao, guardrails e lista dos artefatos.
 - `README.md`: instrucoes de instalacao local para Claude Code e Codex, sem executar copia automaticamente.
-- `commands/`: comandos Loki do MVP.
-- `skills/`: skills Loki e extensoes especializadas opcionais quando o
-  projeto consumidor exigir.
+- `skills/loki-*/`: commands Loki do MVP serializados como bundles.
+- demais `skills/`: conhecimento core e extensoes especializadas opcionais
+  quando o projeto consumidor exigir.
 - `agents/`: agentes operacionais, incluindo `standards-curator`,
   `source-researcher`, `bibliotecario` e `catalogador`.
 - `templates/`: contratos base para comandos e componentes.

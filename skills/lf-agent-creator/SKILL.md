@@ -36,7 +36,7 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:continuous-improvement
+  - loki-continuous-improvement
   - manual-framework-evolution
 ---
 

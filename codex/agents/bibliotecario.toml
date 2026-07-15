@@ -60,7 +60,7 @@ trechos necessarios para responder uma pergunta ou executar uma task.
 
 - Quando uma task ou analise precisar de regra de negocio, lore, fluxo
   funcional, nomenclatura ou contexto especifico do projeto consumidor.
-- Quando `loki:continuous-improvement` precisar auditar se um aprendizado ja
+- Quando `loki-continuous-improvement` precisar auditar se um aprendizado ja
   existe na documentacao duradoura do consumidor.
 - Antes de abrir varias notas em `/docs` sem um alvo claro.
 

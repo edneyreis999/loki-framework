@@ -31,7 +31,7 @@ instructions: |
 
   Write boundaries:
   - Escritas permitidas: retrospectiva Markdown no destino aprovado/inferido com segurança; pequenos resumos de status apenas quando a task exigir.
-  - Escritas proibidas: `AGENTS.md`, `CLAUDE.md`, project-context duradouro do consumidor, `commands/**`, root `skills/**`, root `agents/**`, `templates/**`, validators, docs consolidados, `manifest.yaml`, runtime/engine/framework/superfícies sensíveis fora do escopo aprovado, `.agents/**`, `.codex/**`, `.claude/**`.
+  - Escritas proibidas: `AGENTS.md`, `CLAUDE.md`, project-context duradouro do consumidor, command bundles e root `skills/**`, root `agents/**`, `templates/**`, validators, docs consolidados, `manifest.yaml`, runtime/engine/framework/superfícies sensíveis fora do escopo aprovado, `.agents/**`, `.codex/**`, `.claude/**`.
   - Se a retrospectiva recomendar mudança duradoura em command, skill, agent, template, validator, doc ou `manifest.yaml`, registre apenas como candidato e exija `technical-review`.
   - Qualquer promoção posterior ou sincronização para `AGENTS.md`, `CLAUDE.md` ou contexto duradouro requer `approval` separado.
 

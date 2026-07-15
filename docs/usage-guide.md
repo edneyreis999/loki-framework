@@ -9,15 +9,17 @@ scope: local-project-package
 # Guia de Uso do Loki Framework Local
 
 O Loki Framework local organiza trabalho em projetos de software e jogos usando
-`commands`, `skills` e `agents`. Ele e um pacote documental e operacional
+command bundles, skills e agents. Ele e um pacote documental e operacional
 autocontido: descreve como conduzir analise, plano, execucao, validacao e
 melhoria continua sem depender de blueprint, planos historicos ou arquivos de
 outro projeto.
 
 ## Estrutura
 
-- `commands/`: fluxos invocaveis, como feedback, analise tecnica, plano, execucao e melhoria continua.
-- `skills/`: procedimentos tecnicos ou processuais que devem ser carregados quando o dominio aparecer.
+- `skills/loki-*/`: commands invocaveis serializados como bundles com Input,
+  Execution, Response e template.
+- `skills/lf-*` e skills de dominio: conhecimento tecnico ou processual
+  reutilizavel carregado quando o dominio aparecer.
 - `agents/`: papeis especialistas que retornam analise, checklist, proposta ou
   escrita escopada quando um workflow aprovado atribuir `target_files`.
 - `codex/agents/`: TOMLs versionados derivados de `agents/*.md` para custom
@@ -26,7 +28,7 @@ outro projeto.
   projetos consumidores ou para o package source, filtrado por perfil.
 - `install-scopes.json`: fonte machine-readable dos escopos `internal-only`,
   `both` e `consumer-only`.
-- `templates/`: contratos minimos para criar novos comandos e componentes.
+- `templates/`: contratos minimos para criar novos command bundles e componentes.
 - `docs/`: limites, inventario e guia de uso.
 - `docs/project-context-catalog.md`: contrato entre o pacote Loki e a
   documentacao duradoura do projeto consumidor.
@@ -56,21 +58,21 @@ workflow de aprendizado.
 
 ## Caminho Integrado v2
 
-Use `loki:agentic-development` quando a demanda deve seguir o caminho completo:
+Use `loki-agentic-development` quando a demanda deve seguir o caminho completo:
 demanda simples, analise agentica, gates humanos materiais antes do plano,
 action plan, execucao autonoma, completion reports, digest e backlog.
 
 Use o caminho manual quando precisar controlar cada etapa separadamente:
-`loki:deep-research` quando depender de pesquisa web citada,
-`loki:tech-analysis`, `loki:human-decision-preflight`,
-`loki:generate-action-plan`, `loki:enrich-tasks` quando aplicavel e
-`loki:run-plan` por fase ou task.
+`loki-deep-research` quando depender de pesquisa web citada,
+`loki-tech-analysis`, `loki-human-decision-preflight`,
+`loki-generate-action-plan`, `loki-enrich-tasks` quando aplicavel e
+`loki-run-plan` por fase ou task.
 
-O fluxo integrado nao substitui `loki:run-plan`; ele o preserva como executor
+O fluxo integrado nao substitui `loki-run-plan`; ele o preserva como executor
 manual e pode usa-lo como executor delegado depois que o plano existir. O fluxo
 integrado tambem nao promove aprendizado duradouro automaticamente. Digest,
 backlog, reports e retrospectivas viram entrada para
-`loki:continuous-improvement` somente por decisao posterior.
+`loki-continuous-improvement` somente por decisao posterior.
 
 ## Gates Humanos
 
@@ -95,8 +97,8 @@ como `frontier_reasoning`, `coding`, `generalist`, `long_context` e
 
 Documentacao duravel, politicas, contratos, templates e mudancas normativas do
 pacote usam effort alto por padrao. Documentacao transiente de execucao pode
-usar effort baixo ou medio, exceto pesquisas de `loki:deep-research`, analises
-de `loki:tech-analysis` e planos de `loki:generate-action-plan`, que continuam
+usar effort baixo ou medio, exceto pesquisas de `loki-deep-research`, analises
+de `loki-tech-analysis` e planos de `loki-generate-action-plan`, que continuam
 high effort. Implementacao de codigo
 usa modelo de codificacao e effort medio por padrao, escalando quando houver
 risco tecnico, integracao, arquitetura ou validacao dificil.
@@ -126,7 +128,6 @@ plugin/marketplace continua etapa posterior, fora do v2.
 O script instala:
 
 - `.agents/skills/<skill-name>` apontando para `skills/<skill-name>`;
-- `.agents/commands/loki/<command>.md` apontando para `commands/<command>.md`;
 - `.agents/agents/<agent>.md` apontando para `agents/<agent>.md`;
 - `.agents/templates` apontando para `templates`;
 - `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
@@ -147,12 +148,17 @@ inteiro `agents/`, o instalador bloqueia os links por agente para evitar escrita
 acidental atraves do symlink. Remova esse symlink legado somente no destino
 aprovado e rode o dry-run novamente antes de aplicar.
 
+Se o destino contiver links de command de uma instalação anterior, o dry-run os
+lista como cleanup legado. A remoção só ocorre com
+`--yes --cleanup-legacy-commands`, somente para symlink lexicalmente exato para
+o antigo arquivo deste pacote. Arquivo real, link divergente e caminho sob parent
+symlink bloqueiam e exigem intervenção manual.
+
 Depois da instalacao, valide a estrutura instalada:
 
 ```bash
 python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
-find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
 find "$DEST/.agents/agents" -maxdepth 1 -type l -name '*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
@@ -164,6 +170,7 @@ manifest = pathlib.Path(sys.argv[1]) / ".agents/loki-installation-manifest.json"
 data = json.loads(manifest.read_text(encoding="utf-8"))
 print(f"profile={data.get('install_profile')} links={len(data.get('links', []))}")
 assert all("install_scope" in link for link in data.get("links", []))
+assert all(link.get("type") != "command" for link in data.get("links", []))
 PY
 git -C "$DEST" status --short .agents .codex
 ```
@@ -177,20 +184,20 @@ esse comportamento for necessario.
 
 O Loki inclui tres comandos de Git flow:
 
-- `loki:criar-branch` para criar branch local com base e nome aprovados.
-- `loki:commit` para stage explicito e commit local.
-- `loki:abrir-pr` para publicar a branch e abrir PR.
+- `loki-criar-branch` para criar branch local com base e nome aprovados.
+- `loki-commit` para stage explicito e commit local.
+- `loki-abrir-pr` para publicar a branch e abrir PR.
 
-`loki:abrir-pr` prefere GitHub MCP quando disponivel e usa `gh` autenticado
+`loki-abrir-pr` prefere GitHub MCP quando disponivel e usa `gh` autenticado
 como fallback. Sem GitHub MCP nem `gh`, o comando deve parar apos montar a
 proposta de PR. Consulte `docs/loki-git-workflow.md`.
 
-## Command Projections, Skills Core e Extensoes
+## Command Bundles, Skills Core e Extensoes
 
-As projeções instaláveis de commands (`loki-init`, `loki-feedback`,
+Os command bundles instaláveis (`loki-init`, `loki-feedback`,
 `loki-human-decision-preflight`, `loki-agentic-development`,
 `loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
-meio de `SKILL.md`, mas continuam sendo commands operacionais.
+meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
 
 As skills core (`lf-agentic-orchestration`, `lf-run-plan-execution`,
 `lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
@@ -208,17 +215,15 @@ pedido do usuario ou o plano aprovado declarar aquela superficie.
 
 Planos executaveis devem declarar write owner, `target_files`,
 `allowed_writes`, validators e gates quando uma task puder ser executada por
-agente `scoped-writer`. `loki:enrich-tasks` deve preservar ou refinar esse
-escopo antes de `loki:run-plan`.
+agente `scoped-writer`. `loki-enrich-tasks` deve preservar ou refinar esse
+escopo antes de `loki-run-plan`.
 
 ## Inicializacao Pos-Instalacao
 
-Depois de instalar o Loki em um projeto consumidor aprovado, use `loki:init`
-para criar ou auditar a documentacao inicial do projeto. `init-loki` e apenas
-alias/adaptador quando o runtime suportar; o nome canonico do pacote e
-`loki:init`.
+Depois de instalar o Loki em um projeto consumidor aprovado, use somente
+`loki-init` para criar ou auditar a documentacao inicial do projeto.
 
-A execucao explicita de `loki:init` autoriza escrita somente em `docs/**` e
+A execucao explicita de `loki-init` autoriza escrita somente em `docs/**` e
 `planos/000-init-loki/**` do consumidor. O comando cria ou audita
 `docs/loki-init/**`, `docs/index.xml` e a trilha operacional
 `planos/000-init-loki/` com `interaction/fase1` e `builds/fase1` quando
@@ -259,7 +264,7 @@ duradoura e backlog.
 
 - `standards-curator`: classifica aprendizados como universal, provavel-universal, project-specific ou backlog.
 - `retrospective-digester`: digere retrospectivas tecnicas em modo read-only,
-  com fan-out por arquivo quando `loki:continuous-improvement` recebe multiplas
+  com fan-out por arquivo quando `loki-continuous-improvement` recebe multiplas
   retros.
 - `bibliotecario`: consulta `docs/index.xml` antes de abrir a documentacao
   duradoura do consumidor.
@@ -268,7 +273,7 @@ duradoura e backlog.
 - `runtime-qa`: produz checklist e evidencia exigida; nunca simula
   confirmacao humana.
 - `execution-context-reader`: extrai contexto em modo read-only para
-  `loki:run-plan`, usando `DIR_ANALISE`, tasks e fontes locais permitidas sem
+  `loki-run-plan`, usando `DIR_ANALISE`, tasks e fontes locais permitidas sem
   escrever.
 - `source-researcher`: mapeia fatos, lacunas e conflitos em pesquisa
   multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao,
@@ -278,7 +283,7 @@ duradoura e backlog.
   retorna proposta, validadores e gates.
 - Agentes game-dev como `gameplay-engineer`, `narrative-designer` e
   `dialogue-editor` podem escrever mecanicas, conteudo narrativo, dialogos,
-  quests, tuning ou artefatos equivalentes quando `loki:run-plan` entregar
+  quests, tuning ou artefatos equivalentes quando `loki-run-plan` entregar
   envelope `task_scoped_writer` com arquivos, validators e gates.
 
 ## Contexto Duradouro do Consumidor

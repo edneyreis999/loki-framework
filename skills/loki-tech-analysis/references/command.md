@@ -1,1 +1,0 @@
-../../../commands/loki-tech-analysis.md

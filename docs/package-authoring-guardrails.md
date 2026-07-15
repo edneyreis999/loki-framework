@@ -10,7 +10,7 @@ self_contained: true
 
 Este documento transforma os aprendizados operacionais do plano `010-manual-fixes-loki-framework` em regras de autoria para evoluir o proprio pacote `002-loki-framework-local`.
 
-Use este checklist sempre que a mudanca tocar `commands/`, `skills/`, `agents/`,
+Use este checklist sempre que a mudanca tocar command bundles, `skills/`, `agents/`,
 `codex/agents/`, `scripts/`, `templates/`, `docs/`, `README.md`, `index.md`, `index.xml` ou
 `manifest.yaml`.
 
@@ -48,7 +48,7 @@ Antes de escrever:
   terminologia e contexto factual que devem sobreviver a varios planos.
 - `docs/index.xml` do consumidor: catalogo navegavel para localizar a
   documentacao duradoura com baixo custo.
-- `commands/`, `skills/`, `agents/`, `codex/agents/`, `scripts/`,
+- command bundles, `skills/`, `agents/`, `codex/agents/`, `scripts/`,
   `templates/`, `docs/`, `README.md`, `index.md`, `manifest.yaml` e validators
   do pacote.
 
@@ -67,36 +67,41 @@ Antes de escrever:
 
 ## Regras de Estrutura
 
-### Identidade operacional vs superficie de adaptador
+### Identidade operacional vs serializacao
 
 Classifique o papel operacional antes de considerar o caminho fisico:
 
-- `commands/loki-<stem>.md` e `skills/loki-<stem>/SKILL.md` formam um unico
-  **command** operacional;
-- o arquivo sob `skills/loki-*` e apenas uma projeção instalável serializada
-  como `SKILL.md` para adaptadores que descobrem workflows por essa superficie;
+- `skills/loki-<stem>/SKILL.md` com `type: command` identifica um **command**
+  operacional, independentemente do diretorio;
+- `serialization: skill-bundle` torna o bundle a unica fonte e
+  proibe campos de projection ou contrato pareado;
 - `lf-*` e namespaces explícitos de domínio ou tecnologia identificam
   **skills** operacionais;
 - `agents/**` e suas projeções identificam **agents**.
 
 A identidade operacional prevalece sobre diretório, extensão, seção de
 inventário ou formato de instalação. Nunca use `type: skill`, a expressão
-`wrapper skill` ou o caminho `skills/**` para reclassificar uma projeção
-`loki-*` com command pareado como skill.
+`wrapper skill` ou o caminho `skills/**` para reclassificar um bundle
+`loki-*` como skill.
+
+Cada command bundle declara `type: command`, `serialization: skill-bundle`,
+Input no `SKILL.md`, Execution/Response em `references/` e template em `assets/`.
+Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e heading.
 
 ### Skills
 
 - Toda skill empacotada deve morar em `skills/<skill-name>/SKILL.md`.
 - O nome da pasta deve ser igual ao `name` no frontmatter.
-- Em `skills/`, o prefixo `loki-` e reservado para projeções instaláveis de
-  comandos Loki, não para skills operacionais.
-  Cada `skills/loki-*/SKILL.md` deve ter um `commands/loki-*.md` correspondente
-  com o mesmo stem.
+- Em `skills/`, o prefixo `loki-` e reservado para commands operacionais, nao
+  para skills; exige `serialization: skill-bundle` e proibe contrato pareado.
 - Helpers internas do framework devem usar o prefixo `lf-*`.
 - Skills opcionais de tecnologia ou dominio devem usar namespace proprio, como
   `rpg-maker-mz-*`, e nao `loki-*` salvo quando forem projeções de comandos.
 - `name` e `description` sao obrigatorios no frontmatter top-level.
 - O `description` deve carregar o principal contexto de trigger. `When To Use` no corpo nao substitui isso.
+- Metadados multi-adapter devem preservar os tipos aceitos pelo runtime:
+  `hooks` como mapping (`{}` quando vazio) e `shell` como `bash` ou
+  `powershell`; `hooks: []` e `shell: {}` falham no diagnóstico Claude Code.
 - Quando a skill orientar roteamento de modelo, use a semantica provider-neutral
   definida em `docs/model-effort-guidance.md` e nao prometa enforcement em
   adaptadores que tratam `SKILL.md` apenas como metadado.
@@ -105,7 +110,7 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
 
 ### Commands
 
-- Comandos Loki devem usar namespace `loki:`.
+- A identidade canonica e o proprio `name: loki-<stem>`.
 - O contrato precisa declarar `allowed_writes`, `forbidden_writes`,
   `required_skills`, `required_commands`, `validators`, `human_gates`,
   `stop_conditions` e `resume_contract`. Dependências `loki-*` pertencem a
@@ -114,10 +119,8 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
   ou `execution_profile` quando orientar custo, raciocinio ou handoffs.
 - Quando o comando processar aprendizados de fase, ele deve separar claramente fonte transitoria de destino duradouro.
 - Se o comando evoluir o proprio pacote, ele deve listar validacoes de pacote e artefatos normativos impactados.
-- Quando um comando Loki precisar ser invocavel diretamente no Codex, mantenha
-  uma projeção correspondente em `skills/loki-<command-stem>/SKILL.md`, declare
-  `type: command`, `projection: installable-skill`, `command_name` e os paths do
-  par, e atualize `manifest.yaml`.
+- Use somente o bundle com `type: command` e `serialization: skill-bundle`.
+  Atualize `manifest.yaml` e `install-scopes.json` na mesma mudanca.
 
 ### Agents
 
@@ -127,25 +130,25 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
 - `proposal-only` continua proibindo escrita em docs duradouros, runtime, codigo,
   assets, config, inventarios finais, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` e `.claude/**`, salvo approval explicito em outro contrato.
-- `loki:init` pode classificar agentes de dominio como
+- `loki-init` pode classificar agentes de dominio como
   `init_inventory_domain_writer` e conceder uma excecao estreita: cada agente
   escreve somente dentro do proprio `target_inventory_dir` em
   `docs/loki-init/<agent-name>/**`, validado contra
   `docs/loki-init-inventory-contracts.md`. Essa excecao nao autoriza
   `docs/index.xml`, `planos/000-init-loki/tasks.md`, runtime, assets, dados,
   `AGENTS.md`, `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
-- `loki:init` deve manter `catalogador` fora do fan-out paralelo de inventarios.
+- `loki-init` deve manter `catalogador` fora do fan-out paralelo de inventarios.
   Quando invocado, ele e `init_final_cataloger`: roda uma vez na consolidacao
   serial, usa as pastas de inventario validadas como fontes e so escreve os
   destinos de catalogacao explicitamente declarados no envelope.
-- Quando `loki:init` exigir retrospectiva tecnica por agente, todo agente
+- Quando `loki-init` exigir retrospectiva tecnica por agente, todo agente
   invocado pode receber tambem uma excecao estreita para escrever somente o
   proprio `target_retrospective` exato em
   `planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md`.
   Essa excecao nao autoriza docs duradouros, inventarios finais, runtime,
   codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` ou `.claude/**`.
-- `loki:run-plan` pode invocar agentes `scoped-writer` como owners de escrita
+- `loki-run-plan` pode invocar agentes `scoped-writer` como owners de escrita
   por task. O envelope deve declarar `target_files`, `allowed_writes`,
   `scoped_write_domains`, validators e gates; nenhum agente escreve fora desses
   arquivos.
@@ -170,7 +173,7 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
 - `scripts/install-loki-symlinks.py` e fonte versionada do pacote.
 - `install-scopes.json` e a fonte machine-readable dos perfis e escopos de
   instalacao. Mantenha esse arquivo em sincronia com `skills/*/SKILL.md`,
-  `commands/*.md`, `agents/*.md` e `codex/agents/*.toml`.
+  `agents/*.md` e `codex/agents/*.toml`.
 - Escopos validos: `internal-only`, `both`, `consumer-only`.
 - Perfis validos: `consumer` (`both` + `consumer-only`), `package-source`
   (`both` + `internal-only`) e `all` (todos os escopos).
@@ -188,8 +191,12 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
   dentro do package root, nunca para artefatos instalados locais.
 - Alteracoes em comandos, skills ou agentes instalaveis devem atualizar
   `install-scopes.json` na mesma mudanca.
-- Comandos Codex sao instalados por arquivo em `.agents/commands/loki/*.md`
-  para respeitar o perfil ativo.
+- Command bundles Codex sao instalados como diretorios em
+  `.agents/skills/loki-*`, filtrados pelo perfil ativo.
+- Links legados de command só podem ser removidos com
+  `--yes --cleanup-legacy-commands`, quando forem symlinks exatos para a antiga
+  fonte do mesmo pacote e nenhum parent for symlink. Arquivos reais e links
+  divergentes sempre bloqueiam.
 - Agentes Markdown e projecoes Codex sao instalados por arquivo em
   `.agents/agents/*.md` e `.codex/agents/*.toml` para respeitar o perfil ativo.
 - Destinos legados com `.agents/agents` como symlink de diretorio devem
@@ -205,7 +212,7 @@ inventário ou formato de instalação. Nunca use `type: skill`, a expressão
 - `manifest.yaml` deve apontar apenas para arquivos existentes dentro do package root.
 - `manifest.yaml` deve manter `supported_project_types`,
   `agent_project_tag_policy.base_tag` e `agents[].project_tags` coerentes com o
-  contrato de selecao de agentes do `loki:init`; rode o validador estrutural
+  contrato de selecao de agentes do `loki-init`; rode o validador estrutural
   quando adicionar, remover ou retaggear agentes.
 - Nenhuma fonte normativa do pacote pode apontar para fora deste diretorio.
 - `README.md`, `docs/usage-guide.md`, `docs/source-boundaries.md` e docs de politica devem continuar coerentes entre si.
@@ -228,7 +235,7 @@ classificacao e gates esta em
 | Regra que deve guiar toda LLM do projeto consumidor | `AGENTS.md` | task, interaction, build, retrospectiva |
 | Regra especifica de Claude Code, Codex ou adaptador equivalente | `CLAUDE.md` ou equivalente | `AGENTS.md` generico, task local |
 | Procedimento tecnico reutilizavel | `skills/` | doc generico longa ou checklist local |
-| Workflow com estado, outputs e gates | `commands/` | `AGENTS.md`, retrospectiva |
+| Workflow com estado, outputs e gates | command bundle em `skills/loki-*/` | `AGENTS.md`, retrospectiva |
 | Papel especialista com julgamento proprio | `agents/` | skill ou task isolada |
 | Formato repetivel de contrato ou artefato | `templates/` | copiar texto em varias tasks |
 | Politica, validator, gate ou docs normativos do pacote | `docs/`, validator correspondente ou `manifest.yaml` | retrospectiva ou backlog quando a evidencia ja for suficiente |
@@ -255,7 +262,7 @@ find "$PACKAGE_ROOT"/skills -maxdepth 2 -name SKILL.md | sort
 find "$PACKAGE_ROOT"/skills -maxdepth 1 -type f -name '*.md'
 ```
 
-Quando `SKILL.md` apontar para arquivos locais em `references/`, `commands/`,
+Quando `SKILL.md` apontar para arquivos locais em `references/`,
 `docs/`, `templates/`, `scripts/` ou outro caminho relativo do pacote, valide
 que o alvo existe a partir do arquivo que contem o link. Referencias quebradas
 em projeções de comando sao falha de empacotamento: corrija o link, adicione o
@@ -267,7 +274,7 @@ focado nos artefatos duraveis alterados ou nas superficies consolidadas
 aplicaveis. Esse scan focado e o decisor para a mudanca escopada:
 
 ```bash
-find commands skills agents codex scripts templates docs README.md index.md manifest.yaml install-scopes.json -type f \
+find skills agents codex scripts templates docs README.md index.md manifest.yaml install-scopes.json -type f \
   ! -path 'docs/package-authoring-guardrails.md' \
   ! -path '*/docs/package-authoring-guardrails.md' \
   ! -path 'skills/lf-skill-creator/references/validation-and-forward-testing.md' \
@@ -294,12 +301,10 @@ guidance de modelo ou effort, validar que `docs/model-effort-guidance.md`
 continua sendo a referencia central e que IDs concretos de modelos nao foram
 duplicados como regra canonica espalhada.
 
-`scripts/validate-install-scopes.py` tambem valida identidade e namespace:
-qualquer `skills/loki-*` sem `commands/loki-*.md` correspondente deve falhar;
-a projeção também deve declarar `type: command`,
-`projection: installable-skill`, `command_name`, `paths.package_projection` e
-`paths.command_contract`. Exceções exigem registro explícito no validador e
-neste documento.
+`scripts/validate-install-scopes.py` valida identidade e namespace schema 2.
+Todo `skills/loki-*` exige `serialization: skill-bundle`, os tres recursos
+minimos locais e roteados, e proibe campos de projection ou contrato pareado.
+Chave YAML duplicada e sempre falha.
 
 Para superficies Codex do pacote, validar tambem:
 
@@ -328,7 +333,6 @@ conteudo interno:
 
 ```bash
 find -L /tmp/loki-symlink-test/.agents/skills -maxdepth 2 -name SKILL.md | sort
-find -L /tmp/loki-symlink-test/.agents/commands/loki -maxdepth 1 -name 'loki-*.md' | sort
 ```
 
 Se uma proposta do Loki apontar para documentacao duradoura do consumidor,

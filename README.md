@@ -9,7 +9,7 @@ scope: local-project-package
 # Loki Framework Local
 
 Pacote local do Loki Framework para projetos de software e jogos,
-agnostico de engine/framework, dividido em `agents`, `commands`, `skills`,
+agnostico de engine/framework, dividido em `agents`, command bundles em `skills`,
 `templates` e `docs`.
 
 Este pacote e a fonte auditavel. Instalar significa copiar ou sincronizar estes
@@ -24,20 +24,21 @@ como catalogo navegavel.
 
 Fluxos principais:
 
-- `loki:agentic-development`: caminho integrado v2 de demanda para analise
+- `loki-agentic-development`: caminho integrado v2 de demanda para analise
   agentica, gates antes do plano, action plan, execucao autonoma, digest e
   backlog.
-- `loki:deep-research`: pesquisa profunda na internet com fontes citadas,
+- `loki-deep-research`: pesquisa profunda na internet com fontes citadas,
   verificacao cruzada, contradicoes e handoff para analise ou plano.
-- `loki:run-plan`: executor manual por fase ou task planejada.
-- `loki:continuous-improvement`: promocao posterior e controlada de
+- `loki-run-plan`: executor manual por fase ou task planejada.
+- `loki-continuous-improvement`: promocao posterior e controlada de
   aprendizados validados.
 
 Identidade operacional:
 
-- `commands/loki-<stem>.md` e `skills/loki-<stem>/SKILL.md` representam o
-  mesmo command; o segundo arquivo e somente sua projecao instalavel para
-  adaptadores baseados em skills;
+- `skills/loki-<stem>/` representa um command operacional completo, com Input
+  no `SKILL.md`, Execution/Response em `references/` e template em `assets/`;
+- `type: command` e `serialization: skill-bundle` preservam a taxonomia mesmo
+  que o command seja distribuido por uma superficie baseada em skills;
 - `lf-*` e namespaces de dominio ou tecnologia representam skills
   operacionais reutilizaveis;
 - o caminho `skills/**` ou o formato `SKILL.md` nao reclassifica uma projecao
@@ -56,7 +57,6 @@ PACKAGE_ROOT="$(pwd)"
 ├── manifest.yaml
 ├── agents/
 ├── codex/
-├── commands/
 ├── skills/
 ├── scripts/
 ├── templates/
@@ -68,7 +68,6 @@ PACKAGE_ROOT="$(pwd)"
 Destino local sugerido:
 
 ```text
-.claude/commands/loki/
 .claude/agents/
 .claude/skills/
 ```
@@ -76,28 +75,42 @@ Destino local sugerido:
 Mapeamento:
 
 ```text
-commands/*.md -> .claude/commands/loki/
 agents/*.md   -> .claude/agents/
-skills/*/     -> .claude/skills/
+skills/*/     -> .claude/skills/ (inclui os command bundles loki-*)
 templates/*.md -> .claude/templates/loki/
 ```
 
-Dry-run manual recomendado antes de aplicar:
+Para Claude Code, aplique os mesmos profiles de `install-scopes.json`. Em um
+consumer, copie somente skills e agents classificados como `both` ou
+`consumer-only`; nunca use `cp -R skills/*` nesse profile, pois isso também
+copiaria artefatos `internal-only`.
+
+Dry-run manual recomendado antes de aplicar: gere e revise a lista exata a
+partir de `install-scopes.json`, confirme que cada destino ainda não existe e
+registre essa lista para rollback. Para `consumer`, a lista esperada contém 46
+skills e 24 agents; templates Markdown são copiados separadamente.
 
 ```bash
 find "$PACKAGE_ROOT" -maxdepth 4 -type f | sort
-find .claude/commands .claude/agents .claude/skills -maxdepth 2 -type f 2>/dev/null | sort
+find .claude/agents .claude/skills -maxdepth 2 -type f 2>/dev/null | sort
 ```
 
-Aplicar somente apos approval explicito:
+Aplicar somente após approval explícito, copiando cada source selecionado para
+seu destino exato. O exemplo amplo abaixo é permitido apenas para profile
+`all`, nunca para um consumer:
 
 ```bash
-mkdir -p .claude/commands/loki .claude/agents .claude/skills .claude/templates/loki
-cp "$PACKAGE_ROOT"/commands/*.md .claude/commands/loki/
+mkdir -p .claude/agents .claude/skills .claude/templates/loki
+# profile all somente:
 cp "$PACKAGE_ROOT"/agents/*.md .claude/agents/
 cp -R "$PACKAGE_ROOT"/skills/* .claude/skills/
 cp "$PACKAGE_ROOT"/templates/*.md .claude/templates/loki/
 ```
+
+Depois da cópia filtrada, confirme que `loki-self-healing`,
+`loki-knowledge-extraction-analysis` e demais skills `internal-only` estão
+ausentes no consumer. Não sobrescreva destino existente; conflito exige
+intervenção manual e novo dry-run.
 
 Gate: escrever em `.claude/**` exige approval humano posterior. Este README nao autoriza a copia por si so.
 
@@ -115,7 +128,6 @@ Destino local criado pelo instalador:
 
 ```text
 .agents/skills/<skill-name> -> $PACKAGE_ROOT/skills/<skill-name>
-.agents/commands/loki/<command>.md -> $PACKAGE_ROOT/commands/<command>.md
 .agents/agents/<agent>.md   -> $PACKAGE_ROOT/agents/<agent>.md
 .agents/templates          -> $PACKAGE_ROOT/templates
 .codex/agents/<agent>.toml -> $PACKAGE_ROOT/codex/agents/<agent>.toml
@@ -130,7 +142,7 @@ Perfis:
 `install-scopes.json` e a fonte machine-readable dos escopos. O perfil default
 do script e `consumer`.
 
-O comando `loki:agentic-development` e instalado nos perfis que incluem
+O comando `loki-agentic-development` e instalado nos perfis que incluem
 artefatos `both`. Ele nao autoriza instalacao nem escrita em destino consumidor
 por si so; as regras de dry-run, approval e validacao continuam as mesmas.
 
@@ -165,12 +177,17 @@ inteiro `agents/`. O instalador atual usa um link por agente para respeitar
 `install-scopes.json`; se esse symlink legado existir, o dry-run bloqueia a
 instalacao ate ele ser removido no destino aprovado.
 
+Upgrades anteriores a consolidacao podem conter links legados de command. O
+instalador apenas os diagnostica no dry-run. A remocao exige apply explicito com
+`--yes --cleanup-legacy-commands`; remove somente symlink que aponta exatamente
+para o antigo arquivo do mesmo pacote, nunca arquivo real, link divergente ou
+caminho sob parent symlink. Revise o plano de cleanup antes de aprovar.
+
 Validacao pos-instalacao:
 
 ```bash
 python3 "$PACKAGE_ROOT/scripts/validate-install-scopes.py"
 find -L "$DEST/.agents/skills" -maxdepth 2 -name SKILL.md | sort
-find -L "$DEST/.agents/commands/loki" -maxdepth 1 -name 'loki-*.md' | sort
 find "$DEST/.agents/agents" -maxdepth 1 -type l -name '*.md' | sort
 find "$DEST/.codex/agents" -maxdepth 1 -type l -name '*.toml' | sort
 python3 - "$DEST" <<'PY'
@@ -183,6 +200,7 @@ data = json.loads(manifest.read_text(encoding="utf-8"))
 print(f"profile={data.get('install_profile')} links={len(data.get('links', []))}")
 assert data.get("install_profile") == "consumer"
 assert all("install_scope" in link for link in data.get("links", []))
+assert all(link.get("type") != "command" for link in data.get("links", []))
 PY
 git -C "$DEST" status --short .agents .codex
 ```
@@ -215,7 +233,6 @@ status e modo aplicado antes de qualquer remocao manual.
 Rollback simples:
 
 ```bash
-rm -f .claude/commands/loki/loki-*.md
 rm -f .claude/agents/standards-curator.md .claude/agents/retrospective-digester.md .claude/agents/runtime-qa.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
 rm -rf .claude/skills/loki-feedback .claude/skills/loki-enrich-tasks .claude/skills/lf-run-plan-execution .claude/skills/loki-retrospectiva-tecnica .claude/skills/lf-command-creator .claude/skills/lf-agent-creator .claude/skills/lf-skill-creator .claude/skills/lf-index-navigator .claude/skills/lf-tech-analysis-authoring .claude/skills/lf-action-plan-authoring .claude/skills/rpg-maker-mz-data-json .claude/skills/rpg-maker-mz-plugin-workflow
 ```

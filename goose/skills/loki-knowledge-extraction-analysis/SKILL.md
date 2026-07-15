@@ -7,7 +7,7 @@ description: Orquestra análise Goose-first de artefatos externos para extrair a
 
 ## Objetivo
 
-Use esta skill quando uma Goose Recipe precisar executar o fluxo de `loki:knowledge-extraction-analysis`: mapear artefatos externos, extrair aprendizados sem forçar recomendações, auditar impacto no Loki e consolidar um relatório Markdown consumível por `loki:continuous-improvement`.
+Use esta skill quando uma Goose Recipe precisar executar o fluxo de `loki-knowledge-extraction-analysis`: mapear artefatos externos, extrair aprendizados sem forçar recomendações, auditar impacto no Loki e consolidar um relatório Markdown consumível por `loki-continuous-improvement`.
 
 ## Procedimento
 
@@ -24,7 +24,7 @@ Use esta skill quando uma Goose Recipe precisar executar o fluxo de `loki:knowle
    - registre deltas, lacunas, redundâncias, conflitos, oportunidades, riscos e testes.
 5. Consolide os handoffs sem duplicar recomendações equivalentes.
 6. Produza o relatório final `# Analise de extracao de conhecimento para o Loki` com as seções exigidas pela recipe principal.
-7. Recomende o próximo passo para `loki:continuous-improvement` quando houver aprendizados implementáveis; caso contrário, registre explicitamente a ausência de aprendizado útil.
+7. Recomende o próximo passo para `loki-continuous-improvement` quando houver aprendizados implementáveis; caso contrário, registre explicitamente a ausência de aprendizado útil.
 
 ## Princípio de não-forçamento
 
@@ -59,5 +59,5 @@ O relatório final deve incluir, no mínimo:
 8. Resultado geral.
 9. Aprendizados identificados.
 10. Pontos rejeitados, já cobertos, lacunas e conflitos.
-11. Recomendações finais para `loki:continuous-improvement`.
+11. Recomendações finais para `loki-continuous-improvement`.
 12. Caso de ausência de aprendizado útil, quando aplicável.

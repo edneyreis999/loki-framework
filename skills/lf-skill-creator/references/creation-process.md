@@ -26,8 +26,8 @@ For each example, decide what reusable resources are useful:
 Before writing packaged files, confirm the package guardrails:
 
 - installable layout under `skills/<skill-name>/SKILL.md`;
-- `loki-` only for an installable command projection backed by a matching
-  `commands/loki-*.md`; classify that artifact as a command;
+- `loki-` only for a command bundle with `type: command` and
+  `serialization: skill-bundle`; the bundle is the sole source;
 - `lf-` or an explicit domain/technology namespace for operational skills;
 - top-level `description`;
 - conditional detail split into `references/`;
@@ -49,6 +49,10 @@ For this Loki package, create skills under:
 ```text
 <package-root>/skills/<skill-name>/SKILL.md
 ```
+
+For a Loki command bundle, also create `references/execution.md`,
+`references/response.md` and `assets/response-template.md`. Keep Input in the
+short `SKILL.md` and route every additional reference explicitly.
 
 ## 4. Edit `SKILL.md`
 

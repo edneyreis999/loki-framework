@@ -1,15 +1,13 @@
 ---
 name: lf-command-workflows
-description: Use shared Loki command workflows from Codex. Trigger when the user invokes `loki:init`, `init-loki`, `loki:catalogar-docs`, `loki:criar-branch`, `loki:commit`, `loki:abrir-pr`, `loki:feedback`, `loki:tech-analysis`, `loki:deep-research`, `loki:human-decision-preflight`, `loki:agentic-development`, `loki:generate-action-plan`, `loki:enrich-tasks`, `loki:run-plan`, or `loki:retrospectiva-tecnica`; read the matching installed command contract and load the required Loki skills.
+description: Route shared Loki command bundles from Codex. Trigger when the user invokes a public `loki-*` workflow; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
 when_to_use:
-  - "Use when the user invokes a shared Loki command workflow from Codex."
-  - "Use when routing loki:init, init-loki, loki:catalogar-docs, loki:criar-branch, loki:commit, loki:abrir-pr, loki:feedback, loki:tech-analysis, loki:deep-research, loki:human-decision-preflight, loki:agentic-development, loki:generate-action-plan, loki:enrich-tasks, loki:run-plan, or loki:retrospectiva-tecnica."
-argument-hint: "[loki command name, command arguments]"
+  - "Use when routing one of the 15 public Loki command bundles available to consumer and package profiles."
+  - "Use when a caller needs a catalog of public loki-* identities, not a duplicate command contract."
+argument-hint: "[loki-* command name, arguments]"
 arguments:
   required: []
-  optional:
-    - command_name
-    - command_arguments
+  optional: [command_name, command_arguments]
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -20,9 +18,7 @@ model_class: generalist
 adapter_projection:
   codex: "Advisory unless projected through config, profile or custom agent."
   claude_code: "May map to model/effort frontmatter where supported."
-escalation_signals:
-  - ambiguous command routing
-  - command contract requires high-effort downstream workflow
+escalation_signals: [ambiguous command routing, high-effort downstream workflow]
 context: standard
 agent: main
 hooks: []
@@ -31,89 +27,26 @@ paths:
 shell: {}
 type: skill
 status: draft
-used_by:
-  - loki:init
-  - loki:catalogar-docs
-  - loki:criar-branch
-  - loki:commit
-  - loki:abrir-pr
-  - loki:feedback
-  - loki:tech-analysis
-  - loki:deep-research
-  - loki:human-decision-preflight
-  - loki:agentic-development
-  - loki:generate-action-plan
-  - loki:enrich-tasks
-  - loki:run-plan
-  - loki:retrospectiva-tecnica
+used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-generate-action-plan, loki-human-decision-preflight, loki-agentic-development, loki-deep-research, loki-retrospectiva-tecnica, loki-run-plan, loki-tech-analysis]
 ---
 
 # lf-command-workflows
 
 ## Purpose
 
-Expose shared Loki command contracts to Codex as a skill-based workflow surface.
-Use this skill when the user invokes a command that is available in the active
-installation profile.
+Catalog public Loki command identities without duplicating their execution
+contracts. The command bundle is always the primary authority.
 
-## Command Map
+## Routing
 
-- `loki:init` or `init-loki`: read
-  `.agents/commands/loki/loki-init.md`, then use `loki-init`.
-- `loki:catalogar-docs`: read
-  `.agents/commands/loki/loki-catalogar-docs.md`, then use
-  `loki-catalogar-docs`.
-- `loki:criar-branch`: read
-  `.agents/commands/loki/loki-criar-branch.md`, then use
-  `loki-criar-branch`.
-- `loki:commit`: read
-  `.agents/commands/loki/loki-commit.md`, then use `loki-commit`.
-- `loki:abrir-pr`: read
-  `.agents/commands/loki/loki-abrir-pr.md`, then use `loki-abrir-pr`.
-- `loki:feedback`: read
-  `.agents/commands/loki/loki-feedback.md`, then use `loki-feedback`.
-- `loki:tech-analysis`: read
-  `.agents/commands/loki/loki-tech-analysis.md`, then use
-  the command projection `loki-tech-analysis`.
-- `loki:deep-research`: read
-  `.agents/commands/loki/loki-deep-research.md`, then use
-  `loki-deep-research`.
-- `loki:human-decision-preflight`: read
-  `.agents/commands/loki/loki-human-decision-preflight.md`,
-  then use `loki-human-decision-preflight`.
-- `loki:agentic-development`: read
-  `.agents/commands/loki/loki-agentic-development.md`, then use
-  `loki-agentic-development`.
-- `loki:generate-action-plan`: read
-  `.agents/commands/loki/loki-generate-action-plan.md`,
-  then use the command projection `loki-generate-action-plan`.
-- `loki:enrich-tasks`: read
-  `.agents/commands/loki/loki-enrich-tasks.md`, then use
-  `loki-enrich-tasks`.
-- `loki:run-plan`: read
-  `.agents/commands/loki/loki-run-plan.md`, then use
-  the command projection `loki-run-plan`.
-- `loki:retrospectiva-tecnica`: read
-  `.agents/commands/loki/loki-retrospectiva-tecnica.md`,
-  then use `loki-retrospectiva-tecnica`.
-
-## Procedure
-
-1. Match the user request to one command in the command map.
-2. Read only the matching installed command contract from
-   `.agents/commands/loki/`, as listed in the command map.
-3. Execute the matching `loki-*` command projection and load its
-   `required_skills` and `required_commands` separately. Never classify the
-   projection as a skill merely because the adapter discovers it under
-   `skills/**`.
-4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   validators, gates, stop conditions, and handoffs.
-5. If the command contract is not present in `.agents/commands/loki/`, stop and
-   report that the active installation profile does not expose that command.
+Read [references/command-routing.md](references/command-routing.md), match one
+exact `loki-*` identity and then read that bundle's `SKILL.md`, routed execution
+and response references, and response asset. Load its `required_skills` and
+`required_commands` separately.
 
 ## Limits
 
-- Do not use deprecated Codex custom prompts as the canonical workflow surface.
-- Do not edit `.agents/**` or `.codex/**` during ordinary Loki workflow
-  execution unless the user explicitly asks for installation or synchronization.
-- Do not promote project-specific context into the Loki package.
+- Never read legacy command-contract locations or compatibility projections.
+- Never reinterpret a `type: command` bundle as a knowledge skill.
+- Do not route internal-only workflows from this router.
+- Do not edit installed mirrors during ordinary execution.

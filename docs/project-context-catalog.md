@@ -21,7 +21,7 @@ referencia sem copiar sua estrutura literalmente.
 
 - `docs/**/*.md`: verdade de negocio, lore, fluxo funcional, termos, regras
   especificas e contexto factual do software ou jogo.
-- `docs/loki-init/**`: documentacao inicial produzida por `loki:init`,
+- `docs/loki-init/**`: documentacao inicial produzida por `loki-init`,
   incluindo inventario comum, contexto de tecnologia, pastas de inventario por
   agente, perguntas abertas e conflitos.
 - `docs/index.xml`: catalogo navegavel por maquina que ajuda a localizar os
@@ -52,8 +52,9 @@ O fluxo completo de captura, retrospectiva, classificacao e promocao esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md). Esta secao cobre
 apenas o destino de contexto duradouro do projeto consumidor.
 
-- Aprendizado `universal` ou `probable-universal` vai para `commands/`,
-  `skills/`, `agents/`, `templates/`, `docs/` ou validators do pacote Loki.
+- Aprendizado `universal` ou `probable-universal` vai para command bundle em
+  `skills/loki-*/`, skill reutilizavel, `agents/`, `templates/`, `docs/` ou
+  validators do pacote Loki.
 - Aprendizado `project-specific` vai para `docs/**/*.md` do consumidor e deve
   atualizar `docs/index.xml`.
 - `AGENTS.md` e `CLAUDE.md` do consumidor recebem apenas o minimo necessario

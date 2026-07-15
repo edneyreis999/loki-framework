@@ -29,10 +29,10 @@ escalation_signals:
   - skill changes affect command workflows
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-skill-creator/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 ---
 
@@ -44,10 +44,10 @@ type: skill
 2. Decide whether the need belongs in a `skill`, `command`, `agent`, `template`, `standard`, or backlog.
 3. Run package preflight for packaged skills: confirm destination, namespace,
    installable layout, self-contained references, and required validations.
-   Classify `loki-*` with a matching `commands/loki-*.md` as a command
-   projection and route its operational review to `lf-command-creator`; use
-   `lf-*` for framework skills and domain prefixes for optional technology
-   skills.
+   Classify `loki-*` with `type: command` as a command and route its
+   operational review to `lf-command-creator`. Require
+   `serialization: skill-bundle` and treat the bundle as the sole source. Use `lf-*`
+   for framework skills and domain prefixes for optional technology skills.
 4. Use the installable skill layout:
 
 ```text
@@ -57,7 +57,7 @@ skill-name/
 ```
 
 5. Gere skills multi-adapter por padrao. Nao ramifique o contrato pelo executor atual; some os metadados conhecidos de Claude Code e Codex, usando valores neutros validos quando um campo nao se aplicar.
-6. Preencha o frontmatter superset de `SKILL.md`: `name`, `description`, `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `hooks`, `paths`, `shell`.
+6. Preencha o frontmatter superset de `SKILL.md`: `name`, `description`, `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `hooks`, `paths`, `shell`. Para metadata neutra aceita por Claude Code, use `hooks: {}` quando nao houver hooks e `shell: bash` ou `shell: powershell`; nunca serialize esses campos como listas ou objetos vazios de tipo incompatível.
 7. Quando houver suporte Codex app/plugin, inclua `agents/openai.yaml` com `interface.display_name`, `interface.short_description`, `interface.icon_small`, `interface.icon_large`, `interface.brand_color`, `interface.default_prompt`, `policy.allow_implicit_invocation` e `dependencies.tools[].type/value/description/transport/url`.
 8. Keep `SKILL.md` focused on essential workflow, inputs, outputs, limits, and validation.
 9. Put variant-specific detail, long examples, templates, platform notes, or source research in `references/`.
@@ -77,8 +77,8 @@ skill-name/
 ## Limits
 
 - Do not install skills into `.claude/**`, `.codex/**`, or `.agents/**` without explicit approval.
-- Do not classify a `skills/loki-*/SKILL.md` projection with a matching command
-  as an operational skill merely because of its path or serialization format.
+- Do not classify a `skills/loki-*/SKILL.md` command bundle as an operational
+  skill merely because of its path or serialization format.
 - Do not keep large conditional material in `SKILL.md` when a reference file would preserve context.
 - Do not branch the generated skill by the current executor; generate the multi-adapter metadata superset.
 - Do not create auxiliary README/changelog files inside a skill unless a platform explicitly requires them.

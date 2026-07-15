@@ -30,14 +30,14 @@ escalation_signals:
   - complex gates, validators, or resume state
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-command-creator/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:
-  - loki:continuous-improvement
+  - loki-continuous-improvement
   - manual-framework-evolution
 ---
 
@@ -51,16 +51,26 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 
 ## Procedure
 
-1. Leia primeiro `loki-taxonomy.md`, `command-handoff-contracts.md`, `validators-and-gates.md`, `feature-artifact-structure.md`, `continuous-improvement-design.md`, `docs/package-authoring-guardrails.md` e o `manifest.yaml` do pacote local.
-2. Procure comandos existentes em `commands/` e no catalogo aprovado antes de criar um novo nome.
+1. Leia esta skill e seu
+   [command-contract-template](references/command-contract-template.md). Se o
+   destino contiver `manifest.yaml` e `install-scopes.json`, leia tambem
+   `docs/package-authoring-guardrails.md`, `manifest.yaml`,
+   `install-scopes.json` e as referencias exatas
+   `skills/lf-skill-creator/references/anatomy-and-frontmatter.md`,
+   `creation-process.md`, `loki-package-rules.md`, `naming-and-scope.md` e
+   `resources-and-disclosure.md`. Quando o perfil ativo fornecer auditoria
+   interna, use-a como validator adicional, nunca como dependencia obrigatoria
+   de um artefato `both`. Nao invente fontes que nao existam.
+2. Procure commands operacionais existentes em `skills/loki-*/SKILL.md` e no
+   catalogo aprovado antes de criar um novo nome.
 3. Classifique a necessidade:
    - `command` quando for fluxo invocavel com orquestracao, estado, handoffs, outputs e gates.
    - `skill` quando for procedimento tecnico reutilizavel que outros fluxos chamam.
    - `agent` quando houver julgamento especialista, isolamento de contexto ou proposta `read-only`/`proposal-only`.
    - `template` quando o valor principal for formato de saida repetivel.
-   - No pacote Loki, classifique `commands/loki-<stem>.md` e sua projeção
-     `skills/loki-<stem>/SKILL.md` como um único command operacional. O
-     `SKILL.md` é somente a superfície instalável do adaptador.
+   - No pacote Loki, classifique `skills/loki-<stem>/SKILL.md` com
+     `type: command` e `serialization: skill-bundle` como command operacional e
+     trate o bundle como fonte unica.
 4. Rode preflight de autoria quando o destino for o proprio pacote: namespace, artefato correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
 5. Defina o contrato minimo do comando: `name`, `purpose`, `inputs`, `outputs`,
    `allowed_writes`, `forbidden_writes`, `required_skills`,
@@ -85,8 +95,9 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 ## Quality Checklist
 
 - O comando nao duplica comando existente.
-- A projeção `skills/loki-*/SKILL.md`, quando existir, declara `type: command`,
-  `projection: installable-skill` e o `command_name` correspondente.
+- O bundle `skills/loki-*/SKILL.md` declara `type: command`; no estado final
+  declara `serialization: skill-bundle`, usa `name: loki-<stem>` como
+  identidade e nao conserva campos de projection ou command pareado.
 - O nome e curto, consistente com o namespace pretendido e nao corrige namespace historico fora de escopo.
 - A descricao explica quando usar e quando nao usar.
 - `allowed_writes` e `forbidden_writes` sao explicitos.
@@ -101,16 +112,18 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 ## Inputs
 
 - Demanda do usuario.
-- Blueprint aprovado.
-- Manifesto do pacote local.
-- Comandos, skills, agents e templates existentes.
+- Objetivo e decisoes aprovadas.
+- Catalogo de workflows e componentes disponivel no destino ativo.
+- Quando o destino contiver `manifest.yaml` e `install-scopes.json`, esses
+  arquivos e os commands, skills, agents e templates do mesmo root.
 - Pesquisa atual de Claude Code ou Codex quando a superficie da plataforma estiver em duvida.
 
 ## Outputs
 
 - Novo comando ou revisao de comando em Markdown.
 - Contrato de entradas, saidas, writes, validators e gates.
-- Registro no `manifest.yaml` quando aprovado.
+- Registro no inventario do destino quando a autoria ocorrer em um pacote que
+  possua inventario versionado e a mudanca for aprovada.
 - Lista de validacoes de pacote quando o destino for componente consolidado.
 - Backlog quando a demanda nao for comando.
 

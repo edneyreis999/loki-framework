@@ -1,8 +1,8 @@
 ---
 name: loki-abrir-pr
-description: Run the Loki `loki:abrir-pr` command workflow in Codex. Use when the user asks to open or prepare a Pull Request from the current branch using GitHub MCP when available or gh CLI as fallback.
+description: Run the Loki `loki-abrir-pr` command workflow in Codex. Use when the user asks to open or prepare a Pull Request from the current branch using GitHub MCP when available or gh CLI as fallback.
 when_to_use:
-  - "Use when running loki:abrir-pr."
+  - "Use when running loki-abrir-pr."
   - "Use when a user asks to create, open, draft, or prepare a GitHub Pull Request."
 argument-hint: "[base branch, title, body, draft flag, references]"
 arguments:
@@ -29,34 +29,74 @@ escalation_signals:
   - provider-specific PR behavior
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-abrir-pr/SKILL.md"
-  command_contract: "commands/loki-abrir-pr.md"
-shell: {}
+  package_bundle: "skills/loki-abrir-pr/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:abrir-pr
+serialization: skill-bundle
+domain: git
+required_skills:
+  - lf-git-workflow
+required_commands: []
 status: draft
 used_by:
-  - loki:abrir-pr
+  - loki-abrir-pr
 ---
 
 # loki-abrir-pr
 
-## Procedure
+## Input
 
-1. Read the installed command contract:
-   [loki-abrir-pr.md](../../commands/loki-abrir-pr.md).
-2. Load `lf-git-workflow`.
-3. Prefer GitHub MCP for PR creation when the active adapter exposes a
-   compatible tool; otherwise use authenticated `gh` as fallback.
-4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   validators, gates, stop conditions and resume contract.
-5. Treat this command projection as the Codex entrypoint for `loki:abrir-pr`.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Limits
+```yaml
+parameters:
+  - key: base_branch
+    input_type: string
+    requirement: optional
+    default: null
+    description: Branch base do Pull Request; quando ausente, detectar sem assumir em caso de ambiguidade.
+  - key: title
+    input_type: string
+    requirement: optional
+    default: null
+    description: Titulo proposto para o Pull Request.
+  - key: body
+    input_type: string
+    requirement: optional
+    default: null
+    description: Corpo proposto para o Pull Request.
+  - key: draft
+    input_type: boolean
+    requirement: optional
+    default: false
+    description: Define se o Pull Request deve ser criado como draft.
+  - key: references
+    input_type: list[string]
+    requirement: optional
+    default: []
+    description: Issues, tickets, planos ou validadores a referenciar.
+```
 
-- Do not create a PR without approval of title, body, base and head.
-- Do not merge, label, assign reviewers or alter milestones unless explicitly
-  requested.
+Valide tipos, strings nao vazias quando presentes, formato de branch e valor
+booleano de `draft`. Parametros opcionais ausentes nao bloqueiam a leitura local;
+ambiguidade de base, remote, provider ou intenção deve ser solicitada sem
+inventar defaults. Normalize objetivo, parametros, repositorio/escopo,
+restricoes, destino remoto, approvals, gates e lacunas.
+
+Durante Input nao execute Git, push ou criacao de PR, nao altere estado local ou
+remoto e nao declare sucesso.
+
+## Execution
+
+Leia integralmente [references/execution.md](references/execution.md) antes de
+agir e siga todas as referencias adicionais que esse arquivo ordenar.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e, na
+resposta terminal, preencha [assets/response-template.md](assets/response-template.md).

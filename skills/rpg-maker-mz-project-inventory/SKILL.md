@@ -1,9 +1,9 @@
 ---
 name: rpg-maker-mz-project-inventory
-description: Guide read-only inventory of RPG Maker MZ projects before game-dev analysis, handoff, planning, or implementation by mapping local evidence across project signature, docs, System IDs, Common Events, maps, plugins, plugin commands, assets, save/load, domain surfaces, validation limits, and escalation to loki:tech-analysis. Use when agents need RPG Maker MZ evidence without changing their response format.
+description: Guide read-only inventory of RPG Maker MZ projects before game-dev analysis, handoff, planning, or implementation by mapping local evidence across project signature, docs, System IDs, Common Events, maps, plugins, plugin commands, assets, save/load, domain surfaces, validation limits, and escalation to loki-tech-analysis. Use when agents need RPG Maker MZ evidence without changing their response format.
 when_to_use:
   - "Use after a project is detected as RPG Maker MZ and a game-dev agent needs reliable local inventory evidence."
-  - "Use before `loki:tech-analysis` when the question depends on RPG Maker MZ project structure, switches, variables, Common Events, maps, plugins, plugin commands, assets, save/load, UI, narrative, audio, balance, or runtime gates."
+  - "Use before `loki-tech-analysis` when the question depends on RPG Maker MZ project structure, switches, variables, Common Events, maps, plugins, plugin commands, assets, save/load, UI, narrative, audio, balance, or runtime gates."
   - "Use when a game-dev agent needs to separate static evidence from Playtest-only validation before a handoff."
   - "Use when an RPG Maker MZ inventory is partial because implementation ownership, validation boundaries, or local evidence remain unmapped."
 argument-hint: "[project_root, docs_index, focus_area, inventory_mode]"
@@ -27,7 +27,7 @@ adapter_projection:
 escalation_signals:
   - RPG Maker MZ runtime inventory is incomplete
   - Common Events, switches, variables, maps, plugins, plugin commands or save/load ownership are unknown
-  - inventory findings require loki:tech-analysis before an agent can finish handoff
+  - inventory findings require loki-tech-analysis before an agent can finish handoff
 context: standard
 agent: main
 hooks: []
@@ -54,7 +54,7 @@ This skill is a guide for investigation. It does not impose its own report
 format; preserve the response format of the active agent or command. Use the
 inventory to state what was inspected, what was not inspected, which claims are
 static only, and which next evidence requires Playtest, human review,
-editor/runtime access, or `loki:tech-analysis`.
+editor/runtime access, or `loki-tech-analysis`.
 
 ## Procedure
 
@@ -110,7 +110,7 @@ editor/runtime access, or `loki:tech-analysis`.
     the active task needs them; do not force a fixed Markdown section list.
 12. When ownership crosses docs, maps, Common Events, plugins, assets, save/load
     or runtime behavior, and the active agent cannot finish safely, recommend
-    `loki:tech-analysis` with a concrete focus, source list, unresolved
+    `loki-tech-analysis` with a concrete focus, source list, unresolved
     boundary, and required validator or human gate.
 
 ## Gates And Limits

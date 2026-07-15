@@ -20,77 +20,62 @@ Status permitidos nesta fase:
 
 O relacionamento entre brief, analise, plano, execucao e validacao esta em
 [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md). O
-relacionamento entre `loki:enrich-tasks`, `loki:retrospectiva-tecnica` e
-`loki:continuous-improvement` esta em
+relacionamento entre `loki-enrich-tasks`, `loki-retrospectiva-tecnica` e
+`loki-continuous-improvement` esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md).
 As regras de classe de modelo, effort e projecao por adaptador estao em
 [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md).
 
-## Commands
+## Command Bundles And Command Backlog
+
+Os componentes `loki-*` ativos abaixo são commands operacionais serializados em
+`skills/loki-<stem>/`. Cada bundle reúne entrypoint, execution, response e asset;
+não existe projection ou command físico separado.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki:init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, pastas de inventario por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
-| `loki:catalogar-docs` | `mvp` | Catalogar documentacao duradoura do consumidor em `/docs` com validacao de caminho, limites de recursao, bottom-up e fan-out disjunto via envelopes do `catalogador`, consolidando `docs/index.xml` de forma serial. |
-| `loki:criar-branch` | `mvp` | Criar branch Git local com base, nome, colisao e mudancas locais validadas antes de qualquer escrita. |
-| `loki:commit` | `mvp` | Criar commit local com staging explicito, mensagem convencional, bloqueio de branch default e validacao de diff/status. |
-| `loki:abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
-| `loki:feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
-| `loki:tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
-| `loki:human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
-| `loki:agentic-development` | `mvp` | Executar o caminho integrado v2: receber demanda simples, conduzir analise agentica, resolver gates materiais antes do plano, gerar plano, executar fases autonomamente, registrar evidencias, digest e backlog, preservando `loki:run-plan` como executor manual. |
-| `loki:generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
-| `loki:enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
-| `loki:run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
-| `loki:retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
-| `loki:continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
-| `loki:knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki:continuous-improvement`. |
-| `loki:deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
-| `loki:self-healing` | `mvp` | Auditar artefatos internos do pacote Loki e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
-| `loki:criar-nsd` | `backlog` | Conduzir entrevista narrativa quando o contrato de NSD for normalizado. |
-| `loki:ai-enemy-optimizer` | `backlog` | Gerar comportamento de inimigos por contrato de dominio especializado. |
-| `loki:brainstorm-phase-1-create-boss` | `backlog` | Criar conceito inicial de boss com escopo narrativo/gameplay. |
-| `loki:brainstorm-phase-2-detail-boss` | `backlog` | Detalhar boss em especificacao jogavel. |
+| `loki-init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, pastas de inventario por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
+| `loki-catalogar-docs` | `mvp` | Catalogar documentacao duradoura do consumidor em `/docs` com validacao de caminho, limites de recursao, bottom-up e fan-out disjunto via envelopes do `catalogador`, consolidando `docs/index.xml` de forma serial. |
+| `loki-criar-branch` | `mvp` | Criar branch Git local com base, nome, colisao e mudancas locais validadas antes de qualquer escrita. |
+| `loki-commit` | `mvp` | Criar commit local com staging explicito, mensagem convencional, bloqueio de branch default e validacao de diff/status. |
+| `loki-abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
+| `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
+| `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
+| `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
+| `loki-agentic-development` | `mvp` | Executar o caminho integrado v2: receber demanda simples, conduzir analise agentica, resolver gates materiais antes do plano, gerar plano, executar fases autonomamente, registrar evidencias, digest e backlog, preservando `loki-run-plan` como executor manual. |
+| `loki-generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
+| `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
+| `loki-run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
+| `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
+| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
+| `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
+| `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
+| `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote Loki e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
+| `loki-criar-nsd` | `backlog` | Conduzir entrevista narrativa quando o contrato de NSD for normalizado. |
+| `loki-ai-enemy-optimizer` | `backlog` | Gerar comportamento de inimigos por contrato de dominio especializado. |
+| `loki-brainstorm-phase-1-create-boss` | `backlog` | Criar conceito inicial de boss com escopo narrativo/gameplay. |
+| `loki-brainstorm-phase-2-detail-boss` | `backlog` | Detalhar boss em especificacao jogavel. |
 | `zord:generate-action-plan` | `reference-only` | Base estrutural para o comando Loki equivalente. |
 | `zord:run-plan` | `reference-only` | Base estrutural para executor Loki com gates do runtime do consumidor. |
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
-## Command Projections And Skills
+## Support Skills
 
-Esta seção agrupa superfícies instaladas sob `skills/**`, não uma única
-identidade operacional. Componentes `loki-*` com command pareado são
-**projeções instaláveis de commands**; componentes `lf-*` e de domínio ou
-tecnologia são **skills operacionais**. O formato `SKILL.md` não altera essa
-classificação.
+Esta seção lista skills `lf-*` e de domínio/tecnologia. Elas fornecem
+conhecimento reutilizável; não são mini-orquestradores nem duplicam os command
+bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
-| `loki-catalogar-docs` | `mvp` | Projeção instalável do command `loki:catalogar-docs`, validando alvo documental, limites de recursao, gates de escrita e estado retomavel. |
-| `loki-criar-branch` | `mvp` | Projeção instalável do command `loki:criar-branch`. |
-| `loki-commit` | `mvp` | Projeção instalável do command `loki:commit`. |
-| `loki-abrir-pr` | `mvp` | Projeção instalável do command `loki:abrir-pr`. |
-| `loki-init` | `mvp` | Projeção instalável do command `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
-| `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
-| `loki-feedback` | `mvp` | Projeção instalável do command `loki:feedback` para diagnostico antes de propor escrita. |
-| `loki-tech-analysis` | `mvp` | Projeção instalável do command `loki:tech-analysis`. |
-| `loki-human-decision-preflight` | `mvp` | Projeção instalável do command `loki:human-decision-preflight`. |
-| `loki-agentic-development` | `mvp` | Projeção instalável do command integrado `loki:agentic-development`. |
+| `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `loki-generate-action-plan` | `mvp` | Projeção instalável do command `loki:generate-action-plan`. |
-| `loki-enrich-tasks` | `mvp` | Projeção instalável do command `loki:enrich-tasks` para enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
-| `loki-run-plan` | `mvp` | Projeção instalável do command `loki:run-plan`. |
 | `lf-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
-| `loki-retrospectiva-tecnica` | `mvp` | Projeção instalável do command `loki:retrospectiva-tecnica` apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Projeção instalável do command `loki:continuous-improvement`. |
-| `loki-knowledge-extraction-analysis` | `mvp` | Projeção instalável do command `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `lf-git-workflow` | `mvp` | Procedimento compartilhado para branch, commit e PR com preflight Git, staging seguro, gates humanos e GitHub MCP/`gh` fallback. |
-| `loki-deep-research` | `mvp` | Projeção instalável do command `loki:deep-research` e produzir relatorio de pesquisa web profunda com citacoes, metodologia e limites. |
 | `lf-web-deep-research` | `mvp` | Procedimento reutilizavel de pesquisa profunda na internet com ondas de busca, avaliacao de fontes, contradicoes, assumptions, lacunas e output estruturado. |
-| `loki-self-healing` | `mvp` | Projeção instalável do command `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
 | `lf-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
@@ -107,9 +92,9 @@ classificação.
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
-| `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki:continuous-improvement`. |
+| `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
-| `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki:run-plan` sem escrever. |
+| `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki-run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
 | `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
@@ -143,7 +128,7 @@ classificação.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `scripts/install-loki-symlinks.py` | `mvp` | Instalar skills, commands, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com `--dry-run`, `--yes`, conflito seguro, `--replace` controlado e manifest de instalacao. |
+| `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, cleanup legado seguro e manifest de instalacao. |
 | `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex e tags de tipo de projeto dos agentes no `manifest.yaml`. |
 | `scripts/validate-agentic-run-state.py` | `mvp` | Validar estado XML do fluxo v2, incluindo parse, IDs, `selection_reason`, gates `must_ask_now`, contratos de escrita, conflitos de `target_files` e completion reports. |
 
@@ -151,7 +136,7 @@ classificação.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para skills, comandos, agentes Markdown, docs compartilhados declarados e projecoes Codex instalaveis. |
+| `install-scopes.json` | `mvp` | Fonte machine-readable dos escopos `internal-only`, `both` e `consumer-only` para bundles/skills, agentes Markdown, docs compartilhados e projecoes Codex instalaveis. |
 
 ## Templates
 
@@ -193,9 +178,9 @@ classificação.
 | `docs/model-effort-guidance.md` | `mvp` | Definir classes provider-neutral de modelo, effort, sinais de escalamento e projecao por adaptador para artefatos Loki. |
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
-| `docs/loki-init-inventory-contracts.md` | `mvp` | Definir contrato compartilhado de conteudo minimo para pastas de inventario por agente produzidas por `loki:init`. |
+| `docs/loki-init-inventory-contracts.md` | `mvp` | Definir contrato compartilhado de conteudo minimo para pastas de inventario por agente produzidas por `loki-init`. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |
-| `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki:init` para selecao de agentes. |
+| `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki-init` para selecao de agentes. |
 | Fontes historicas externalizadas | `reference-only` | Usadas como origem antes da publicacao do pacote; nao sao dependencias operacionais. |
 
 ## Extensoes Opcionais: RPG Maker MZ
@@ -208,9 +193,9 @@ projeto consumidor declarar RPG Maker MZ.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki:implementar-enemy` | `optional-extension` | Implementar inimigos em database RPG Maker MZ depois de validar gates da tecnologia. |
-| `loki:action-sequence-generator` | `optional-extension` | Gerar Action Sequences VisuStella por contrato especializado. |
-| `loki:visustella-add-postmortem` | `optional-extension` | Promover aprendizados VisuStella com gate de aprovacao. |
+| `loki-implementar-enemy` | `optional-extension` | Implementar inimigos em database RPG Maker MZ depois de validar gates da tecnologia. |
+| `loki-action-sequence-generator` | `optional-extension` | Gerar Action Sequences VisuStella por contrato especializado. |
+| `loki-visustella-add-postmortem` | `optional-extension` | Promover aprendizados VisuStella com gate de aprovacao. |
 
 ### Skills
 
@@ -240,4 +225,4 @@ projeto consumidor declarar RPG Maker MZ.
 
 ## Conclusao
 
-O inventario operacional separa `agents`, `commands`, `skills`, `templates` e `docs`. O pacote deve permanecer autocontido para instalacao em outros projetos.
+O inventario operacional separa command bundles/skills, agents, templates e docs. O pacote deve permanecer autocontido para instalacao em outros projetos.

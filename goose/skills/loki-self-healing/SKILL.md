@@ -43,7 +43,7 @@ Antes de qualquer patch, leia contexto suficiente para entender o todo:
 
 ## Classificação de install scope
 
-Antes de escrever em `commands/**` ou `skills/**`, classifique cada arquivo via `install-scopes.json`:
+Antes de escrever em command bundles ou `skills/**`, classifique cada arquivo via `install-scopes.json`:
 
 - `internal-only`;
 - `both`;
@@ -94,8 +94,8 @@ Aplique somente achados `corrigir agora`.
 - `find skills -maxdepth 1 -type f -name '*.md'`
 - Validação de frontmatter de skills: `name`, `description` e nome da pasta.
 - Validação de paths do `manifest.yaml`.
-- `python3 scripts/validate-install-scopes.py` quando tocar `commands/**`, `skills/**` ou superfícies instaláveis.
-- `python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile package-source` quando tocar skills, commands, agents, templates, scripts ou instalador.
+- `python3 scripts/validate-install-scopes.py` quando tocar command bundles, `skills/**` ou superfícies instaláveis.
+- `python3 scripts/install-loki-symlinks.py --dest /tmp/loki-symlink-test --dry-run --profile package-source` quando tocar bundles/skills, agents, templates, scripts ou instalador.
 - Validadores específicos do artefato corrigido quando houver.
 
 ## Limites
@@ -118,4 +118,4 @@ Pare quando:
 - a única correção possível exigir forbidden write;
 - a correção depender de informação externa atual ou decisão de produto ausente;
 - houver conflito interno sem critério claro;
-- uma edição em `commands/**` ou `skills/**` depender de install scope ausente.
+- uma edição em command bundle ou `skills/**` depender de install scope ausente.

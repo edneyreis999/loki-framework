@@ -44,6 +44,18 @@ Use `assets/` for files consumed by output, not for instructions to read into co
 - images;
 - boilerplate files.
 
+For a Loki command bundle, `assets/response-template.md` is the required
+materialization of the Response contract. Keep response instructions in
+`references/response.md`; keep the reusable output skeleton in the asset.
+
+## Loki Command Bundle Disclosure
+
+Keep `SKILL.md` short and restricted to metadata, Input and explicit loading
+instructions. Put the full Execution contract in
+`references/execution.md` (split only when every split is explicitly routed)
+and the Response contract in `references/response.md`. A clean-context LLM
+must be told to read each required reference completely before acting.
+
 ## What Not To Include
 
 Do not add auxiliary documentation that is not required for execution:

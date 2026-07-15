@@ -1,16 +1,16 @@
 ---
-title: Contratos de Inventario do loki:init
+title: Contratos de Inventario do loki-init
 type: loki-init-inventory-contracts
 status: draft
 self_contained: true
 ---
 
-# Contratos de Inventario do loki:init
+# Contratos de Inventario do loki-init
 
 ## Objetivo
 
 Este documento define o conteudo minimo dos inventarios factuais produzidos por
-agentes de dominio durante `loki:init`.
+agentes de dominio durante `loki-init`.
 
 O contrato existe para que cada agente escreva a propria pasta em
 `docs/loki-init/<agent-name>/` com liberdade de organizacao interna. Ele define
@@ -43,7 +43,7 @@ nao sao obrigatorios.
 ## Frescor Dos Inventarios
 
 Inventarios produzidos em fan-out sao snapshots do momento em que cada agente
-leu suas fontes. Durante a consolidacao final do `loki:init`, qualquer conclusao
+leu suas fontes. Durante a consolidacao final do `loki-init`, qualquer conclusao
 duradoura que dependa de frescor deve ser rechecada contra os documentos comuns
 atuais ou contra as fontes locais atuais que sustentam a conclusao.
 
@@ -54,7 +54,7 @@ que foi criado ou atualizado depois do fan-out.
 
 ## Relacao Com Skills Tecnicas
 
-O core do `loki:init` define o que precisa ser inventariado. Skills tecnicas
+O core do `loki-init` define o que precisa ser inventariado. Skills tecnicas
 definem onde buscar, como interpretar fontes especializadas e quais validadores
 extras aplicar quando uma tecnologia concreta for declarada pelo usuario, pelo
 projeto consumidor ou por um plano aprovado.

@@ -31,6 +31,24 @@ Antes de alterar as instruções do comando, pergunte a si mesma:
 
 Responda a cada pergunta somente com `sim` ou `não`. Responda `sim` apenas quando a exigência estiver explícita, verificável e sem contradição em outra parte das instruções. Não infira cobertura a partir de comportamento implícito, nome de seção genérico ou capacidade presumida do executor.
 
+### Unidade de auditoria para command bundle
+
+Quando o command estiver no schema final com `serialization: skill-bundle` sob
+`skills/loki-<stem>/`, audite o bundle inteiro como uma unica unidade. Leia
+`SKILL.md`, todos os references roteados e
+`assets/response-template.md`. Produza exatamente uma resposta 24/24 por bundle
+e separe `bundle_score` de blockers estruturais ou semanticos. Para cada item registre:
+
+```text
+item -> sim|não -> arquivo -> heading ou trecho -> contradições
+```
+
+Nao conceda `sim` por soma implicita: a evidencia precisa estar explicita e
+sem contradicao em qualquer arquivo do bundle. Itens 3–8 devem ser verificaveis
+no Input; itens 1–2 e 9–19, no Execution e seus splits; itens 20–24, no
+Response e no template. O gate final exige 24 respostas `sim`, mesmo quando a
+tabela de classificacao geral considere 23 como Excelente.
+
 ## Como corrigir cada resposta “não”
 
 Se responder `não` a qualquer pergunta, altere as instruções do comando antes de classificá-las. Aplique a correção de mesmo número usando linguagem imperativa, condições binárias e limites verificáveis.

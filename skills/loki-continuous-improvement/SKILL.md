@@ -1,18 +1,19 @@
 ---
 name: loki-continuous-improvement
-description: Run the Loki `loki:continuous-improvement` command workflow in Codex. Use when promoting validated learnings into durable project context, technical skills, Loki package artifacts, standards, commands, agents, templates, validators, docs, manifest updates, or backlog; classify whether evidence belongs in consumer `/docs`, a reusable skill, another durable artifact, or should be discarded/recorded only.
+description: Run the Loki `loki-continuous-improvement` command bundle in Codex. Promote validated retrospective learnings into the correct durable consumer or package surface through capability-aware digestion, evidence classification, root-cause analysis, normative gates, serial writes, verification, or evidence-backed backlog.
 when_to_use:
-  - "Use when promoting validated learnings into durable project context or Loki package artifacts."
-  - "Use when classifying candidates for standards, commands, skills, agents, templates, validators, docs, manifest updates, or backlog."
-  - "Use when deciding whether a retrospective learning belongs in consumer docs, a technical skill, or record-only/backlog."
-argument-hint: "[retrospective path, candidate learning, target surface]"
+  - "Use when validated retrospective learnings may belong in consumer docs, routing context, reusable skills, commands, agents, templates, validators, package policy, manifest, or backlog."
+  - "Use when multiple retrospectives require capability preflight, read-only digests, deduplication, root-cause boundaries, evidence classification, normative approval, and resumable candidates."
+argument-hint: "[retrospective_source, optional interactions, builds, target_surface, package_root, scope]"
 arguments:
-  required: []
+  required:
+    - retrospective_source
   optional:
-    - retrospective_path
-    - retrospective_dir
-    - candidate_learning
+    - interactions
+    - builds
     - target_surface
+    - package_root
+    - scope
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -29,110 +30,89 @@ escalation_signals:
   - broad normative change with cross-adapter impact
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
-  package_projection: "skills/loki-continuous-improvement/SKILL.md"
-  command_contract: "commands/loki-continuous-improvement.md"
-shell: {}
+  package_bundle: "skills/loki-continuous-improvement/"
+  execution: "references/execution.md"
+  response: "references/response.md"
+  response_template: "assets/response-template.md"
+shell: bash
 type: command
-projection: installable-skill
-command_name: loki:continuous-improvement
+serialization: skill-bundle
+domain: continuous-improvement
+required_skills:
+  - lf-command-creator
+  - lf-agent-creator
+  - lf-skill-creator
+required_commands:
+  - loki-retrospectiva-tecnica
 status: draft
 used_by:
-  - loki:continuous-improvement
+  - loki-continuous-improvement
 ---
 
 # loki-continuous-improvement
 
-## Procedure
+## Input
 
-1. Read the installed command contract:
-   [loki-continuous-improvement.md](references/command.md).
-2. Follow the command's inputs, outputs, allowed writes, forbidden writes,
-   required skills, handoffs, validators, gates, stop conditions, and resume
-   contract.
-3. Load the relevant Loki skills named by the command contract, especially
-   `loki-retrospectiva-tecnica`, `lf-command-creator`,
-   `lf-agent-creator`, and `lf-skill-creator`.
-4. If the input is a retrospective directory or multiple retrospective files,
-   run an adapter capability preflight before choosing fallback serial. In
-   Codex, use directed tool discovery for multi-agent, subagent, delegation, or
-   `retrospective-digester` tools; do not infer absence from the initial tool
-   surface alone. Fan out read-only digestion with `retrospective-digester` by
-   file when the runtime allows it. If fan-out remains unavailable after the
-   preflight, record the concrete evidence and process files serially using the
-   same `retrospective_digest` schema.
-5. Consolidate digests in the main context before classification. Do not load
-   all raw retrospectives into the main context unless resolving conflict or
-   weak evidence requires it.
-6. Classify every candidate with the shortcut below before proposing a patch.
-7. For every candidate, set `root_cause_learning.required`. When it is `true`,
-   run the command's read-only root-cause learning phase by handoff before
-   choosing the final destination or proposed patch. Use `source-researcher`
-   for multi-source root-cause research and `retrospective-digester` for
-   retrospective pattern search. Keep raw research out of the main context
-   unless resolving conflict or weak evidence requires reopening a source.
-   External research still requires explicit consent.
-8. When reading retrospectives, preserve execution friction fields such as
-   useful and bad inferences, scripts, unexpected outputs, environment
-   mismatches, failed lookups, waste impact, and minimum next path.
-9. Treat this command projection as the Codex entrypoint for the command name
-   `loki:continuous-improvement`.
+Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
-## Classification Shortcut
+```yaml
+parameters:
+  - key: retrospective_source
+    input_type: path[file_or_directory] | list[path[file]]
+    requirement: required
+    description: Retrospectiva técnica, diretório ou lista de retrospectivas concluídas, pausadas claramente ou relativas a dificuldade realmente resolvida.
+  - key: interactions
+    input_type: list[path_or_mapping]
+    requirement: optional
+    default: []
+    description: Decisões humanas, approvals, defaults e rejeições que delimitam promoção e escopo.
+  - key: builds
+    input_type: list[path_or_mapping]
+    requirement: optional
+    default: []
+    description: Builds, validators, tasks, diffs e validações humanas usados apenas como evidência transitória.
+  - key: target_surface
+    input_type: path_or_artifact_type
+    requirement: optional
+    default: null
+    description: Superfície duradoura candidata; é hipótese a classificar, não autorização de escrita.
+  - key: package_root
+    input_type: path[directory]
+    requirement: optional
+    default: null
+    description: Raiz do pacote quando o candidato puder afetar artefato Loki consolidado.
+  - key: scope
+    input_type: string_or_mapping
+    requirement: optional
+    default: null
+    description: Escopo positivo, limites, fora de escopo e restrições da melhoria.
+```
 
-- Put project-specific facts in consumer `docs/**/*.md` plus `docs/index.xml`:
-  business rules, lore, product behavior, domain terms, feature flows,
-  project conventions, architecture facts, source-of-truth paths, and decisions
-  that should survive across plans for that consumer project.
-- Put reusable technical procedures in `skills/`: repeatable workflows,
-  technology handling, validators, preflights, debugging recipes, file format
-  rules, tool usage, engine/framework operations, or execution heuristics that
-  apply beyond one task.
-- Put project-wide routing in `AGENTS.md` only when all LLMs in the consumer
-  project need a short pointer to the durable source. Keep detailed rules in
-  `/docs` or a skill.
-- Put adapter-specific routing in `CLAUDE.md` or equivalent only when the rule
-  applies to one execution surface.
-- Put command orchestration in `commands/` when the learning requires an
-  invokable workflow with inputs, outputs, gates, writes, handoffs, validators,
-  stop conditions, and resume state.
-- Put repeatable output shape in `templates/`.
-- Put package policy, validators, or manifest inventory in the matching Loki
-  package artifact only after `technical-review` and required approval.
-- Use `record-only` or backlog when evidence is weak, isolated, still
-  hypothetical, purely transient, already covered by an existing durable source,
-  or would add noise without preventing a repeatable failure.
+Valide que `retrospective_source` resolve apenas arquivos legíveis de
+retrospectiva ou um diretório legível enumerável. Valide existência de paths em
+`interactions`, `builds` e `package_root`, tipos das mappings e compatibilidade
+entre `scope` e `target_surface`. Rejeite fontes ainda em execução, dificuldades
+não resolvidas, destinos transitórios tratados como normativos e qualquer path
+fora do escopo, explicando como corrigir.
 
-## Classification Checks
+Identifique e solicite cada informação obrigatória ausente. Não invente fonte,
+evidência, escopo, destino, classificação, causa, approval ou gate; não avance
+enquanto a lacuna impedir avaliação segura.
 
-- Identify the source evidence, scope, target file or artifact type, validation,
-  and required gate before writing.
-- Prefer the surface that would have prevented the repeated error with the least
-  durable text.
-- Mark `root_cause_learning.required: true` when extra read-only research could
-  turn a symptom-level learning into a stronger source-of-truth rule, especially
-  for false-positive validation, wrong source of truth, repeated patterns,
-  surprising tool/engine semantics, or weak suspected cause.
-- Do not promote execution friction directly; convert it into a durable rule,
-  skill procedure, validator, preflight, doc update, or backlog item only when it
-  is reusable and evidenced.
-- When using multiple retrospectives, deduplicate by source evidence,
-  destination surface, repeated failure, and minimum next path before proposing
-  any durable update.
-- If the destination is consumer docs, update `docs/index.xml` in the same
-  promotion and use `catalogador` when appropriate.
-- If the destination is a skill, load `lf-skill-creator` and keep
-  technology-specific rules out of core package skills unless they belong to a
-  specialized skill.
+Normalize objetivo, parâmetros, fontes, evidências transitórias, erro observado
+quando aplicável, atritos de execução, escopo, restrições, destino candidato,
+allowed/forbidden writes, approvals, gates e lacunas. Durante Input não faça
+digests, pesquisa, classificação, proposta, promoção, escrita nem declaração de
+sucesso.
 
-## Limits
+## Execution
 
-- Do not promote transient phase evidence into durable rules without the gates
-  required by the command contract.
-- Do not edit `.agents/**` or `.codex/**` unless the user explicitly asks for
-  installation or synchronization.
-- Do not put consumer business rules, lore, product behavior, or project facts
-  into the Loki package.
-- Do not discard validated learning without recording why it is already covered,
-  too weak, too local, or not worth durable context.
+Leia integralmente [references/execution.md](references/execution.md) antes de
+agir e siga todas as referências adicionais que esse arquivo ordenar.
+
+## Response
+
+Leia integralmente [references/response.md](references/response.md) e, na
+resposta terminal, preencha [assets/response-template.md](assets/response-template.md).

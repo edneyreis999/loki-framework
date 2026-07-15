@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -35,31 +37,73 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
+FINAL_LOKI_COMMAND_COUNT = 17
+FINAL_BUNDLE_RESOURCES = (
+    "references/execution.md",
+    "references/response.md",
+    "assets/response-template.md",
+)
 
 
 def load_scopes(package_root: Path) -> dict:
     path = package_root / SCOPE_FILE
     with path.open(encoding="utf-8") as handle:
         data = json.load(handle)
-    if data.get("schema_version") != 1:
-        raise ValueError("install-scopes.json must use schema_version 1")
+    schema_version = data.get("schema_version")
+    if schema_version not in {1, 2}:
+        raise ValueError("install-scopes.json must use schema_version 1 or 2")
     identity_policy = data.get("artifact_identity_policy", {})
     command_projection = identity_policy.get("skills/loki-*/SKILL.md", {})
-    if command_projection != {
-        "operational_role": "command",
-        "projection": "installable-skill",
-        "paired_contract": "commands/loki-*.md",
-    }:
+    if schema_version == 1:
+        expected_command_policy = {
+            "operational_role": "command",
+            "projection": "installable-skill",
+            "paired_contract": "commands/loki-*.md",
+        }
+    else:
+        expected_command_policy = {
+            "operational_role": "command",
+            "serialization": "skill-bundle",
+            "required_resources": list(FINAL_BUNDLE_RESOURCES),
+        }
+    if command_projection != expected_command_policy:
         raise ValueError(
-            "install-scopes.json must classify skills/loki-*/SKILL.md as "
-            "installable command projections"
+            "install-scopes.json has an invalid skills/loki-*/SKILL.md "
+            f"identity policy for schema {schema_version}"
         )
+    artifacts = data.get("artifacts", {})
+    if schema_version == 1 and not isinstance(artifacts.get("commands"), dict):
+        raise ValueError("schema 1 must define artifacts.commands")
+    if schema_version == 2 and "commands" in artifacts:
+        raise ValueError("schema 2 must not define artifacts.commands")
     framework_skill = identity_policy.get("skills/lf-*/SKILL.md", {})
-    if framework_skill.get("operational_role") != "skill":
+    has_framework_skills = any(
+        name.startswith("lf-")
+        for name in artifacts.get("skills", {})
+    )
+    if has_framework_skills and framework_skill.get("operational_role") != "skill":
         raise ValueError(
             "install-scopes.json must classify skills/lf-*/SKILL.md as skills"
         )
     return data
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--package-root",
+        type=Path,
+        help="Validate an isolated package fixture instead of this package root.",
+    )
+    parser.add_argument(
+        "--scope-contract-only",
+        action="store_true",
+        help=(
+            "Validate install-scopes and schema-2 command bundles only. This is "
+            "intended for isolated tempfile fixtures, not release validation."
+        ),
+    )
+    return parser.parse_args(argv)
 
 
 def artifact_scopes(data: dict, kind: str) -> dict[str, str]:
@@ -85,23 +129,144 @@ def assert_exact_keys(label: str, actual: set[str], expected: set[str]) -> None:
         raise ValueError("; ".join(message))
 
 
+def _parse_yaml_string_scalar(raw_value: str, path: Path, field: str) -> str:
+    value = raw_value.strip()
+    if not value:
+        raise ValueError(f"{path}: {field} contains an empty list item")
+    if value.startswith('"'):
+        if not value.endswith('"'):
+            raise ValueError(f"{path}: {field} contains an unterminated double quote")
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"{path}: {field} contains an invalid double-quoted item: {exc}"
+            ) from exc
+        if not isinstance(parsed, str):
+            raise ValueError(f"{path}: {field} items must be strings")
+        return parsed
+    if value.startswith("'"):
+        if not value.endswith("'") or len(value) < 2:
+            raise ValueError(f"{path}: {field} contains an unterminated single quote")
+        inner = value[1:-1]
+        index = 0
+        decoded: list[str] = []
+        while index < len(inner):
+            if inner[index] == "'":
+                if index + 1 >= len(inner) or inner[index + 1] != "'":
+                    raise ValueError(
+                        f"{path}: {field} contains an invalid single-quoted item"
+                    )
+                decoded.append("'")
+                index += 2
+                continue
+            decoded.append(inner[index])
+            index += 1
+        return "".join(decoded)
+    if any(character in value for character in "'\"[]{}#,"):
+        raise ValueError(
+            f"{path}: {field} contains malformed or unsupported unquoted YAML: {value}"
+        )
+    if not re.fullmatch(r"[A-Za-z0-9_.+/@-]+", value):
+        raise ValueError(f"{path}: {field} contains invalid unquoted item: {value}")
+    return value
+
+
+def _parse_inline_yaml_list(raw_value: str, path: Path, field: str) -> list[str]:
+    value = raw_value.strip()
+    if not value.startswith("[") or not value.endswith("]"):
+        raise ValueError(f"{path}: {field} inline value must be a bracketed list")
+    inner = value[1:-1]
+    if not inner.strip():
+        return []
+
+    tokens: list[str] = []
+    current: list[str] = []
+    quote = ""
+    escaped = False
+    index = 0
+    while index < len(inner):
+        character = inner[index]
+        if quote == '"':
+            current.append(character)
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                quote = ""
+            index += 1
+            continue
+        if quote == "'":
+            current.append(character)
+            if character == "'":
+                if index + 1 < len(inner) and inner[index + 1] == "'":
+                    current.append(inner[index + 1])
+                    index += 2
+                    continue
+                quote = ""
+            index += 1
+            continue
+        if character in {'"', "'"}:
+            quote = character
+            current.append(character)
+        elif character == ",":
+            tokens.append("".join(current))
+            current = []
+        elif character in "[]":
+            raise ValueError(f"{path}: {field} does not support nested YAML lists")
+        else:
+            current.append(character)
+        index += 1
+    if quote or escaped:
+        raise ValueError(f"{path}: {field} contains an unterminated quoted item")
+    tokens.append("".join(current))
+    return [_parse_yaml_string_scalar(token, path, field) for token in tokens]
+
+
 def parse_frontmatter_list(path: Path, field: str) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
-    required: list[str] = []
-    in_required = False
-    for line in lines:
-        if line == f"{field}: []":
-            return []
-        if line == f"{field}:":
-            in_required = True
+    if not lines or lines[0].strip() != "---":
+        raise ValueError(f"{path}: missing frontmatter while parsing {field}")
+
+    frontmatter_end = next(
+        (index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"),
+        None,
+    )
+    if frontmatter_end is None:
+        raise ValueError(f"{path}: unterminated frontmatter while parsing {field}")
+
+    declaration_index: int | None = None
+    declaration_value = ""
+    for index, line in enumerate(lines[1:frontmatter_end], start=1):
+        match = re.fullmatch(rf"{re.escape(field)}:\s*(.*)", line)
+        if not match:
             continue
-        if in_required:
-            if line.startswith("  - "):
-                required.append(line[4:].strip())
-                continue
-            if line and not line.startswith(" "):
-                break
-    return required
+        if declaration_index is not None:
+            raise ValueError(f"{path}: duplicate frontmatter field {field}")
+        declaration_index = index
+        declaration_value = match.group(1)
+
+    if declaration_index is None:
+        return []
+    if declaration_value:
+        return _parse_inline_yaml_list(declaration_value, path, field)
+
+    values: list[str] = []
+    index = declaration_index + 1
+    while index < frontmatter_end:
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+        if not line.startswith(" "):
+            break
+        match = re.fullmatch(r"  -\s+(.+)", line)
+        if not match:
+            raise ValueError(f"{path}: malformed multiline list for {field}: {line}")
+        values.append(_parse_yaml_string_scalar(match.group(1), path, field))
+        index += 1
+    return values
 
 
 def parse_required_skills(path: Path) -> list[str]:
@@ -122,6 +287,89 @@ def frontmatter_declares_field(path: Path, field: str) -> bool:
         if line.startswith(f"{field}:"):
             return True
     return False
+
+
+def duplicate_frontmatter_keys(path: Path, package_root: Path) -> list[str]:
+    """Detect duplicate mapping keys in the frontmatter subset used here."""
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0].strip() != "---":
+        return []
+    parents: dict[int, str] = {}
+    seen: set[tuple[str, str]] = set()
+    duplicates: list[str] = []
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        match = re.match(r"^( *)([A-Za-z0-9_-]+):(?:\s|$)", line)
+        if not match:
+            continue
+        indent = len(match.group(1))
+        key = match.group(2)
+        for level in list(parents):
+            if level >= indent:
+                del parents[level]
+        parent = ".".join(parents[level] for level in sorted(parents))
+        qualified = f"{parent}.{key}" if parent else key
+        marker = (parent, key)
+        if marker in seen:
+            duplicates.append(qualified)
+        else:
+            seen.add(marker)
+        if line.rstrip().endswith(":"):
+            parents[indent] = key
+    return duplicates
+
+
+def validate_frontmatter_duplicate_keys(package_root: Path) -> None:
+    failures: list[str] = []
+    candidates = sorted((package_root / "skills").glob("*/SKILL.md"))
+    candidates += sorted((package_root / "agents").glob("*.md"))
+    candidates += sorted((package_root / "commands").glob("*.md"))
+    for path in candidates:
+        for key in duplicate_frontmatter_keys(path, package_root):
+            relative = str(path.relative_to(package_root))
+            failures.append(f"{relative}: duplicate frontmatter key {key}")
+    if failures:
+        raise ValueError("frontmatter duplicate key failures:\n- " + "\n- ".join(failures))
+
+
+def validate_transitional_loki_bundles(package_root: Path) -> None:
+    failures: list[str] = []
+    for skill_path in sorted((package_root / "skills").glob("loki-*/SKILL.md")):
+        bundle = skill_path.parent
+        execution = bundle / "references" / "execution.md"
+        response = bundle / "references" / "response.md"
+        template = bundle / "assets" / "response-template.md"
+        resources = (execution, response, template)
+        skill_text = skill_path.read_text(encoding="utf-8")
+        frontmatter = skill_text.split("---", 2)[1]
+        if "serialization:" in frontmatter:
+            failures.append(f"{skill_path}: schema 1 bundle must not declare serialization")
+        if not any(path.exists() or path.is_symlink() for path in resources):
+            continue
+        for path in resources:
+            if not path.exists():
+                failures.append(f"{bundle}: incomplete transitional bundle; missing {path.relative_to(bundle)}")
+            elif path.is_symlink():
+                failures.append(f"{path}: transitional bundle resource must not be a symlink")
+        for reference in (
+            "references/execution.md",
+            "references/response.md",
+            "assets/response-template.md",
+        ):
+            if reference not in skill_text:
+                failures.append(f"{skill_path}: does not route {reference}")
+        headings = [skill_text.find(f"## {name}") for name in ("Input", "Execution", "Response")]
+        if any(index < 0 for index in headings) or headings != sorted(headings):
+            failures.append(
+                f"{skill_path}: transitional bundle must route ## Input, ## Execution and ## Response in order"
+            )
+        if execution.exists() and "## Execution" not in execution.read_text(encoding="utf-8"):
+            failures.append(f"{execution}: missing ## Execution")
+        if response.exists() and "## Response" not in response.read_text(encoding="utf-8"):
+            failures.append(f"{response}: missing ## Response")
+    if failures:
+        raise ValueError("transitional Loki bundle failures:\n- " + "\n- ".join(failures))
 
 
 def iter_artifact_files(package_root: Path, kind: str, name: str) -> list[Path]:
@@ -687,32 +935,267 @@ def validate_agentic_agent_metadata(package_root: Path) -> None:
         raise ValueError("agentic agent metadata failures:\n- " + "\n- ".join(failures))
 
 
-def main() -> int:
-    package_root = Path(__file__).resolve().parent.parent
+def frontmatter_text(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    parts = text.split("---", 2)
+    if len(parts) != 3 or parts[0].strip():
+        raise ValueError(f"{path}: missing parseable YAML frontmatter delimiters")
+    return parts[1]
+
+
+def validate_final_loki_bundles(
+    package_root: Path,
+    data: dict,
+    require_full_inventory: bool = True,
+) -> None:
+    skill_scopes = artifact_scopes(data, "skills")
+    loki_names = sorted(name for name in skill_scopes if name.startswith("loki-"))
+    if require_full_inventory and len(loki_names) != FINAL_LOKI_COMMAND_COUNT:
+        raise ValueError(
+            f"schema 2 must declare {FINAL_LOKI_COMMAND_COUNT} loki command bundles; "
+            f"found {len(loki_names)}"
+        )
+
+    failures: list[str] = []
+    for name in loki_names:
+        bundle = package_root / "skills" / name
+        skill_path = bundle / "SKILL.md"
+        if not skill_path.is_file() or skill_path.is_symlink():
+            failures.append(f"{skill_path}: command entrypoint must be a real file")
+            continue
+        try:
+            frontmatter = frontmatter_text(skill_path)
+        except ValueError as exc:
+            failures.append(str(exc))
+            continue
+
+        checks = {
+            "name": name,
+            "type": "command",
+            "serialization": "skill-bundle",
+            "hooks": "{}",
+            "shell": "bash",
+        }
+        for field, expected in checks.items():
+            actual = frontmatter_scalar(skill_path, field)
+            if actual != expected:
+                failures.append(
+                    f"{skill_path}: {field}={actual or 'missing'}; expected {expected}"
+                )
+        for forbidden in ("projection", "command_name", "command_contract"):
+            if re.search(rf"(?m)^\s*{re.escape(forbidden)}:", frontmatter):
+                failures.append(f"{skill_path}: forbidden schema-1 key {forbidden}")
+        for field in ("required_skills", "required_commands"):
+            if not frontmatter_declares_field(skill_path, field):
+                failures.append(f"{skill_path}: missing {field}")
+
+        bundle_resolved = bundle.resolve(strict=True)
+        for relative in FINAL_BUNDLE_RESOURCES:
+            resource = bundle / relative
+            if resource.is_symlink() or not resource.is_file():
+                failures.append(f"{resource}: required bundle resource must be a real file")
+                continue
+            try:
+                resource.resolve(strict=True).relative_to(bundle_resolved)
+            except ValueError:
+                failures.append(f"{resource}: resource resolves outside its bundle")
+
+        skill_text = skill_path.read_text(encoding="utf-8")
+        for reference in ("references/execution.md", "references/response.md"):
+            if reference not in skill_text:
+                failures.append(f"{skill_path}: does not route {reference}")
+        headings = [
+            skill_text.find(f"## {heading}")
+            for heading in ("Input", "Execution", "Response")
+        ]
+        if any(index < 0 for index in headings) or headings != sorted(headings):
+            failures.append(
+                f"{skill_path}: must route ## Input, ## Execution and ## Response in order"
+            )
+        response_path = bundle / "references" / "response.md"
+        if response_path.is_file() and "assets/response-template.md" not in response_path.read_text(
+            encoding="utf-8"
+        ):
+            failures.append(
+                f"{response_path}: must reference assets/response-template.md"
+            )
+
+    if failures:
+        raise ValueError("final Loki bundle failures:\n- " + "\n- ".join(failures))
+
+
+def validate_final_command_dependencies(package_root: Path, data: dict) -> None:
+    scopes = artifact_scopes(data, "skills")
+    command_names = {name for name in scopes if name.startswith("loki-")}
+    failures: list[str] = []
+
+    for command_name in sorted(command_names):
+        path = package_root / "skills" / command_name / "SKILL.md"
+        source_profiles = {
+            profile
+            for profile in PROFILE_SCOPES_FOR_VALIDATION
+            if scopes[command_name] in PROFILE_SCOPES_FOR_VALIDATION[profile]
+        }
+        for skill_name in parse_required_skills(path):
+            if skill_name.startswith("loki-"):
+                failures.append(
+                    f"{path}: required_skills contains command bundle {skill_name}"
+                )
+                continue
+            if skill_name not in scopes:
+                failures.append(f"{path}: required skill {skill_name} is not installed")
+                continue
+            dependency_profiles = {
+                profile
+                for profile in PROFILE_SCOPES_FOR_VALIDATION
+                if scopes[skill_name] in PROFILE_SCOPES_FOR_VALIDATION[profile]
+            }
+            missing_profiles = sorted(source_profiles - dependency_profiles)
+            if missing_profiles:
+                failures.append(
+                    f"{path}: required skill {skill_name} is absent from profile(s) "
+                    + ", ".join(missing_profiles)
+                )
+
+        for required_command in parse_required_commands(path):
+            if not required_command.startswith("loki-"):
+                failures.append(
+                    f"{path}: required_commands contains non-command {required_command}"
+                )
+                continue
+            if required_command == command_name:
+                failures.append(f"{path}: command must not require itself")
+            if required_command not in command_names:
+                failures.append(
+                    f"{path}: required command {required_command} is not installed"
+                )
+                continue
+            dependency_profiles = {
+                profile
+                for profile in PROFILE_SCOPES_FOR_VALIDATION
+                if scopes[required_command] in PROFILE_SCOPES_FOR_VALIDATION[profile]
+            }
+            missing_profiles = sorted(source_profiles - dependency_profiles)
+            if missing_profiles:
+                failures.append(
+                    f"{path}: required command {required_command} is absent from profile(s) "
+                    + ", ".join(missing_profiles)
+                )
+
+    if failures:
+        raise ValueError(
+            "final command dependency failures:\n- " + "\n- ".join(failures)
+        )
+
+
+PROFILE_SCOPES_FOR_VALIDATION = {
+    "consumer": {"both", "consumer-only"},
+    "package-source": {"both", "internal-only"},
+    "all": set(VALID_SCOPES),
+}
+
+
+def validate_final_neutrality(package_root: Path, data: dict) -> None:
+    scopes = artifact_scopes(data, "skills")
+    internal_names = {
+        name for name, scope in scopes.items() if scope == "internal-only"
+    }
+    failures: list[str] = []
+    for name, scope in sorted(scopes.items()):
+        if scope != "both":
+            continue
+        for path in iter_artifact_files(package_root, "skills", name):
+            text = path.read_text(encoding="utf-8").lower()
+            for term in SUSPICIOUS_BOTH_TERMS:
+                if term in text:
+                    failures.append(f"{path}: both artifact contains '{term}'")
+            for internal_name in internal_names:
+                if internal_name in text:
+                    failures.append(
+                        f"{path}: both artifact references internal-only {internal_name}"
+                    )
+    if failures:
+        raise ValueError("neutrality failures:\n- " + "\n- ".join(failures))
+
+
+def validate_final_manifest(package_root: Path) -> None:
+    manifest_path = package_root / "manifest.yaml"
+    text = manifest_path.read_text(encoding="utf-8")
+    failures: list[str] = []
+    if re.search(r"(?m)^commands:\s*$", text):
+        failures.append("manifest must not contain a top-level commands catalog")
+    if re.search(r"(?m)^\s+(commands|command_contract|projection):", text):
+        failures.append("manifest contains a legacy commands/projection field")
+    catalog = parse_manifest_skill_catalog(package_root)
+    loki_entries = {name: metadata for name, metadata in catalog.items() if name.startswith("loki-")}
+    if len(loki_entries) != FINAL_LOKI_COMMAND_COUNT:
+        failures.append(
+            f"manifest must contain {FINAL_LOKI_COMMAND_COUNT} loki skill entries"
+        )
+    for name, metadata in sorted(loki_entries.items()):
+        if metadata.get("operational_role") != "command":
+            failures.append(f"manifest skills.{name}.operational_role must be command")
+        if metadata.get("serialization") != "skill-bundle":
+            failures.append(f"manifest skills.{name}.serialization must be skill-bundle")
+        if metadata.get("projection"):
+            failures.append(f"manifest skills.{name} must not declare projection")
+    if failures:
+        raise ValueError("final manifest failures:\n- " + "\n- ".join(failures))
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(sys.argv[1:] if argv is None else argv)
+    package_root = (
+        args.package_root.expanduser().resolve(strict=True)
+        if args.package_root
+        else Path(__file__).resolve().parent.parent
+    )
     try:
         data = load_scopes(package_root)
+        schema_version = data["schema_version"]
         skill_scopes = artifact_scopes(data, "skills")
-        command_scopes = artifact_scopes(data, "commands")
-        agent_scopes = artifact_scopes(data, "agents")
-        codex_agent_scopes = artifact_scopes(data, "codex_agents")
-
         skill_names = {
             path.parent.name
             for path in (package_root / "skills").glob("*/SKILL.md")
         }
-        command_names = {path.name for path in (package_root / "commands").glob("*.md")}
+        assert_exact_keys("skill", set(skill_scopes), skill_names)
+        validate_frontmatter_duplicate_keys(package_root)
+
+        if schema_version == 2:
+            if (package_root / "commands").exists():
+                raise ValueError("schema 2 final state must not contain commands/")
+            validate_final_loki_bundles(
+                package_root,
+                data,
+                require_full_inventory=not args.scope_contract_only,
+            )
+            validate_final_command_dependencies(package_root, data)
+        else:
+            command_scopes = artifact_scopes(data, "commands")
+            command_names = {
+                path.name for path in (package_root / "commands").glob("*.md")
+            }
+            assert_exact_keys("command", set(command_scopes), command_names)
+            validate_loki_command_projection_namespace(skill_names, command_names)
+            validate_loki_command_projection_identity(package_root, data)
+            validate_transitional_loki_bundles(package_root)
+            validate_command_dependency_identity(package_root, data)
+
+        if args.scope_contract_only:
+            if schema_version != 2:
+                raise ValueError("--scope-contract-only requires schema_version 2")
+            print("install scope validation: ok (schema 2 fixture contract)")
+            return 0
+
+        agent_scopes = artifact_scopes(data, "agents")
+        codex_agent_scopes = artifact_scopes(data, "codex_agents")
         agent_names = {path.name for path in (package_root / "agents").glob("*.md")}
         codex_agent_names = {
             path.name for path in (package_root / "codex" / "agents").glob("*.toml")
         }
-        assert_exact_keys("skill", set(skill_scopes), skill_names)
-        assert_exact_keys("command", set(command_scopes), command_names)
         assert_exact_keys("agent", set(agent_scopes), agent_names)
         assert_exact_keys("Codex agent", set(codex_agent_scopes), codex_agent_names)
-        validate_loki_command_projection_namespace(skill_names, command_names)
-        validate_loki_command_projection_identity(package_root, data)
         validate_framework_skill_identity(package_root, data)
-        validate_command_dependency_identity(package_root, data)
 
         mismatched_agent_scopes = []
         for agent_name, scope in sorted(agent_scopes.items()):
@@ -728,10 +1211,16 @@ def main() -> int:
                 + "; ".join(mismatched_agent_scopes)
             )
 
-        validate_neutrality(package_root, data)
+        if schema_version == 2:
+            validate_final_neutrality(package_root, data)
+        else:
+            validate_neutrality(package_root, data)
         validate_toml(package_root)
         validate_manifest_entries(package_root)
-        validate_manifest_command_projection_identity(package_root)
+        if schema_version == 2:
+            validate_final_manifest(package_root)
+        else:
+            validate_manifest_command_projection_identity(package_root)
         validate_agent_project_tags(package_root)
         validate_agentic_agent_metadata(package_root)
     except (OSError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as exc:

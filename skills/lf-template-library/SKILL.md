@@ -32,9 +32,9 @@ shell: {}
 type: skill
 status: draft
 used_by:
-  - loki:tech-analysis
-  - loki:generate-action-plan
-  - loki:continuous-improvement
+  - loki-tech-analysis
+  - loki-generate-action-plan
+  - loki-continuous-improvement
 ---
 
 # lf-template-library
