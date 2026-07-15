@@ -25,7 +25,7 @@ SUSPICIOUS_BOTH_TERMS = (
     "prefer these sources",
     "if this skill",
 )
-LOKI_SKILL_NAMESPACE_EXCEPTIONS: set[str] = set()
+LOKI_COMMAND_PROJECTION_EXCEPTIONS: set[str] = set()
 REQUIRED_AGENTIC_METADATA_FIELDS = {
     "capability_tags",
     "phase_roles",
@@ -43,6 +43,22 @@ def load_scopes(package_root: Path) -> dict:
         data = json.load(handle)
     if data.get("schema_version") != 1:
         raise ValueError("install-scopes.json must use schema_version 1")
+    identity_policy = data.get("artifact_identity_policy", {})
+    command_projection = identity_policy.get("skills/loki-*/SKILL.md", {})
+    if command_projection != {
+        "operational_role": "command",
+        "projection": "installable-skill",
+        "paired_contract": "commands/loki-*.md",
+    }:
+        raise ValueError(
+            "install-scopes.json must classify skills/loki-*/SKILL.md as "
+            "installable command projections"
+        )
+    framework_skill = identity_policy.get("skills/lf-*/SKILL.md", {})
+    if framework_skill.get("operational_role") != "skill":
+        raise ValueError(
+            "install-scopes.json must classify skills/lf-*/SKILL.md as skills"
+        )
     return data
 
 
@@ -69,12 +85,14 @@ def assert_exact_keys(label: str, actual: set[str], expected: set[str]) -> None:
         raise ValueError("; ".join(message))
 
 
-def parse_required_skills(path: Path) -> list[str]:
+def parse_frontmatter_list(path: Path, field: str) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
     required: list[str] = []
     in_required = False
     for line in lines:
-        if line == "required_skills:":
+        if line == f"{field}: []":
+            return []
+        if line == f"{field}:":
             in_required = True
             continue
         if in_required:
@@ -84,6 +102,26 @@ def parse_required_skills(path: Path) -> list[str]:
             if line and not line.startswith(" "):
                 break
     return required
+
+
+def parse_required_skills(path: Path) -> list[str]:
+    return parse_frontmatter_list(path, "required_skills")
+
+
+def parse_required_commands(path: Path) -> list[str]:
+    return parse_frontmatter_list(path, "required_commands")
+
+
+def frontmatter_declares_field(path: Path, field: str) -> bool:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0].strip() != "---":
+        return False
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith(f"{field}:"):
+            return True
+    return False
 
 
 def iter_artifact_files(package_root: Path, kind: str, name: str) -> list[Path]:
@@ -107,6 +145,11 @@ def validate_neutrality(package_root: Path, data: dict) -> None:
     internal_skill_names = {
         name for name, scope in skill_scopes.items() if scope == "internal-only"
     }
+    internal_command_names = {
+        Path(name).stem
+        for name, scope in command_scopes.items()
+        if scope == "internal-only"
+    }
 
     failures: list[str] = []
     for command_name, scope in command_scopes.items():
@@ -117,6 +160,12 @@ def validate_neutrality(package_root: Path, data: dict) -> None:
             if skill_name in internal_skill_names:
                 failures.append(
                     f"{command_path}: both command requires internal-only {skill_name}"
+                )
+        for command_name in parse_required_commands(command_path):
+            if command_name in internal_command_names:
+                failures.append(
+                    f"{command_path}: both command requires internal-only "
+                    f"{command_name}"
                 )
 
     for kind, scopes in (
@@ -143,13 +192,53 @@ def validate_neutrality(package_root: Path, data: dict) -> None:
         raise ValueError("neutrality failures:\n- " + "\n- ".join(failures))
 
 
+def validate_command_dependency_identity(package_root: Path, data: dict) -> None:
+    command_scopes = artifact_scopes(data, "commands")
+    failures: list[str] = []
+
+    for command_file in sorted(command_scopes):
+        path = package_root / "commands" / command_file
+        command_stem = Path(command_file).stem
+
+        for required_field in ("required_skills", "required_commands"):
+            if not frontmatter_declares_field(path, required_field):
+                failures.append(f"{path}: missing {required_field}")
+
+        for skill_name in parse_required_skills(path):
+            if skill_name.startswith("loki-"):
+                failures.append(
+                    f"{path}: required_skills contains command projection "
+                    f"{skill_name}; move it to required_commands"
+                )
+
+        for required_command in parse_required_commands(path):
+            if not required_command.startswith("loki-"):
+                failures.append(
+                    f"{path}: required_commands contains non-command "
+                    f"{required_command}"
+                )
+                continue
+            if required_command == command_stem:
+                failures.append(f"{path}: command must not require itself")
+            required_file = f"{required_command}.md"
+            if required_file not in command_scopes:
+                failures.append(
+                    f"{path}: required command {required_file} is not installed"
+                )
+
+    if failures:
+        raise ValueError(
+            "command dependency identity failures:\n- " + "\n- ".join(failures)
+        )
+
+
 def validate_toml(package_root: Path) -> None:
     for path in sorted((package_root / "codex" / "agents").glob("*.toml")):
         with path.open("rb") as handle:
             tomllib.load(handle)
 
 
-def validate_loki_skill_namespace(
+def validate_loki_command_projection_namespace(
     skill_names: set[str], command_names: set[str]
 ) -> None:
     command_wrapper_names = {
@@ -162,12 +251,119 @@ def validate_loki_skill_namespace(
         for name in skill_names
         if name.startswith("loki-")
         and name not in command_wrapper_names
-        and name not in LOKI_SKILL_NAMESPACE_EXCEPTIONS
+        and name not in LOKI_COMMAND_PROJECTION_EXCEPTIONS
     )
     if unexpected:
         raise ValueError(
-            "loki skill namespace failures:\n- skills/loki-* without matching "
+            "loki command projection namespace failures:\n- skills/loki-* without matching "
             "commands/loki-*.md: " + ", ".join(unexpected)
+        )
+
+
+def frontmatter_scalar(path: Path, key: str, nested_under: str | None = None) -> str:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0].strip() != "---":
+        return ""
+
+    active_parent = ""
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line and not line.startswith(" ") and line.endswith(":"):
+            active_parent = line[:-1]
+            continue
+        if nested_under is None and line.startswith(f"{key}:"):
+            return parse_manifest_scalar(line.split(":", 1)[1])
+        if (
+            nested_under is not None
+            and active_parent == nested_under
+            and line.startswith(f"  {key}:")
+        ):
+            return parse_manifest_scalar(line.split(":", 1)[1])
+    return ""
+
+
+def validate_loki_command_projection_identity(package_root: Path, data: dict) -> None:
+    skill_scopes = artifact_scopes(data, "skills")
+    command_scopes = artifact_scopes(data, "commands")
+    failures: list[str] = []
+
+    for skill_name, skill_scope in sorted(skill_scopes.items()):
+        if not skill_name.startswith("loki-"):
+            continue
+
+        command_file = f"{skill_name}.md"
+        command_name = "loki:" + skill_name.removeprefix("loki-")
+        projection_path = package_root / "skills" / skill_name / "SKILL.md"
+        command_path = package_root / "commands" / command_file
+        expected_projection = f"skills/{skill_name}/SKILL.md"
+        expected_contract = f"commands/{command_file}"
+
+        checks = {
+            "type": (frontmatter_scalar(projection_path, "type"), "command"),
+            "projection": (
+                frontmatter_scalar(projection_path, "projection"),
+                "installable-skill",
+            ),
+            "command_name": (
+                frontmatter_scalar(projection_path, "command_name"),
+                command_name,
+            ),
+            "paths.package_projection": (
+                frontmatter_scalar(
+                    projection_path, "package_projection", nested_under="paths"
+                ),
+                expected_projection,
+            ),
+            "paths.command_contract": (
+                frontmatter_scalar(
+                    projection_path, "command_contract", nested_under="paths"
+                ),
+                expected_contract,
+            ),
+        }
+        for field, (actual, expected) in checks.items():
+            if actual != expected:
+                failures.append(
+                    f"{projection_path}: {field}={actual or 'missing'}; "
+                    f"expected {expected}"
+                )
+
+        actual_command_name = frontmatter_scalar(command_path, "name")
+        if actual_command_name != command_name:
+            failures.append(
+                f"{command_path}: name={actual_command_name or 'missing'}; "
+                f"expected {command_name}"
+            )
+
+        command_scope = command_scopes.get(command_file)
+        if command_scope != skill_scope:
+            failures.append(
+                f"{projection_path}: install scope {skill_scope} differs from "
+                f"{expected_contract}={command_scope or 'missing'}"
+            )
+
+    if failures:
+        raise ValueError(
+            "loki command projection identity failures:\n- "
+            + "\n- ".join(failures)
+        )
+
+
+def validate_framework_skill_identity(package_root: Path, data: dict) -> None:
+    failures: list[str] = []
+    for skill_name in sorted(artifact_scopes(data, "skills")):
+        if not skill_name.startswith("lf-"):
+            continue
+        path = package_root / "skills" / skill_name / "SKILL.md"
+        artifact_type = frontmatter_scalar(path, "type")
+        if artifact_type != "skill":
+            failures.append(
+                f"{path}: type={artifact_type or 'missing'}; expected skill"
+            )
+    if failures:
+        raise ValueError(
+            "framework skill identity failures:\n- " + "\n- ".join(failures)
         )
 
 
@@ -208,6 +404,51 @@ def parse_manifest_list_value(value: str) -> list[str]:
         for part in inner.split(",")
         if part.strip()
     ]
+
+
+def parse_manifest_skill_catalog(package_root: Path) -> dict[str, dict[str, str]]:
+    lines = (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines()
+    catalog: dict[str, dict[str, str]] = {}
+    in_skills = False
+    current = ""
+
+    for line in lines:
+        if line == "skills:":
+            in_skills = True
+            continue
+        if in_skills and line and not line.startswith(" "):
+            break
+        if not in_skills:
+            continue
+        if line.startswith("  - name:"):
+            current = parse_manifest_scalar(line.split(":", 1)[1])
+            catalog[current] = {}
+            continue
+        if current and line.startswith("    ") and ":" in line:
+            key, value = line.strip().split(":", 1)
+            catalog[current][key] = parse_manifest_scalar(value)
+    return catalog
+
+
+def validate_manifest_command_projection_identity(package_root: Path) -> None:
+    catalog = parse_manifest_skill_catalog(package_root)
+    failures: list[str] = []
+    for name, metadata in sorted(catalog.items()):
+        if not name.startswith("loki-"):
+            continue
+        if metadata.get("operational_role") != "command":
+            failures.append(
+                f"manifest skills.{name}.operational_role must be command"
+            )
+        if metadata.get("projection") != "installable-skill":
+            failures.append(
+                f"manifest skills.{name}.projection must be installable-skill"
+            )
+    if failures:
+        raise ValueError(
+            "manifest command projection identity failures:\n- "
+            + "\n- ".join(failures)
+        )
 
 
 def parse_manifest_agent_catalog(package_root: Path) -> dict:
@@ -468,7 +709,10 @@ def main() -> int:
         assert_exact_keys("command", set(command_scopes), command_names)
         assert_exact_keys("agent", set(agent_scopes), agent_names)
         assert_exact_keys("Codex agent", set(codex_agent_scopes), codex_agent_names)
-        validate_loki_skill_namespace(skill_names, command_names)
+        validate_loki_command_projection_namespace(skill_names, command_names)
+        validate_loki_command_projection_identity(package_root, data)
+        validate_framework_skill_identity(package_root, data)
+        validate_command_dependency_identity(package_root, data)
 
         mismatched_agent_scopes = []
         for agent_name, scope in sorted(agent_scopes.items()):
@@ -487,6 +731,7 @@ def main() -> int:
         validate_neutrality(package_root, data)
         validate_toml(package_root)
         validate_manifest_entries(package_root)
+        validate_manifest_command_projection_identity(package_root)
         validate_agent_project_tags(package_root)
         validate_agentic_agent_metadata(package_root)
     except (OSError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as exc:

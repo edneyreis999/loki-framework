@@ -16,12 +16,12 @@ For Loki-packaged skills:
 
 - use `skills/<skill-name>/SKILL.md`;
 - keep the folder name equal to top-level `name`;
-- reserve `loki-` for command wrapper skills backed by a matching
-  `commands/loki-*.md` file;
+- reserve `loki-` for installable command projections backed by a matching
+  `commands/loki-*.md` file; classify these projections as commands;
 - use `lf-` for internal framework helper skills that stay installable for
   consumers;
 - use domain or technology prefixes, such as `rpg-maker-mz-*`, for optional
-  technology skills that are not command wrappers;
+  technology skills that are not command projections;
 - keep conditional detail in `references/`, not in a monolithic `SKILL.md`;
 - do not leave loose `.md` files directly under `skills/`.
 

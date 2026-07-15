@@ -49,18 +49,20 @@ itself. This skill is `internal-only` and must not be installed by the
 ## Command Map
 
 - `loki:continuous-improvement`: read `commands/loki-continuous-improvement.md`,
-  then load the skills named by that command contract.
+  then execute the command projection `loki-continuous-improvement`.
 - `loki:knowledge-extraction-analysis`: read
-  `commands/loki-knowledge-extraction-analysis.md`, then load
-  `loki-knowledge-extraction-analysis`.
-- `loki:self-healing`: read `commands/loki-self-healing.md`, then load
-  `loki-self-healing`.
+  `commands/loki-knowledge-extraction-analysis.md`, then execute the command
+  projection `loki-knowledge-extraction-analysis`.
+- `loki:self-healing`: read `commands/loki-self-healing.md`, then execute the
+  command projection `loki-self-healing`.
 
 ## Procedure
 
 1. Match the request to one command in the command map.
 2. Read the matching command contract from `commands/`.
 3. Load only the required skills named by that command contract.
+   Execute `loki-*` dependencies as commands from `required_commands`; do not
+   reinterpret their installable projections as skills.
 4. Follow the command's inputs, outputs, write boundaries, validators, gates,
    stop conditions, and resume contract.
 5. Keep all writes inside the approved package task or maintenance scope.

@@ -34,6 +34,7 @@ hooks: []
 paths:
   package_skill: "skills/lf-tech-analysis-authoring/SKILL.md"
 shell: {}
+type: skill
 ---
 
 # lf-tech-analysis-authoring

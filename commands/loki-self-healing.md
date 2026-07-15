@@ -4,10 +4,10 @@ type: command
 status: draft
 domain: package-maintenance
 required_skills:
-  - loki-self-healing
   - lf-framework-impact-audit
   - lf-command-creator
   - lf-skill-creator
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -80,15 +80,15 @@ quando o runtime permitir, consolida achados e aplica correcoes serialmente.
 
 ## Required Skills
 
-- `loki-self-healing` para o procedimento de auditoria interna, correcao
-  serializada e relatorio.
 - `lf-framework-impact-audit` como referencia de selecao de artefatos,
   auditoria individual, deltas, lacunas, redundancias e conflitos quando a
   correcao envolver workflows ou multiplos artefatos.
 - `lf-command-creator` quando a correcao tocar `commands/**`,
-  `skills/lf-command-workflows/**` ou contrato de workflow invocavel.
-- `lf-skill-creator` quando a correcao tocar `skills/**`, layout de skill,
-  frontmatter, progressive disclosure ou referencias de skill.
+  `skills/loki-*/**`, `skills/lf-command-workflows/**` ou contrato de workflow
+  invocavel. Uma projeção `loki-*` continua sendo command operacional.
+- `lf-skill-creator` quando a correcao tocar skills operacionais `lf-*` ou de
+  dominio/tecnologia, layout de skill, frontmatter, progressive disclosure ou
+  referencias de skill.
 
 ## Handoffs
 

@@ -30,9 +30,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-feedback/SKILL.md"
+  package_projection: "skills/loki-feedback/SKILL.md"
+  command_contract: "commands/loki-feedback.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:feedback
 status: draft
 used_by:
   - loki:feedback
@@ -40,80 +43,31 @@ used_by:
 
 # loki-feedback
 
-## When To Use
-
-Use quando o usuario trouxer feedback, bug visual, validacao humana, sensacao de gameplay ou produto, problema de UX, audio, input, integracao, estado de runtime ou comportamento inesperado.
-
 ## Procedure
 
-1. Resuma o sintoma em uma frase.
-2. Normalize o feedback em acao disparadora, comportamento observado, comportamento esperado e condicoes.
-3. Marque campos ausentes como duvidas pendentes.
-4. Faca uma pergunta por vez.
-5. Diferencie observacao, expectativa e contexto.
-6. Identifique superficie provavel: runtime, configuration/data, integration code, content/assets, UI/UX surfaces, docs/process, audio/input ou narrativa.
-7. Leia apenas fontes locais necessarias e permitidas para confirmar ou rejeitar hipoteses materiais.
-8. Se informacao externa atual for material, proponha a frase exata da busca e peca consentimento antes de pesquisar.
-9. Nao pesquise na internet sem consentimento explicito para a frase apresentada.
-10. Proponha diagnostico e proximo passo sem aplicar escrita, somente quando nao houver duvida critica pendente.
-11. Nao altere codigo, docs, plano, commands, skills, agents, templates,
-    validators, manifest, runtime ou contexto duradouro como parte de
-    `loki:feedback`.
-12. Se o feedback revelar mudanca necessaria, encaminhe para
-    `loki:tech-analysis`, `loki:human-decision-preflight`,
-    `loki:generate-action-plan`, `loki:run-plan`,
-    `loki:retrospectiva-tecnica` ou `loki:continuous-improvement`.
-13. A unica escrita permitida por este workflow e criar ou complementar um
-    artefato autorizado de `loki:retrospectiva-tecnica`, quando o objetivo for
-    registrar feedback, atrito, decisao humana, risco residual ou aprendizado.
-
-## External Research Consent
-
-Pesquisa externa e opcional. Use apenas quando o diagnostico depender de
-versao, engine, plugin, API, biblioteca, compatibilidade, bug conhecido,
-seguranca, licenca ou documentacao oficial atual.
-
-Quando precisar pesquisar, faca a pergunta em turno proprio:
-
-```markdown
-Posso pesquisar na internet por: "<frase exata da busca>"?
-```
-
-Se o usuario recusar, continue com evidencias locais quando isso ainda for
-suficiente. Se a recomendacao depender da pesquisa recusada, registre a lacuna
-como risco, pergunta aberta ou stop condition.
-
-## Inputs
-
-- Feedback bruto.
-- Caminho ou feature relacionada.
-- Evidencia do usuario quando houver.
-
-## Outputs
-
-- Diagnostico.
-- Perguntas e respostas.
-- Proposta de proximo passo.
-- Gates necessarios.
-- Query de pesquisa proposta, consentimento e fontes citadas quando pesquisa externa for aprovada.
-- Registro em retrospectiva tecnica somente quando esse artefato estiver
-  explicitamente autorizado.
+1. Read the installed command contract:
+   [loki-feedback.md](../../commands/loki-feedback.md).
+2. Treat the paired command contract as the canonical operational source and
+   follow its inputs, outputs, allowed writes, forbidden writes, gates,
+   handoffs, stop conditions, and resume contract.
+3. Read the
+   [Diagnostic Output and Forward-Test Contract](references/diagnostic-output-and-forward-test.md)
+   when explicit response states are needed or when validating this projection.
+4. Keep ordinary feedback execution read-only and proposal-only. Normalize the
+   report, separate facts from inferences and hypotheses, and ask at most one
+   objective question while critical ambiguity remains.
+5. Do not perform external research until the user has approved the exact
+   proposed search phrase.
+6. When the diagnosis identifies a probable correction, provide a textual
+   implementation handoff and ask for authorization before leaving diagnostic
+   mode.
+7. Treat this projection as the Codex entrypoint for `loki:feedback`.
 
 ## Limits
 
-- Nao simula confirmacao humana.
-- Nao declara validacao humana como aprovada.
-- Nao aplica correcao nem executa alteracao proposta.
-- Nao escreve em codigo, docs, plano, task, interaction, build evidence,
-  commands, skills, agents, templates, validators, `manifest.yaml`,
-  `install-scopes.json` ou contexto duradouro por conta propria.
-- Nao escreve no consumer runtime/engine/framework.
-- Nao escreve em `.claude/**`, `.agents/**` ou `.codex/**`.
-- Nao cria artefato novo exceto retrospectiva tecnica autorizada.
-- Nao pesquisa na internet sem apresentar a frase exata da busca e receber consentimento explicito.
-
-## Required Gates
-
-- `interview` ate remover ambiguidade critica.
-- `research-consent` quando contexto externo atual for material para o diagnostico ou proposta.
-- `human-validation` quando a validacao depender de comportamento perceptivel, estado de runtime, integracoes ou superficies especificas da tecnologia usada.
+- Do not apply the proposed correction from this command projection.
+- Do not write durable artifacts except through the retrospective exception
+  explicitly authorized by the paired command contract.
+- Do not claim perceptible or runtime behavior as validated without explicit
+  human confirmation.
+- Do not continue to a final diagnosis while a critical question remains open.

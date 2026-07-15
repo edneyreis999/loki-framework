@@ -32,9 +32,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-catalogar-docs/SKILL.md"
+  package_projection: "skills/loki-catalogar-docs/SKILL.md"
+  command_contract: "commands/loki-catalogar-docs.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:catalogar-docs
 status: draft
 used_by:
   - loki:catalogar-docs
@@ -59,7 +62,7 @@ used_by:
    index.
 6. Invoke `catalogador` only through the explicit scoped-write envelope declared
    by the command contract.
-7. Treat this skill as the Codex entrypoint for the command name
+7. Treat this command projection as the Codex entrypoint for the command name
    `loki:catalogar-docs`.
 
 ## Limits

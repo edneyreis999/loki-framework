@@ -5,6 +5,7 @@ status: draft
 domain: planning
 required_skills:
   - lf-action-plan-authoring
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high

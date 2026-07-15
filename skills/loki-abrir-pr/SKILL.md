@@ -31,9 +31,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-abrir-pr/SKILL.md"
+  package_projection: "skills/loki-abrir-pr/SKILL.md"
+  command_contract: "commands/loki-abrir-pr.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:abrir-pr
 status: draft
 used_by:
   - loki:abrir-pr
@@ -50,7 +53,7 @@ used_by:
    compatible tool; otherwise use authenticated `gh` as fallback.
 4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    validators, gates, stop conditions and resume contract.
-5. Treat this skill as the Codex entrypoint for `loki:abrir-pr`.
+5. Treat this command projection as the Codex entrypoint for `loki:abrir-pr`.
 
 ## Limits
 

@@ -67,16 +67,34 @@ Antes de escrever:
 
 ## Regras de Estrutura
 
+### Identidade operacional vs superficie de adaptador
+
+Classifique o papel operacional antes de considerar o caminho fisico:
+
+- `commands/loki-<stem>.md` e `skills/loki-<stem>/SKILL.md` formam um unico
+  **command** operacional;
+- o arquivo sob `skills/loki-*` e apenas uma projeção instalável serializada
+  como `SKILL.md` para adaptadores que descobrem workflows por essa superficie;
+- `lf-*` e namespaces explícitos de domínio ou tecnologia identificam
+  **skills** operacionais;
+- `agents/**` e suas projeções identificam **agents**.
+
+A identidade operacional prevalece sobre diretório, extensão, seção de
+inventário ou formato de instalação. Nunca use `type: skill`, a expressão
+`wrapper skill` ou o caminho `skills/**` para reclassificar uma projeção
+`loki-*` com command pareado como skill.
+
 ### Skills
 
 - Toda skill empacotada deve morar em `skills/<skill-name>/SKILL.md`.
 - O nome da pasta deve ser igual ao `name` no frontmatter.
-- Em `skills/`, o prefixo `loki-` e reservado para wrappers de comandos Loki.
+- Em `skills/`, o prefixo `loki-` e reservado para projeções instaláveis de
+  comandos Loki, não para skills operacionais.
   Cada `skills/loki-*/SKILL.md` deve ter um `commands/loki-*.md` correspondente
   com o mesmo stem.
 - Helpers internas do framework devem usar o prefixo `lf-*`.
 - Skills opcionais de tecnologia ou dominio devem usar namespace proprio, como
-  `rpg-maker-mz-*`, e nao `loki-*` salvo quando forem wrappers de comandos.
+  `rpg-maker-mz-*`, e nao `loki-*` salvo quando forem projeções de comandos.
 - `name` e `description` sao obrigatorios no frontmatter top-level.
 - O `description` deve carregar o principal contexto de trigger. `When To Use` no corpo nao substitui isso.
 - Quando a skill orientar roteamento de modelo, use a semantica provider-neutral
@@ -88,14 +106,18 @@ Antes de escrever:
 ### Commands
 
 - Comandos Loki devem usar namespace `loki:`.
-- O contrato precisa declarar `allowed_writes`, `forbidden_writes`, `validators`, `human_gates`, `stop_conditions` e `resume_contract`.
+- O contrato precisa declarar `allowed_writes`, `forbidden_writes`,
+  `required_skills`, `required_commands`, `validators`, `human_gates`,
+  `stop_conditions` e `resume_contract`. Dependências `loki-*` pertencem a
+  `required_commands`; `required_skills` aceita somente skills operacionais.
 - O contrato deve apontar para `model_class`, `effort`, sinais de escalamento
   ou `execution_profile` quando orientar custo, raciocinio ou handoffs.
 - Quando o comando processar aprendizados de fase, ele deve separar claramente fonte transitoria de destino duradouro.
 - Se o comando evoluir o proprio pacote, ele deve listar validacoes de pacote e artefatos normativos impactados.
 - Quando um comando Loki precisar ser invocavel diretamente no Codex, mantenha
-  um wrapper correspondente em `skills/loki-<command-stem>/SKILL.md` e atualize
-  `manifest.yaml`.
+  uma projeção correspondente em `skills/loki-<command-stem>/SKILL.md`, declare
+  `type: command`, `projection: installable-skill`, `command_name` e os paths do
+  par, e atualize `manifest.yaml`.
 
 ### Agents
 
@@ -236,7 +258,7 @@ find "$PACKAGE_ROOT"/skills -maxdepth 1 -type f -name '*.md'
 Quando `SKILL.md` apontar para arquivos locais em `references/`, `commands/`,
 `docs/`, `templates/`, `scripts/` ou outro caminho relativo do pacote, valide
 que o alvo existe a partir do arquivo que contem o link. Referencias quebradas
-em wrappers de comando sao falha de empacotamento: corrija o link, adicione o
+em projeções de comando sao falha de empacotamento: corrija o link, adicione o
 arquivo ausente ou registre backlog tecnico antes de tratar o pacote como
 instalavel.
 
@@ -272,9 +294,12 @@ guidance de modelo ou effort, validar que `docs/model-effort-guidance.md`
 continua sendo a referencia central e que IDs concretos de modelos nao foram
 duplicados como regra canonica espalhada.
 
-`scripts/validate-install-scopes.py` tambem valida a politica de namespace:
-qualquer `skills/loki-*` sem `commands/loki-*.md` correspondente deve falhar,
-salvo excecao explicita registrada no proprio validador e neste documento.
+`scripts/validate-install-scopes.py` tambem valida identidade e namespace:
+qualquer `skills/loki-*` sem `commands/loki-*.md` correspondente deve falhar;
+a projeção também deve declarar `type: command`,
+`projection: installable-skill`, `command_name`, `paths.package_projection` e
+`paths.command_contract`. Exceções exigem registro explícito no validador e
+neste documento.
 
 Para superficies Codex do pacote, validar tambem:
 

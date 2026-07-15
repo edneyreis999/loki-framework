@@ -5,6 +5,7 @@ status: draft
 domain: execution
 required_skills:
   - lf-run-plan-execution
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high

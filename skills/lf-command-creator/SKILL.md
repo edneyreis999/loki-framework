@@ -58,8 +58,15 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
    - `skill` quando for procedimento tecnico reutilizavel que outros fluxos chamam.
    - `agent` quando houver julgamento especialista, isolamento de contexto ou proposta `read-only`/`proposal-only`.
    - `template` quando o valor principal for formato de saida repetivel.
+   - No pacote Loki, classifique `commands/loki-<stem>.md` e sua projeção
+     `skills/loki-<stem>/SKILL.md` como um único command operacional. O
+     `SKILL.md` é somente a superfície instalável do adaptador.
 4. Rode preflight de autoria quando o destino for o proprio pacote: namespace, artefato correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
-5. Defina o contrato minimo do comando: `name`, `purpose`, `inputs`, `outputs`, `allowed_writes`, `forbidden_writes`, `required_skills`, `handoffs`, `validators`, `human_gates`, `stop_conditions` e `resume_contract`.
+5. Defina o contrato minimo do comando: `name`, `purpose`, `inputs`, `outputs`,
+   `allowed_writes`, `forbidden_writes`, `required_skills`,
+   `required_commands`, `handoffs`, `validators`, `human_gates`,
+   `stop_conditions` e `resume_contract`. Nunca coloque um command `loki-*`
+   em `required_skills`.
 6. Escreva o comando como fluxo curto e auditavel. Mova detalhes tecnicos para skills e exemplos longos para templates ou referencias.
 7. Nao embuta regras de projeto, engine ou framework em comandos core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
 8. Use placeholders genericos para fronteiras do consumidor: `<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `<domain_ids>` e `<human_validation_gate>`.
@@ -78,6 +85,8 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 ## Quality Checklist
 
 - O comando nao duplica comando existente.
+- A projeção `skills/loki-*/SKILL.md`, quando existir, declara `type: command`,
+  `projection: installable-skill` e o `command_name` correspondente.
 - O nome e curto, consistente com o namespace pretendido e nao corrige namespace historico fora de escopo.
 - A descricao explica quando usar e quando nao usar.
 - `allowed_writes` e `forbidden_writes` sao explicitos.

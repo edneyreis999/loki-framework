@@ -1,6 +1,6 @@
 ---
 name: lf-agentic-orchestration
-description: Coordinate the reusable Loki agentic development workflow pieces: agent preflight, selected fan-out, XML run state, decision gates, cross-review, synthesis, plan handoff, autonomous execution checkpoints, completion reports, liveness, invalidation, digest, backlog, and agent retrospectives.
+description: "Coordinate the reusable Loki agentic development workflow pieces: agent preflight, selected fan-out, XML run state, decision gates, cross-review, synthesis, plan handoff, autonomous execution checkpoints, completion reports, liveness, invalidation, digest, backlog, and agent retrospectives."
 when_to_use:
   - "Use when a Loki workflow needs agentic analysis before planning or autonomous phase execution with resumable state."
   - "Use when coordinating selected agents, XML run state, decision gates, completion reports, digest, backlog, or per-agent retrospectives."

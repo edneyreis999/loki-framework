@@ -1,6 +1,6 @@
 ---
 name: loki-self-healing
-description: Run the Loki `loki-self-healing` command workflow in Codex. Use when auditing and automatically correcting internal Loki package artifacts from a specific file, directory, workflow, or staged-file set; it understands the package, analyzes files individually, applies scoped fixes to the working tree, and never stages or commits changes.
+description: Run the Loki `loki:self-healing` command workflow through an installable adapter projection. Use when auditing and automatically correcting internal Loki package artifacts from a specific file, directory, workflow, or staged-file set; it understands the package, analyzes files individually, applies scoped fixes to the working tree, and never stages or commits changes.
 when_to_use:
   - "Use when the user asks Loki to self-heal, audit, or automatically correct internal Loki package artifacts."
   - "Use when the input is a file, directory, workflow name, or staged files that should be checked against Loki package standards."
@@ -33,12 +33,15 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-self-healing/SKILL.md"
+  package_projection: "skills/loki-self-healing/SKILL.md"
+  command_contract: "commands/loki-self-healing.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:self-healing
 status: draft
 used_by:
-  - loki-self-healing
+  - loki:self-healing
 ---
 
 # loki-self-healing
@@ -69,9 +72,20 @@ Objetivos:
 
 ### Classificação operacional
 
-- Agentes são artefatos armazenados em .agents/**.
-- Comandos são artefatos que começam com -loki.
-- Skills são artefatos que começam com lf-.
+- Agentes são contratos em `agents/**` ou suas projeções de adaptador.
+- Comandos usam `loki:` em `commands/**` ou `loki-` em uma projeção
+  instalável `skills/loki-*/SKILL.md`.
+- Skills operacionais usam `lf-` ou um namespace explícito de domínio ou
+  tecnologia.
+
+A identidade operacional prevalece sobre diretório, extensão e formato de
+instalação. Se `skills/loki-<stem>/SKILL.md` possuir
+`commands/loki-<stem>.md`, classifique o par como **Comando**. O `SKILL.md` é
+somente a projeção instalável do comando e nunca deve ser classificado ou
+reescrito como conhecimento de skill.
+
+Ausência do comando pareado para um artefato `loki-*` é blocker de estrutura;
+não autoriza classificá-lo como skill.
 
 ### Separação de responsabilidades
 
@@ -98,13 +112,21 @@ Trate agentes como personas especializadas em conhecimento.
 ## Referências obrigatórias
 
 Antes de analisar qualquer artefato, carregue as referências correspondentes.
+Classifique cada artefato como:
 
-- Para comandos, leia:
+- Agente
+- Comando
+- Skill
+
+- Para comandos, inclusive `skills/loki-*/SKILL.md`, leia:
   - references/how-to-improve-command.md
-- Para skills, leia:
+- Para skills `lf-*` ou de domínio/tecnologia, leia:
   - references/how-to-improve-skills.md
 - Para agentes, leia:
   - references/how-to-improve-agents.md
+
+Nunca carregue `how-to-improve-skills.md` para uma projeção `loki-*` com
+comando correspondente.
 
 ## Workflow
 
@@ -139,7 +161,7 @@ Enumere todos os arquivos do pacote sob esse diretório.
 Mapeie:
 
 - command;
-- wrapper skill;
+- projeção instalável do command em `skills/loki-*/SKILL.md`;
 - helper skills;
 - referências;
 - templates;

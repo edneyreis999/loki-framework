@@ -31,9 +31,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-continuous-improvement/SKILL.md"
+  package_projection: "skills/loki-continuous-improvement/SKILL.md"
+  command_contract: "commands/loki-continuous-improvement.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:continuous-improvement
 status: draft
 used_by:
   - loki:continuous-improvement
@@ -73,7 +76,7 @@ used_by:
 8. When reading retrospectives, preserve execution friction fields such as
    useful and bad inferences, scripts, unexpected outputs, environment
    mismatches, failed lookups, waste impact, and minimum next path.
-9. Treat this skill as the Codex entrypoint for the command name
+9. Treat this command projection as the Codex entrypoint for the command name
    `loki:continuous-improvement`.
 
 ## Classification Shortcut

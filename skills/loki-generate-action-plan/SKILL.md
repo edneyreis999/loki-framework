@@ -29,9 +29,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-generate-action-plan/SKILL.md"
+  package_projection: "skills/loki-generate-action-plan/SKILL.md"
+  command_contract: "commands/loki-generate-action-plan.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:generate-action-plan
 status: draft
 used_by:
   - loki:generate-action-plan
@@ -48,7 +51,7 @@ used_by:
    contract.
 3. Load `lf-action-plan-authoring` before creating or reviewing plan files.
 4. Use `lf-template-library` when writing `tasks.md` or `task-N.M.md`.
-5. Treat this skill as the Codex entrypoint for the command name
+5. Treat this command projection as the Codex entrypoint for the command name
    `loki:generate-action-plan`.
 
 ## Limits

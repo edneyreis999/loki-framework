@@ -31,10 +31,13 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-init/SKILL.md"
+  package_projection: "skills/loki-init/SKILL.md"
+  command_contract: "commands/loki-init.md"
   command_contract: "commands/loki-init.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:init
 status: draft
 used_by:
   - loki:init

@@ -5,6 +5,7 @@ status: draft
 domain: git
 required_skills:
   - lf-git-workflow
+required_commands: []
 execution_profile:
   model_class: coding
   default_effort: medium

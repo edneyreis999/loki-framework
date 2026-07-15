@@ -3,8 +3,8 @@ name: loki:retrospectiva-tecnica
 type: command
 status: draft
 domain: continuous-improvement
-required_skills:
-  - loki-retrospectiva-tecnica
+required_skills: []
+required_commands: []
 execution_profile:
   model_class: generalist
   default_effort: medium
@@ -66,7 +66,8 @@ Produzir retrospectiva tecnica objetiva como fonte auditavel de evidencia para o
 
 ## Required Skills
 
-- `loki-retrospectiva-tecnica`
+- Nenhuma por default. Carregue skills de tecnologia somente quando o contexto
+  da retrospectiva exigir.
 
 ## Handoffs
 

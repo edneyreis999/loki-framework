@@ -29,9 +29,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-criar-branch/SKILL.md"
+  package_projection: "skills/loki-criar-branch/SKILL.md"
+  command_contract: "commands/loki-criar-branch.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:criar-branch
 status: draft
 used_by:
   - loki:criar-branch
@@ -46,7 +49,7 @@ used_by:
 2. Load `lf-git-workflow`.
 3. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    validators, gates, stop conditions and resume contract.
-4. Treat this skill as the Codex entrypoint for `loki:criar-branch`.
+4. Treat this command projection as the Codex entrypoint for `loki:criar-branch`.
 
 ## Limits
 

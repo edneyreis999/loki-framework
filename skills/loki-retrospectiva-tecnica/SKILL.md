@@ -36,9 +36,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-retrospectiva-tecnica/SKILL.md"
+  package_projection: "skills/loki-retrospectiva-tecnica/SKILL.md"
+  command_contract: "commands/loki-retrospectiva-tecnica.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:retrospectiva-tecnica
 status: draft
 used_by:
   - loki:retrospectiva-tecnica

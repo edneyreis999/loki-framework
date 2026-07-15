@@ -33,6 +33,7 @@ hooks: []
 paths:
   package_skill: "skills/lf-skill-creator/SKILL.md"
 shell: {}
+type: skill
 ---
 
 # lf-skill-creator
@@ -41,7 +42,12 @@ shell: {}
 
 1. Confirm the skill's concrete use cases and trigger phrases.
 2. Decide whether the need belongs in a `skill`, `command`, `agent`, `template`, `standard`, or backlog.
-3. Run package preflight for packaged skills: confirm destination, namespace (`loki-` only for command wrappers with matching `commands/loki-*.md`, `lf-*` for internal helpers, domain prefixes for optional technology skills), installable layout, self-contained references, and required validations.
+3. Run package preflight for packaged skills: confirm destination, namespace,
+   installable layout, self-contained references, and required validations.
+   Classify `loki-*` with a matching `commands/loki-*.md` as a command
+   projection and route its operational review to `lf-command-creator`; use
+   `lf-*` for framework skills and domain prefixes for optional technology
+   skills.
 4. Use the installable skill layout:
 
 ```text
@@ -71,6 +77,8 @@ skill-name/
 ## Limits
 
 - Do not install skills into `.claude/**`, `.codex/**`, or `.agents/**` without explicit approval.
+- Do not classify a `skills/loki-*/SKILL.md` projection with a matching command
+  as an operational skill merely because of its path or serialization format.
 - Do not keep large conditional material in `SKILL.md` when a reference file would preserve context.
 - Do not branch the generated skill by the current executor; generate the multi-adapter metadata superset.
 - Do not create auxiliary README/changelog files inside a skill unless a platform explicitly requires them.

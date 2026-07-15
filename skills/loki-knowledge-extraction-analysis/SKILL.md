@@ -31,9 +31,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-knowledge-extraction-analysis/SKILL.md"
+  package_projection: "skills/loki-knowledge-extraction-analysis/SKILL.md"
+  command_contract: "commands/loki-knowledge-extraction-analysis.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:knowledge-extraction-analysis
 status: draft
 used_by:
   - loki:knowledge-extraction-analysis
@@ -69,7 +72,7 @@ used_by:
    specific clarity or economy gain.
 9. Use exactly the required output structure from `output-contract.md`,
    including the special structure for cases with no useful learning.
-10. Treat this skill as the Codex entrypoint for the command name
+10. Treat this command projection as the Codex entrypoint for the command name
    `loki:knowledge-extraction-analysis`.
 
 ## Inputs
@@ -92,7 +95,7 @@ used_by:
 
 - Do not force recommendations just to populate the analysis.
 - Do not apply package, consumer documentation, runtime, or installation changes
-  directly from this skill.
+  directly from this command projection.
 - Do not claim Loki coverage unless it is visible in the provided context,
   `docs/operational-inventory.md`, or files actually read.
 - Do not use an external plan, blueprint, `.agents/**`, `.claude/**`, or

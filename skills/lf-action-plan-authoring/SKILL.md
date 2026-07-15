@@ -33,6 +33,7 @@ hooks: []
 paths:
   package_skill: "skills/lf-action-plan-authoring/SKILL.md"
 shell: {}
+type: skill
 ---
 
 # lf-action-plan-authoring

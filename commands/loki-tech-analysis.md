@@ -5,6 +5,7 @@ status: draft
 domain: spec-driven
 required_skills:
   - lf-tech-analysis-authoring
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high

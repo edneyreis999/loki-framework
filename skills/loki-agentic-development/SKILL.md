@@ -31,9 +31,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-agentic-development/SKILL.md"
+  package_projection: "skills/loki-agentic-development/SKILL.md"
+  command_contract: "commands/loki-agentic-development.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:agentic-development
 status: draft
 used_by:
   - loki:agentic-development
@@ -53,7 +56,7 @@ used_by:
 4. Use `loki-human-decision-preflight`, `loki-generate-action-plan`,
    `loki-run-plan`, and `loki-retrospectiva-tecnica` only as directed by the
    command contract and active run state.
-5. Treat this skill as the Codex entrypoint for the command name
+5. Treat this command projection as the Codex entrypoint for the command name
    `loki:agentic-development`.
 
 ## Limits

@@ -30,9 +30,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-tech-analysis/SKILL.md"
+  package_projection: "skills/loki-tech-analysis/SKILL.md"
+  command_contract: "commands/loki-tech-analysis.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:tech-analysis
 status: draft
 used_by:
   - loki:tech-analysis
@@ -50,7 +53,7 @@ used_by:
 3. Load `lf-tech-analysis-authoring` before creating or reviewing the
    analysis artifact.
 4. Use `lf-template-library` when writing a technical analysis file.
-5. Treat this skill as the Codex entrypoint for the command name
+5. Treat this command projection as the Codex entrypoint for the command name
    `loki:tech-analysis`.
 
 ## Limits

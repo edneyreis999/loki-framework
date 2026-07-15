@@ -5,8 +5,8 @@ status: draft
 domain: consumer-bootstrap
 aliases:
   - init-loki
-required_skills:
-  - loki-init
+required_skills: []
+required_commands:
   - loki-retrospectiva-tecnica
 execution_profile:
   model_class: frontier_reasoning
@@ -96,12 +96,14 @@ sobrescrever silenciosamente.
 
 ## Required Skills
 
-- `loki-init` para executar este workflow no Codex.
-- `loki-retrospectiva-tecnica` para cada agente invocado registrar a propria
-  retrospectiva antes de encerrar.
 - `lf-index-navigator` quando `docs/index.xml` existir e precisar ser lido.
 - `<technology_required_skills>` somente quando o inventario, o usuario ou um
   agente especialista declararem uma tecnologia especifica.
+
+## Required Commands
+
+- `loki-retrospectiva-tecnica` para cada agente invocado registrar a propria
+  retrospectiva antes de encerrar.
 
 ## Agent Init Write Policy
 

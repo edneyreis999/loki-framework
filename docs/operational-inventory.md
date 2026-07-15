@@ -56,35 +56,41 @@ As regras de classe de modelo, effort e projecao por adaptador estao em
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
-## Skills
+## Command Projections And Skills
+
+Esta seção agrupa superfícies instaladas sob `skills/**`, não uma única
+identidade operacional. Componentes `loki-*` com command pareado são
+**projeções instaláveis de commands**; componentes `lf-*` e de domínio ou
+tecnologia são **skills operacionais**. O formato `SKILL.md` não altera essa
+classificação.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
 | `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
-| `loki-catalogar-docs` | `mvp` | Wrapper Codex para executar o workflow `loki:catalogar-docs`, validando alvo documental, limites de recursao, gates de escrita e estado retomavel. |
-| `loki-criar-branch` | `mvp` | Wrapper Codex para executar `loki:criar-branch`. |
-| `loki-commit` | `mvp` | Wrapper Codex para executar `loki:commit`. |
-| `loki-abrir-pr` | `mvp` | Wrapper Codex para executar `loki:abrir-pr`. |
-| `loki-init` | `mvp` | Wrapper Codex para executar o workflow `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
+| `loki-catalogar-docs` | `mvp` | Projeção instalável do command `loki:catalogar-docs`, validando alvo documental, limites de recursao, gates de escrita e estado retomavel. |
+| `loki-criar-branch` | `mvp` | Projeção instalável do command `loki:criar-branch`. |
+| `loki-commit` | `mvp` | Projeção instalável do command `loki:commit`. |
+| `loki-abrir-pr` | `mvp` | Projeção instalável do command `loki:abrir-pr`. |
+| `loki-init` | `mvp` | Projeção instalável do command `loki:init` ou alias `init-loki`, preservando allowed writes restritos a `docs/**` e `planos/000-init-loki/**`. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear comandos de manutencao do pacote, como melhoria continua, extracao de conhecimento e self-healing. |
-| `loki-feedback` | `mvp` | Procedimento de diagnostico de feedback antes de propor escrita. |
-| `loki-tech-analysis` | `mvp` | Wrapper Codex para executar o workflow `loki:tech-analysis`. |
-| `loki-human-decision-preflight` | `mvp` | Wrapper Codex para executar o workflow `loki:human-decision-preflight`. |
-| `loki-agentic-development` | `mvp` | Wrapper Codex para executar o workflow integrado `loki:agentic-development`. |
+| `loki-feedback` | `mvp` | Projeção instalável do command `loki:feedback` para diagnostico antes de propor escrita. |
+| `loki-tech-analysis` | `mvp` | Projeção instalável do command `loki:tech-analysis`. |
+| `loki-human-decision-preflight` | `mvp` | Projeção instalável do command `loki:human-decision-preflight`. |
+| `loki-agentic-development` | `mvp` | Projeção instalável do command integrado `loki:agentic-development`. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `loki-generate-action-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:generate-action-plan`. |
-| `loki-enrich-tasks` | `mvp` | Procedimento de enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
-| `loki-run-plan` | `mvp` | Wrapper Codex para executar o workflow `loki:run-plan`. |
+| `loki-generate-action-plan` | `mvp` | Projeção instalável do command `loki:generate-action-plan`. |
+| `loki-enrich-tasks` | `mvp` | Projeção instalável do command `loki:enrich-tasks` para enriquecimento cirurgico de tasks com retrospectivas, builds, owners de escrita, target files, interactions, resolucao de ambiguidades e research gate condicionado sem handoff normativo direto. |
+| `loki-run-plan` | `mvp` | Projeção instalável do command `loki:run-plan`. |
 | `lf-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
-| `loki-retrospectiva-tecnica` | `mvp` | Procedimento de retrospectiva tecnica apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Wrapper Codex para executar o workflow `loki:continuous-improvement`. |
-| `loki-knowledge-extraction-analysis` | `mvp` | Wrapper Codex para executar `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
+| `loki-retrospectiva-tecnica` | `mvp` | Projeção instalável do command `loki:retrospectiva-tecnica` apos fase concluida, pausada claramente ou dificuldade resolvida de fato. |
+| `loki-continuous-improvement` | `mvp` | Projeção instalável do command `loki:continuous-improvement`. |
+| `loki-knowledge-extraction-analysis` | `mvp` | Projeção instalável do command `loki:knowledge-extraction-analysis` e produzir analise de aprendizados externos para melhoria continua. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `lf-git-workflow` | `mvp` | Procedimento compartilhado para branch, commit e PR com preflight Git, staging seguro, gates humanos e GitHub MCP/`gh` fallback. |
-| `loki-deep-research` | `mvp` | Wrapper Codex para executar `loki:deep-research` e produzir relatorio de pesquisa web profunda com citacoes, metodologia e limites. |
+| `loki-deep-research` | `mvp` | Projeção instalável do command `loki:deep-research` e produzir relatorio de pesquisa web profunda com citacoes, metodologia e limites. |
 | `lf-web-deep-research` | `mvp` | Procedimento reutilizavel de pesquisa profunda na internet com ondas de busca, avaliacao de fontes, contradicoes, assumptions, lacunas e output estruturado. |
-| `loki-self-healing` | `mvp` | Wrapper Codex para executar `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
+| `loki-self-healing` | `mvp` | Projeção instalável do command `loki:self-healing`, analisando e corrigindo artefatos internos do pacote dentro do escopo solicitado. |
 | `lf-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |

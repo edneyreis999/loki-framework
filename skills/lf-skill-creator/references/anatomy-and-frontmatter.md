@@ -54,6 +54,21 @@ metadata. The active runtime can use the fields it supports and ignore the rest.
 - `paths`
 - `shell`
 
+For an installable Loki command projection stored as
+`skills/loki-<stem>/SKILL.md`, also declare:
+
+```yaml
+type: command
+projection: installable-skill
+command_name: loki:<stem>
+paths:
+  package_projection: skills/loki-<stem>/SKILL.md
+  command_contract: commands/loki-<stem>.md
+```
+
+These fields preserve the command's operational identity. Do not set
+`type: skill` on a `loki-*` projection with a matching command.
+
 Codex app/plugin metadata belongs in `agents/openai.yaml`:
 
 - `interface.display_name`

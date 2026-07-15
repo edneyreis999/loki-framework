@@ -4,6 +4,7 @@ type: command
 status: draft
 domain: documentation
 required_skills: []
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high

@@ -4,9 +4,9 @@ type: command
 status: draft
 domain: continuous-improvement
 required_skills:
-  - loki-knowledge-extraction-analysis
   - lf-external-knowledge-extraction
   - lf-framework-impact-audit
+required_commands:
   - loki-continuous-improvement
 execution_profile:
   model_class: frontier_reasoning
@@ -82,12 +82,13 @@ Este comando produz uma analise estruturada para consumo posterior por
 
 ## Required Skills
 
-- `loki-knowledge-extraction-analysis` para orquestrar as etapas, consolidar os
-  handoffs e produzir a saida final.
 - `lf-external-knowledge-extraction` para extrair aprendizados dos artefatos
   externos sem decidir mudancas no Loki.
 - `lf-framework-impact-audit` para auditar o impacto dos aprendizados
   externos em artefatos, workflows e contratos do Loki.
+
+## Required Commands
+
 - `loki-continuous-improvement` somente depois da analise, quando houver
   aprendizados validados a promover.
 
@@ -104,7 +105,9 @@ independente.
 
 ## Workflow
 
-1. Carregar `loki-knowledge-extraction-analysis`.
+1. Tratar este contrato como fonte operacional canonica; a projeção
+   `skills/loki-knowledge-extraction-analysis/SKILL.md` e somente o entrypoint
+   instalável.
 2. Carregar `lf-external-knowledge-extraction` para mapear artefatos externos
    e produzir `external_extraction`.
 3. Carregar `lf-framework-impact-audit` para ler

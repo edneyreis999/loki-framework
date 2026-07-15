@@ -5,6 +5,16 @@
     "consumer": ["both", "consumer-only"],
     "package-source": ["both", "internal-only"]
   },
+  "artifact_identity_policy": {
+    "skills/loki-*/SKILL.md": {
+      "operational_role": "command",
+      "projection": "installable-skill",
+      "paired_contract": "commands/loki-*.md"
+    },
+    "skills/lf-*/SKILL.md": {
+      "operational_role": "skill"
+    }
+  },
   "artifacts": {
     "commands": {
       "loki-init.md": "both",

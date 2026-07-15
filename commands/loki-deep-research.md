@@ -5,6 +5,7 @@ status: draft
 domain: research
 required_skills:
   - lf-web-deep-research
+required_commands: []
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high

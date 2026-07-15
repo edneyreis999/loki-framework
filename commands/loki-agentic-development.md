@@ -5,6 +5,7 @@ status: draft
 domain: orchestration
 required_skills:
   - lf-agentic-orchestration
+required_commands:
   - loki-human-decision-preflight
   - loki-generate-action-plan
   - loki-run-plan
@@ -91,6 +92,9 @@ substituir `loki:run-plan` como executor manual.
   trabalho material, fan-out condicionado, estado XML, decision gates,
   cross-review, liveness, invalidacao,
   completion reports, digest e retrospectivas.
+
+## Required Commands
+
 - `loki-human-decision-preflight` quando a analise gerar decision gates
   materiais antes do plano.
 - `loki-generate-action-plan` para gerar o plano executavel depois da analise.

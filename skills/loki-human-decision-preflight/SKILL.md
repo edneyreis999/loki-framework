@@ -31,9 +31,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-human-decision-preflight/SKILL.md"
+  package_projection: "skills/loki-human-decision-preflight/SKILL.md"
+  command_contract: "commands/loki-human-decision-preflight.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:human-decision-preflight
 status: draft
 used_by:
   - loki:human-decision-preflight
@@ -55,7 +58,7 @@ used_by:
 5. Classify every pending decision as `must_ask_now`, `can_delegate_to_plan`,
    `can_validate_later` or `do_not_ask_llm_can_determine`.
 6. Ask at most one active `must_ask_now` question per turn.
-7. Treat this skill as the Codex entrypoint for the command name
+7. Treat this command projection as the Codex entrypoint for the command name
    `loki:human-decision-preflight`.
 
 ## Limits

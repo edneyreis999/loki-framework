@@ -74,7 +74,7 @@ installation profile.
   `.agents/commands/loki/loki-feedback.md`, then use `loki-feedback`.
 - `loki:tech-analysis`: read
   `.agents/commands/loki/loki-tech-analysis.md`, then use
-  `lf-tech-analysis-authoring`.
+  the command projection `loki-tech-analysis`.
 - `loki:deep-research`: read
   `.agents/commands/loki/loki-deep-research.md`, then use
   `loki-deep-research`.
@@ -86,13 +86,13 @@ installation profile.
   `loki-agentic-development`.
 - `loki:generate-action-plan`: read
   `.agents/commands/loki/loki-generate-action-plan.md`,
-  then use `lf-action-plan-authoring`.
+  then use the command projection `loki-generate-action-plan`.
 - `loki:enrich-tasks`: read
   `.agents/commands/loki/loki-enrich-tasks.md`, then use
   `loki-enrich-tasks`.
 - `loki:run-plan`: read
   `.agents/commands/loki/loki-run-plan.md`, then use
-  `lf-run-plan-execution`.
+  the command projection `loki-run-plan`.
 - `loki:retrospectiva-tecnica`: read
   `.agents/commands/loki/loki-retrospectiva-tecnica.md`,
   then use `loki-retrospectiva-tecnica`.
@@ -102,8 +102,10 @@ installation profile.
 1. Match the user request to one command in the command map.
 2. Read only the matching installed command contract from
    `.agents/commands/loki/`, as listed in the command map.
-3. Load the command's required Loki skill or skills by name from the installed
-   skill set.
+3. Execute the matching `loki-*` command projection and load its
+   `required_skills` and `required_commands` separately. Never classify the
+   projection as a skill merely because the adapter discovers it under
+   `skills/**`.
 4. Follow the command's inputs, outputs, allowed writes, forbidden writes,
    validators, gates, stop conditions, and handoffs.
 5. If the command contract is not present in `.agents/commands/loki/`, stop and

@@ -3,8 +3,8 @@ name: loki:enrich-tasks
 type: command
 status: draft
 domain: continuous-improvement
-required_skills:
-  - loki-enrich-tasks
+required_skills: []
+required_commands: []
 execution_profile:
   model_class: generalist
   default_effort: medium
@@ -65,12 +65,14 @@ Revisar e enriquecer tasks da fase ativa usando aprendizados anteriores, retrosp
 
 ## Required Skills
 
-- `loki-enrich-tasks`
+- Nenhuma por default. Carregue skills de tecnologia somente quando o contexto
+  da task exigir.
 
 ## Workflow
 
 1. Confirmar `FASE_ATUAL`, `TASKS_MD`, fontes transitorias, escopo permitido e forbidden writes.
-2. Carregar `loki-enrich-tasks` antes de analisar ou editar tasks.
+2. Tratar este contrato como fonte operacional canonica; a projeção
+   `skills/loki-enrich-tasks/SKILL.md` e somente o entrypoint instalável.
 3. Ler `TASKS_MD`, identificar tasks da fase alvo e localizar `task-N.M.md` correspondentes.
 4. Entender objetivo, arquivos provaveis, write owner, `target_files`, riscos,
    dependencias, criterios de sucesso, validators e human loops da fase antes

@@ -26,6 +26,7 @@ command_contract:
     - "<sensitive_write_patterns>"
   required_skills:
     - "<technology_required_skills>"
+  required_commands: []
   execution_profile:
     model_class: "frontier_reasoning | coding | generalist | long_context | fast_low_cost | specialist_generalist_human_like"
     default_effort: "low | medium | high"

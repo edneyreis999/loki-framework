@@ -6,6 +6,7 @@ domain: planning
 required_skills:
   - lf-tech-analysis-authoring
   - lf-action-plan-authoring
+required_commands: []
 execution_profile:
   model_class: generalist
   default_effort: medium

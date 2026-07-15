@@ -30,9 +30,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-run-plan/SKILL.md"
+  package_projection: "skills/loki-run-plan/SKILL.md"
+  command_contract: "commands/loki-run-plan.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:run-plan
 status: draft
 used_by:
   - loki:run-plan
@@ -50,7 +53,7 @@ used_by:
 3. Load `lf-run-plan-execution` before planning or applying phase execution.
 4. Use runtime-supported subagent delegation only when the user asks for
    delegation or parallel agent work.
-5. Treat this skill as the Codex entrypoint for the command name
+5. Treat this command projection as the Codex entrypoint for the command name
    `loki:run-plan`.
 
 ## Limits

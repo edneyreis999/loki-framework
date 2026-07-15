@@ -3,8 +3,8 @@ name: loki:feedback
 type: command
 status: draft
 domain: qa-feedback
-required_skills:
-  - loki-feedback
+required_skills: []
+required_commands: []
 execution_profile:
   model_class: generalist
   default_effort: medium
@@ -75,7 +75,8 @@ passos, sem aplicar alteracoes no projeto ou no pacote.
 
 ## Workflow
 
-1. Carregar `loki-feedback`.
+1. Tratar este contrato como fonte operacional canonica; a projeção
+   `skills/loki-feedback/SKILL.md` e somente o entrypoint instalável.
 2. Normalizar o feedback em acao disparadora, comportamento observado, comportamento esperado e condicoes.
 3. Marcar campos ausentes como duvidas pendentes.
 4. Fazer uma pergunta por turno ate remover ambiguidade critica.

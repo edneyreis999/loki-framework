@@ -32,9 +32,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-deep-research/SKILL.md"
+  package_projection: "skills/loki-deep-research/SKILL.md"
+  command_contract: "commands/loki-deep-research.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:deep-research
 status: draft
 used_by:
   - loki:deep-research
@@ -53,7 +56,7 @@ used_by:
    research report.
 4. Load `lf-index-navigator` first when durable consumer docs must constrain or
    contextualize the internet research.
-5. Treat this skill as the Codex entrypoint for the command name
+5. Treat this command projection as the Codex entrypoint for the command name
    `loki:deep-research`.
 
 ## Limits

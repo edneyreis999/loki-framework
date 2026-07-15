@@ -337,6 +337,18 @@ layout:
   docs: "docs/"
   install_scope_source: "install-scopes.json"
 
+artifact_identity_policy:
+  precedence: "Operational identity overrides storage directory, extension and adapter serialization."
+  command_projection:
+    path: "skills/loki-<stem>/SKILL.md"
+    paired_contract: "commands/loki-<stem>.md"
+    type: command
+    projection: installable-skill
+  operational_skills:
+    namespaces:
+      - "lf-*"
+      - "<domain-or-technology>-*"
+
 scripts:
   - name: "install-loki-symlinks"
     file: "scripts/install-loki-symlinks.py"
@@ -345,7 +357,7 @@ scripts:
   - name: "validate-install-scopes"
     file: "scripts/validate-install-scopes.py"
     status: draft
-    purpose: "Validate installer scope metadata, shared-artifact neutrality, command dependencies, Codex agent TOML and agent project tags."
+    purpose: "Validate installer scope metadata, command-projection identity, shared-artifact neutrality, command dependencies, Codex agent TOML and agent project tags."
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
@@ -434,57 +446,87 @@ skills:
   - name: "loki-catalogar-docs"
     file: "skills/loki-catalogar-docs/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-criar-branch"
     file: "skills/loki-criar-branch/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-commit"
     file: "skills/loki-commit/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-abrir-pr"
     file: "skills/loki-abrir-pr/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-init"
     file: "skills/loki-init/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-internal-command-workflows"
     file: "skills/lf-internal-command-workflows/SKILL.md"
     status: draft
   - name: "loki-feedback"
     file: "skills/loki-feedback/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-tech-analysis"
     file: "skills/loki-tech-analysis/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-human-decision-preflight"
     file: "skills/loki-human-decision-preflight/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-agentic-development"
     file: "skills/loki-agentic-development/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-agentic-orchestration"
     file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
   - name: "loki-generate-action-plan"
     file: "skills/loki-generate-action-plan/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-enrich-tasks"
     file: "skills/loki-enrich-tasks/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-run-plan"
     file: "skills/loki-run-plan/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-run-plan-execution"
     file: "skills/lf-run-plan-execution/SKILL.md"
     status: draft
   - name: "loki-retrospectiva-tecnica"
     file: "skills/loki-retrospectiva-tecnica/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-continuous-improvement"
     file: "skills/loki-continuous-improvement/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "loki-knowledge-extraction-analysis"
     file: "skills/loki-knowledge-extraction-analysis/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-external-knowledge-extraction"
     file: "skills/lf-external-knowledge-extraction/SKILL.md"
     status: draft
@@ -497,12 +539,16 @@ skills:
   - name: "loki-deep-research"
     file: "skills/loki-deep-research/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-web-deep-research"
     file: "skills/lf-web-deep-research/SKILL.md"
     status: draft
   - name: "loki-self-healing"
     file: "skills/loki-self-healing/SKILL.md"
     status: draft
+    operational_role: command
+    projection: installable-skill
   - name: "lf-template-library"
     file: "skills/lf-template-library/SKILL.md"
     status: draft

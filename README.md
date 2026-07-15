@@ -33,6 +33,16 @@ Fluxos principais:
 - `loki:continuous-improvement`: promocao posterior e controlada de
   aprendizados validados.
 
+Identidade operacional:
+
+- `commands/loki-<stem>.md` e `skills/loki-<stem>/SKILL.md` representam o
+  mesmo command; o segundo arquivo e somente sua projecao instalavel para
+  adaptadores baseados em skills;
+- `lf-*` e namespaces de dominio ou tecnologia representam skills
+  operacionais reutilizaveis;
+- o caminho `skills/**` ou o formato `SKILL.md` nao reclassifica uma projecao
+  `loki-*` como skill.
+
 Os exemplos abaixo usam `PACKAGE_ROOT` para manter o pacote portavel entre projetos:
 
 ```bash

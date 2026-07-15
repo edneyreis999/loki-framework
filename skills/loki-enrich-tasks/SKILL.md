@@ -30,9 +30,12 @@ context: standard
 agent: main
 hooks: []
 paths:
-  package_skill: "skills/loki-enrich-tasks/SKILL.md"
+  package_projection: "skills/loki-enrich-tasks/SKILL.md"
+  command_contract: "commands/loki-enrich-tasks.md"
 shell: {}
-type: skill
+type: command
+projection: installable-skill
+command_name: loki:enrich-tasks
 status: draft
 used_by:
   - loki:enrich-tasks

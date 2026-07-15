@@ -4,10 +4,11 @@ type: command
 status: draft
 domain: continuous-improvement
 required_skills:
-  - loki-retrospectiva-tecnica
   - lf-command-creator
   - lf-agent-creator
   - lf-skill-creator
+required_commands:
+  - loki-retrospectiva-tecnica
 execution_profile:
   model_class: frontier_reasoning
   default_effort: high
@@ -84,10 +85,13 @@ commands, skills, agents, templates, validators, docs normativos,
 
 ## Required Skills
 
-- `loki-retrospectiva-tecnica` para ler retrospectivas como fonte auditavel de aprendizado.
 - `lf-command-creator` quando o destino duradouro for command, template de command ou contrato de orquestracao.
 - `lf-agent-creator` quando o destino duradouro for agent ou quando houver duvida entre agent, skill e command.
 - `lf-skill-creator` quando o destino duradouro for skill, layout de skill ou contrato de trigger/progressive disclosure.
+
+## Required Commands
+
+- `loki-retrospectiva-tecnica` para ler retrospectivas como fonte auditavel de aprendizado.
 
 ## Handoffs
 

@@ -185,19 +185,23 @@ O Loki inclui tres comandos de Git flow:
 como fallback. Sem GitHub MCP nem `gh`, o comando deve parar apos montar a
 proposta de PR. Consulte `docs/loki-git-workflow.md`.
 
-## Skills Core e Extensoes
+## Command Projections, Skills Core e Extensoes
 
-As skills Loki (`loki-init`, `loki-feedback`,
+As projeções instaláveis de commands (`loki-init`, `loki-feedback`,
 `loki-human-decision-preflight`, `loki-agentic-development`,
-`lf-agentic-orchestration`, `loki-enrich-tasks`,
-`lf-run-plan-execution`, `loki-retrospectiva-tecnica`, `lf-command-creator`,
-`lf-agent-creator`, `lf-skill-creator`, `lf-index-navigator`,
-`lf-tech-analysis-authoring`, `lf-action-plan-authoring` e
-`lf-template-library`) governam
-entrevista, autoria de analises, preflight de decisoes humanas, planos,
-orquestracao agentica, templates, enriquecimento de tasks, execucao de fase,
-retrospectiva, navegacao de documentacao e evolucao controlada de commands,
-agents e skills.
+`loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
+meio de `SKILL.md`, mas continuam sendo commands operacionais.
+
+As skills core (`lf-agentic-orchestration`, `lf-run-plan-execution`,
+`lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
+`lf-index-navigator`, `lf-tech-analysis-authoring`,
+`lf-action-plan-authoring` e `lf-template-library`) fornecem conhecimento e
+procedimentos reutilizáveis chamados pelos commands.
+
+Juntas, essas superfícies governam entrevista, autoria de analises, preflight
+de decisoes humanas, planos, orquestracao agentica, templates, enriquecimento
+de tasks, execucao de fase, retrospectiva, navegacao de documentacao e
+evolucao controlada de commands, agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.

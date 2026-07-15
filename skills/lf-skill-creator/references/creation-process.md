@@ -26,7 +26,9 @@ For each example, decide what reusable resources are useful:
 Before writing packaged files, confirm the package guardrails:
 
 - installable layout under `skills/<skill-name>/SKILL.md`;
-- `loki-` namespace when the skill belongs to the package namespace;
+- `loki-` only for an installable command projection backed by a matching
+  `commands/loki-*.md`; classify that artifact as a command;
+- `lf-` or an explicit domain/technology namespace for operational skills;
 - top-level `description`;
 - conditional detail split into `references/`;
 - no external normative dependency outside the package root.
