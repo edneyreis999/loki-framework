@@ -28,8 +28,9 @@ resumable XML state.
    complete enough for autonomous execution.
 9. Execution: call the active plan executor for each approved phase or task,
    preserving serialized writes and validators.
-10. Completion: collect reports, evidence, blockers, digest, backlog and
-   retrospective requirements.
+10. Completion: collect a compact completion record, validated evidence or an
+   explicit gap, blockers, digest and backlog. Retrospective execution is an
+   explicit human or command action, never an automatic fallback.
 
 ## Agent Selection
 
@@ -155,7 +156,7 @@ requires loading broad raw sources, long data files, multiple retrospectives or
 large diffs, prefer read-only digests or isolated agent handoffs. Do not wait
 for context exhaustion before delegating.
 
-## Completion and Retrospectives
+## Completion, evidence and retrospective eligibility
 
 Use compact completion reports for read-only lookups, trivial proposals or
 skipped agents.
@@ -169,7 +170,11 @@ Require a technical retrospective when an agent:
 - resolved a real difficulty;
 - generated a reusable lesson that may later be promoted.
 
-Retrospectives remain evidence. Durable promotion is a separate improvement
+For schema v2, every material handoff carries `agent_run_id`, `handoff_id`, an
+`evidence_id` and evidence-manifest path. Handoff dependencies, when present,
+use `depends_on_handoff_id` and must be acyclic. Readers retain schema v1;
+writers emit schema v2 and record evidence-first policy. Retrospectives remain
+an explicit evidence input. Durable promotion is a separate improvement
 workflow with its own gate.
 
 ## Stop Conditions

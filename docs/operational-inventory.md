@@ -226,3 +226,11 @@ projeto consumidor declarar RPG Maker MZ.
 ## Conclusao
 
 O inventario operacional separa command bundles/skills, agents, templates e docs. O pacote deve permanecer autocontido para instalacao em outros projetos.
+# Session evidence components
+
+- `skills/lf-agent-execution-evidence/`: provider-neutral contract, collector,
+  adapter capability matrix and validator.
+- `agents/session-evidence-auditor.md`: read-only evidence audit; the Codex
+  projection is `codex/agents/session-evidence-auditor.toml`.
+- `templates/agent-session-evidence-template.xml`: evidence manifest schema;
+  v2 agentic templates carry evidence lineage.

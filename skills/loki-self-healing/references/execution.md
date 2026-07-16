@@ -85,7 +85,7 @@ Leituras independentes podem ser paralelas; toda escrita é serial e tem owner
 único. Delegue patch a Write Agent com targets, allowed/forbidden writes,
 validators, gates e evidência. Escrita direta só após registrar inexistência de
 writer apropriado; conveniência não justifica. Declare envelope completo e
-registre na retrospectiva tipo de implementação, motivo, oportunidade/escopo do
+registre no completion record tipo de implementação, motivo, oportunidade/escopo do
 futuro writer, evidências e riscos. Pare diante de overlap ou permissão ausente.
 
 ## Validators And Human Gates
@@ -105,6 +105,12 @@ Pare sem escopo/staged; fora do root; com única correção proibida; dependênc
 de pesquisa externa/decisão ausente; conflito interno sem desempate; install
 scope ausente; handoff sem destino; conflito de writers; validator falho; ou
 correção que exija ampliar o envelope. Não declare conclusão com condição ativa.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada ou registra `partial`, `unavailable` ou `unsupported`, sem
+retrospectiva automática ou CoT privado.
 
 ## Resume Contract
 

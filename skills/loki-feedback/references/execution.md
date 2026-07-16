@@ -50,9 +50,9 @@ orquestrador depois da delegacao.
 ## Allowed Writes
 
 - Nenhuma por default.
-- Excecao unica: criar ou complementar artefato de retrospectiva tecnica
-  autorizado pelo workflow `loki-retrospectiva-tecnica` para registrar feedback,
-  atrito, decisao humana, risco residual ou aprendizado.
+- Excecao unica: criar ou complementar completion record operacional autorizado
+  pelo workflow para registrar feedback, atrito, decisao humana, risco residual
+  ou aprendizado.
 
 ## Forbidden Writes
 
@@ -70,8 +70,8 @@ required_skills: []
 required_commands: []
 ```
 
-`loki-retrospectiva-tecnica` e apenas o workflow autorizado para a excecao de
-registro; nao o trate como dependencia obrigatoria da entrevista comum.
+O completion record e o unico registro operacional permitido; evidence/gap e
+responsabilidade do orquestrador, sem dependência de retrospectiva.
 
 ## Execution Planning And Replanning
 
@@ -120,7 +120,7 @@ da entrevista; nenhuma delegacao pode violar a regra de uma pergunta por turno.
    `loki-tech-analysis`, `loki-human-decision-preflight`,
    `loki-generate-action-plan`, `loki-run-plan`,
    `loki-retrospectiva-tecnica` ou `loki-continuous-improvement`.
-10. Se houver registro operacional autorizado, limite-o a retrospectiva.
+10. Se houver registro operacional autorizado, limite-o ao completion record.
 
 ## Write Ownership And Serialization
 
@@ -131,8 +131,8 @@ handoff. Como o fluxo comum e read-only, nao existe writer por default.
 Escrita direta e permitida somente depois de registrar que nenhum Write Agent
 apropriado esta disponivel. Nesse caso, declare owner unico, path exato,
 allowed/forbidden writes, validators, approvals e criterios de sucesso/falha;
-serialize o arquivo e interrompa writers concorrentes. Registre na retrospectiva
-o tipo de escrita, a ausencia do agente, a oportunidade de criar/especializar um
+serialize o arquivo e interrompa writers concorrentes. Registre no completion
+record o tipo de escrita, a ausencia do agente, a oportunidade de criar/especializar um
 writer, o escopo futuro, evidencias e riscos. Conveniencia nao justifica escrita
 direta.
 
@@ -162,6 +162,12 @@ indicar mudanca duradoura, faca handoff; nao promova diretamente.
 - Escopo/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
 - Seria necessario aplicar a correcao antes de concluir o diagnostico.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 

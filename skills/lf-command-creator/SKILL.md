@@ -86,7 +86,12 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 10. Inclua placeholders de argumentos somente quando o comando for realmente invocado por texto. Para Claude Code, use `$ARGUMENTS`; para Codex, prefira skill com `description` clara e entradas documentadas.
 11. Modele gates antes de modelar escrita. Toda escrita sensivel deve ter owner unico, escopo permitido, validator e criterio de parada.
 12. Para comandos Loki, preserve a politica core agnostica: superficies do consumidor, escritas sensiveis, IDs de dominio e validacoes humanas devem permanecer como placeholders ate uma skill especializada resolver a tecnologia.
-13. Atualize `manifest.yaml` apenas quando o novo comando for aceito no pacote local.
+13. Para cada handoff, exija completion record com parentage/identidade,
+    completude, validators, gates e proximo destino. O orquestrador captura
+    evidence sanitizada depois do retorno ou registra estado degradado
+    (`partial`, `unavailable` ou `unsupported`). Nao duplique schema de
+    evidence no command nem use retrospectiva como fallback automatico.
+14. Atualize `manifest.yaml` apenas quando o novo comando for aceito no pacote local.
 
 ## References
 
@@ -103,6 +108,8 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 - `allowed_writes` e `forbidden_writes` sao explicitos.
 - O fluxo separa leitura paralela de escrita serializada.
 - Handoffs retornam proposta, nao aplicam mudanca direta.
+- Handoffs retornam completion record; capture/gap e responsabilidade do
+  orquestrador, sem CoT privado, descoberta de token/ID ou auto-retrospectiva.
 - O output e revisavel em Markdown/YAML.
 - Validadores automaticos nao substituem gates humanos.
 - O comando aponta para skills tecnicas em vez de reexplicar todo o dominio.

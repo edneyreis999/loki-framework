@@ -2,6 +2,12 @@
 
 ## Execution
 
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
+
 ### Propósito e estado verificável
 
 Produza uma análise técnica baseada em evidências antes de plano ou execução.
@@ -111,7 +117,7 @@ Agent` apropriado está disponível. Conveniência, velocidade ou tamanho não s
 justificativas. Antes da exceção, assuma e registre: alvo exato, owner único,
 allowed e forbidden writes, validators, gates, approvals, critérios de sucesso
 e falha e evidências obrigatórias. Pare se a escrita exigir escopo ou permissão
-adicional. Quando escrever diretamente, registre na retrospectiva técnica o tipo
+adicional. Quando escrever diretamente, registre no completion record o tipo
 de implementação, a ausência do agente, a oportunidade e o escopo de um futuro
 `Write Agent`, as evidências e os riscos; não conclua sem esse registro.
 

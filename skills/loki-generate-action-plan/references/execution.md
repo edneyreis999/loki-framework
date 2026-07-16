@@ -131,7 +131,7 @@ ou scoped write plan.
 Defina owner unico por arquivo, detecte sobreposicao, serialize writes e
 interrompa writers concorrentes; leituras independentes podem ser paralelas.
 Escrita direta so depois de registrar ausencia de Write Agent. Nesse caso,
-assuma envelope completo e registre na retrospectiva tipo de escrita, motivo,
+assuma envelope completo e registre no completion record tipo de escrita, motivo,
 oportunidade/escopo de writer futuro, evidencias e riscos. Conveniencia nao e
 justificativa.
 
@@ -168,6 +168,12 @@ task deve incluir guardrails e technical-review aplicaveis.
 - Escopo/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
 - Plano exigiria escrita fora do escopo aprovado.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 

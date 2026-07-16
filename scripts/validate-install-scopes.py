@@ -375,7 +375,12 @@ def validate_transitional_loki_bundles(package_root: Path) -> None:
 def iter_artifact_files(package_root: Path, kind: str, name: str) -> list[Path]:
     if kind == "skills":
         root = package_root / "skills" / name
-        return sorted(path for path in root.rglob("*") if path.is_file())
+        # Compiled Python caches are runtime by-products, never package
+        # artifacts.  Do not decode them during neutrality scanning.
+        return sorted(
+            path for path in root.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+        )
     if kind == "commands":
         return [package_root / "commands" / name]
     if kind == "agents":

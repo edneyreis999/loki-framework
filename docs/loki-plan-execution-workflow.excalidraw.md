@@ -143,3 +143,8 @@ QQ6qSASnQFCAlwCaBggmLSOSQE6wyxccTwOWKQGUD/AAAFPYhuy8BlgHUD1R1GGBoIAAlCiAZht9yM/s
 MD046QejAPFehCBLgBgPFcoSrnYL/KqoAwPv2CA7rjoJXUwfkpXVzg11MSUdY4GYDFrnY9FKAApyyBCBX6lQP0aVECBdR6IY8SMe+uuWxgvxC64ddWr3DMAFOJASadOtwC1KS80GzSJ/z+yYBL1VXTgHOv6TdsEUHcLRcECNCWgQAloIAA==
 ```
 %%
+# Evidence-first update
+
+```text
+handoff terminal -> collector -> atomic sanitized manifest -> validators/gates
+```

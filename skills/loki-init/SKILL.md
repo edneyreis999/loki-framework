@@ -1,9 +1,9 @@
 ---
 name: loki-init
-description: Run the Loki `loki-init` command bundle in Codex. Bootstrap or audit consumer documentation under docs/** and resumable operational state under planos/000-init-loki/** through controlled discovery, domain inventory writers, one final catalogador pass, per-agent retrospectives, validators, gates, and strict write boundaries.
+description: Run the Loki `loki-init` command bundle in Codex. Bootstrap or audit consumer documentation under docs/** and resumable operational state under planos/000-init-loki/** through controlled discovery, domain inventory writers, one final catalogador pass, completion records, evidence capture by the orchestrator, validators, gates, and strict write boundaries.
 when_to_use:
   - "Use when bootstrapping or auditing Loki consumer documentation and planos/000-init-loki state."
-  - "Use when initialization requires project classification, domain inventory fan-out, final cataloging, per-agent retrospectives, validators, and resumable state without touching consumer runtime."
+  - "Use when initialization requires project classification, domain inventory fan-out, final cataloging, completion records, evidence capture, validators, and resumable state without touching consumer runtime."
 argument-hint: "[consumer_project_root, docs_root, plan_root, mode, engine_hint, project_type_hint, max_scan_depth, include_patterns, exclude_patterns]"
 arguments:
   required: []
@@ -46,8 +46,7 @@ domain: consumer-bootstrap
 aliases:
   - init-loki
 required_skills: []
-required_commands:
-  - loki-retrospectiva-tecnica
+required_commands: []
 status: draft
 used_by:
   - loki-init

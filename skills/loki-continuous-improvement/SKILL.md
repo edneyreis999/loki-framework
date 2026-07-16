@@ -59,6 +59,11 @@ Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
 ```yaml
 parameters:
+  - key: learning_sources
+    input_type: list[path_or_mapping]
+    requirement: optional
+    default: []
+    description: Retrospectivas, audits e manifests com lineage; sem promocao direta.
   - key: retrospective_source
     input_type: path[file_or_directory] | list[path[file]]
     requirement: required

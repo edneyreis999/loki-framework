@@ -304,3 +304,10 @@ Mantenha o diretorio do pacote como fonte auditavel. Instale em `.claude/`,
 gate humano apropriado.
 
 Quando a mudanca for no proprio pacote, nao pare em retrospectiva ou intuicao: atualize o artefato normativo correto, registre impacto no `manifest.yaml` se necessario e termine com validacao objetiva de estrutura e autocontencao.
+# Session evidence
+
+Use the collector with structured adapter input and an approved evidence
+destination. It stores a sanitized snapshot by default and records a typed gap
+when no source is observable. Audit is on demand through the read-only auditor.
+Token metrics require source, scope and time; cumulative/account-window values
+are never per-agent usage. No workflow collects private chain-of-thought.

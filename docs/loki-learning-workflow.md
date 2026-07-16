@@ -122,3 +122,9 @@ Antes de promover qualquer aprendizado, confirme:
 - Como validar que a nova regra funciona?
 
 Se qualquer resposta estiver incerta, registre como candidato ou backlog, nao como regra aplicada.
+# Evidence-first learning flow
+
+`completion record -> sanitized evidence -> read-only audit -> explicit human
+retrospective -> deduplicated candidate -> gated promotion`. Evidence gaps stay
+gaps. The auditor reads manifests/sanitized snapshots on demand and labels its
+inferences; it never receives private reasoning or directly promotes policy.

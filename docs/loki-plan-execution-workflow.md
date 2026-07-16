@@ -168,3 +168,10 @@ Ao fim da execucao, outra LLM deve conseguir retomar pelo disco:
 - qual `LokiRunState` ou resumo equivalente permite retomada;
 - qual retrospectiva ou proximo passo deve alimentar o aprendizado, incluindo
   atritos materiais que a proxima execucao deve evitar.
+# Evidence capture at completion
+
+At each terminal handoff, the orchestrator correlates run, agent-run and
+handoff IDs, then invokes a provider-neutral collector. The default artifact is
+a sanitized, atomically published snapshot and checksum-bearing manifest. A
+closed or unsupported adapter records a typed degraded state rather than an
+automatic retrospective or synthetic token count.

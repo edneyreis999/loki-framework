@@ -147,8 +147,8 @@ paralelas.
 
 Escrita direta so e permitida depois de registrar que nenhum Write Agent
 apropriado existe. Assuma owner unico e envelope completo com allowed/forbidden
-writes, validators, approvals, criterios e evidencias. Registre na retrospectiva
-tecnica o tipo de escrita, motivo da ausencia, oportunidade e escopo de um
+writes, validators, approvals, criterios e evidencias. Registre no completion
+record o tipo de escrita, motivo da ausencia, oportunidade e escopo de um
 writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 
 ## Validators
@@ -187,6 +187,13 @@ permanecer registrado e validar com `python3 scripts/validate-install-scopes.py`
 - Escopo/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
 - Proxima etapa exigiria escrita sensivel sem plano, validator e gate.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente. A
+persistência terminal atômica do preflight permanece inalterada.
 
 ## Resume Contract
 

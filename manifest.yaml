@@ -132,6 +132,14 @@ agentic_selection_policy:
     - "technology_skill_routes"
 
 agentic_agent_metadata:
+  session-evidence-auditor:
+    capability_tags: ["evidence", "audit", "lineage"]
+    phase_roles: ["audit", "retrospective"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["privacy", "evidence-integrity"]
+    parallel_safe: true
+    technology_skill_routes: []
   standards-curator:
     capability_tags: ["standards", "learning", "governance"]
     phase_roles: ["review", "improvement"]
@@ -484,6 +492,9 @@ skills:
   - name: "lf-agentic-orchestration"
     file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
+  - name: "lf-agent-execution-evidence"
+    file: "skills/lf-agent-execution-evidence/SKILL.md"
+    status: draft
   - name: "loki-generate-action-plan"
     file: "skills/loki-generate-action-plan/SKILL.md"
     status: draft
@@ -670,6 +681,11 @@ skills:
     extension: "RPG Maker MZ VisuStella"
 
 agents:
+  - name: "session-evidence-auditor"
+    file: "agents/session-evidence-auditor.md"
+    status: draft-read-only
+    project_tags:
+      - "core"
   - name: "standards-curator"
     file: "agents/standards-curator.md"
     status: draft
@@ -792,6 +808,10 @@ agents:
       - "game-dev"
 
 codex_agents:
+  - name: "session-evidence-auditor"
+    file: "codex/agents/session-evidence-auditor.toml"
+    source_agent: "agents/session-evidence-auditor.md"
+    status: draft-derived
   - name: "bibliotecario"
     file: "codex/agents/bibliotecario.toml"
     source_agent: "agents/bibliotecario.md"
@@ -907,6 +927,9 @@ templates:
     status: draft
   - name: "agent-run-report-template"
     file: "templates/agent-run-report-template.xml"
+    status: draft
+  - name: "agent-session-evidence-template"
+    file: "templates/agent-session-evidence-template.xml"
     status: draft
   - name: "agentic-run-digest-template"
     file: "templates/agentic-run-digest-template.xml"

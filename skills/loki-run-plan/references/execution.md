@@ -16,8 +16,8 @@ validators, gates humanos materiais e estado retomável.
   `LokiRunState` suficiente para retomada.
 - Saídas obrigatórias: `Execution Brief`, artefatos ou diffs da fase, lista de
   tasks executadas/bloqueadas/puladas com motivo, resultados de validators,
-  registros de gates e handoffs, estado atualizado do plano, `LokiRunState` e
-  recomendação ou início da retrospectiva técnica ao concluir a fase.
+  registros de gates e handoffs, completion/evidence state, plano atualizado e
+  `LokiRunState`. Retrospectiva só é recomendada quando explicitamente prevista.
 
 ## Execution Profile
 
@@ -70,16 +70,12 @@ Antes da primeira escrita, derive do plano e enumere como `allowed_writes`:
 - `target_files` de domínio, conteúdo, runtime, configuração, dados, scripts ou
   assets explicitamente autorizados pela task ativa e atribuídos a owner único;
 - build reports e evidências autorizadas em `builds/faseN/`;
-- o `target_retrospective` exato de cada agente quando o plano exigir
-  retrospectiva por agente sob `retrospetivas/faseN/`.
 
 `forbidden_writes` inclui qualquer superfície fora da task ativa; fases não
 selecionadas; targets sem owner; `.claude/**`, `.agents/**` e `.codex/**` sem
 approval posterior específico; e runtime, engine, framework, dados persistidos
 ou superfície sensível sem plano, owner, skill técnica quando exigida,
-validators e gate humano. A exceção de retrospectiva não autoriza docs
-duradouros, inventários finais, runtime, código, assets, config, `AGENTS.md` ou
-`CLAUDE.md`. Não amplie silenciosamente o escopo; pare quando um path ou permissão
+validators e gate humano. Não amplie silenciosamente o escopo; pare quando um path ou permissão
 adicional for necessário.
 
 ## Preflight, DAG And Execution Brief
@@ -144,7 +140,7 @@ Use delegação suportada pelo runtime somente quando o usuário tiver solicitad
 delegação ou trabalho paralelo, ou quando o contrato de orquestração ativo já a
 autorizar explicitamente. Se a política ativa não autorizar subagentes, registre
 que o agente apropriado está indisponível; qualquer escrita pelo orquestrador
-continua sujeita à exceção, ao envelope e à retrospectiva definidos abaixo.
+continua sujeita à exceção, ao envelope e ao completion record definidos abaixo.
 
 Antes de invocar qualquer subagente, entregue um envelope autocontido com:
 
@@ -182,9 +178,10 @@ e registrar que nenhum Write Agent apropriado está disponível; conveniência,
 velocidade ou tamanho da mudança não justificam a exceção. Antes dela, declare
 target files, `allowed_writes`, `forbidden_writes`, owner único, validators,
 gates/approvals, critérios de sucesso/falha e evidências. Se o envelope não
-cobrir a mudança, pare. Sempre registre na retrospectiva o tipo de implementação,
-motivo da ausência, oportunidade e escopo de um futuro Write Agent, evidências e
-riscos observados.
+cobrir a mudança, pare. Sempre registre no completion record o tipo de
+implementação, motivo da ausência, oportunidade e escopo de um futuro Write
+Agent, evidências e riscos observados. O orquestrador captura evidence ou gap;
+nunca usa retrospectiva como fallback.
 
 ## Task Execution And Evidence
 
@@ -201,8 +198,8 @@ Para cada task na ordem topológica:
    output gerado como validado sem validator aplicável e confirmação do gate
    humano exigido.
 
-Ao concluir a fase, recomende ou inicie `loki-retrospectiva-tecnica` conforme o
-plano, incluindo arquivos afetados, validators, gates, riscos residuais,
+Ao concluir a fase, recomende retrospectiva técnica apenas quando o plano a
+previr explicitamente, incluindo arquivos afetados, validators, gates, riscos residuais,
 comandos/scripts, outputs inesperados, inferências úteis e incorretas, mismatches
 de ambiente, correções do usuário e desperdícios a evitar.
 

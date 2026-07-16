@@ -1,8 +1,8 @@
 ---
 name: lf-template-library
-description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, or agentic v2 XML state artifacts that should follow the package templates.
+description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, agent-session evidence, or agentic v2 XML state artifacts that should follow the package templates.
 when_to_use:
-  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, or agentic v2 XML state artifacts."
+  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, agent-session evidence, or agentic v2 XML state artifacts."
   - "Use when an installed package template should be loaded before writing an artifact."
 argument-hint: "[template kind, artifact destination]"
 arguments:
@@ -73,6 +73,8 @@ inspection mirror.
   [agentic-synthesis-template.xml](references/templates/agentic-synthesis-template.xml)
 - Agent run report:
   [agent-run-report-template.xml](references/templates/agent-run-report-template.xml)
+- Agent session evidence:
+  [agent-session-evidence-template.xml](references/templates/agent-session-evidence-template.xml)
 - Agentic run digest:
   [agentic-run-digest-template.xml](references/templates/agentic-run-digest-template.xml)
 - Agentic backlog:

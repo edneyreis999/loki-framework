@@ -72,10 +72,11 @@ parallel writes, hand off to planning and execution, and record completion.
    generate executable phases without new human questions.
 9. During autonomous execution, record blockers or post-execution items instead
    of asking new human questions mid-run.
-10. Require a compact completion report for every agent handoff. Require a
-    retrospective when an agent wrote files, produced substantial analysis,
-    performed material validation, found a blocker or resolved a real
-    difficulty.
+10. Require a compact completion record for every agent handoff. The
+    orchestrator captures a validated evidence manifest after completion or
+    records an explicit `partial`, `unavailable` or `unsupported` gap. A
+    retrospective is human- or explicitly-command-invoked; never auto-invoke
+    one as a fallback for absent evidence.
 11. Validate state with the available agentic run-state validator before
     treating the run as resumable or fixture-ready.
 
@@ -98,7 +99,7 @@ parallel writes, hand off to planning and execution, and record completion.
 - Agent run reports with `agent_run_id`, `handoff_id`, owner, target files,
   validators, gates, evidence, completion status and blockers.
 - Digest and backlog records.
-- Retrospective requirements for material agent work.
+- Explicit retrospective eligibility for material agent work; no automatic run.
 
 ## Limits
 

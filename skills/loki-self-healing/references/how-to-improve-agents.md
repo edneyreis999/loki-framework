@@ -22,10 +22,10 @@ Antes de alterar as instruções do agente, pergunte a si mesma:
 16. Se o agente for um `Write Agent`, as instruções contemplam a exigência de remover artefatos temporários antes do handoff, salvo para preservar evidências temporárias em `/planos`?
 17. Se o agente for um `Write Agent`, as instruções contemplam a exigência de não persistir testes finais e de fornecer uma especificação completa para testes determinísticos?
 18. Se o agente for um `Write Agent`, as instruções contemplam a exigência de quando a alteração não puder ser validada completamente de forma determinística fornecer um roteiro executável para essa validação no handoff?
-19. Se o agente for um `Write Agent`, as instruções contemplam a exigência de executar `loki-retrospectiva-tecnica` antes de todo handoff?
+19. Se o agente for um `Write Agent`, as instruções contemplam a exigência de devolver um completion record honesto, sem raciocínio privado, para captura de evidence pelo orquestrador?
 20. Se o agente for um `Write Agent`, as instruções contemplam a exigência de usar `docs/loki-init/<agent-name>/` como documentação própria e consultar documentação relevante no pre-flight?
 21. Se o agente for um `Write Test Agent`, as instruções contemplam a exigência de modificar somente arquivos da suíte de testes e persistir os testes determinísticos finais?
-22. Se o agente for um `Write Test Agent`, as instruções contemplam a exigência de definir handoffs distintos para sucesso e falha e executar `loki-retrospectiva-tecnica` antes de cada handoff?
+22. Se o agente for um `Write Test Agent`, as instruções contemplam a exigência de definir handoffs distintos para sucesso e falha e devolver completion record antes de cada handoff?
 23. Se o agente for um `Read-Only / Proposal-Only Agent`, as instruções contemplam a exigência de proibir qualquer modificação ou criação persistente no projeto?
 24. Se o agente for um `Read-Only / Proposal-Only Agent`, as instruções contemplam a exigência de devolver análise, proposta ou handoff estruturado quando identificar uma alteração necessária?
 
@@ -194,9 +194,14 @@ Exija que o roteiro de teste humano contenha:
 
 Mantenha os testes humanos complementares aos testes determinísticos. Exija ambos quando partes diferentes da mudança puderem ser verificadas de formas diferentes.
 
-### 19. Exija retrospectiva do Write Agent
+### 19. Exija completion record do Write Agent
 
-Instrua o `Write Agent` a executar `loki-retrospectiva-tecnica` antes de todo handoff usando o contexto da própria janela.
+Instrua o `Write Agent` a devolver, antes de todo handoff, um completion record
+compacto com identidade e parentage recebidos, arquivos afetados, validators,
+gates, status e riscos. O agente não descobre IDs, tokens nem explica
+raciocínio privado. O orquestrador captura o evidence manifest sanitizado após
+o retorno ou declara `partial`, `unavailable` ou `unsupported`; retrospectiva
+é ação humana ou explicitamente invocada, nunca fallback automático.
 
 ### 20. Preserve documentação própria do Write Agent
 
@@ -220,7 +225,10 @@ Exija que o `Write Test Agent` conheça antes do início:
 - o destino de falha, normalmente o `Write Agent` responsável pela implementação;
 - a suíte e os arquivos de teste que pode modificar.
 
-Instrua-o a executar `loki-retrospectiva-tecnica` antes de cada handoff e registrar testes criados, resultados, falhas, lacunas da especificação, riscos e recomendação de próximo destino.
+Instrua-o a devolver completion record antes de cada handoff, com testes criados,
+resultados, falhas, lacunas da especificação, riscos e próximo destino. A
+captura de evidence pertence ao orquestrador e não autoriza retrospectiva
+automática.
 
 ### 23. Torne o Read-Only / Proposal-Only Agent realmente não escritor
 
@@ -252,10 +260,10 @@ Depois de aplicar as correções, responda novamente às 24 perguntas e marque c
 - [ ] 16. Remoção dos artefatos temporários.
 - [ ] 17. Especificação para testes determinísticos.
 - [ ] 18. Gate e roteiro de teste humano para alterações não determinísticas.
-- [ ] 19. Retrospectiva do Write Agent.
+- [ ] 19. Completion record do Write Agent e captura evidence-first pelo orquestrador.
 - [ ] 20. Documentação própria e pre-flight documental.
 - [ ] 21. Escrita do Write Test Agent restrita a testes.
-- [ ] 22. Handoffs e retrospectiva do Write Test Agent.
+- [ ] 22. Handoffs e completion record do Write Test Agent.
 - [ ] 23. Proibição total de escrita do Read-Only / Proposal-Only Agent.
 - [ ] 24. Proposta ou handoff estruturado do Read-Only / Proposal-Only Agent.
 

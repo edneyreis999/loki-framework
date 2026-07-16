@@ -108,3 +108,8 @@ risco residual ^learn-apply
 }
 ```
 %%
+# Evidence-first update
+
+```text
+completion -> sanitized evidence -> read-only audit -> explicit retrospective -> candidate -> gated improvement
+```

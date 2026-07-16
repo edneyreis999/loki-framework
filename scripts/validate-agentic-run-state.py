@@ -58,9 +58,10 @@ def validate_decision_gates(root: ET.Element, label: str, failures: list[str]) -
             failures.append(f"{label}: unresolved must_ask_now gate {gate_id}")
 
 
-def validate_manifest_handoffs(root: ET.Element, failures: list[str]) -> None:
+def validate_manifest_handoffs(root: ET.Element, failures: list[str]) -> dict[str, str]:
     seen_agent_runs: set[str] = set()
     seen_handoffs: set[str] = set()
+    parents: dict[str, str] = {}
     for handoff in root.findall(".//handoff"):
         agent_run_id = child_text(handoff, "agent_run_id")
         handoff_id = child_text(handoff, "handoff_id")
@@ -81,6 +82,24 @@ def validate_manifest_handoffs(root: ET.Element, failures: list[str]) -> None:
             )
         else:
             seen_handoffs.add(handoff_id)
+        if root.get("schema_version") == "2":
+            evidence_id = child_text(handoff, "evidence_id")
+            evidence_path = child_text(handoff, "evidence_manifest_path")
+            if not evidence_id or not evidence_path:
+                failures.append("agentic-run-manifest.xml: v2 handoff missing evidence lineage")
+        parent = child_text(handoff, "depends_on_handoff_id")
+        if parent and handoff_id:
+            parents[handoff_id] = parent
+    for handoff_id in parents:
+        visited: set[str] = set()
+        current = handoff_id
+        while current in parents:
+            if current in visited:
+                failures.append(f"agentic-run-manifest.xml: cyclic handoff lineage at {current}")
+                break
+            visited.add(current)
+            current = parents[current]
+    return {child_text(h, "handoff_id"): child_text(h, "agent_run_id") for h in root.findall(".//handoff")}
 
 
 def validate_report(path: Path, root: ET.Element, failures: list[str]) -> tuple[str, str, list[str]]:
@@ -100,6 +119,10 @@ def validate_report(path: Path, root: ET.Element, failures: list[str]) -> tuple[
         failures.append(f"{path}: missing identity/handoff_id")
     if not child_text(root, "selection/selection_reason"):
         failures.append(f"{path}: missing selection/selection_reason")
+    if root.get("schema_version") == "2":
+        for field in ("evidence_manifest_path", "evidence_status", "capture_trigger", "capture_target"):
+            if not child_text(root, f"evidence/{field}"):
+                failures.append(f"{path}: v2 missing evidence/{field}")
     if root.find("freshness_signature") is None:
         failures.append(f"{path}: missing freshness_signature")
 
@@ -130,7 +153,7 @@ def validate_report(path: Path, root: ET.Element, failures: list[str]) -> tuple[
 
 
 def validate_reports(
-    roots: dict[Path, ET.Element], run_dir: Path, failures: list[str]
+    roots: dict[Path, ET.Element], run_dir: Path, failures: list[str], manifest_handoffs: dict[str, str]
 ) -> None:
     seen_agent_runs: set[str] = set()
     seen_handoffs: set[str] = set()
@@ -158,6 +181,10 @@ def validate_reports(
             seen_handoffs.add(handoff_id)
 
         report_agent_run_id, group_id, target_files = validate_report(path, root, failures)
+        if root.get("schema_version") == "2" and handoff_id:
+            expected_agent_run = manifest_handoffs.get(handoff_id)
+            if expected_agent_run != report_agent_run_id:
+                failures.append(f"{path}: v2 handoff correlation does not match manifest")
         if group_id:
             for target_file in target_files:
                 target_files_by_group[group_id][target_file].append(report_agent_run_id)
@@ -185,14 +212,16 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         if manifest.find("freshness_signature") is None:
             failures.append(f"{manifest_path}: missing freshness_signature")
         validate_selected_agents(manifest, str(manifest_path), failures)
-        validate_manifest_handoffs(manifest, failures)
+        manifest_handoffs = validate_manifest_handoffs(manifest, failures)
+    if manifest is None:
+        manifest_handoffs = {}
 
     for path, root in roots.items():
         validate_decision_gates(root, str(path), failures)
         if root.tag == "agentic_analysis_manifest":
             validate_selected_agents(root, str(path), failures)
 
-    validate_reports(roots, run_dir, failures)
+    validate_reports(roots, run_dir, failures, manifest_handoffs)
     return failures
 
 

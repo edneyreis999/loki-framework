@@ -24,6 +24,9 @@ scoped_write_domains:
   - "integration-code"
   - "validators"
   - "task-approved-runtime-surfaces"
+  - "package-skill-contracts"
+  - "package-templates"
+  - "task-local-evidence"
 approval_policy: never
 tools:
   - Read

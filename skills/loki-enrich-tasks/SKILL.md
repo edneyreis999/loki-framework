@@ -107,6 +107,12 @@ principal e não declare sucesso.
 Leia integralmente [references/execution.md](references/execution.md) antes de
 agir e siga todas as referências adicionais que esse arquivo ordenar.
 
+## Evidence Policy
+
+Subagentes devolvem completion record; o orquestrador captura evidence sanitizada
+ou declara `partial`, `unavailable` ou `unsupported`. Nunca solicite CoT privado
+nem use retrospectiva como fallback automático.
+
 ## Response
 
 Leia integralmente [references/response.md](references/response.md) e, na

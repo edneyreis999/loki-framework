@@ -13,7 +13,7 @@ runtime do projeto.
   handoff atingiu estado terminal; validators e gates foram registrados; e não
   resta stop condition ativa.
 - Resultado verificável: `docs/**` e `planos/000-init-loki/**` contêm os outputs
-  aplicáveis, evidência de fan-out/consolidação, retrospectivas por agente e
+  aplicáveis, completion records, evidência sanitizada ou gaps explícitos, e
   `loki_init_state` retomável.
 - Saídas obrigatórias: cumpra integralmente `references/response.md` e os Output
   Contracts abaixo.
@@ -52,16 +52,15 @@ Mantenha responsabilidade pelo progresso e estado global depois de delegar.
 
 ```yaml
 required_skills: []
-required_commands:
-  - loki-retrospectiva-tecnica
+required_commands: []
 ```
 
 Carregue `lf-index-navigator` somente quando `docs/index.xml` existir e precisar
 ser lido. Carregue `<technology_required_skills>` somente quando inventário,
 usuário ou especialista declarar tecnologia concreta. O core passa tecnologia e
 skills candidatas aos envelopes, mas não executa regra de engine. Todo agente
-invocado deve executar `loki-retrospectiva-tecnica` depois do trabalho e antes de
-concluir.
+invocado devolve completion record; o orquestrador captura evidence sanitizada
+ou declara gap explícito, sem auto-retrospectiva.
 
 ## Mandatory Inventory Contract
 
@@ -98,7 +97,7 @@ dois roots.
    evidência da sessão, não contrato universal.
 4. Verifique se o adapter concede a cada agente escrita escopada em seu
    `target_inventory_dir` quando aplicável e no próprio
-   `target_retrospective`. Marque `blocked` ou `skipped` com motivo antes do
+   evidence capture pelo orquestrador. Marque `blocked` ou `skipped` com motivo antes do
    fan-out quando não conceder.
 5. Faça preflight do catálogo. Use `manifest.yaml` instalado como fonte primária
    de `supported_project_types`, `agent_project_tag_policy` e
@@ -175,10 +174,8 @@ agent_init_envelope:
   init_class: "init_inventory_domain_writer"
   target_inventory_dir: "docs/loki-init/<agent-name>/"
   inventory_contract: "docs/loki-init-inventory-contracts.md"
-  target_retrospective: "planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md"
   allowed_writes:
     - "docs/loki-init/<agent-name>/**"
-    - "planos/000-init-loki/retrospetivas/fase1/<agent-name>-retrospectiva.md"
   allowed_sources:
     - "docs/loki-init/project-inventory.md"
     - "docs/loki-init/technology-context.md"
@@ -191,24 +188,22 @@ agent_init_envelope:
     - "AGENTS.md"
     - "CLAUDE.md"
     - "<consumer_runtime_surfaces>"
-  completion_retrospective:
-    command: "loki-retrospectiva-tecnica"
+  completion_record:
     required: true
-    timing: "after assigned work and before agent completion"
+    evidence_capture_owner: "orchestrator"
+    gap_states: ["partial", "unavailable", "unsupported"]
     source_scope:
       - "own execution trace"
       - "own target_inventory_dir or structured support result"
       - "own validations, blockers, useful and bad inferences, tool friction and residual risks"
   write_mode:
     final_artifacts: "direct-target-inventory-dir"
-    retrospective: "direct-target-retrospective"
 ```
 
 Support-only recebe o mesmo contrato sem inventory dir, com
-`final_artifacts: structured-support-result-only` e allowed write exclusivo para
-a retrospectiva. Catalogador recebe envelope final apenas na consolidação, com
-pastas validadas em `allowed_sources`, destinos exatos em `allowed_writes` e sua
-retrospectiva.
+`final_artifacts: structured-support-result-only`. Catalogador recebe envelope
+final apenas na consolidação, com pastas validadas em `allowed_sources` e
+destinos exatos em `allowed_writes`; ambos devolvem completion record.
 
 Registre para cada handoff origem, destino, objetivo, entrada, resultado
 esperado, status, evidência recebida e próximo destino. Acompanhe até estado
@@ -218,7 +213,7 @@ terminal; invocação não é conclusão.
 
 Registre a matriz `available -> inventory_required -> selected -> planned ->
 invoked | blocked | skipped`, com motivos, classe, output, inventory dir e
-retrospective por agente. Todo requerido deve alcançar uma dessas categorias.
+completion/evidence state por agente. Todo requerido deve alcançar uma dessas categorias.
 
 Execute domain writers em lotes conservadores. Use `agents.max_threads` quando
 conhecido; caso contrário, use 6 como teto inicial. Registre limites configurado
@@ -226,24 +221,24 @@ e observado e feche agentes concluídos antes de abrir novo lote. Leituras
 independentes podem ser paralelas; atribua owner único por arquivo, detecte
 overlap e serialize writes compartilhados.
 
-Cada domain writer escreve a própria pasta e retrospectiva; handoff do
-orquestrador não as substitui. Sem conteúdo útil, o agente escreve falha
-estruturada na própria pasta. Support-only escreve somente a retrospectiva.
+Cada domain writer escreve a própria pasta e devolve completion record; o
+handoff do orquestrador não os substitui. Sem conteúdo útil, o agente devolve
+falha estruturada. Support-only não escreve artefato persistente por padrão.
 
 Qualquer criação, alteração, movimento ou remoção deve ser delegada ao Write
 Agent apropriado sempre que ele existir. Escrita direta pelo orquestrador é
 exceção somente após registrar indisponibilidade de Write Agent; conveniência,
 velocidade ou tamanho não justificam. Declare antes target files,
 allowed/forbidden writes, owner único, validators, gates/approvals, critérios e
-evidências. Pare se o envelope não cobrir a mudança. Registre na retrospectiva o
-tipo de implementação direta, motivo da ausência, oportunidade/escopo de futuro
-Write Agent, evidências e riscos.
+evidências. Pare se o envelope não cobrir a mudança. Registre no completion
+record o tipo de implementação direta, motivo da ausência, oportunidade/escopo
+de futuro Write Agent, evidências e riscos.
 
 ## Serial Consolidation
 
 Depois do fan-out:
 
-1. Valide a materialização de cada inventory dir e retrospectiva requerida.
+1. Valide a materialização de cada inventory dir e completion/evidence state requerido.
 2. Valide cada pasta inteira contra o contrato obrigatório.
 3. Reabra docs/fontes atuais antes de conclusão duradoura sensível a frescor;
    não faça rescan amplo quando frescor não importar.
@@ -291,10 +286,9 @@ ruins, ferramentas, mismatches, riscos e próximo caminho mínimo.
 - Cada domain writer materializou e validou sua pasta contra o contrato.
 - Conclusões freshness-sensitive foram rechecadas sem rescan desnecessário.
 - Catalogador rodou no máximo uma vez, somente depois das validações.
-- Cada agente invocado escreveu a própria retrospective via command obrigatório;
-  ninguém escreveu retrospectiva de outro agente.
-- Support-only não escreveu docs finais, index, tasks ou runtime; sua única
-  escrita direta foi a própria retrospectiva.
+- Cada agente invocado devolveu completion record; o orquestrador capturou
+  evidence ou registrou gap explícito, sem retrospectiva automática.
+- Support-only não escreveu docs finais, index, tasks ou runtime.
 - `docs/index.xml` foi atualizado quando docs duradouros foram criados.
 - Tasks e resume state refletem status, conflitos, validators e próximo command.
 - Nenhum comportamento perceptível, runtime, integração, save/load, gameplay,

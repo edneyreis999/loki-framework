@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agent_session_evidence schema_version="1">
+  <identity>
+    <run_id type="loki-run-id">{{run_id}}</run_id>
+    <agent_run_id type="agent-run-id">{{agent_run_id}}</agent_run_id>
+    <handoff_id type="handoff-id">{{handoff_id}}</handoff_id>
+    <agent_name type="agent-name">{{agent_name}}</agent_name>
+  </identity>
+  <runtime>
+    <adapter>{{adapter}}</adapter>
+    <adapter_version>{{adapter_version_or_null}}</adapter_version>
+    <root_session_id type="runtime-root-session-id">{{root_session_id}}</root_session_id>
+    <parent_thread_id type="runtime-parent-thread-id">{{parent_thread_id_or_null}}</parent_thread_id>
+    <thread_id type="runtime-thread-id">{{thread_id}}</thread_id>
+    <runtime_agent_id type="runtime-agent-id">{{runtime_agent_id}}</runtime_agent_id>
+    <terminal_status>{{terminal_status}}</terminal_status>
+    <parent_reference>
+      <type>{{parent_reference_type_or_null}}</type>
+      <value>{{parent_reference_or_null}}</value>
+    </parent_reference>
+  </runtime>
+  <locator>
+    <kind>{{locator_kind}}</kind>
+    <value>{{locator_value_or_null}}</value>
+    <portability>{{locator_portability}}</portability>
+    <unavailable_reason>{{locator_unavailable_reason_or_null}}</unavailable_reason>
+  </locator>
+  <snapshot>
+    <storage_mode>{{snapshot_storage_mode}}</storage_mode>
+    <payload_path>{{sanitized_payload_path_or_null}}</payload_path>
+    <captured_at>{{snapshot_captured_at_or_null}}</captured_at>
+    <payload_checksum algorithm="sha-256">{{sanitized_payload_sha256_or_null}}</payload_checksum>
+    <checksum_absence_reason>{{payload_checksum_absence_reason_or_null}}</checksum_absence_reason>
+  </snapshot>
+  <evidence_completeness>
+    <overall_status>{{overall_evidence_status}}</overall_status>
+    <dimension name="transcript">
+      <status>{{transcript_status}}</status>
+      <missing_reason>{{transcript_missing_reason_or_null}}</missing_reason>
+    </dimension>
+    <dimension name="tool_io">
+      <status>{{tool_io_status}}</status>
+      <missing_reason>{{tool_io_missing_reason_or_null}}</missing_reason>
+    </dimension>
+    <dimension name="errors">
+      <status>{{errors_status}}</status>
+      <missing_reason>{{errors_missing_reason_or_null}}</missing_reason>
+    </dimension>
+    <dimension name="reasoning_summary">
+      <status>{{reasoning_summary_status}}</status>
+      <missing_reason>{{reasoning_summary_missing_reason_or_null}}</missing_reason>
+      <provenance>{{reasoning_summary_provenance_or_null}}</provenance>
+    </dimension>
+    <dimension name="token_usage">
+      <status>{{token_usage_status}}</status>
+      <missing_reason>{{token_usage_missing_reason_or_null}}</missing_reason>
+    </dimension>
+  </evidence_completeness>
+  <usage>
+    <status>{{usage_status}}</status>
+    <metric_kind>{{usage_metric_kind_or_null}}</metric_kind>
+    <source>{{usage_source_or_null}}</source>
+    <source_scope>{{usage_source_scope_or_null}}</source_scope>
+    <measured_at>{{usage_measured_at_or_null}}</measured_at>
+    <input_tokens>{{input_tokens_or_null}}</input_tokens>
+    <cached_input_tokens>{{cached_input_tokens_or_null}}</cached_input_tokens>
+    <output_tokens>{{output_tokens_or_null}}</output_tokens>
+    <reasoning_output_tokens>{{reasoning_output_tokens_or_null}}</reasoning_output_tokens>
+    <total_tokens>{{total_tokens_or_null}}</total_tokens>
+    <unavailable_reason>{{usage_unavailable_reason_or_null}}</unavailable_reason>
+  </usage>
+  <security>
+    <snapshot_classification>sanitized</snapshot_classification>
+    <structural_redaction_result>{{structural_redaction_result}}</structural_redaction_result>
+    <secret_pii_hardening>{{secret_pii_hardening_status}}</secret_pii_hardening>
+    <retention_metadata>{{retention_metadata_or_deferred}}</retention_metadata>
+    <purge_policy>{{purge_policy_or_deferred}}</purge_policy>
+  </security>
+  <integrity>
+    <canonical_content_checksum algorithm="sha-256">{{canonical_content_sha256}}</canonical_content_checksum>
+    <result>{{integrity_result}}</result>
+    <verification_notes>{{integrity_verification_notes_or_null}}</verification_notes>
+  </integrity>
+  <completion_record>
+    <agent_run_id type="agent-run-id">{{completion_agent_run_id}}</agent_run_id>
+    <handoff_id type="handoff-id">{{completion_handoff_id}}</handoff_id>
+    <terminal_status>{{completion_terminal_status}}</terminal_status>
+    <summary>{{completion_summary}}</summary>
+    <changed_files><file>{{changed_file}}</file></changed_files>
+    <read_files><file>{{read_file}}</file></read_files>
+    <validations><validation>{{validation}}</validation></validations>
+    <material_attempts><attempt>{{material_attempt}}</attempt></material_attempts>
+    <known_errors><error>{{known_error}}</error></known_errors>
+    <decisions><decision>{{decision}}</decision></decisions>
+    <residual_risks><risk>{{residual_risk}}</risk></residual_risks>
+    <next_destination>{{next_destination}}</next_destination>
+  </completion_record>
+  <retrospective_policy>
+    <mode>evidence-first</mode>
+    <automatic_agent_retrospective>false</automatic_agent_retrospective>
+    <dual_capture>false</dual_capture>
+    <legacy_retrospective_fallback>false</legacy_retrospective_fallback>
+    <evidence_gap_handling>preserve-gap</evidence_gap_handling>
+  </retrospective_policy>
+</agent_session_evidence>

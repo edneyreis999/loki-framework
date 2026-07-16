@@ -113,8 +113,9 @@ target, writes, validators, gates, evidencias e handoff. Escrita direta so apos
 registrar ausencia de Write Agent e assumir owner unico/envelope completo.
 Serialize arquivos compartilhados e interrompa escopos sobrepostos.
 
-Se escrever diretamente, registre em retrospectiva tipo, motivo, lacuna de
-agente, oportunidade/escopo futuro, evidencias e riscos.
+Se escrever diretamente, registre no completion record tipo, motivo, lacuna de
+agente, oportunidade/escopo futuro, evidencias e riscos; o orquestrador captura
+evidence sanitizada ou declara gap, sem fallback de retrospectiva.
 
 ## Validators And Human Gates
 
@@ -145,6 +146,12 @@ evidencia citada, nunca dependencia normativa.
   decisao de alto risco prematura.
 - Entrada/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 

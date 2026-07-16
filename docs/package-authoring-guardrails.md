@@ -355,3 +355,12 @@ Uma evolucao correta do framework:
 - nao quebra o layout instalavel das skills;
 - deixa `manifest.yaml`, docs e contratos coerentes;
 - termina com validacao objetiva, nao apenas julgamento subjetivo.
+# Session evidence guardrail
+
+Execution evidence is provider-neutral and evidence-first. The orchestrator
+owns correlation and may persist only a structurally sanitized snapshot plus a
+verified manifest. Raw runtime payloads, private/full chain-of-thought,
+automatic agent retrospectives, dual capture and legacy fallback are forbidden.
+Adapters must expose `partial`, `pointer-only`, `unavailable`, or `unsupported`
+when a capability is not observed. TTL, purge and full PII hardening remain
+deferred backlog work, not implemented guarantees.

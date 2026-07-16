@@ -92,8 +92,8 @@ stash aprovada. Para refs/stash, use agente autorizado se disponivel; escrita
 direta somente apos registrar ausencia de Write Agent e envelope com branch,
 base, allowed/forbidden writes, validators, approvals, criterios e evidencias.
 
-Se houver escrita direta, registre na retrospectiva tipo, motivo da ausencia do
-agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
+Se houver escrita direta, registre no completion record tipo, motivo da ausencia
+do agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
 
 ## Validators And Human Gates
 
@@ -114,6 +114,11 @@ Nao escreva em pacote/destinos instalados e nao amplie para commit/push/PR.
   mudancas impedem troca e usuario nao aprova alternativa.
 - Entrada/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
+
+## Evidence-First Cutover
+
+Capture somente quando houver subagente ou run state; caso contrário registre
+`not-applicable`. Em todos os casos não há CoT privado ou retrospectiva automática.
 
 ## Resume Contract
 

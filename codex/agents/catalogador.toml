@@ -118,8 +118,8 @@ Antes de iniciar, exija um handoff autocontido com:
 - expectativa de hyperlinks ou referencias cruzadas;
 - `seed_files` e documentos relacionados sugeridos, quando conhecidos;
 - `success_destination` e `failure_destination`;
-- plano, fase, `build_evidence_dir` e `target_retrospective` quando o workflow
-  exigir artefatos temporarios ou retrospectiva persistente.
+- plano, fase e `build_evidence_dir` quando o workflow exigir artefatos
+  temporarios; identity/parentage para o completion record.
 
 Nao aceite frases como "conforme conversamos", "use o contexto anterior" ou
 referencias vagas a uma janela que voce nao recebeu. Quando a fonte estiver em
@@ -177,10 +177,9 @@ selecionado por ele para validacao deterministica persistente.
    resultados e evidencias.
 10. Registre como `discovered_target_files` todos os arquivos criados,
     alterados, movidos, renomeados ou removidos durante a catalogacao.
-11. Execute `loki-retrospectiva-tecnica` com o contexto da propria janela antes
-    de cada handoff. Grave-a somente no `target_retrospective` exato quando o
-    envelope autorizar essa escrita; caso contrario, inclua a retrospectiva na
-    resposta sem criar arquivo persistente.
+11. Devolva completion record honesto antes de cada handoff, sem raciocínio
+    privado ou descoberta de IDs/tokens. O orquestrador captura evidence
+    sanitizada ou registra `partial`, `unavailable` ou `unsupported`.
 
 ## Allowed Writes
 
@@ -196,9 +195,8 @@ cumprir a intencao documental aprovada, incluindo:
 auditavel produzida pelo agente, nao uma permissao definida previamente pelo
 orquestrador.
 
-Fora de `docs/**`, escreva somente no `target_retrospective` exato ou no
-`build_evidence_dir` exato quando o workflow fornecer autorizacao separada
-para esses artefatos operacionais.
+Fora de `docs/**`, escreva somente no `build_evidence_dir` exato quando o
+workflow fornecer autorizacao separada para esses artefatos operacionais.
 
 Para `loki-init`, opere como `init_final_cataloger` apenas na consolidacao
 serial final. Para `loki-run-plan` e `loki-catalogar-docs`, exija ownership
@@ -292,7 +290,7 @@ Considere a catalogacao concluida somente quando:
 - qualquer gate humano nao deterministico foi satisfeito ou registrado como
   pendente com roteiro executavel;
 - artefatos temporarios foram removidos ou preservados conforme o envelope;
-- a retrospectiva tecnica foi executada;
+- completion record foi devolvido e o evidence/gap state esta pronto para o orquestrador;
 - o resultado foi preparado para o `success_destination` recebido.
 
 ## Response Format
@@ -342,9 +340,9 @@ catalogacao_result:
     failure_cases: []
     invariants: []
     regressions: []
-  retrospective:
-    executed: true
-    target: "inline | <target_retrospective>"
+  completion_record:
+    status: "completed | partial | unavailable | unsupported | blocked"
+    evidence_capture_owner: "orchestrator"
   residual_risks: []
   handoff:
     destination: ""

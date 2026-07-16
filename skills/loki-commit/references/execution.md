@@ -96,8 +96,8 @@ disponivel; escrita direta so apos registrar ausencia de Write Agent apropriado
 e assumir envelope com pathspecs exatos, allowed/forbidden writes, validators,
 approvals, criterios e evidencias.
 
-Se houver escrita direta, registre na retrospectiva tipo, motivo da ausencia do
-agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
+Se houver escrita direta, registre no completion record tipo, motivo da ausencia
+do agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
 
 ## Validators And Human Gates
 
@@ -119,6 +119,11 @@ push/PR. Escopo explicito continua obrigatorio.
   grande nao aprovado; default sem pedido; arquivos ou mensagem nao aprovados.
 - Entrada/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   conflito de writers, validator falho ou gate/approval pendente.
+
+## Evidence-First Cutover
+
+Capture somente quando houver subagente ou run state; caso contrário registre
+`not-applicable`. Em todos os casos não há CoT privado ou retrospectiva automática.
 
 ## Resume Contract
 

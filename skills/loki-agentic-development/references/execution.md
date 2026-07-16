@@ -7,11 +7,11 @@ Use este contrato para a fase de execução.
 ## Purpose And Observable Contract
 
 Este command orquestra demanda → análise agentic → decision preflight → plano →
-execução autônoma por fases → evidências/retrospectivas → digest/backlog, sem
+execução autônoma por fases → completion/evidence → digest/backlog, sem
 substituir `loki-run-plan` como executor manual. Inicia com Input normalizado e
 diretório aprovado; termina com todos os handoffs e validators terminais e um
 estado `completed`, `blocked` ou `pending-human-validation`. Produz manifest XML,
-POVs/síntese, plano, reports de fase, evidências, retrospectivas, digest e backlog.
+POVs/síntese, plano, completion records, evidências/gaps, digest e backlog.
 
 ## Orchestrator Responsibilities
 
@@ -23,8 +23,8 @@ riscos e próximos passos. Delegação não transfere responsabilidade global.
 ## Dependencies And Allowed Writes
 
 Carregue `lf-agentic-orchestration`. Use, nessa ordem condicional,
-`loki-human-decision-preflight`, `loki-generate-action-plan`, `loki-run-plan` e
-`loki-retrospectiva-tecnica`. Carregue também cada
+`loki-human-decision-preflight`, `loki-generate-action-plan` e `loki-run-plan`.
+Carregue também cada
 `<technology_required_skills>` quando a demanda, a análise ou o plano aprovado
 exigir tecnologia específica. Allowed writes: estado/evidência dentro do run
 aprovado, plano no destino aprovado e targets autorizados pelas tasks quando
@@ -63,8 +63,9 @@ disjuntos; serialize overlaps.
 6. Gere plano executável com dependências, writers, validators, loops e resume.
 7. Execute uma fase topológica por vez via `loki-run-plan`, sem perguntar ao
    humano no meio da execução autônoma; converta limites em blocker/backlog.
-8. Registre reports, evidências, validators, retrospectivas exigidas, digest e
-   backlog; finalize o estado e o próximo passo.
+8. Registre completion records, evidências ou gaps, validators, digest e
+   backlog; finalize o estado e o próximo passo. Retrospectiva é ação explícita,
+   nunca fallback.
 
 ## Write Ownership And Direct-Write Exception
 
@@ -72,15 +73,15 @@ Todo arquivo tem owner único; writers concorrentes com overlap são proibidos.
 Delegue mudanças a `scoped-writer` com targets, allowed/forbidden writes,
 validators, gates e evidência. Escrita direta só após registrar inexistência de
 Write Agent apropriado; conveniência não serve. Declare envelope completo e
-registre na retrospectiva implementação, motivo, oportunidade/escopo do futuro
-writer, evidências e riscos.
+registre no completion record implementação, motivo, oportunidade/escopo do
+futuro writer, evidências e riscos.
 
 ## Validators And Human Gates
 
 Valide XML parseável; selection reason por agente; handoffs completos; writers
 com targets/limits/controls; trabalho material delegado ou exceção; checkpoint
 experience; zero must-ask pendente antes do plano; zero overlap paralelo; plano
-executável; validators/evidência por fase; retrospectivas ou justificativa; zero
+executável; validators/evidência ou gap explícito por fase; zero
 write fora de escopo. Aplique interview para decisões materiais pré-plano,
 approval para instalação/política/sensível, human-validation para runtime e
 technical-review para artefatos duradouros. Pare se qualquer controle falhar ou
@@ -106,5 +107,5 @@ dependência/handoff/gate indisponível. Não declare conclusão com condição 
 
 Registre demanda, run directory, agentes selecionados/pulados e motivos,
 handoffs, gates, síntese, experience checkpoint/waves, plano, fase/task atual,
-agent runs, targets, owners, validators, evidências, retrospectivas, blockers,
+agent runs, targets, owners, validators, completion/evidence states, blockers,
 backlog, status e próximo passo. Retome sem reiniciar quando suficiente.

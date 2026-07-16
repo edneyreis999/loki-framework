@@ -90,8 +90,14 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 14. Limite ferramentas e permissoes ao minimo necessario. Em plugin Claude Code, nao dependa de `hooks`, `mcpServers` ou `permissionMode` para comportamento essencial, porque esses campos podem ser ignorados.
 15. Para Codex, lembre que subagents so sao spawned quando o usuario pede explicitamente; eles herdam sandbox/approval do turno pai, e fan-out aumenta custo e latencia.
 16. Inclua formato de resposta estruturado para o orquestrador detectar conflitos por arquivo, `<domain_ids>`, superficie e gate.
-17. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
-18. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
+17. Exija de cada agente um completion record compacto com identidade e
+   parentage fornecidos pelo orquestrador, resultado, arquivos, validators,
+   gates, riscos e proximo destino. Proiba coleta de IDs/tokens por inferencia e
+   qualquer cadeia de raciocinio privada. O orquestrador, e nao o agente,
+   captura evidence sanitizada ou registra `partial`, `unavailable` ou
+   `unsupported`; retrospectiva so ocorre por acao humana ou command explicito.
+18. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
+19. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
 
 ## References
 
@@ -113,8 +119,9 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
   `scoped_write_modes`, `task_write_mode`/destino equivalente, ferramentas
   minimas, dominios de escrita e Allowed Writes com caminhos exatos recebidos
   pelo envelope.
-- Se houver retrospectiva tecnica por agente, qualquer escrita direta fica
-  limitada ao `target_retrospective` exato.
+- O agente devolve completion record; evidence e gaps pertencem ao
+  orquestrador. Nenhum contrato exige retrospectiva automática ou escrita em
+  `target_retrospective` como fallback.
 - A saida tem evidencia, risco, confianca e proximo passo.
 - O agente declara quando deve parar e devolver ao orquestrador.
 - Conflitos por arquivo, `<domain_ids>`, `<consumer_runtime_surfaces>`, gate ou destino ficam detectaveis.

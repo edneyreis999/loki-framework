@@ -199,3 +199,11 @@ material, scripts/comandos, inferencias, atritos, outputs inesperados,
 desperdicios, caminho minimo, aprendizados, riscos, candidatos, handoffs,
 writers, gates, etapas concluidas, proxima acao e condicao para continuar.
 Retome desse estado em vez de reiniciar.
+# Evidence-first source rule
+
+Accept `execution_evidence_sources` (validated manifests, completion records,
+and read-only audit reports) as the preferred input. A legacy
+`operational_trace` is contextual only and must not be reopened by default.
+The orchestrator captures completion evidence; this command does not trigger an
+automatic agent retrospective and must preserve gaps, inference labels and
+lineage without exposing raw traces or private reasoning.

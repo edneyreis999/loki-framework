@@ -62,8 +62,8 @@ Derive do registro normalizado e enumere como `allowed_writes` exatos:
 - o path concreto de `TASKS_MD`;
 - apenas os `task-N.M.md` pertencentes a `FASE_ATUAL` e referenciados pelo plano;
 - apenas arquivos necessários dentro de `interaction/faseN/` da fase resolvida;
-- quando houver escrita direta excepcional, um registro de retrospectiva
-  técnica da fase ativa, dentro do plano e explicitamente autorizado.
+- quando houver escrita direta excepcional, completion record da fase ativa,
+  dentro do plano e explicitamente autorizado.
 
 Tudo o mais é proibido. Em especial, `forbidden_writes` inclui:
 
@@ -230,8 +230,8 @@ direta, declare paths exatos em `allowed_writes`, `forbidden_writes`, owner
 e falha e evidências obrigatórias; assuma esse envelope e pare se ele for
 insuficiente.
 
-Sempre que escrever diretamente, registre antes de concluir, em retrospectiva
-técnica local e autorizada da fase ativa: tipo da implementação, motivo da
+Sempre que escrever diretamente, registre antes de concluir no completion
+record local e autorizado da fase ativa: tipo da implementação, motivo da
 ausência de Write Agent, oportunidade de criar/especializar agente, escopo que
 o futuro agente deveria assumir, evidências e riscos. Se esse registro não
 estiver dentro dos `allowed_writes` ou não tiver autorização, pare e solicite a
@@ -275,6 +275,12 @@ gate ou approval obrigatório estiver ausente, pendente, rejeitado ou falhar.
 - dependência indisponível;
 - decisão humana necessária;
 - pesquisa externa revela conflito material sem validator ou decisão possível.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 

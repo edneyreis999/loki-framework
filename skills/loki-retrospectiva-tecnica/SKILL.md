@@ -83,6 +83,11 @@ parameters:
     requirement: optional
     default: []
     description: Ferramentas, comandos, scripts, buscas, tentativas, resultados e correcoes de rota observaveis.
+  - key: execution_evidence_sources
+    input_type: list[path_or_mapping]
+    requirement: optional
+    default: []
+    description: Manifests validados, session_audits ou referencias autorizadas; sem trace bruto.
   - key: residual_risks
     input_type: list[string_or_mapping]
     requirement: optional

@@ -168,7 +168,7 @@ com target exato, allowed/forbidden writes, owner unico, validators, gates,
 approvals, criterios de sucesso/falha e evidencias. Conveniencia, velocidade ou
 tamanho da mudanca nao justificam a excecao.
 
-Se a excecao ocorrer, registre na retrospectiva tecnica o tipo de escrita, o
+Se a excecao ocorrer, registre no completion record o tipo de escrita, o
 motivo da ausencia, a oportunidade e o escopo de um futuro Write Agent, as
 evidencias e os riscos. Nao encerre sem esse registro.
 
@@ -244,6 +244,12 @@ escopada nao autoriza altera-los sem inclui-los explicitamente no escopo.
 - Handoff incompleto ou sem destino; dependencia indisponivel.
 - Approval/gate pendente ou rejeitado; validator ausente, falho ou inconclusivo.
 - Proxima acao exige forbidden write ou decisao humana ausente.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada ou registra `partial`, `unavailable` ou `unsupported`, sem
+retrospectiva automática ou CoT privado.
 
 ## Resume Contract
 

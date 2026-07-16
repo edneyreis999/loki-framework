@@ -369,3 +369,10 @@ execution friction, `root_cause_learning`, ação, owner/writes, handoffs, gates
 validators, artefatos impactados, diff esperado, approval, status, risco,
 etapas concluídas, próxima ação e condição de retomada. Preserve a evidência e
 retome sem reiniciar quando esse estado bastar.
+# Evidence-first learning sources
+
+Prefer validated retrospective outputs, evidence audits and completion records
+as `learning_sources`. Deduplicate candidates by evidence lineage and keep
+contradictions as conflicts for human/technical review. A transient evidence
+source never directly promotes a durable rule, and raw runtime traces are not a
+default input.

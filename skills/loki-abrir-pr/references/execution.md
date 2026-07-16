@@ -108,8 +108,8 @@ so ocorre apos registrar ausencia de Write Agent apropriado e um envelope com
 remote/base/head, allowed/forbidden writes, validators, approvals, sucesso/falha
 e evidencias. Serialize push e criacao de PR.
 
-Se houver escrita direta, registre em retrospectiva tipo, motivo da ausencia do
-agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
+Se houver escrita direta, registre no completion record tipo, motivo da ausencia
+do agente, oportunidade de especializacao, escopo futuro, evidencias e riscos.
 
 ## Validators And Human Gates
 
@@ -134,6 +134,11 @@ relacionadas devem usar workflow posterior aprovado.
   obrigatorio sem decisao.
 - Entrada/permissao insuficiente, dependencia indisponivel, handoff sem destino,
   writer conflitante, validator falho ou gate/approval pendente.
+
+## Evidence-First Cutover
+
+Capture somente quando houver subagente ou run state; caso contrário registre
+`not-applicable`. Em todos os casos não há CoT privado ou retrospectiva automática.
 
 ## Resume Contract
 

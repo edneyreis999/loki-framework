@@ -59,6 +59,8 @@ indicar qual superficie duradoura, qual delegacao e qual destino sao corretos.
 - Interactions com decisoes humanas.
 - Validators e gates.
 - Evidencia de builds ou validacao humana/runtime apropriada ao dominio.
+- Auditorias de evidence e lineage quando existirem; nunca use trace bruto ou
+  inferencia como promocao automatica.
 - `docs/package-authoring-guardrails.md` quando houver chance de tocar artefato do pacote.
 - `docs/project-context-catalog.md` quando houver chance de tocar contexto
   duradouro do projeto consumidor.

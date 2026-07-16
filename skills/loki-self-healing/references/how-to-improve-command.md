@@ -20,7 +20,7 @@ Antes de alterar as instruções do comando, pergunte a si mesma:
 14. As instruções do comando contemplam a exigência de serializar escritas em arquivos-alvo compartilhados e impedir múltiplos escritores simultâneos no mesmo arquivo?
 15. As instruções do comando contemplam a exigência de delegar alterações no projeto para um `Write Agent` apropriado?
 16. As instruções do comando contemplam a exigência de permitir escrita direta pelo comando somente quando não existir um `Write Agent` apropriado?
-17. As instruções do comando contemplam a exigência de registrar na retrospectiva técnica a oportunidade de criar um `Write Agent` especializado sempre que o comando escrever diretamente?
+17. As instruções do comando contemplam a exigência de registrar no completion record a oportunidade de criar um `Write Agent` especializado sempre que o comando escrever diretamente?
 18. As instruções do comando contemplam a exigência de declarar `allowed_writes`, `forbidden_writes`, owner, validators e gates aplicáveis a qualquer escrita direta excepcional?
 19. As instruções do comando contemplam a exigência de declarar condições de parada e um contrato de retomada?
 20. As instruções do comando contemplam a exigência de a fase `Response` identificar explicitamente seu consumidor como `LLM`, `Humano` ou `Both`?
@@ -214,9 +214,10 @@ Permita que o comando escreva diretamente somente após verificar e registrar qu
 
 Quando a exceção for acionada, faça o comando assumir explicitamente o envelope, os limites, as validações e os gates que seriam exigidos do escritor delegado.
 
-### 17. Registre a lacuna na retrospectiva
+### 17. Registre a lacuna no completion record
 
-Sempre que o comando escrever diretamente, obrigue-o a registrar na retrospectiva técnica:
+Sempre que o comando escrever diretamente, obrigue-o a registrar no completion
+record:
 
 - tipo de implementação executada;
 - motivo da ausência de um `Write Agent` apropriado;
@@ -224,7 +225,9 @@ Sempre que o comando escrever diretamente, obrigue-o a registrar na retrospectiv
 - escopo que o futuro agente deveria assumir;
 - evidências e riscos observados.
 
-Não encerre o fluxo sem esse registro.
+Não encerre o fluxo sem esse registro. O orquestrador captura o evidence
+manifest sanitizado ou declara um gap explícito; não dispare retrospectiva como
+fallback automático.
 
 ### 18. Proteja qualquer escrita direta
 
@@ -326,7 +329,7 @@ Depois de aplicar as correções, responda novamente às 24 perguntas e marque c
 - [ ] 14. Escritas compartilhadas serializadas.
 - [ ] 15. Alterações delegadas para `Write Agent`.
 - [ ] 16. Escrita direta restrita à ausência de `Write Agent` apropriado.
-- [ ] 17. Lacuna de `Write Agent` registrada na retrospectiva.
+- [ ] 17. Lacuna de `Write Agent` registrada no completion record.
 - [ ] 18. Escrita direta protegida por envelope e controles.
 - [ ] 19. Condições de parada e contrato de retomada.
 - [ ] 20. Consumidor da resposta declarado.

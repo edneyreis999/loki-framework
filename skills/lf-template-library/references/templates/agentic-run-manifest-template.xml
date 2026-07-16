@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agentic_run_manifest schema_version="1">
+<agentic_run_manifest schema_version="2">
   <run>
     <run_id>{{run_id}}</run_id>
     <command>loki-agentic-development</command>
@@ -41,6 +41,8 @@
   <handoffs>
     <handoff>
       <handoff_id>{{handoff_id}}</handoff_id>
+      <evidence_id>{{evidence_id}}</evidence_id>
+      <evidence_manifest_path>{{evidence_manifest_path}}</evidence_manifest_path>
       <agent_run_id>{{agent_run_id}}</agent_run_id>
       <agent_name>{{agent_name}}</agent_name>
       <phase>{{phase}}</phase>
@@ -52,6 +54,7 @@
       <status>planned</status>
     </handoff>
   </handoffs>
+  <evidence_policy><mode>evidence-first</mode><legacy_retrospective_fallback>false</legacy_retrospective_fallback></evidence_policy>
   <decision_gates>
     <decision_gate id="{{decision_gate_id}}">
       <category>{{decision_gate_category}}</category>

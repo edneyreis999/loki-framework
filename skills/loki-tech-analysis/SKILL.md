@@ -127,6 +127,12 @@ Leia [references/execution.md](references/execution.md) integralmente antes de
 agir e cumpra todo o contrato de execução, inclusive delegação, evidência,
 validators, gates, condições de parada e retomada.
 
+## Evidence Policy
+
+Subagentes devolvem completion record; o orquestrador captura evidence sanitizada
+ou declara `partial`, `unavailable` ou `unsupported`. Nunca solicite CoT privado
+nem use retrospectiva como fallback automático.
+
 ## Response
 
 Leia [references/response.md](references/response.md) integralmente antes de

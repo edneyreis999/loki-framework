@@ -85,6 +85,8 @@ documentacao duradoura, criar skill, alterar command ou validar runtime.
 - Escopo permitido, fora de escopo e forbidden writes.
 - Opcional: foco de extracao, como `project-docs`, `skills`,
   `execution-friction`, `validators` ou `backlog`.
+- Preferencialmente manifestos de evidence validados e auditorias read-only;
+  nao abra trace bruto por default e rotule inferencias como parciais.
 
 ## Outputs
 

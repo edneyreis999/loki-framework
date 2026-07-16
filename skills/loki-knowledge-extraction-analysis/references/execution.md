@@ -89,7 +89,7 @@ owner único por arquivo. Delegue qualquer criação/modificação a Write Agent
 targets, alteração, allowed/forbidden writes, validators, gates e evidência.
 Escrita direta só após registrar que nenhum Write Agent apropriado existe;
 conveniência não justifica. Nesse caso, declare o envelope completo e registre
-na retrospectiva tipo de implementação, ausência, oportunidade do futuro writer,
+no completion record tipo de implementação, ausência, oportunidade do futuro writer,
 escopo, evidências e riscos. Pare diante de overlap ou permissão insuficiente.
 
 ## Validators
@@ -126,6 +126,12 @@ pedido exigir aplicar mudança antes da análise; diante de pesquisa externa nã
 autorizada, dependência indisponível, handoff sem destino, conflito de writers,
 validator falho, gate/approval pendente, escopo insuficiente ou saída sem
 evidência. Não declare conclusão com condição ativa.
+
+## Evidence-First Cutover
+
+Cada subagente devolve completion record; o orquestrador captura evidence
+sanitizada após o handoff ou registra `partial`, `unavailable` ou `unsupported`.
+Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 
