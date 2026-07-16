@@ -134,7 +134,7 @@ execucao.
 | `catalogador` | Entra depois da execucao, quando aprendizado `project-specific` precisar virar `/docs` do consumidor. |
 | `standards-curator` | Entra depois da retrospectiva, quando houver candidato a regra duradoura ou backlog. |
 | `gameplay-engineer` | Pode escrever mecanicas, codigo/config de gameplay ou dados aprovados quando a task atribuir `target_files` e skills/gates aplicaveis. |
-| `narrative-designer` e `dialogue-editor` | Podem escrever conteudo narrativo, dialogos, escolhas e texto de dominio quando a task atribuir `target_files` e gates aplicaveis. |
+| `narrative-designer` | Pode escrever conteudo narrativo, dialogos, escolhas e texto de dominio quando a task atribuir `target_files` e gates aplicaveis. |
 
 ## Gates e pontos de parada
 

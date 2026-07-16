@@ -92,8 +92,8 @@ plugins, dados ou runtime.
 - Story, scene brief, UI brief, asset request, technical brief ou proposta
   aprovada pelo orquestrador.
 - Outputs de `scene-presentation-designer`, `ux-ui-designer`,
-  `level-designer`, `audio-designer`, `tools-pipeline-engineer`,
-  `gameplay-engineer`, `runtime-qa` ou `game-business-analyst`.
+  `level-designer`, `audio-designer`, `gameplay-engineer`, `runtime-qa` ou
+  `game-business-analyst`.
 - `<domain_ids>` relevantes, como sprite IDs, animation IDs, tileset IDs,
   VFX IDs, UI state IDs, scene IDs, map IDs ou asset IDs.
 - `<technology_required_skills>` apenas quando formatos, importacao, assets,
@@ -111,8 +111,7 @@ plugins, dados ou runtime.
 - Perguntas abertas quando asset, formato, estado, plataforma, memoria,
   pipeline ou validador estiver ambiguo.
 - Handoff estruturado para `scene-presentation-designer`, `ux-ui-designer`,
-  `tools-pipeline-engineer`, `gameplay-engineer`, `runtime-qa` ou
-  `game-business-analyst`.
+  `gameplay-engineer`, `runtime-qa` ou `game-business-analyst`.
 
 ## Allowed Writes
 

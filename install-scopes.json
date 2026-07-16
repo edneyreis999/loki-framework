@@ -24,9 +24,7 @@
       "audio-designer.md": "consumer-only",
       "balance-economy-designer.md": "consumer-only",
       "bibliotecario.md": "both",
-      "branching-narrative-designer.md": "consumer-only",
       "catalogador.md": "both",
-      "dialogue-editor.md": "consumer-only",
       "execution-context-reader.md": "both",
       "game-business-analyst.md": "consumer-only",
       "game-designer.md": "consumer-only",
@@ -44,16 +42,13 @@
       "standards-curator.md": "both",
       "technical-artist.md": "consumer-only",
       "technical-implementer.md": "both",
-      "tools-pipeline-engineer.md": "consumer-only",
       "ux-ui-designer.md": "consumer-only"
     },
     "codex_agents": {
       "audio-designer.toml": "consumer-only",
       "balance-economy-designer.toml": "consumer-only",
       "bibliotecario.toml": "both",
-      "branching-narrative-designer.toml": "consumer-only",
       "catalogador.toml": "both",
-      "dialogue-editor.toml": "consumer-only",
       "execution-context-reader.toml": "both",
       "game-business-analyst.toml": "consumer-only",
       "game-designer.toml": "consumer-only",
@@ -71,7 +66,6 @@
       "standards-curator.toml": "both",
       "technical-artist.toml": "consumer-only",
       "technical-implementer.toml": "both",
-      "tools-pipeline-engineer.toml": "consumer-only",
       "ux-ui-designer.toml": "consumer-only"
     },
     "docs": {

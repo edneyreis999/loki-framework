@@ -281,8 +281,8 @@ duradoura e backlog.
 - `technical-implementer`: pode aplicar mudancas tecnicas como
   `scoped-writer` quando a task atribuir `target_files`; caso contrario,
   retorna proposta, validadores e gates.
-- Agentes game-dev como `gameplay-engineer`, `narrative-designer` e
-  `dialogue-editor` podem escrever mecanicas, conteudo narrativo, dialogos,
+- Agentes game-dev como `gameplay-engineer` e `narrative-designer` podem
+  escrever mecanicas, conteudo narrativo, dialogos,
   quests, tuning ou artefatos equivalentes quando `loki-run-plan` entregar
   envelope `task_scoped_writer` com arquivos, validators e gates.
 

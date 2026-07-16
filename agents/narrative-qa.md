@@ -80,8 +80,8 @@ de experiencia narrativa, sem validar runtime nem simular leitura humana.
 ## Inputs
 
 - Story, roteiro, quest, cena, rota, dialogo ou brief aprovado.
-- Outputs de `narrative-designer`, `branching-narrative-designer`,
-  `ux-ui-designer`, `scene-presentation-designer`, `gameplay-engineer` ou
+- Outputs de `narrative-designer`, `ux-ui-designer`,
+  `scene-presentation-designer`, `gameplay-engineer` ou
   `runtime-qa`.
 - Rotas, escolhas, flags, estados narrativos, saves, criterios de continuidade
   e `<domain_ids>` fornecidos pelo orquestrador.
@@ -103,8 +103,7 @@ de experiencia narrativa, sem validar runtime nem simular leitura humana.
 - Riscos por severidade e perguntas abertas para estados, rotas, fixtures ou
   criterios ambiguos.
 - Handoff estruturado para `runtime-qa`, `gameplay-engineer`,
-  `narrative-designer`, `branching-narrative-designer` ou
-  `game-business-analyst`.
+  `narrative-designer` ou `game-business-analyst`.
 
 ## Allowed Writes
 

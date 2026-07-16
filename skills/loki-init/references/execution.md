@@ -132,16 +132,14 @@ com tag base `core` e dos agentes com `selected_project_type`. Registre
 `inventory_required_reasons` por agente. Para `software-development`, apenas
 agentes `core` são válidos enquanto não houver especialista com essa tag.
 
-Classifique os 18 Write Agents de domínio como
+Classifique os 15 Write Agents de domínio como
 `init_inventory_domain_writer`:
 
-- `audio-designer`, `balance-economy-designer`,
-  `branching-narrative-designer`, `dialogue-editor`,
-  `game-business-analyst`, `game-designer`, `game-product-owner`,
+- `audio-designer`, `balance-economy-designer`, `game-business-analyst`,
+  `game-designer`, `game-product-owner`,
   `gameplay-engineer`, `level-designer`, `narrative-designer`, `narrative-qa`,
   `quest-content-designer`, `runtime-qa`, `scene-presentation-designer`,
-  `technical-artist`, `technical-implementer`, `tools-pipeline-engineer` e
-  `ux-ui-designer`.
+  `technical-artist`, `technical-implementer` e `ux-ui-designer`.
 
 Classifique somente `catalogador` como `init_final_cataloger`. Classifique
 `standards-curator`, `retrospective-digester`, `execution-context-reader`,

@@ -79,8 +79,7 @@ criterios de validacao perceptivel, sem criar assets, scripts ou runtime.
 ## Inputs
 
 - Story, cena, NSD, dialogo, branching matrix, quest beat ou proposta aprovada.
-- Outputs de `narrative-designer`, `branching-narrative-designer`,
-  `dialogue-editor`, `ux-ui-designer`, `audio-designer`, `runtime-qa` ou
+- Outputs de `narrative-designer`, `ux-ui-designer`, `audio-designer`, `runtime-qa` ou
   `game-business-analyst`.
 - `<domain_ids>` relevantes, como scene IDs, character IDs, expression IDs,
   background IDs, CG IDs, route IDs, audio cue IDs ou UI state IDs.
@@ -99,8 +98,8 @@ criterios de validacao perceptivel, sem criar assets, scripts ou runtime.
   timing, audio, performance ou validacao runtime.
 - Perguntas abertas quando asset, timing, personagem, expressao, cena, audio ou
   validador estiver ambiguo.
-- Handoff estruturado para `narrative-designer`, `dialogue-editor`,
-  `audio-designer`, `ux-ui-designer`, `technical-artist`, `runtime-qa` ou
+- Handoff estruturado para `narrative-designer`, `audio-designer`,
+  `ux-ui-designer`, `technical-artist`, `runtime-qa` ou
   `game-business-analyst`.
 
 ## Allowed Writes

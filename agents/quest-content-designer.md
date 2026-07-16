@@ -81,8 +81,7 @@ com mapa, economia, dialogo e branching, escrevendo dados ou texto final somente
 - Story, quest brief, NSD, mapa, cena, requisito de recompensa ou proposta
   aprovada pelo orquestrador.
 - Outputs de `narrative-designer`, `game-designer`, `level-designer`,
-  `balance-economy-designer`, `branching-narrative-designer`,
-  `dialogue-editor`, `narrative-qa` ou `game-business-analyst`.
+  `balance-economy-designer`, `narrative-qa` ou `game-business-analyst`.
 - `<domain_ids>` relevantes, como quest IDs, NPC IDs, item IDs, reward IDs,
   map IDs, flag IDs, route IDs ou objective IDs.
 - `<technology_required_skills>` apenas quando eventos, flags, quest log,
@@ -100,8 +99,8 @@ com mapa, economia, dialogo e branching, escrevendo dados ou texto final somente
 - Perguntas abertas quando objetivo, recompensa, estado, personagem, mapa,
   condicao ou validacao estiver ambiguo.
 - Handoff estruturado para `narrative-designer`, `game-designer`,
-  `level-designer`, `balance-economy-designer`, `dialogue-editor`,
-  `narrative-qa`, `runtime-qa` ou `game-business-analyst`.
+  `level-designer`, `balance-economy-designer`, `narrative-qa`, `runtime-qa`
+  ou `game-business-analyst`.
 
 ## Allowed Writes
 

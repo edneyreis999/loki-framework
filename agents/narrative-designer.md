@@ -100,8 +100,7 @@ da task.
 - Perguntas abertas quando contexto, voz, canon, estado narrativo ou consequencia
   estiver ambiguo.
 - Handoff estruturado para `game-designer`, `ux-ui-designer`,
-  `branching-narrative-designer`, `dialogue-editor`, `narrative-qa`,
-  `gameplay-engineer` ou `game-business-analyst`.
+  `narrative-qa`, `gameplay-engineer` ou `game-business-analyst`.
 
 ## Allowed Writes
 

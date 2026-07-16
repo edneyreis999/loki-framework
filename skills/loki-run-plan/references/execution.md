@@ -129,8 +129,8 @@ responsabilidade correspondente sempre que possível. Use:
   decisão, skill ou gate;
 - `gameplay-engineer` como `scoped-writer` para mecânicas, código/config de
   gameplay e superfícies runtime aprovadas;
-- `narrative-designer`, `dialogue-editor`, `quest-content-designer`,
-  `branching-narrative-designer` ou equivalente para conteúdo, diálogo, quests,
+- `narrative-designer`, `quest-content-designer` ou equivalente para conteúdo,
+  diálogo, quests,
   escolhas, cenas, tuning e outros targets de domínio declarados;
 - `runtime-qa` para checklist, reports e evidência de comportamento perceptível,
   runtime, integração ativa, estado persistido ou artefato gerado. Esse handoff

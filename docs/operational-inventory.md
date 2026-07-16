@@ -108,12 +108,9 @@ bundles.
 | `narrative-qa` | `mvp` | Revisar coerencia narrativa, flags, rotas, regressao de dialogo e riscos de conteudo. |
 | `level-designer` | `mvp` | Propor mapas, ritmo espacial, encounters e navegacao quando a story tocar superficie de level. |
 | `balance-economy-designer` | `mvp` | Avaliar progressao, recompensas, custos, economia e curva de dificuldade. |
-| `branching-narrative-designer` | `mvp` | Projetar rotas, escolhas, flags e consequencias para narrativa ramificada. |
 | `scene-presentation-designer` | `mvp` | Propor apresentacao de cenas, beats, transicoes, timing e leitura visual. |
 | `audio-designer` | `mvp` | Propor intencao de audio, musica, SFX e cues sem validar audio perceptivel automaticamente. |
 | `quest-content-designer` | `mvp` | Estruturar quests, objetivos, prerequisitos, recompensas e estados de conteudo. |
-| `dialogue-editor` | `mvp` | Pode revisar ou escrever falas, escolhas, barks e texto fonte de localizacao quando a task atribuir target_files. |
-| `tools-pipeline-engineer` | `mvp` | Propor automacoes, validadores e pipeline para conteudo de jogo sem escrita sensivel direta. |
 | `technical-artist` | `mvp` | Avaliar viabilidade de assets, apresentacao tecnica, constraints visuais e pipeline. |
 | `prompt-engineer` | `reference-only` | Apoiar consolidacao de instrucoes reutilizaveis em comandos depois que contratos existirem. |
 | `context-engineer-optimization` | `reference-only` | Inspirar melhoria continua e promocao de contexto sem copiar estruturas externas literalmente. |

@@ -69,8 +69,6 @@ suporte sem escrita em `docs/loki-init/**` nao precisam produzir inventario.
 
 - `audio-designer`
 - `balance-economy-designer`
-- `branching-narrative-designer`
-- `dialogue-editor`
 - `game-business-analyst`
 - `game-designer`
 - `game-product-owner`
@@ -83,7 +81,6 @@ suporte sem escrita em `docs/loki-init/**` nao precisam produzir inventario.
 - `scene-presentation-designer`
 - `technical-artist`
 - `technical-implementer`
-- `tools-pipeline-engineer`
 - `ux-ui-designer`
 
 `catalogador` nao tem contrato de inventario por agente. O workflow chama o
@@ -102,17 +99,6 @@ audio encontradas.
 A pasta deve conter inventario factual de progressao, atributos, recompensas,
 custos, lojas, recursos, sinks e sources, tabelas numericas e fontes de economia
 ou balanceamento.
-
-### branching-narrative-designer
-
-A pasta deve conter inventario factual de escolhas, flags, condicoes, rotas,
-endings, consequencias e fontes de ramificacao narrativa encontradas.
-
-### dialogue-editor
-
-A pasta deve conter inventario factual do corpus de dialogos, vozes ou
-personagens, localizacao e idioma observados, tom, variacoes, fontes de texto e
-concentracao de dialogos no projeto.
 
 ### game-business-analyst
 
@@ -179,12 +165,6 @@ fontes de arte tecnica.
 A pasta deve conter inventario factual de arquitetura tecnica atual, pontos de
 entrada, modulos, scripts, configuracoes, dependencias, superficies de build ou
 teste e fontes tecnicas.
-
-### tools-pipeline-engineer
-
-A pasta deve conter inventario factual de scripts, automacoes, import/export,
-validadores, geradores, ferramentas historicas, classificacao de scripts e
-fontes de pipeline.
 
 ### ux-ui-designer
 

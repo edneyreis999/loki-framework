@@ -276,14 +276,6 @@ agentic_agent_metadata:
     risk_tags: ["balance-regression"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
-  branching-narrative-designer:
-    capability_tags: ["branching-narrative", "choices", "flags"]
-    phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
-    write_classes: ["narrative", "quest-spec"]
-    risk_tags: ["state-branching"]
-    parallel_safe: true
-    technology_skill_routes: []
   scene-presentation-designer:
     capability_tags: ["scene-presentation", "beats", "visual-flow"]
     phase_roles: ["analysis", "content"]
@@ -308,22 +300,6 @@ agentic_agent_metadata:
     risk_tags: ["quest-state"]
     parallel_safe: true
     technology_skill_routes: []
-  dialogue-editor:
-    capability_tags: ["dialogue", "copy", "localization-source"]
-    phase_roles: ["content", "review"]
-    agentic_modes: ["proposal", "scoped-writer"]
-    write_classes: ["dialogue", "text"]
-    risk_tags: ["copy-regression"]
-    parallel_safe: true
-    technology_skill_routes: []
-  tools-pipeline-engineer:
-    capability_tags: ["tools", "pipeline", "automation"]
-    phase_roles: ["implementation", "validation"]
-    agentic_modes: ["proposal", "scoped-writer"]
-    write_classes: ["scripts", "config", "tools"]
-    risk_tags: ["pipeline", "write-conflict"]
-    parallel_safe: false
-    technology_skill_routes: ["<technology_required_skills>"]
   technical-artist:
     capability_tags: ["technical-art", "assets", "presentation"]
     phase_roles: ["analysis", "validation"]
@@ -771,11 +747,6 @@ agents:
     status: draft-scoped-writer
     project_tags:
       - "game-dev"
-  - name: "branching-narrative-designer"
-    file: "agents/branching-narrative-designer.md"
-    status: draft-scoped-writer
-    project_tags:
-      - "game-dev"
   - name: "scene-presentation-designer"
     file: "agents/scene-presentation-designer.md"
     status: draft-scoped-writer
@@ -788,16 +759,6 @@ agents:
       - "game-dev"
   - name: "quest-content-designer"
     file: "agents/quest-content-designer.md"
-    status: draft-scoped-writer
-    project_tags:
-      - "game-dev"
-  - name: "dialogue-editor"
-    file: "agents/dialogue-editor.md"
-    status: draft-scoped-writer
-    project_tags:
-      - "game-dev"
-  - name: "tools-pipeline-engineer"
-    file: "agents/tools-pipeline-engineer.md"
     status: draft-scoped-writer
     project_tags:
       - "game-dev"
@@ -880,10 +841,6 @@ codex_agents:
     file: "codex/agents/balance-economy-designer.toml"
     source_agent: "agents/balance-economy-designer.md"
     status: draft-derived-scoped-writer
-  - name: "branching-narrative-designer"
-    file: "codex/agents/branching-narrative-designer.toml"
-    source_agent: "agents/branching-narrative-designer.md"
-    status: draft-derived-scoped-writer
   - name: "scene-presentation-designer"
     file: "codex/agents/scene-presentation-designer.toml"
     source_agent: "agents/scene-presentation-designer.md"
@@ -895,14 +852,6 @@ codex_agents:
   - name: "quest-content-designer"
     file: "codex/agents/quest-content-designer.toml"
     source_agent: "agents/quest-content-designer.md"
-    status: draft-derived-scoped-writer
-  - name: "dialogue-editor"
-    file: "codex/agents/dialogue-editor.toml"
-    source_agent: "agents/dialogue-editor.md"
-    status: draft-derived-scoped-writer
-  - name: "tools-pipeline-engineer"
-    file: "codex/agents/tools-pipeline-engineer.toml"
-    source_agent: "agents/tools-pipeline-engineer.md"
     status: draft-derived-scoped-writer
   - name: "technical-artist"
     file: "codex/agents/technical-artist.toml"
