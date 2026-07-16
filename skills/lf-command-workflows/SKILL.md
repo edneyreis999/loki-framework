@@ -21,10 +21,10 @@ adapter_projection:
 escalation_signals: [ambiguous command routing, high-effort downstream workflow]
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-command-workflows/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-generate-action-plan, loki-human-decision-preflight, loki-agentic-development, loki-deep-research, loki-retrospectiva-tecnica, loki-run-plan, loki-tech-analysis]

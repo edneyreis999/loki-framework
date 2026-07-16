@@ -29,14 +29,14 @@ escalation_signals:
   - runtime behavior requires Playtest
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-plugin-commands/SKILL.md"
   references:
     command_surfaces: "references/plugin-command-surfaces.md"
     command_index: "references/plugin-command-index.md"
     payload_checklist: "references/event-payload-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

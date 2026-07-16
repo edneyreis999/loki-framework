@@ -30,10 +30,10 @@ escalation_signals:
   - need for paid tools, login, scraping or personal-data collection
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-web-deep-research/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

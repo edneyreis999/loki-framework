@@ -27,3 +27,12 @@ Forward-test complex skills with clean context when feasible. Pass the skill and
 Use raw artifacts for validation: prompts, outputs, diffs, logs, traces, or generated files.
 
 Avoid leaking conclusions into validation prompts. The test should reveal whether the skill generalizes.
+
+## Capability Boundary And Freedom
+
+Declare one specialized reusable capability with included scope, non-scope,
+observable triggers and exclusions. A skill can be invoked inside a workflow,
+but never coordinates the workflow's agents, global handoffs or resume state.
+Use high freedom only for low-risk judgment; use templates or exact procedures
+for fragile/repeated work. Stop for missing required input, permission, source,
+validator or gate, and report success, failure or partial completion honestly.

@@ -28,10 +28,10 @@ escalation_signals:
   - autonomous execution across multiple planned phases
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-agentic-orchestration/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

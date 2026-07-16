@@ -29,14 +29,14 @@ escalation_signals:
   - runtime behavior must be validated in game
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-notetags/SKILL.md"
   references:
     notetag_targets: "references/notetag-targets.md"
     plugin_notetag_index: "references/plugin-notetag-index.md"
     validation_checklist: "references/notetag-validation-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

@@ -28,10 +28,10 @@ escalation_signals:
   - weak source evidence or high risk of forced learning
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-external-knowledge-extraction/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

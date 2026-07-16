@@ -22,6 +22,14 @@ status: draft
 
 - <Saida esperada>
 
+## Operational Contract
+
+- Capabilities and active mode: <read-only | proposal-only | scoped-writer | write-test>
+- Success destination: <owner>
+- Failure destination: <owner>
+- Stop conditions: <missing scope, permission, validator, gate or handoff>
+- Completion evidence: <observable validator or human gate>
+
 ## Allowed Writes
 
 - <Se nao puder escrever, declarar `none` ou `proposal-only`.>

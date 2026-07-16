@@ -12,6 +12,10 @@ Identify concrete examples:
 - What output should exist when the skill succeeds?
 - Is this truly a skill, or should it be a command, agent, template, standard, or backlog item?
 
+Record one main capability, included scope, excluded scope, required/optional
+inputs, expected outputs and stop conditions. If the need coordinates multiple
+agents, handoffs and resumable state, choose a command instead.
+
 Skip only when usage patterns are already obvious.
 
 ## 2. Plan Reusable Contents
@@ -66,6 +70,10 @@ Keep the body lean and move conditional detail to references. Include:
 - outputs;
 - limits;
 - required gates or validation.
+
+Declare success, failure and partial completion output states. Do not invent
+missing required inputs, permissions, paths or decisions; stop and request the
+missing information when it prevents safe execution.
 
 ## 5. Update Package Metadata
 

@@ -29,13 +29,13 @@ escalation_signals:
   - the task may touch data JSON, plugin parameters, or plugin command payloads
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-progression-economy/SKILL.md"
   references:
     progression_economy_plugin_map: "references/progression-economy-plugin-map.md"
     progression_economy_checklist: "references/progression-economy-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

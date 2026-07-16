@@ -30,14 +30,14 @@ escalation_signals:
   - inventory findings require loki-tech-analysis before an agent can finish handoff
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-project-inventory/SKILL.md"
   references:
     checklist: "references/inventory-checklist.md"
     core_inventory: "references/core-inventory-checklist.md"
     game_dev_domains: "references/game-dev-domain-inventories.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 ---

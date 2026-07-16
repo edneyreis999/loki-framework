@@ -29,13 +29,13 @@ escalation_signals:
   - runtime or human-validation gate is required
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-events-presentation/SKILL.md"
   references:
     events_presentation_plugin_map: "references/events-presentation-plugin-map.md"
     events_presentation_checklist: "references/events-presentation-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

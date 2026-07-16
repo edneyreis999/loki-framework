@@ -29,13 +29,13 @@ escalation_signals:
   - damage, target selection, state behavior, AI, ATB, TP, aggro, or battle UI must be validated
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-battle-mechanics/SKILL.md"
   references:
     battle_plugin_map: "references/battle-plugin-map.md"
     battle_mechanics_checklist: "references/battle-mechanics-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

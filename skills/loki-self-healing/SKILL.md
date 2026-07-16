@@ -35,7 +35,7 @@ shell: bash
 type: command
 serialization: skill-bundle
 domain: package-maintenance
-required_skills: [lf-framework-impact-audit, lf-command-creator, lf-skill-creator]
+required_skills: [lf-framework-impact-audit, lf-command-creator, lf-skill-creator, lf-agent-creator]
 required_commands: []
 status: draft
 used_by: [loki-self-healing]

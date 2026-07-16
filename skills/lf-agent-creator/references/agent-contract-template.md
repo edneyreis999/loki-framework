@@ -71,7 +71,9 @@ because Codex custom agents are TOML files.
 ```yaml
 agent_contract:
   name: "example-agent"
-  mode: "read-only | proposal-only | scoped-writer"
+  capabilities:
+    - "read-only-analysis | proposal | scoped-write | write-test"
+  active_mode: "read-only | proposal-only | scoped-writer | write-test"
   purpose: ""
   when_to_trigger: []
   inputs: []
@@ -105,6 +107,11 @@ agent_contract:
   response_format: ""
   required_gates:
     - "<interview | approval | human-validation | technical-review>"
+  success_destination: "<orchestrator or named next owner>"
+  failure_destination: "<orchestrator or correcting owner>"
+  stop_conditions:
+    - "<missing envelope, scope, permission, validator, gate or handoff destination>"
+  completion_criteria: "<observable result and validation evidence>"
 ```
 
 ## Model and Effort Rules
@@ -153,6 +160,26 @@ parallel_agent_response:
   required_validations: []
   proposed_next_step: ""
 ```
+
+## Operational modes and 24/24 evidence
+
+Capabilities may coexist, but the caller selects one `active_mode` per handoff.
+`read-only`/`proposal-only` never create persistent files. `scoped-writer`
+receives exact targets, owner, allowed/forbidden writes, validators, gates,
+success/failure destinations and removes temporary validation artifacts unless
+the approved envelope preserves plan evidence. `write-test` writes only the
+approved deterministic test surface; it never changes production.
+
+Before handoff record `sim|não`, file and heading for: (1) capability/mode
+contract; (2) narrow responsibility; (3) mode bounded by capability/envelope;
+(4) triggers/inputs/outputs/completion; (5) scoped allowed writes; (6)
+forbidden writes; (7–8) known success/failure destinations; (9) deterministic
+validation distinct from human gate; (10) stop conditions; (11) structured
+response; (12) minimum tools/permissions/gates; (13–19) scoped-writer envelope,
+validation, temporary isolation/removal, deterministic-test specification,
+human-test route and honest completion record; (20) relevant preflight docs;
+(21–22) write-test restriction and handoffs; (23–24) no-write proposal mode and
+structured recommendation. Any `não` blocks delivery.
 
 ## Research Basis
 

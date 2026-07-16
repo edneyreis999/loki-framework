@@ -128,6 +128,11 @@ Use the body for instructions after activation:
 - references to load conditionally;
 - validation requirements.
 
+Also declare named required/optional inputs, how missing required data is
+handled, expected outputs, observable success/failure/partial states, limits,
+prohibitions and stop conditions. State observable use triggers and exclusions;
+do not make a knowledge skill orchestrate a complete multi-agent workflow.
+
 ## Optional UI Metadata
 
 `agents/openai.yaml` can add UI metadata, default prompts, invocation policy, and dependencies. Generate or update it only when the package intends to support that UI surface.

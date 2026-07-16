@@ -29,12 +29,16 @@ Classifique pela identidade operacional, não pelo diretório:
 - `lf-*` e skills de domínio/tecnologia: skill;
 - `agents/**` e projeções: agent.
 
-Para command bundle, leia [how-to-improve-command.md](how-to-improve-command.md)
-e avalie SKILL, todos os references roteados e o response template como uma
-unidade 24/24. Para skill, leia
-[how-to-improve-skills.md](how-to-improve-skills.md). Para agent, leia
-[how-to-improve-agents.md](how-to-improve-agents.md). Não exija command físico
-pareado e não classifique bundle command como knowledge skill.
+Para command bundle, leia o contrato canônico do
+`lf-command-creator` em
+`../../lf-command-creator/references/command-contract-template.md` e avalie
+SKILL, todos os references roteados e o response template como uma unidade
+24/24. Para skill, leia as referências do `lf-skill-creator`, em especial
+`../../lf-skill-creator/references/validation-and-forward-testing.md`; para
+agent, leia `../../lf-agent-creator/references/agent-contract-template.md`.
+Os arquivos `how-to-improve-*` são routers de compatibilidade, não fontes
+normativas. Não exija command físico pareado e não classifique bundle command
+como knowledge skill.
 
 ## Scope Resolution And Global Context
 

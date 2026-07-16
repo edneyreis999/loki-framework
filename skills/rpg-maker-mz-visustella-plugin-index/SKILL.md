@@ -29,13 +29,13 @@ escalation_signals:
   - a symptom is not explained by vanilla RPG Maker MZ source
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-plugin-index/SKILL.md"
   references:
     plugin_map: "references/plugin-map.md"
     routing_checklist: "references/routing-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

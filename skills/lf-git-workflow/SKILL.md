@@ -31,10 +31,10 @@ escalation_signals:
   - provider-specific pull request behavior
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-git-workflow/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

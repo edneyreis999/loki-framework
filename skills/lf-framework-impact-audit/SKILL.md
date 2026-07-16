@@ -28,10 +28,10 @@ escalation_signals:
   - conflicting evidence across Loki artifacts
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-framework-impact-audit/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

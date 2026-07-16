@@ -29,10 +29,10 @@ escalation_signals:
   - sensitive writes modeled for future execution
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-action-plan-authoring/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 ---
 

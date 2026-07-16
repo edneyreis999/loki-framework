@@ -26,10 +26,10 @@ escalation_signals:
   - document ownership or scope is unclear
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-index-navigator/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

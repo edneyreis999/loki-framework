@@ -25,10 +25,10 @@ escalation_signals:
   - durable package documentation changes
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-template-library/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

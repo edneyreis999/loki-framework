@@ -29,10 +29,10 @@ escalation_signals:
   - restricted tool or write boundary design
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-agent-creator/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:
@@ -72,7 +72,10 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
    - Claude Code subagent: `name`, `description`, `tools`, `disallowedTools`, `model`, `permissionMode`, `maxTurns`, `skills`, `mcpServers`, `hooks`, `memory`, `background`, `effort`, `isolation`, `color`, `initialPrompt`.
    - Codex custom agent TOML: `name`, `description`, `developer_instructions`, `nickname_candidates`, `model`, `model_reasoning_effort`, `sandbox_mode`, `approval_policy`, `mcp_servers`, `skills.config`.
 7. Quando formatos de runtime divergirem, mantenha um contrato Loki como fonte e gere as projecoes exigidas: Markdown/YAML para Claude Code e TOML em `codex/agents/` para Codex.
-8. Defina uma responsabilidade estreita. O agente deve fazer uma coisa bem e retornar uma saida consolidada.
+8. Defina uma responsabilidade estreita, capacidades incluídas/excluídas e
+   modos compatíveis. `read-only`, `proposal-only` e `scoped-writer` são modos
+   operacionais, não categorias mutuamente exclusivas: o envelope aprovado
+   escolhe o modo ativo e nunca concede escrita global.
 9. Defina o modo default do Loki como `proposal-only`, salvo approval humano
    explicito ou politica de pacote que autorize um `scoped-writer` com
    `target_files`, dominios de escrita, validators, gates e proibicoes
@@ -96,7 +99,15 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
    qualquer cadeia de raciocinio privada. O orquestrador, e nao o agente,
    captura evidence sanitizada ou registra `partial`, `unavailable` ou
    `unsupported`; retrospectiva so ocorre por acao humana ou command explicito.
-18. Antes de concluir, rode uma validacao estrutural pequena para agente do pacote: frontmatter minimo, `mode`, `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e TOML Codex pareado quando existir projecao Codex.
+18. Antes de concluir, exija entradas, destinos de handoff de sucesso/falha,
+   validação antes do handoff, condições de parada e completion record honesto.
+   Um scoped-writer recebe targets, owner, domínios, validators, gates e roteiro
+   humano quando a validação não for determinística; remove temporários salvo
+   evidência autorizada em `planos/`.
+19. Antes de concluir, rode validação estrutural: frontmatter mínimo, modos,
+   `allowed_writes`, `forbidden_writes`, `required_gates`, `response_format` e
+   TOML Codex pareado quando existir projeção. Aplique a checklist 24/24 da
+   referência e corrija todo `não` antes da entrega.
 19. Atualize `manifest.yaml` apenas quando o novo agente for aceito no pacote local.
 
 ## References
@@ -129,6 +140,9 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - Se houver projecao Codex, o TOML em `codex/agents/` existe, acompanha o nome base do agente e parseia com `tomllib`.
 - O agente nao generaliza aprendizado local sem approval.
 - A mudanca em agente consolidado tem `technical-review` ou `approval`.
+- O contrato declara capacidades/modos, handoffs de sucesso/falha, validação,
+  stop conditions, temporários, testes e completion record conforme a checklist
+  24/24 da referência.
 
 ## Inputs
 

@@ -31,10 +31,10 @@ escalation_signals:
   - future-agent guidance
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-documentation-writing/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 ---
 

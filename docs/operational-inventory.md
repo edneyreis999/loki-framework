@@ -50,7 +50,7 @@ não existe projection ou command físico separado.
 | `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
-| `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote Loki e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
+| `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
 | `loki-criar-nsd` | `backlog` | Conduzir entrevista narrativa quando o contrato de NSD for normalizado. |
 | `loki-ai-enemy-optimizer` | `backlog` | Gerar comportamento de inimigos por contrato de dominio especializado. |
 | `loki-brainstorm-phase-1-create-boss` | `backlog` | Criar conceito inicial de boss com escopo narrativo/gameplay. |
@@ -81,9 +81,9 @@ bundles.
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `lf-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `lf-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
-| `lf-command-creator` | `mvp` | Skill compartilhada para criar ou revisar commands com estado, gates, outputs, limites e validadores. |
-| `lf-agent-creator` | `mvp` | Skill compartilhada para criar ou revisar agents especialistas com julgamento proprio, ferramentas restritas e handoff claro. |
-| `lf-skill-creator` | `mvp` | Skill compartilhada para criar ou revisar skills com trigger, progressive disclosure, referencias e validacao estrutural. |
+| `lf-command-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar command bundles com Input, Execution, Response, owners, gates, validators e retomada. |
+| `lf-agent-creator` | `mvp` | Fonte compartilhada do contrato de agents por capacidades e modos, com envelope de escrita, validação e handoff claro. |
+| `lf-skill-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar skills com capacidade única, metadata válida, progressive disclosure e forward testing. |
 | `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `lf-run-plan-execution`. |
 | `brainstorm-character` | `backlog` | Apoio futuro para design de personagens e bosses. |
 

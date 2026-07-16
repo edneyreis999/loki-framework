@@ -21,10 +21,10 @@ adapter_projection:
 escalation_signals: [internal package maintenance, self-healing workflow]
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-internal-command-workflows/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by: [loki-knowledge-extraction-analysis, loki-self-healing]

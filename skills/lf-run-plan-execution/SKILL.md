@@ -28,10 +28,10 @@ escalation_signals:
   - sensitive write, runtime behavior, or human gate complexity
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-run-plan-execution/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 status: draft
 used_by:

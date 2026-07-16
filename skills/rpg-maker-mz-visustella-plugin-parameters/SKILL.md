@@ -29,13 +29,13 @@ escalation_signals:
   - runtime behavior, UI, save, input, battle, or visual behavior must be validated
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-plugin-parameters/SKILL.md"
   references:
     parameter_surfaces: "references/parameter-surfaces.md"
     plugin_parameter_index: "references/plugin-parameter-index.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

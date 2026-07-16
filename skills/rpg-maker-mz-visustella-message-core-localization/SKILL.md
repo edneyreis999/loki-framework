@@ -29,13 +29,13 @@ escalation_signals:
   - browser smoke or Playtest/LQA is required before closing runtime behavior
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-message-core-localization/SKILL.md"
   references:
     localization_workflow: "references/localization-workflow.md"
     validation_checklist: "references/validation-checklist.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

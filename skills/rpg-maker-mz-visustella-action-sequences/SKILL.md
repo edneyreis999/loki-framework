@@ -29,14 +29,14 @@ escalation_signals:
   - runtime behavior must be validated in battle
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-action-sequences/SKILL.md"
   references:
     command_index: "references/action-sequence-command-index.md"
     patterns: "references/action-sequence-patterns.md"
     example_index: "references/action-sequence-example-index.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

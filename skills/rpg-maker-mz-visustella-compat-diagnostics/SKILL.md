@@ -29,13 +29,13 @@ escalation_signals:
   - broad troubleshooting may need loki-feedback, project inventory, or technical analysis
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-visustella-compat-diagnostics/SKILL.md"
   references:
     diagnostic_checklist: "references/diagnostic-checklist.md"
     compatibility_risk_map: "references/compatibility-risk-map.md"
-shell: {}
+shell: bash
 type: skill
 status: optional-extension
 extension: "RPG Maker MZ VisuStella"

@@ -84,3 +84,18 @@ write owner, validators/gates/approvals, packaging, stop and resume.
 response.md declares primary consumer Both and the LLM/Humano/Both formats.
 Do not add projection, command_name, package_projection or command_contract.
 -->
+## Contract requirements
+
+This bundle must implement the canonical contract in
+`skills/lf-command-creator/references/command-contract-template.md`. It must
+declare observable purpose/start/end/output; keep Input limited to the exact
+Plan prompt, YAML parameters, validation, missing-input request and normalized
+handoff; orchestrate, replan, serialize owners/writes, validate gates and track
+handoffs in Execution; and declare LLM/Humano/Both terminal formats in Response.
+
+The execution contract must define `allowed_writes`, `forbidden_writes`, owner,
+required skills/commands, validators, human gates, stop conditions and resume
+state. Delegate to a scoped Write Agent where available. Direct orchestration
+writes require an explicit no-writer exception and completion record with the
+future-writer opportunity. Before delivery, record 24/24 explicit evidence
+against the canonical checklist; any `não` blocks delivery.

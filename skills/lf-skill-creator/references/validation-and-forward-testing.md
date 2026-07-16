@@ -58,3 +58,26 @@ Review:
 - whether the agent needed hidden context to succeed.
 
 If forward testing only succeeds with leaked context, tighten the skill or split references differently.
+
+## Canonical 24/24 checklist
+
+Before delivery, record `sim|não`, file and heading for every item. Any `não`
+blocks delivery: (1) reusable specialized role; (2) one capability with scope
+and non-scope; (3) no full workflow orchestration; (4) installable layout;
+(5) YAML name/description; (6) folder/name/namespace; (7) trigger description;
+(8) observable use/exclusions; (9) coherent multi-adapter metadata; (10)
+objective purpose; (11) required/optional inputs and missing-input handling;
+(12) imperative procedure; (13) outputs plus success/failure/partial states;
+(14) limits/prohibitions/stops; (15) validators/evidence/gates; (16) degree of
+freedom proportional to risk; (17) focused SKILL.md; (18) conditional detail in
+references; (19) conditional reference routing; (20) deterministic scripts
+tested; (21) assets only as output resources; (22) no contradiction/duplication;
+(23) package self-containment; (24) structural validation and clean-context
+forward test when complex/high-risk.
+
+### Correction 16 — calibrate freedom
+
+Choose explicit scripts or low-freedom steps for fragile, repetitive or
+high-risk operations; use parameterized templates for medium-risk work and
+heuristics only where judgment safely admits alternatives. This correction must
+be present whenever item 16 is claimed as `sim`.

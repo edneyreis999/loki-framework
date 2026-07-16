@@ -28,10 +28,10 @@ escalation_signals:
   - playtest gate is required
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/rpg-maker-mz-data-json/SKILL.md"
-shell: {}
+shell: bash
 type: skill-dependency
 status: reference
 source_policy: dependency-reference-not-copy

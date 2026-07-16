@@ -72,12 +72,17 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
      `type: command` e `serialization: skill-bundle` como command operacional e
      trate o bundle como fonte unica.
 4. Rode preflight de autoria quando o destino for o proprio pacote: namespace, artefato correto, docs/manifest impactados, referencias externas classificadas e validacoes finais.
-5. Defina o contrato minimo do comando: `name`, `purpose`, `inputs`, `outputs`,
-   `allowed_writes`, `forbidden_writes`, `required_skills`,
-   `required_commands`, `handoffs`, `validators`, `human_gates`,
-   `stop_conditions` e `resume_contract`. Nunca coloque um command `loki-*`
-   em `required_skills`.
-6. Escreva o comando como fluxo curto e auditavel. Mova detalhes tecnicos para skills e exemplos longos para templates ou referencias.
+5. Defina o contrato completo pelo
+   [command-contract-template](references/command-contract-template.md):
+   propósito, início/fim observáveis, Input, Execution, Response, writes,
+   dependências, handoffs, validators, gates, stop conditions e retomada.
+   Aplique a checklist binária 24/24 da referência antes de entregar. Nunca
+   coloque um command `loki-*` em `required_skills`.
+6. Escreva o comando como fluxo curto e auditável: mantenha Input somente para
+   coletar, validar e normalizar; mantenha orquestração, owners e replanejamento
+   em Execution; e declare o consumidor e o formato terminal em Response.
+   Mova detalhes técnicos para skills e exemplos longos para templates ou
+   referências.
 7. Nao embuta regras de projeto, engine ou framework em comandos core. Quando retrospectivas tecnicas revelarem padroes de uma tecnologia, gere ou atualize uma skill especializada e referencie-a em `<technology_required_skills>`.
 8. Use placeholders genericos para fronteiras do consumidor: `<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `<domain_ids>` e `<human_validation_gate>`.
 9. Trate Claude Code e Codex como adaptadores diferentes:
@@ -99,22 +104,11 @@ Use tambem quando houver duvida se uma melhoria deve virar `command`, `skill`, `
 
 ## Quality Checklist
 
-- O comando nao duplica comando existente.
-- O bundle `skills/loki-*/SKILL.md` declara `type: command`; no estado final
-  declara `serialization: skill-bundle`, usa `name: loki-<stem>` como
-  identidade e nao conserva campos de projection ou command pareado.
-- O nome e curto, consistente com o namespace pretendido e nao corrige namespace historico fora de escopo.
-- A descricao explica quando usar e quando nao usar.
-- `allowed_writes` e `forbidden_writes` sao explicitos.
-- O fluxo separa leitura paralela de escrita serializada.
-- Handoffs retornam proposta, nao aplicam mudanca direta.
-- Handoffs retornam completion record; capture/gap e responsabilidade do
-  orquestrador, sem CoT privado, descoberta de token/ID ou auto-retrospectiva.
-- O output e revisavel em Markdown/YAML.
-- Validadores automaticos nao substituem gates humanos.
-- O comando aponta para skills tecnicas em vez de reexplicar todo o dominio.
-- Se o comando for empacotado, a mudanca respeita `docs/package-authoring-guardrails.md`.
-- A mudanca em command consolidado tem `technical-review` ou `approval`.
+Antes de entregar, percorra os 24 itens da seção **Checklist binária 24/24**
+da referência. Para cada `sim`, registre o arquivo e heading que o tornam
+explícito; corrija todo `não`. O command bundle só está pronto com 24/24,
+identidade `loki-*`, `type: command`, `serialization: skill-bundle` e os três
+recursos roteados. Validadores automáticos não substituem gates humanos.
 
 ## Inputs
 

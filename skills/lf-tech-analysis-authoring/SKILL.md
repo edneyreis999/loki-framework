@@ -30,10 +30,10 @@ escalation_signals:
   - irreversible or high-impact recommendation
 context: standard
 agent: main
-hooks: []
+hooks: {}
 paths:
   package_skill: "skills/lf-tech-analysis-authoring/SKILL.md"
-shell: {}
+shell: bash
 type: skill
 ---
 

@@ -40,7 +40,10 @@ type: skill
 
 ## Procedure
 
-1. Confirm the skill's concrete use cases and trigger phrases.
+1. Confirm one reusable specialized capability, its concrete use cases,
+   trigger phrases, observable exclusions and non-scope. A skill teaches or
+   applies that capability; it must not orchestrate a complete multi-agent,
+   handoff-tracked, resumable workflow (use a command for that).
 2. Decide whether the need belongs in a `skill`, `command`, `agent`, `template`, `standard`, or backlog.
 3. Run package preflight for packaged skills: confirm destination, namespace,
    installable layout, self-contained references, and required validations.
@@ -59,10 +62,16 @@ skill-name/
 5. Gere skills multi-adapter por padrao. Nao ramifique o contrato pelo executor atual; some os metadados conhecidos de Claude Code e Codex, usando valores neutros validos quando um campo nao se aplicar.
 6. Preencha o frontmatter superset de `SKILL.md`: `name`, `description`, `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `hooks`, `paths`, `shell`. Para metadata neutra aceita por Claude Code, use `hooks: {}` quando nao houver hooks e `shell: bash` ou `shell: powershell`; nunca serialize esses campos como listas ou objetos vazios de tipo incompatível.
 7. Quando houver suporte Codex app/plugin, inclua `agents/openai.yaml` com `interface.display_name`, `interface.short_description`, `interface.icon_small`, `interface.icon_large`, `interface.brand_color`, `interface.default_prompt`, `policy.allow_implicit_invocation` e `dependencies.tools[].type/value/description/transport/url`.
-8. Keep `SKILL.md` focused on essential workflow, inputs, outputs, limits, and validation.
+8. Keep `SKILL.md` focused on essential workflow, named required/optional
+   inputs, outputs, success/failure/partial completion states, limits, stop
+   conditions and validation. Request or locate required input when absent;
+   stop rather than inventing facts, paths, permissions or decisions.
 9. Put variant-specific detail, long examples, templates, platform notes, or source research in `references/`.
 10. Validate that each skill directory has `SKILL.md`, YAML frontmatter, `name`, and `description`.
-11. Update the local package manifest when a skill is added, removed, renamed, or moved.
+11. Apply the 24/24 checklist in
+   [validation-and-forward-testing.md](references/validation-and-forward-testing.md)
+   before delivery; record evidence for every `sim` and correct each `não`.
+12. Update the local package manifest when a skill is added, removed, renamed, or moved.
 
 ## References
 
