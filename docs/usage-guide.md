@@ -74,6 +74,17 @@ integrado tambem nao promove aprendizado duradouro automaticamente. Digest,
 backlog, reports e retrospectivas viram entrada para
 `loki-continuous-improvement` somente por decisao posterior.
 
+## Evidencia de Sessao
+
+Use `lf-agent-execution-evidence` quando o orquestrador ou collector precisar
+registrar evidencia de uma execucao de agente. O collector recebe entrada
+estruturada do adaptador e um destino aprovado; ele preserva um snapshot
+sanitizado quando possivel ou registra uma lacuna tipada quando a fonte nao e
+observavel. `session-evidence-auditor` revisa manifests ja validados em modo
+read-only. Metricas de tokens exigem fonte, escopo e tempo: valores cumulativos
+ou de janela de conta nunca representam uso por agente. Nenhum workflow coleta
+raciocinio privado.
+
 ## Gates Humanos
 
 O framework usa gates para impedir validacao falsa:
@@ -304,10 +315,3 @@ Mantenha o diretorio do pacote como fonte auditavel. Instale em `.claude/`,
 gate humano apropriado.
 
 Quando a mudanca for no proprio pacote, nao pare em retrospectiva ou intuicao: atualize o artefato normativo correto, registre impacto no `manifest.yaml` se necessario e termine com validacao objetiva de estrutura e autocontencao.
-# Session evidence
-
-Use the collector with structured adapter input and an approved evidence
-destination. It stores a sanitized snapshot by default and records a typed gap
-when no source is observable. Audit is on demand through the read-only auditor.
-Token metrics require source, scope and time; cumulative/account-window values
-are never per-agent usage. No workflow collects private chain-of-thought.

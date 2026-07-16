@@ -99,11 +99,14 @@ dois roots.
    `target_inventory_dir` quando aplicável e no próprio
    evidence capture pelo orquestrador. Marque `blocked` ou `skipped` com motivo antes do
    fan-out quando não conceder.
-5. Faça preflight do catálogo. Use `manifest.yaml` instalado como fonte primária
-   de `supported_project_types`, `agent_project_tag_policy` e
-   `agents[].project_tags`. Superfícies aprovadas como `.codex/agents`,
-   `.agents/agents`, `agents/`, `codex/agents/` ou lista equivalente comprovam
-   disponibilidade, não tags nem autorização de escrita.
+5. Faça preflight do catálogo. Use uma fonte de catálogo disponível na instalação
+   atual que declare `supported_project_types`, `agent_project_tag_policy` e
+   `agents[].project_tags`; `manifest.yaml` do package pode ser usado somente
+   quando estiver acessível, nunca como dependência obrigatória. Superfícies
+   aprovadas como `.codex/agents`, `.agents/agents`, `agents/`, `codex/agents/`
+   ou lista equivalente comprovam disponibilidade, não tags nem autorização de
+   escrita. Sem uma fonte de catálogo verificável, registre o blocker e não
+   execute fan-out dependente de tags.
 6. Registre fonte do catálogo, tipos suportados, base tag, tags por agente,
    agentes disponíveis, ferramentas e limites de descoberta.
 7. Replaneje explicitamente quando capability, catálogo, hint, evidência,

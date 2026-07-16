@@ -5,7 +5,8 @@
 Este command orquestra a transformacao de entrada aprovada em plano faseado,
 executavel por outra LLM e retomavel sem memoria da conversa.
 
-- Inicio: entrada normalizada, escopo verificavel e preflight pronta quando aplicavel.
+- Inicio: entrada normalizada, `derived_allowed_scope` verificavel com fonte e
+  proveniencia, e preflight pronta quando aplicavel.
 - Conclusao: diretorio aprovado contem todos os artefatos e validadores passam,
   ou existe stop condition explicita.
 - Resultado verificavel: DAG de fases/tasks focadas, owners, writes, validators,
@@ -92,7 +93,9 @@ pergunta humana ou stop condition, nunca decisao automatica.
 
 ## Workflow
 
-1. Consuma entrada normalizada, decisoes, preflight e limites.
+1. Consuma entrada normalizada, `derived_allowed_scope`, fonte, proveniencia,
+   decisoes, preflight e limites. Nao aceite `allowed_scope` legado, alias ou
+   assercao conversacional como autorizacao.
 2. Pare com `must_ask_now` aberto ou `ready_for_next_phase: false`.
 3. Planeje fases, tasks, dependencias, referencias, validators, human loops,
    owners e ordem topologica antes de escrever.
@@ -145,6 +148,8 @@ justificativa.
 - Scoped writers declaram owner, targets, writes, domains, validators e gates;
   excecoes do orquestrador tem justificativa.
 - Todas as tres subpastas existem para cada fase.
+- `derived_allowed_scope` tem fonte aprovada e proveniencia registrada, sem
+  conflito com `out_of_scope` ou `forbidden_surfaces`.
 - O plano e retomavel apenas por `tasks.md` e `task-N.M.md`.
 - Falha ou pendencia de validator, gate ou approval interrompe o fluxo.
 
@@ -162,7 +167,8 @@ task deve incluir guardrails e technical-review aplicaveis.
 
 ## Stop Conditions
 
-- Objetivo ou escopo sem verificacao; diretorio ainda nao confirmado.
+- Objetivo ou `derived_allowed_scope` sem verificacao, fonte/proveniencia, ou
+  com ambiguidade/conflito; diretorio ainda nao confirmado.
 - `must_ask_now` sem resposta ou ordem dependente de decisao humana.
 - Referencia ausente torna task inexequivel.
 - Escopo/permissao insuficiente, dependencia indisponivel, handoff sem destino,
@@ -177,7 +183,8 @@ Não registrar CoT privado nem invocar retrospectiva automaticamente.
 
 ## Resume Contract
 
-Registre entrada, path candidato/aprovado, DAG, fase/task atual, status,
+Registre entrada, `derived_allowed_scope`, fonte e proveniencia, path
+candidato/aprovado, DAG, fase/task atual, status,
 handoffs, human loops, validators, owners, writes, artefatos esperados,
 etapas concluidas, lacunas, riscos, proxima acao e condicao para continuar.
 Retome por `tasks.md` e `task-N.M.md`, sem reiniciar quando o estado bastar.

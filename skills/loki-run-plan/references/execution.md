@@ -2,13 +2,13 @@
 
 ## Purpose And Observable Contract
 
-Este command é o orquestrador que executa uma fase ou task aprovada sem depender
+Este command é o orquestrador que executa uma task, fase ou plano aprovado sem depender
 da memória da conversa, usando leitura paralelizável, escrita serializada,
 validators, gates humanos materiais e estado retomável.
 
 - Início: registro normalizado do Input, plano aprovado legível, fase/task
   resolvida, dependências e fronteiras de escrita conhecidas.
-- Conclusão: todas as tasks selecionadas atingiram estado terminal, validators e
+- Conclusão: todas as tasks do escopo terminal selecionado atingiram estado terminal, validators e
   gates aplicáveis foram processados, estado do plano e evidências foram
   atualizados, e não resta condição de parada ativa.
 - Resultado verificável: artefatos autorizados, status coerentes em `tasks.md` e
@@ -88,9 +88,10 @@ adicional for necessário.
    records aplicáveis. Artefatos ignorados, untracked ou ausentes do status do
    VCS continuam obrigatórios e devem ser conferidos com `find`, `rg`,
    `sed` ou equivalente.
-4. Confira status, ordem topológica, dependências, referências, validators,
+4. Resolva `EXECUTION_SCOPE`: `task` limita a uma task, `fase` a uma fase e
+   `plano` abrange todas as fases retomáveis. Confira status, ordem topológica, dependências, referências, validators,
    observable validation, Human Loop, Definition of Done e resume notes. Não
-   execute o plano inteiro quando `TASK_TARGET` limitar o pedido.
+   execute fora do escopo terminal solicitado.
 5. Transforme a entrada em plano de execução com etapas, dependências,
    responsáveis, handoffs, possíveis escritas, validators, gates e critérios de
    conclusão. Detecte sobreposição e atribua owner único por arquivo.
@@ -185,18 +186,27 @@ nunca usa retrospectiva como fallback.
 
 ## Task Execution And Evidence
 
-Para cada task na ordem topológica:
+Para cada task na ordem topológica dentro do escopo terminal:
 
 1. Confirme dependências concluídas e reconcilie o estado com evidência em disco.
 2. Entregue contexto e envelope ao responsável e acompanhe o handoff.
 3. Consolide o retorno e execute os validators antes de liberar dependentes.
 4. Registre em `builds/faseN/` comando/checklist, resultado e evidência, ou
    justificativa objetiva quando um validator não se aplicar.
-5. Atualize task file e `TASKS_MD` com status, arquivos afetados, validations,
-   Human Loop e `next_action`; atualize interaction records quando autorizado.
+5. Execute checkpoint obrigatório antes de liberar dependentes: atualize task
+   file, `TASKS_MD` e `LokiRunState` com status, arquivos afetados,
+   validations/evidências, Human Loop, `next_action`, blockers e próxima task
+   resolvida pela DAG; atualize interaction records quando autorizado.
 6. Não marque comportamento perceptível, runtime, integração, persistência ou
    output gerado como validado sem validator aplicável e confirmação do gate
    humano exigido.
+
+Após checkpoint válido, resolva automaticamente a próxima task pronta na DAG e
+continue, sem resposta terminal intermediária. A resposta terminal só ocorre
+quando o escopo selecionado acabar, o usuário cancelar, ou uma stop condition
+real permanecer ativa. Se o host expuser compactação de contexto, faça-a somente
+depois de persistir o checkpoint; indisponibilidade ou falha não bloqueia a
+continuação a partir do estado persistido.
 
 Ao concluir a fase, recomende retrospectiva técnica apenas quando o plano a
 previr explicitamente, incluindo arquivos afetados, validators, gates, riscos residuais,
@@ -258,7 +268,7 @@ completo. Não declare conclusão enquanto qualquer condição permanecer ativa.
 
 ## Resume Contract
 
-Mantenha `LokiRunState` com plano e paths resolvidos, fase, task atual, status,
+Mantenha `LokiRunState` com plano e paths resolvidos, escopo terminal, fase, task atual, status,
 `Execution Brief`, DAG e dependências, fontes lidas, handoffs e seus estados,
 owners, allowed/forbidden writes, arquivos afetados, validations e evidências,
 Human Loop, approvals/gates, etapas concluídas, blockers, riscos, próxima ação e

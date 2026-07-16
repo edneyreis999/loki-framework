@@ -23,7 +23,7 @@ responder.
 
 ## Intermediate Response
 
-Quando houver pergunta, gate ou stop condition, responda com status atual,
+Quando houver pergunta, gate ou stop condition real, responda com status atual,
 decisão exata necessária, evidências disponíveis, handoffs, riscos, próxima
 ação e `LokiRunState` mínimo. Não preencha o resultado terminal nem declare
 conclusão.
@@ -36,7 +36,8 @@ status final ou atual, fase/tasks, artefatos criados/alterados/analisados,
 evidências e validators, handoffs concluídos ou pendentes, gates e approvals,
 falhas/lacunas/riscos, próximos passos com owner e `LokiRunState`.
 
-Não declare conclusão com validator falho, gate/approval material pendente,
+Não use resposta terminal após checkpoint de task enquanto outra task do escopo
+selecionado estiver pronta na DAG. Não declare conclusão com validator falho, gate/approval material pendente,
 handoff aberto ou stop condition ativa. Ao fim de uma fase concluída, inclua a
 retrospectiva iniciada ou recomendada.
 

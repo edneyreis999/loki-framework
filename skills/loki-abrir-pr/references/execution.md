@@ -103,8 +103,8 @@ proximo destino; acompanhe ate estado terminal.
 
 Detecte sobreposicao e mantenha owner unico para cada side effect. Alteracoes de
 arquivo do projeto exigem Write Agent, mas sao proibidas por este workflow. Para
-push/PR, selecione agente autorizado se existir; escrita direta pelo orquestrador
-so ocorre apos registrar ausencia de Write Agent apropriado e um envelope com
+push/PR, selecione Write Agent apropriado quando disponivel; escrita direta pelo
+orquestrador so ocorre apos registrar ausencia de Write Agent apropriado e um envelope com
 remote/base/head, allowed/forbidden writes, validators, approvals, sucesso/falha
 e evidencias. Serialize push e criacao de PR.
 

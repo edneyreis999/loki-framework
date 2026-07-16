@@ -4,11 +4,11 @@ description: Run the Loki `loki-run-plan` command bundle in Codex. Use when exec
 when_to_use:
   - "Use when executing an approved Loki plan phase or task from tasks.md and task-N.M.md."
   - "Use when phase execution requires an Execution Brief, dependency checks, scoped writers, validators, human gates, evidence, task-state updates, and resumable state."
-argument-hint: "[FASE_ATUAL, TASKS_MD, optional TASK_TARGET, DIR_ANALISE, task_files, interaction_records]"
+argument-hint: "[TASKS_MD, EXECUTION_SCOPE=task|fase|plano, optional FASE_ATUAL, TASK_TARGET, DIR_ANALISE, task_files, interaction_records]"
 arguments:
   required:
-    - FASE_ATUAL
     - TASKS_MD
+    - EXECUTION_SCOPE
   optional:
     - TASK_TARGET
     - DIR_ANALISE
@@ -56,10 +56,15 @@ Entre no modo Plan e peça os parâmetros de entrada para o workflow.
 
 ```yaml
 parameters:
+  - key: EXECUTION_SCOPE
+    input_type: enum
+    requirement: required
+    description: "Escopo terminal: task, fase ou plano."
+    allowed_values: [task, fase, plano]
   - key: FASE_ATUAL
     input_type: string_or_integer
-    requirement: required
-    description: Numero ou identificador que resolve exatamente uma fase do plano ativo.
+    requirement: conditional
+    description: Fase alvo para task/fase; no plano, fase inicial ou primeira fase retomavel.
   - key: TASKS_MD
     input_type: path[file]
     requirement: required
@@ -68,7 +73,7 @@ parameters:
     input_type: string
     requirement: optional
     default: null
-    description: Task especifica da fase alvo; quando ausente, execute a fase conforme a DAG aprovada.
+    description: Obrigatoria quando EXECUTION_SCOPE=task; quando ausente, execute o escopo selecionado conforme a DAG.
   - key: DIR_ANALISE
     input_type: path[file_or_directory]
     requirement: optional
@@ -87,10 +92,12 @@ parameters:
 ```
 
 Valide presença, tipo e formato dos parâmetros. `TASKS_MD` deve ser arquivo
-regular legível e declarar exatamente uma fase correspondente a `FASE_ATUAL`.
+regular legível. `EXECUTION_SCOPE=task` exige `FASE_ATUAL` e `TASK_TARGET`;
+`fase` exige `FASE_ATUAL`; `plano` resolve todas as fases pela DAG e
+usa `LokiRunState` persistido ou a primeira fase retomável.
 Cada path em `task_files`, `DIR_ANALISE` e `interaction_records` deve existir e
-ser legível quando informado. Confirme que cada task file pertence ao plano e à
-fase alvo, que `TASK_TARGET` resolve uma única task dessa fase e que decisões ou
+ser legível quando informado. Confirme que cada task file pertence ao plano e ao
+escopo selecionado, que `TASK_TARGET` resolve uma única task quando aplicável e que decisões ou
 approvals registrados são aplicáveis ao mesmo escopo. Confira arquivos ignorados
 ou untracked por leitura direta em disco; nunca use `git status` como única prova
 de existência.
@@ -100,8 +107,8 @@ informação obrigatória ausente; não invente path, fase, task, escopo, decis�
 approval, validator ou gate. Não avance enquanto uma lacuna impedir execução
 segura.
 
-Normalize a entrada em registro com objetivo, parâmetros validados, fase e tasks
-alvo, DAG conhecida, escopo, restrições, destinos, `allowed_writes`,
+Normalize a entrada em registro com objetivo, parâmetros validados, escopo
+terminal, fase inicial e tasks alvo, DAG conhecida, restrições, destinos, `allowed_writes`,
 `forbidden_writes`, approvals, gates e lacunas. Durante Input não implemente,
 altere arquivos, execute a tarefa principal, invoque escritores nem declare
 sucesso.

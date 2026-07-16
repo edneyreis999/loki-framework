@@ -76,6 +76,7 @@ bundles.
 | `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `lf-git-workflow` | `mvp` | Procedimento compartilhado para branch, commit e PR com preflight Git, staging seguro, gates humanos e GitHub MCP/`gh` fallback. |
 | `lf-web-deep-research` | `mvp` | Procedimento reutilizavel de pesquisa profunda na internet com ondas de busca, avaliacao de fontes, contradicoes, assumptions, lacunas e output estruturado. |
+| `lf-agent-execution-evidence` | `mvp` | Definir, coletar e revisar evidencia provider-neutral de execucao, com identidade tipada, snapshot sanitizado, lacunas explicitas e proveniencia de uso sem registrar raciocinio privado. |
 | `lf-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
@@ -98,6 +99,7 @@ bundles.
 | `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only: executa checks e rubrica independente sobre patch de pacote, bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki-run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
+| `session-evidence-auditor` | `mvp` | Auditar em modo read-only manifests de evidencia de sessao ja validados, sem inventar identidade, transcritos, uso de tokens ou raciocinio privado. |
 | `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
 | `catalogador` | `mvp` | Manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima em `AGENTS.md` e `CLAUDE.md` do consumidor. |
@@ -129,6 +131,7 @@ bundles.
 | --- | --- | --- |
 | `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, cleanup legado seguro e manifest de instalacao. |
 | `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex e tags de tipo de projeto dos agentes no `manifest.yaml`. |
+| `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e fixtures temporarias de schema v2 e limpeza legada, sem tocar destinos consumidores. |
 | `scripts/validate-agentic-run-state.py` | `mvp` | Validar estado XML do fluxo v2, incluindo parse, IDs, `selection_reason`, gates `must_ask_now`, contratos de escrita, conflitos de `target_files` e completion reports. |
 
 ## Install Scope Source
@@ -156,6 +159,7 @@ bundles.
 | `agentic-agent-review-template.xml` | `mvp` | Modelo de cross-review agentico para acordos, conflitos materiais, resolucao recomendada e notas de validator. |
 | `agentic-synthesis-template.xml` | `mvp` | Modelo de sintese do orquestrador com fatos, gates resolvidos, blockers e handoff para plano. |
 | `agent-run-report-template.xml` | `mvp` | Modelo de completion report por handoff, com `agent_run_id`, `handoff_id`, owner, target files, validators, gates, evidencia e status. |
+| `agent-session-evidence-template.xml` | `mvp` | Modelo de evidencia de sessao com identidade tipada, completude, snapshots sanitizados, locators de runtime e proveniencia de uso. |
 | `agentic-run-digest-template.xml` | `mvp` | Modelo de digest final da rodada v2 para consolidar resultados, validators, gates pendentes, backlog e proxima acao. |
 | `agentic-backlog-template.md` | `mvp` | Modelo Markdown para pendencias, blockers e follow-ups nao bloqueantes do fluxo agentic. |
 | `templates-xml-zord` | `reference-only` | Referencia estrutural, sem formato obrigatorio no MVP Loki. |
@@ -178,6 +182,7 @@ bundles.
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
 | `docs/loki-init-inventory-contracts.md` | `mvp` | Definir contrato compartilhado de conteudo minimo para pastas de inventario por agente produzidas por `loki-init`. |
+| `docs/self-containment-audit.md` | `mvp` | Registrar a auditoria e checklist de autocontencao do pacote. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |
 | `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki-init` para selecao de agentes. |
 | Fontes historicas externalizadas | `reference-only` | Usadas como origem antes da publicacao do pacote; nao sao dependencias operacionais. |
@@ -225,11 +230,3 @@ projeto consumidor declarar RPG Maker MZ.
 ## Conclusao
 
 O inventario operacional separa command bundles/skills, agents, templates e docs. O pacote deve permanecer autocontido para instalacao em outros projetos.
-# Session evidence components
-
-- `skills/lf-agent-execution-evidence/`: provider-neutral contract, collector,
-  adapter capability matrix and validator.
-- `agents/session-evidence-auditor.md`: read-only evidence audit; the Codex
-  projection is `codex/agents/session-evidence-auditor.toml`.
-- `templates/agent-session-evidence-template.xml`: evidence manifest schema;
-  v2 agentic templates carry evidence lineage.

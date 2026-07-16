@@ -42,14 +42,15 @@ used_by:
 
 ## Purpose
 
-Preparar e executar uma fase aprovada do plano Loki sem depender de memoria da
+Preparar e executar uma task, fase ou plano aprovado do plano Loki sem depender de memoria da
 conversa. A skill transforma `tasks.md`, `task-N.M.md`, analises existentes,
 decisoes humanas e validators em uma execucao rastreavel.
 
 ## Procedure
 
-1. Confirmar entradas: `FASE_ATUAL`, `TASKS_MD`, `TASK_TARGET` opcional,
-   `DIR_ANALISE` opcional, escopo permitido e forbidden writes.
+1. Confirmar entradas: `TASKS_MD`, `EXECUTION_SCOPE` (`task`, `fase` ou
+   `plano`), `FASE_ATUAL`/`TASK_TARGET` condicionais, `DIR_ANALISE`
+   opcional, escopo permitido e forbidden writes.
 2. Resolver paths relativos ou absolutos antes de ler. Parar se um path
    obrigatorio estiver ausente, ambiguo ou fora do plano ativo.
 3. Ler `TASKS_MD` e localizar todos os arquivos `task-N.M.md` da fase alvo.
@@ -80,7 +81,8 @@ decisoes humanas e validators em uma execucao rastreavel.
    executavel, approval, validator ou skill tecnica exigida.
 9. Carregar `<technology_required_skills>` apenas quando o usuario, a task, o
    contexto detectado ou retrospectiva aprovada indicar uma tecnologia.
-10. Executar tasks uma por vez na ordem topologica. Leitura pode ser paralela;
+10. Executar tasks uma por vez na ordem topologica dentro do escopo terminal.
+    Leitura pode ser paralela;
     escrita e serializada por owner e arquivo. O owner pode ser o orquestrador
     ou um agente `scoped-writer` quando a task aprovada declarar
     `target_files`, `allowed_writes`, validators e gates.
@@ -91,12 +93,19 @@ decisoes humanas e validators em uma execucao rastreavel.
     evidencia e justificativa quando um validator nao se aplicar.
 13. Nao declarar comportamento perceptivel, runtime, integracao, estado
     persistido ou artefato gerado como validado sem `<human_validation_gate>`.
-14. Atualizar `task-N.M.md`, `tasks.md`, `builds/faseN/` e `interaction/faseN/`
-    apenas conforme permitido pelo plano ativo.
-15. Quando uma task terminar com `pending-technical-review` ou qualquer input
-    humano material ainda pendente, a resposta final ao usuario deve terminar
-    com um disclaimer destacado, usando o status exato como titulo e bullets
-    concretos do que falta esclarecer, aprovar ou validar:
+14. Ao terminar cada task, executar checkpoint obrigatorio antes de liberar
+    dependentes: validators/evidencias, status em `task-N.M.md` e `tasks.md`,
+    `LokiRunState` completo (incluindo blockers e `next_action`) e proxima task
+    pronta na DAG. Atualizar `builds/faseN/` e `interaction/faseN/` apenas conforme permitido.
+15. Depois de checkpoint valido, seguir automaticamente para a proxima task
+    pronta; nao encerrar entre tasks. Quando a plataforma oferecer compactacao
+    de contexto, ela pode ocorrer depois do checkpoint, mas sua ausencia/falha
+    nunca bloqueia a continuacao pelo estado persistido.
+16. Quando uma task tiver `pending-technical-review` ou qualquer input humano
+    material pendente, persista esse estado no checkpoint. Só emita o disclaimer
+    destacado na resposta terminal causada por esse bloqueio real, usando o
+    status exato como titulo e bullets concretos do que falta esclarecer,
+    aprovar ou validar:
 
     ```markdown
     --------------
@@ -115,8 +124,9 @@ decisoes humanas e validators em uma execucao rastreavel.
 
 ## Inputs
 
-- `FASE_ATUAL`.
 - `TASKS_MD`.
+- `EXECUTION_SCOPE` (`task`, `fase` ou `plano`).
+- `FASE_ATUAL` condicional.
 - `TASK_TARGET` opcional.
 - `DIR_ANALISE` opcional.
 - `task-N.M.md` da fase alvo.
@@ -139,7 +149,8 @@ decisoes humanas e validators em uma execucao rastreavel.
 
 ## Limits
 
-- Nao execute plano inteiro quando o usuario especificar apenas fase ou task.
+- Nao execute fora do escopo explicitamente selecionado; execute plano
+  quando esse for o escopo selecionado.
 - Nao escreva fora do escopo da task ativa.
 - Nao pule dependencias pendentes.
 - Nao use analise externa ou memoria da conversa como substituto de referencias
@@ -198,3 +209,5 @@ decisoes humanas e validators em uma execucao rastreavel.
 - Human gates pendentes nao foram marcados como aprovados quando dependiam de
   input humano material fora do plano aprovado.
 - `LokiRunState` permite retomada sem memoria da conversa.
+- Cada checkpoint terminal de task registra proxima acao e libera
+  automaticamente a proxima task pronta, salvo stop condition real.

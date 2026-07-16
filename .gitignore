@@ -4,6 +4,7 @@
 .codex
 planos
 .DS_Store
+__pycache__/
 # AgentOps session artifacts
 .agents/
 frameworks-de-referencia

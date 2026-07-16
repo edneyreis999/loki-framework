@@ -14,7 +14,7 @@ self_contained: true
 | --- | --- | --- |
 | 1 | `manifest.yaml` | Indice de componentes, destinos sugeridos, guardrails e politica de instalacao. |
 | 2 | `skills/`, `agents/`, `codex/agents/` | Command bundles, conhecimento operacional e projeções Codex versionadas que devem funcionar sem consultar arquivos externos ao pacote. |
-| 3 | `docs/usage-guide.md`, `docs/operational-inventory.md`, `docs/loki-installation-workflow.md`, `docs/loki-plan-execution-workflow.md`, `docs/loki-learning-workflow.md`, `docs/model-effort-guidance.md`, `docs/package-authoring-guardrails.md` e `docs/project-context-catalog.md` | Guias, inventario, workflows canonicos, politica de modelo/effort, checklist normativo e contrato de roteamento entre pacote e contexto duradouro do consumidor. |
+| 3 | `docs/*.md` declarados no inventario e manifest, incluindo `usage-guide.md`, `operational-inventory.md`, `self-containment-audit.md`, workflows, guardrails e contratos de contexto | Guias, inventario, auditorias, workflows canonicos, politica de modelo/effort, checklist normativo e contrato de roteamento entre pacote e contexto duradouro do consumidor. |
 | 4 | `templates/` e `scripts/` | Contratos base e utilitarios versionados para instalar ou validar o pacote. |
 
 ## Limites

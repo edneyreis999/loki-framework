@@ -49,10 +49,9 @@ orquestrador depois da delegacao.
 
 ## Allowed Writes
 
-- Nenhuma por default.
-- Excecao unica: criar ou complementar completion record operacional autorizado
-  pelo workflow para registrar feedback, atrito, decisao humana, risco residual
-  ou aprendizado.
+- Nenhuma. O diagnostico e a resposta terminal permanecem read-only; qualquer
+  registro persistente pertence ao workflow chamador e exige um envelope de
+  escrita proprio.
 
 ## Forbidden Writes
 
@@ -70,8 +69,8 @@ required_skills: []
 required_commands: []
 ```
 
-O completion record e o unico registro operacional permitido; evidence/gap e
-responsabilidade do orquestrador, sem dependência de retrospectiva.
+Evidence/gap e responsabilidade do orquestrador na resposta e no estado da
+sessao; nao crie completion record persistente neste command.
 
 ## Execution Planning And Replanning
 
@@ -120,21 +119,15 @@ da entrevista; nenhuma delegacao pode violar a regra de uma pergunta por turno.
    `loki-tech-analysis`, `loki-human-decision-preflight`,
    `loki-generate-action-plan`, `loki-run-plan`,
    `loki-retrospectiva-tecnica` ou `loki-continuous-improvement`.
-10. Se houver registro operacional autorizado, limite-o ao completion record.
+10. Retorne o diagnostico e o estado retomavel ao workflow chamador; nao crie
+    registro persistente.
 
 ## Write Ownership And Serialization
 
-Antes de qualquer alteracao de arquivo, selecione um Write Agent apropriado e
-entregue target files, allowed/forbidden writes, validators, gates, evidencias e
-handoff. Como o fluxo comum e read-only, nao existe writer por default.
-
-Escrita direta e permitida somente depois de registrar que nenhum Write Agent
-apropriado esta disponivel. Nesse caso, declare owner unico, path exato,
-allowed/forbidden writes, validators, approvals e criterios de sucesso/falha;
-serialize o arquivo e interrompa writers concorrentes. Registre no completion
-record o tipo de escrita, a ausencia do agente, a oportunidade de criar/especializar um
-writer, o escopo futuro, evidencias e riscos. Conveniencia nao justifica escrita
-direta.
+Este command nao escreve arquivos e nao seleciona writer. Quando o diagnostico
+exigir registro ou implementacao, encaminhe ao workflow chamador ou ao command
+apropriado, que deve definir owner, targets, envelope, validators e gates antes
+de qualquer escrita.
 
 ## Validators And Human Gates
 

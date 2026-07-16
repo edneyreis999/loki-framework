@@ -174,8 +174,8 @@ writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 ## Packaging Checks
 
 Nao altere o pacote durante a execucao. Se a preflight revelar mudanca
-duradoura, encaminhe-a ao workflow apropriado. O bundle transicional deve
-permanecer registrado e validar com `python3 scripts/validate-install-scopes.py`.
+duradoura, encaminhe-a ao workflow apropriado. Valide apenas as referencias e
+limites locais disponiveis para a invocacao.
 
 ## Stop Conditions
 

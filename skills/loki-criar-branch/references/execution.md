@@ -88,8 +88,9 @@ ate estado terminal.
 
 Mantenha owner unico para refs/stash; serialize todas as operacoes Git. Mudanca
 de arquivo do projeto exige Write Agent, mas e proibida fora da restauracao de
-stash aprovada. Para refs/stash, use agente autorizado se disponivel; escrita
-direta somente apos registrar ausencia de Write Agent e envelope com branch,
+stash aprovada. Para refs/stash, selecione Write Agent apropriado quando
+disponivel; escrita direta somente apos registrar ausencia de Write Agent
+apropriado e envelope com branch,
 base, allowed/forbidden writes, validators, approvals, criterios e evidencias.
 
 Se houver escrita direta, registre no completion record tipo, motivo da ausencia

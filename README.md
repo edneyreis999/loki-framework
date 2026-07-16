@@ -87,8 +87,8 @@ copiaria artefatos `internal-only`.
 
 Dry-run manual recomendado antes de aplicar: gere e revise a lista exata a
 partir de `install-scopes.json`, confirme que cada destino ainda não existe e
-registre essa lista para rollback. Para `consumer`, a lista esperada contém 46
-skills e 24 agents; templates Markdown são copiados separadamente.
+registre essa lista para rollback. Para `consumer`, a lista esperada contém 47
+skills e 22 agents; templates Markdown são copiados separadamente.
 
 ```bash
 find "$PACKAGE_ROOT" -maxdepth 4 -type f | sort

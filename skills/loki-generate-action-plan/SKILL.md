@@ -4,11 +4,10 @@ description: Run the Loki `loki-generate-action-plan` command workflow in Codex.
 when_to_use:
   - "Use when approved analysis, feedback, brief, or objectives must become a phased executable Loki plan."
   - "Use when creating tasks.md, task-N.M.md, phase folders, a dependency DAG, scoped writers, validators, human loops, and resume state."
-argument-hint: "[approved input, allowed scope, preflight record, candidate plan directory]"
+argument-hint: "[approved input, preflight record, candidate plan directory]"
 arguments:
   required:
     - approved_input
-    - allowed_scope
   optional:
     - preflight_record
     - out_of_scope
@@ -61,10 +60,6 @@ parameters:
     input_type: path_or_string_or_mapping
     requirement: required
     description: Analise, brief, feedback ou objetivo aprovado que fundamenta o plano.
-  - key: allowed_scope
-    input_type: string_or_mapping
-    requirement: required
-    description: Escopo positivo verificavel que o plano pode cobrir.
   - key: preflight_record
     input_type: path_or_mapping
     requirement: optional
@@ -92,16 +87,23 @@ parameters:
     description: Diretorio candidato, ainda sujeito a approval separado antes da criacao.
 ```
 
-Valide presenca, tipo e conteudo de `approved_input` e `allowed_scope`; valide a
-existencia de paths de leitura, tipos das listas, conflitos de escopo e formato
-do diretorio candidato. Se houver preflight, valide que nao restou
+Valide presenca, tipo, aprovacao e conteudo de `approved_input`. Quando for um
+path, valide que existe, e legivel e identifica uma entrada aprovada; quando for
+texto ou mapping, valide evidencia explicita de aprovacao e um escopo positivo
+inequivoco. Extraia somente dessa fonte `derived_allowed_scope`, com fonte e
+proveniencia. Nao aceite `allowed_scope` legado, alias, assercao em chat ou
+outro input separado como autorizacao. Falhe fechado se a fonte nao for
+aprovada ou legivel, ou se o escopo positivo estiver ausente, ambiguo ou em
+conflito. Valide tipos das listas, conflitos entre o escopo derivado e
+`out_of_scope` ou `forbidden_surfaces`, e formato do diretorio candidato. Se houver preflight, valide que nao restou
 `must_ask_now` e que `ready_for_next_phase` e `true`. Rejeite entrada invalida
 com correcao acionavel e nao interprete diretorio candidato como approval.
 
 Solicite uma informacao obrigatoria ausente por turno e pare diante de lacuna
 critica. Nao invente escopo, referencias, decisoes, approvals, validators ou
-destino. Normalize objetivo, parametros, escopo, restricoes, destino candidato,
-decisoes, approvals, gates e lacunas para Execution.
+destino. Normalize objetivo, parametros, `derived_allowed_scope`, fonte e
+proveniencia, restricoes, destino candidato, decisoes, approvals, gates e
+lacunas para Execution.
 
 Durante Input nao planeje tasks, crie diretorios, escreva arquivos, invoque
 agentes, execute o objetivo aprovado nem declare sucesso.

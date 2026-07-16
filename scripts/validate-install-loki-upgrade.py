@@ -25,11 +25,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 47, "agent": 25, "codex-agent": 25, "templates": 1},
-    "package-source": {"skill": 38, "agent": 9, "codex-agent": 9, "templates": 1},
-    "all": {"skill": 52, "agent": 25, "codex-agent": 25, "templates": 1},
+    "consumer": {"skill": 47, "agent": 22, "codex-agent": 22, "templates": 1},
+    "package-source": {"skill": 38, "agent": 11, "codex-agent": 11, "templates": 1},
+    "all": {"skill": 52, "agent": 24, "codex-agent": 24, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 98, "package-source": 57, "all": 103}
+FINAL_TOTALS = {"consumer": 92, "package-source": 61, "all": 101}
 
 
 @dataclass(frozen=True)
@@ -281,7 +281,7 @@ class ProfileAndSchemaTests(unittest.TestCase):
             manifest = json.loads(
                 (destination / MANIFEST_RELATIVE_PATH).read_text(encoding="utf-8")
             )
-            self.assertEqual(98, len(manifest["links"]))
+            self.assertEqual(92, len(manifest["links"]))
             self.assertEqual([], manifest["removed_legacy_links"])
             self.assertNotIn("command", {entry["type"] for entry in manifest["links"]})
             self.assertFalse((destination / ".agents" / "commands").exists())
@@ -454,7 +454,7 @@ class LegacyCleanupTests(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr or result.stdout)
             self.assertFalse(fixture.legacy_destination.is_symlink())
             manifest = json.loads(fixture.manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(98, len(manifest["links"]))
+            self.assertEqual(92, len(manifest["links"]))
             self.assertEqual(1, len(manifest["removed_legacy_links"]))
             removed = manifest["removed_legacy_links"][0]
             self.assertEqual(str(fixture.recorded_origin), removed["origin"])
