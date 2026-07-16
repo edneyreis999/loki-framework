@@ -308,6 +308,22 @@ agentic_agent_metadata:
     risk_tags: ["asset-pipeline", "perceptible-behavior"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+  framework-artifact-writer:
+    capability_tags: ["package-authoring", "scoped-write", "contract-sync"]
+    phase_roles: ["implementation", "package-promotion"]
+    agentic_modes: ["scoped-writer", "proposal"]
+    write_classes: ["package-contract", "manifest", "documentation"]
+    risk_tags: ["durable-policy", "write-conflict", "projection-drift"]
+    parallel_safe: false
+    technology_skill_routes: []
+  framework-artifact-quality-auditor:
+    capability_tags: ["write-test", "quality-audit", "contract-review"]
+    phase_roles: ["validation", "audit"]
+    agentic_modes: ["write-test", "proposal"]
+    write_classes: []
+    risk_tags: ["quality-regression", "normative-ambiguity"]
+    parallel_safe: true
+    technology_skill_routes: []
 
 layout:
   agents: "agents/"
@@ -657,6 +673,16 @@ skills:
     extension: "RPG Maker MZ VisuStella"
 
 agents:
+  - name: "framework-artifact-writer"
+    file: "agents/framework-artifact-writer.md"
+    status: draft-scoped-writer
+    project_tags:
+      - "core"
+  - name: "framework-artifact-quality-auditor"
+    file: "agents/framework-artifact-quality-auditor.md"
+    status: draft-write-test
+    project_tags:
+      - "core"
   - name: "session-evidence-auditor"
     file: "agents/session-evidence-auditor.md"
     status: draft-read-only
@@ -769,6 +795,14 @@ agents:
       - "game-dev"
 
 codex_agents:
+  - name: "framework-artifact-writer"
+    file: "codex/agents/framework-artifact-writer.toml"
+    source_agent: "agents/framework-artifact-writer.md"
+    status: draft-derived-scoped-writer
+  - name: "framework-artifact-quality-auditor"
+    file: "codex/agents/framework-artifact-quality-auditor.toml"
+    source_agent: "agents/framework-artifact-quality-auditor.md"
+    status: draft-derived-write-test
   - name: "session-evidence-auditor"
     file: "codex/agents/session-evidence-auditor.toml"
     source_agent: "agents/session-evidence-auditor.md"

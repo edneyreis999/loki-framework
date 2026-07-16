@@ -47,7 +47,16 @@ formal ou auditoria interna de conformidade do pacote.
 11. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
 12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
 13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
-14. A promocao termina com diff, validacao e registro do risco residual.
+14. Quando `destination_scope: package`, depois dos gates o
+`framework-artifact-writer` aplica o patch sob envelope exclusivo, os checks
+mecanicos rodam e o `framework-artifact-quality-auditor` revisa o estado real
+sem editar producao. Somente `approved` conclui; finding retorna ao Writer,
+enquanto incerteza ou mudanca material bloqueia para os gates aplicaveis e
+exige nova auditoria.
+15. Para destino consumidor ou runtime, preserve `catalogador` ou o writer e
+auditor de dominio aplicaveis; os dois agentes de artefatos nao sao instalados
+nem recebem permissao nesses destinos.
+16. A promocao termina com diff, validacao e registro do risco residual.
 
 ## Artefatos participantes
 
@@ -83,6 +92,8 @@ formal ou auditoria interna de conformidade do pacote.
 | `catalogador` | Promove aprendizado `project-specific` para `/docs` do consumidor e atualiza `docs/index.xml`. |
 | `bibliotecario` | Localiza contexto duradouro existente antes de criar duplicidade. |
 | `runtime-qa` | Fornece evidencia de validacao humana ou checklist quando o aprendizado depende de comportamento perceptivel. |
+| `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nao substitui writers de consumidor/runtime. |
+| `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui `technical-review` nem `approval`. |
 
 ## Destinos corretos
 

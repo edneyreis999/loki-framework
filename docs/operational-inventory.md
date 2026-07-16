@@ -94,6 +94,8 @@ bundles.
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
+| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: recebe envelope de task com targets exatos, aplica promocao package-only e entrega checks ao auditor; nao atua em consumidor ou runtime. |
+| `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only: executa checks e rubrica independente sobre patch de pacote, bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki-run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
 | `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |

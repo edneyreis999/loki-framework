@@ -26,6 +26,14 @@ com status, pergunta/decisão/query exata, evidências disponíveis, candidatos 
 seguros, handoffs, riscos, próximo passo e resume state mínimo. Não materialize
 resposta terminal nem declare promoção concluída.
 
+Para candidato com `destination_scope: package`, inclua Writer/owner, arquivos
+alterados e descobertos, checks mecânicos, status externo e interno do auditor,
+findings, confiança, iteração, gates invalidados e próximo destino. Projete
+`needs-human-review` como `blocked` com
+`block_reason: human_review_required`. Após correção ou decisão humana, declare
+o rerun obrigatório do auditor; não o confunda com `technical-review` ou
+`approval`.
+
 ## Terminal Response
 
 Para `Both`, preencha integralmente `../assets/response-template.md`. Para
@@ -36,6 +44,12 @@ resume state.
 
 Não declare conclusão com validator falho, gate/approval pendente, handoff
 aberto ou stop condition ativa.
+
+Para promoção de pacote, `completed` ou `applied` exige auditor externo
+`approved`, interno `pass`, ausência de finding/inconclusão/human review e
+nenhum gate invalidado. Finding corrigível, human review ou gate invalidado é
+`blocked` e precisa de destino executável; somente o cenário `approved` pode
+ser terminal.
 
 ## XML Shape For LLM
 
@@ -50,3 +64,7 @@ aberto ou stop condition ativa.
   <next_steps></next_steps>
 </command_response>
 ```
+
+No XML, mantenha esse shape e serialize os dados de promoção dentro de
+`artifacts`, `evidence`, `handoff`, `risks` e `next_steps`; não crie outro nó
+raiz.

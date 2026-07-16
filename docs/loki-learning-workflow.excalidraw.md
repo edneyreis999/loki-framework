@@ -32,8 +32,7 @@ Classificar escopo
 `standards-curator` ^learn-scope
 
 Pacote Loki
-commands, skills,
-agents, docs ^learn-package
+candidate package ^learn-package
 
 Projeto consumidor
 `catalogador`
@@ -48,8 +47,8 @@ technical-review
 approval ^learn-gates
 
 Aplicar e validar
-diff, checks,
-risco residual ^learn-apply
+Writer → checks → auditor
+approved ou bloqueado ^learn-apply
 
 %%
 ## Drawing
@@ -78,7 +77,7 @@ risco residual ^learn-apply
     {"id":"scope-text","type":"text","x":1236,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":312,"version":1,"versionNonce":312,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Classificar escopo\nstandards-curator\n","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Classificar escopo\nstandards-curator\n","lineHeight":1.25,"baseline":50},
 
     {"id":"package-box","type":"rectangle","x":1480,"y":0,"width":200,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#e7f5ff","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":313,"version":1,"versionNonce":313,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"package-text","type":"text","x":1496,"y":15,"width":168,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":314,"version":1,"versionNonce":314,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Pacote Loki\ncommands, skills,\nagents, docs","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Pacote Loki\ncommands, skills,\nagents, docs","lineHeight":1.25,"baseline":50},
+    {"id":"package-text","type":"text","x":1496,"y":15,"width":168,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":314,"version":2,"versionNonce":314,"isDeleted":false,"boundElements":null,"updated":2,"link":null,"locked":false,"text":"Pacote Loki\ncandidate package","fontSize":16,"fontFamily":5,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Pacote Loki\ncandidate package","lineHeight":1.25,"baseline":50},
 
     {"id":"consumer-box","type":"rectangle","x":1480,"y":120,"width":200,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#ebfbee","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":315,"version":1,"versionNonce":315,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
     {"id":"consumer-text","type":"text","x":1496,"y":135,"width":168,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":316,"version":1,"versionNonce":316,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Projeto consumidor\ncatalogador\ndocs + index.xml","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Projeto consumidor\ncatalogador\ndocs + index.xml","lineHeight":1.25,"baseline":50},
@@ -90,7 +89,7 @@ risco residual ^learn-apply
     {"id":"gates-text","type":"text","x":1756,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":320,"version":1,"versionNonce":320,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Gates\ntechnical-review\napproval","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Gates\ntechnical-review\napproval","lineHeight":1.25,"baseline":50},
 
     {"id":"apply-box","type":"rectangle","x":1990,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#f3f0ff","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":321,"version":1,"versionNonce":321,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"apply-text","type":"text","x":2006,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":322,"version":1,"versionNonce":322,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Aplicar e validar\ndiff, checks,\nrisco residual","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Aplicar e validar\ndiff, checks,\nrisco residual","lineHeight":1.25,"baseline":50},
+    {"id":"apply-text","type":"text","x":2006,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":322,"version":2,"versionNonce":322,"isDeleted":false,"boundElements":null,"updated":2,"link":null,"locked":false,"text":"Writer → checks → auditor\napproved ou bloqueado","fontSize":16,"fontFamily":5,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Writer → checks → auditor\napproved ou bloqueado","lineHeight":1.25,"baseline":50},
 
     {"id":"arrow-a","type":"arrow","x":190,"y":112,"width":60,"height":0,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":2},"seed":401,"version":1,"versionNonce":401,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"points":[[0,0],[60,0]],"lastCommittedPoint":null,"startBinding":null,"endBinding":null,"startArrowhead":null,"endArrowhead":"arrow"},
     {"id":"arrow-b","type":"arrow","x":440,"y":112,"width":60,"height":0,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":2},"seed":402,"version":1,"versionNonce":402,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"points":[[0,0],[60,0]],"lastCommittedPoint":null,"startBinding":null,"endBinding":null,"startArrowhead":null,"endArrowhead":"arrow"},

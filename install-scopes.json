@@ -21,6 +21,8 @@
   },
   "artifacts": {
     "agents": {
+      "framework-artifact-quality-auditor.md": "internal-only",
+      "framework-artifact-writer.md": "internal-only",
       "audio-designer.md": "consumer-only",
       "balance-economy-designer.md": "consumer-only",
       "bibliotecario.md": "both",
@@ -45,6 +47,8 @@
       "ux-ui-designer.md": "consumer-only"
     },
     "codex_agents": {
+      "framework-artifact-quality-auditor.toml": "internal-only",
+      "framework-artifact-writer.toml": "internal-only",
       "audio-designer.toml": "consumer-only",
       "balance-economy-designer.toml": "consumer-only",
       "bibliotecario.toml": "both",

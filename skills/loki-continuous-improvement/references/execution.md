@@ -97,6 +97,22 @@ sempre que possível:
 - os creators obrigatórios para propor/revisar os artefatos correspondentes;
 - um Write Agent `scoped-writer` apropriado para qualquer alteração autorizada.
 
+Para `destination_scope: package`, o Write Agent obrigatório é
+`framework-artifact-writer` e, depois do patch real e dos checks mecânicos, o
+revisor obrigatório é `framework-artifact-quality-auditor`. Eles não participam
+de `consumer-context`, runtime, engine ou backlog; nesses destinos, preserve o
+writer e auditor de domínio já aplicáveis.
+
+Antes de selecionar essa ramificação, faça preflight do contexto ativo de
+manutenção do pacote: confirme que os dois contratos internal-only estão
+localmente disponíveis. O command `both` não depende deles para
+`consumer-context`, runtime ou backlog. Se um candidato `package` for executado
+sem essa disponibilidade, não use fallback genérico nem declare conclusão:
+responda `blocked` com agentes ausentes, motivo e próximo destino
+`orchestrator` para um contexto em que os artefatos internos de manutenção
+estejam disponíveis ou para reclassificar o candidato; preserve os gates e não
+converta o destino em consumidor por conveniência.
+
 Antes de invocar subagente, entregue objetivo/motivo, unidade, fatos, decisões,
 restrições, fontes/paths, dependências, escopo, allowed/forbidden writes, owner,
 critérios de sucesso/falha/conclusão, validators, gates/approvals, output e
@@ -202,9 +218,20 @@ exata da busca ao usuário.
    `block-and-ask`.
 5. Aplique `interview`, `technical-review`, `approval` e pesquisa consentida
    antes das ações dependentes.
-6. Depois dos gates, delegue patch/promoção ao Write Agent e serialize todas as
-   escritas. Consolide retorno e execute validators/packaging checks.
-7. Responda com candidatos, artefatos, evidência, handoffs, gates, riscos,
+6. Para `destination_scope: package`, entregue o envelope aprovado ao
+   `framework-artifact-writer` somente após o preflight de manutenção interna;
+   se falhar, bloqueie com retorno executável ao orquestrador. Quando passar,
+   serialize os arquivos e execute validators e
+   packaging checks. Em seguida entregue o patch real, baseline, arquivos
+   descobertos, checks e iteração ao `framework-artifact-quality-auditor`.
+   Somente `approved` sem finding/inconclusão é terminal. Finding corrigível
+   dentro do envelope volta ao Writer, repete checks e exige nova auditoria.
+   Ampliação material invalida gates e retorna à proposta, review e approval;
+   `needs-human-review` é `blocked` e retorna ao `technical-review`, seguido
+   obrigatoriamente de nova auditoria.
+7. Para outros destinos, delegue ao Write Agent apropriado e preserve seus
+   gates e validators existentes.
+8. Responda com candidatos, artefatos, evidência, handoffs, gates, riscos,
    backlog e resume state.
 
 ## Write Ownership And Direct-Write Exception
@@ -220,6 +247,12 @@ registrar ausência de Write Agent; conveniência, velocidade ou tamanho não s�
 justificativa. Declare previamente o envelope completo, pare se insuficiente e
 registre na retrospectiva tipo de implementação, motivo da ausência,
 oportunidade/escopo do futuro writer, evidências e riscos.
+
+Na ramificação `package`, `framework-artifact-writer` é owner exclusivo dos
+`target_files` e sync files declarados; o auditor tem sandbox read-only e não
+recebe permissão de escrita em produção. O Writer não pode autoatestar a própria
+mudança. Finding retorna ao owner somente se não ampliar objetivo, destino,
+target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
 
 ## Validators
 
@@ -239,6 +272,9 @@ oportunidade/escopo do futuro writer, evidências e riscos.
 - Writers e handoffs têm envelope, owner, estado terminal e evidência.
 - Gate/approval requerido está satisfeito antes da escrita; validators passam
   antes de conclusão.
+- Destino `package` tem Writer, checks mecânicos e parecer independente
+  `approved`; auditor ausente, `blocked`, finding, inconclusão ou human review
+  impede terminal.
 
 ## Human Gates
 
@@ -334,6 +370,7 @@ continuous_improvement_candidate:
     ambiguity: ""
     why_this_surface_would_prevent_repeat: ""
   destination:
+    destination_scope: "package | consumer-context | runtime | backlog"
     artifact_type: "AGENTS.md | CLAUDE.md | project-doc | project-doc-index | command | skill | agent | template | validator | doc | manifest | backlog"
     target_file: ""
     sync_files: []
@@ -350,6 +387,25 @@ continuous_improvement_candidate:
     - "diff revisado"
     - "validacao de estrutura"
   residual_risk: []
+  promotion_execution:
+    package_artifact_flow_required: "true | false"
+    writer:
+      agent: "framework-artifact-writer | applicable-domain-writer | none"
+      envelope_status: "pending | valid | invalid"
+      target_files: []
+      discovered_target_files: []
+      status: "pending | completed | blocked | failed | not-required"
+      validator_evidence: []
+    auditor:
+      agent: "framework-artifact-quality-auditor | applicable-domain-auditor | none"
+      required: "true | false"
+      status: "pending | approved | blocked | not-required"
+      internal_status: "pending | pass | finding | inconclusive | needs-human-review | not-required"
+      findings: []
+      residual_risks: []
+    iteration: 0
+    gates_invalidated: false
+    next_destination: "writer | technical-review | orchestrator | none"
 ```
 
 ## Stop Conditions
@@ -360,6 +416,10 @@ caso isolado sem project-specific; tentativa de relaxar gate; regra consumidora
 proposta para pacote; root-cause required incompleta e não bloqueada; dependência
 indisponível; handoff sem destino; conflito de writers; validator ausente/falho;
 gate/approval/decisão humana pendente; ou superfície sem validação verificável.
+Para `destination_scope: package`, pare também se o Writer ou auditor estiver
+indisponível, se auditoria tiver finding/inconclusão/human review, se o auditor
+tentar editar produção, ou se uma correção ampliar materialmente o envelope sem
+invalidar e renovar os gates.
 Não declare conclusão com condição ativa.
 
 ## Resume Contract
@@ -369,6 +429,12 @@ execution friction, `root_cause_learning`, ação, owner/writes, handoffs, gates
 validators, artefatos impactados, diff esperado, approval, status, risco,
 etapas concluídas, próxima ação e condição de retomada. Preserve a evidência e
 retome sem reiniciar quando esse estado bastar.
+
+Para `destination_scope: package`, registre também `promotion_execution`: owner
+e envelope do Writer, target/discovered files, evidência de checks, auditor e
+seus estados interno/externo, findings, iteração, gates invalidados e próximo
+destino. Após correção ou decisão humana, o estado volta a `auditor.pending`;
+apenas uma nova auditoria `approved` permite conclusão.
 # Evidence-first learning sources
 
 Prefer validated retrospective outputs, evidence audits and completion records
