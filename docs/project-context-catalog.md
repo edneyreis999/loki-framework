@@ -22,8 +22,8 @@ referencia sem copiar sua estrutura literalmente.
 - `docs/**/*.md`: verdade de negocio, lore, fluxo funcional, termos, regras
   especificas e contexto factual do software ou jogo.
 - `docs/loki-init/**`: documentacao inicial produzida por `loki-init`,
-  incluindo inventario comum, contexto de tecnologia, pastas de inventario por
-  agente, perguntas abertas e conflitos.
+  incluindo inventario comum, contexto de tecnologia, perguntas abertas e
+  conflitos materializados pelo `catalogador` a partir de packets validados.
 - `docs/index.xml`: catalogo navegavel por maquina que ajuda a localizar os
   documentos certos com baixo custo de contexto.
 - `AGENTS.md`: instrucoes project-wide e roteamento minimo para dizer quando a
@@ -45,6 +45,12 @@ referencia sem copiar sua estrutura literalmente.
   que podem exigir documentacao duradoura, sem escrever ou promover contexto por
   conta propria.
 - `lf-index-navigator`: procedimento tecnico para navegar no catalogo XML.
+
+Investigadores de dominio produzem `loki_init_research_packet` schema v1 com
+fontes, sem escrever docs. O orquestrador valida cobertura, organiza lotes e
+preserva continuacao; o `catalogador` materializa bootstrap, lotes e
+reconciliacao final serialmente. Se estiver indisponivel, a escrita bloqueia:
+nao existe writer alternativo para documentacao do consumidor.
 
 ## Regra de Promocao
 
@@ -83,7 +89,10 @@ self-contained em cold start. Eles precisam descrever o conteudo duradouro e
 quando ler o documento sem depender de IDs transitorios de plano, CI, task,
 build, delegacao ou run local. IDs estaveis de dominio, documento, path,
 anchor ou fonte versionada podem aparecer quando vierem acompanhados de
-descricao textual suficiente.
+descricao textual suficiente. IDs de packet, batch, run, invocation ou
+handoff, assim como hashes, idempotency keys e revisions operacionais, nao sao
+chaves obrigatorias do indice nem substituem as chaves human-semantic de
+descoberta.
 
 Exemplo minimo:
 
@@ -120,3 +129,6 @@ Exemplo minimo:
   normativas do pacote.
 - Se um documento duradouro novo for criado em `/docs`, `docs/index.xml` deve
   ser atualizado na mesma promocao.
+- Somente `catalogador` materializa docs duradouros do consumidor. Docs do
+  proprio pacote sao uma superficie distinta sob `framework-artifact-writer`
+  dentro do package root.

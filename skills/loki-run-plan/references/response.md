@@ -34,7 +34,20 @@ Para o consumidor padrão `Both`, preencha integralmente
 `../assets/response-template.md`. Para qualquer consumidor, comunique resumo,
 status final ou atual, fase/tasks, artefatos criados/alterados/analisados,
 evidências e validators, handoffs concluídos ou pendentes, gates e approvals,
-falhas/lacunas/riscos, próximos passos com owner e `LokiRunState`.
+falhas/lacunas/riscos, próximos passos com owner e `LokiRunState`. Para cada
+Write Agent selecionado pela formula canonica, exponha um resumo do
+`domain_context_preflight` com agent/task, durable root, README/docs read,
+freshness `current|stale|absent|unavailable|uncertain`, current sources,
+conflicts, gaps/materiality/substitutes, source precedence, cross-domain e
+durable-gap handoffs, result `ready|ready-with-gaps|blocked`, reason e minimum
+`minimum_next_input`. O mesmo registro deve existir no task state e
+`LokiRunState`.
+
+Declare explicitamente que docs/brief fornecidos pelo orquestrador nao
+substituiram o preflight pessoal. Se target for consumer docs, reporte
+`catalogador`, `calling_workflow: loki-run-plan`, `write_mode:
+task_scoped_writer`, disponibilidade e destinations; indisponibilidade e
+`blocked` pre-write sem fallback.
 
 Não use resposta terminal após checkpoint de task enquanto outra task do escopo
 selecionado estiver pronta na DAG. Não declare conclusão com validator falho, gate/approval material pendente,
@@ -68,6 +81,8 @@ pending-technical-review
   <artifacts></artifacts>
   <evidence></evidence>
   <handoff></handoff>
+  <domain_context_preflight></domain_context_preflight>
+  <consumer_docs_ownership></consumer_docs_ownership>
   <risks></risks>
   <next_steps></next_steps>
 </command_response>

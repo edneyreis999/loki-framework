@@ -42,6 +42,7 @@ serialization: skill-bundle
 domain: execution
 required_skills:
   - lf-run-plan-execution
+  - lf-domain-context-preflight
 required_commands: []
 status: draft
 used_by:
@@ -109,7 +110,11 @@ segura.
 
 Normalize a entrada em registro com objetivo, parâmetros validados, escopo
 terminal, fase inicial e tasks alvo, DAG conhecida, restrições, destinos, `allowed_writes`,
-`forbidden_writes`, approvals, gates e lacunas. Durante Input não implemente,
+`forbidden_writes`, approvals, gates, lacunas, metadata canonica dos agents
+selecionados, durable domain roots declarados e destino read-only para lookup
+documental estreito. Docs ou brief fornecidos pelo orquestrador entram como
+task context, nunca como prova de que o preflight pessoal do Write Agent foi
+executado. Durante Input não implemente,
 altere arquivos, execute a tarefa principal, invoque escritores nem declare
 sucesso.
 

@@ -245,6 +245,14 @@ O init nao escreve em runtime, engine, assets, dados gerados, `.agents/**`,
 gameplay, UI, audio, build, save/load, integracoes ou estado persistido sem
 human-validation posterior.
 
+Agentes de dominio atuam como `init_inventory_domain_investigator` read-only
+ou proposal-only e devolvem packets schema v1 com fontes, fatos, inferencias,
+lacunas, conflitos e cobertura. O orquestrador valida os packets e chama
+`catalogador` serialmente em `init-bootstrap-cataloger`,
+`init-publication-batch` e `init-final-reconciliation`, preservando cobertura,
+continuacao, materializacao e retomada. Nao ha escrita direta nem fallback por
+investigador ou orquestrador; indisponibilidade do `catalogador` bloqueia.
+
 ### Extensao Opcional: RPG Maker MZ
 
 Use `rpg-maker-mz-data-json` somente quando o projeto consumidor exigir
@@ -279,8 +287,11 @@ duradoura e backlog.
   retros.
 - `bibliotecario`: consulta `docs/index.xml` antes de abrir a documentacao
   duradoura do consumidor.
-- `catalogador`: consolida aprendizado `project-specific` em `/docs` do
-  consumidor e mantem o catalogo XML.
+- `catalogador`: unico writer de docs duradouros do consumidor; exige caller,
+  mode, fontes e targets explicitos para manter `/docs` e o catalogo XML.
+- `lf-domain-context-preflight`: preflight pessoal antes de cada task; consulta
+  docs minimas, compara fontes atuais, registra freshness, conflitos e lacunas
+  e nunca autocorrige `/docs`.
 - `runtime-qa`: produz checklist e evidencia exigida; nunca simula
   confirmacao humana.
 - `execution-context-reader`: extrai contexto em modo read-only para
@@ -306,6 +317,12 @@ duradoura e backlog.
   `lf-index-navigator`.
 - `AGENTS.md` e `CLAUDE.md` do consumidor recebem apenas roteamento minimo para
   dizer quando a LLM deve consultar `/docs`.
+
+A matriz caller/mode e fechada: `loki-init` usa
+`init-bootstrap-cataloger`, `init-publication-batch` e
+`init-final-reconciliation`; `loki-continuous-improvement` e `loki-run-plan`
+usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
+`proposal-only`. Caller ou mode ausente ou cruzado bloqueia antes da escrita.
 
 ## Regra de Uso Seguro
 

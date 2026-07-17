@@ -52,10 +52,13 @@ responsabilidade pelo progresso nem pelo estado global do fluxo.
 ```yaml
 required_skills:
   - lf-run-plan-execution
+  - lf-domain-context-preflight
 required_commands: []
 ```
 
-Carregue `lf-run-plan-execution` antes de planejar ou aplicar a execução. Não há
+Carregue `lf-run-plan-execution` e `lf-domain-context-preflight` antes de
+planejar ou aplicar a execução. A segunda e obrigatoria somente quando a
+formula canonica de applicability selecionar um domain Write Agent. Não há
 skill técnica default do core. Carregue `<technology_required_skills>` somente
 quando a task, o usuário, o contexto detectado ou retrospectiva aprovada exigir;
 a skill selecionada deve declarar `<consumer_runtime_surfaces>`, validators e
@@ -120,6 +123,49 @@ Resolva lacunas críticas antes de implementar. Não escreva sem referência
 executável, approval, validator, skill técnica exigida ou decisão humana
 obrigatória não coberta pelo plano ou por registro humano.
 
+## Personal Domain Context Preflight
+
+Antes de cada escrita aplicavel, o proprio domain Write Agent executa
+`lf-domain-context-preflight` quando toda a formula canonica for verdadeira:
+`installed_in_consumer`, `category == Write Agent`, `task_write_mode` inclui
+`task_scoped_writer`, `durable_context_root` esta declarado e o agent e de
+dominio. `active_mode: scoped-writer` nao substitui `task_write_mode`.
+
+O Execution Brief, docs anexados, brief do orquestrador ou leitura anterior nao
+satisfazem nem substituem esse preflight pessoal. Entregue ao agent task context
+autocontido, root resolvido, current sources, requirements materiais e destino
+documental read-only; receba um record schema v1 antes de autorizar a escrita.
+Registre no task state e `LokiRunState`:
+
+- agent/task, durable root, README attempt e durable docs lidos;
+- freshness `current | stale | absent | unavailable` (ou `uncertain` quando o
+  contrato da skill exigir), evidence e current source locators;
+- conflitos, gaps, materialidade, substitutes e
+  `current-source-prevails` quando fonte atual superar doc stale;
+- cross-domain lookup, durable gap handoff, terminal result
+  `ready | ready-with-gaps | blocked`, reason e `minimum_next_input`.
+
+`ready` libera o preflight ordinario de escrita. `ready-with-gaps` libera
+somente quando todo gap e nao-material ou possui substitute atual confiavel.
+Root ausente pode usar esse resultado apenas nessa condicao. Doc stale,
+inacessivel, conflito ou gap material sem substitute bloqueia; com route
+disponivel, solicite a menor unidade por `bibliotecario` read-only. Use
+`source-researcher` read-only somente quando a lacuna for multifonte/conflitante
+como ja previsto. Cross-domain nunca autoriza o Write Agent a ler outro root
+diretamente. O agent nao corrige consumer docs; registre gap e route estreita.
+
+## Consumer Documentation Ownership
+
+Se qualquer target resolver em consumer docs, atribua-o exclusivamente ao
+`catalogador` com `calling_workflow: loki-run-plan` e
+`write_mode: task_scoped_writer`. Valide o par antes da primeira escrita e
+preserve targets, owner, approval, validators, gates e destinations. Se o
+`catalogador` estiver ausente ou indisponivel, bloqueie pre-write com task state
+e `LokiRunState` retomaveis; orquestrador, domain agent, framework writer ou
+writer alternativo nunca assume consumer docs. Isto nao remove writers
+legitimos de codigo, config, dados, assets, specs, reports ou runtime fora de
+consumer docs.
+
 ## Agents, Self-Contained Envelopes And Handoffs
 
 Delegue leitura, pesquisa, implementação, teste e revisão ao agente que possua a
@@ -174,7 +220,8 @@ Antes de cada escrita, confirme task ativa, arquivo, superfície,
 `scoped-writer` quando a task aprovada declarar target files, allowed writes,
 owner exclusivo, validators e gates.
 
-Escrita direta pelo orquestrador é exceção permitida apenas depois de verificar
+Para consumer docs, escrita direta e qualquer fallback sao proibidos conforme
+ownership acima. Para outros targets, escrita direta pelo orquestrador é exceção permitida apenas depois de verificar
 e registrar que nenhum Write Agent apropriado está disponível; conveniência,
 velocidade ou tamanho da mudança não justificam a exceção. Antes dela, declare
 target files, `allowed_writes`, `forbidden_writes`, owner único, validators,
@@ -190,14 +237,17 @@ Para cada task na ordem topológica dentro do escopo terminal:
 
 1. Confirme dependências concluídas e reconcilie o estado com evidência em disco.
 2. Entregue contexto e envelope ao responsável e acompanhe o handoff.
-3. Consolide o retorno e execute os validators antes de liberar dependentes.
-4. Registre em `builds/faseN/` comando/checklist, resultado e evidência, ou
+3. Quando aplicavel, exija o preflight pessoal terminal do Write Agent e
+   registre roots/docs/freshness/conflicts/gaps/result/next input antes de
+   liberar a escrita. O contexto entregue pelo orquestrador nao o substitui.
+4. Consolide o retorno e execute os validators antes de liberar dependentes.
+5. Registre em `builds/faseN/` comando/checklist, resultado e evidência, ou
    justificativa objetiva quando um validator não se aplicar.
-5. Execute checkpoint obrigatório antes de liberar dependentes: atualize task
+6. Execute checkpoint obrigatório antes de liberar dependentes: atualize task
    file, `TASKS_MD` e `LokiRunState` com status, arquivos afetados,
    validations/evidências, Human Loop, `next_action`, blockers e próxima task
    resolvida pela DAG; atualize interaction records quando autorizado.
-6. Não marque comportamento perceptível, runtime, integração, persistência ou
+7. Não marque comportamento perceptível, runtime, integração, persistência ou
    output gerado como validado sem validator aplicável e confirmação do gate
    humano exigido.
 
@@ -223,6 +273,13 @@ de ambiente, correções do usuário e desperdícios a evitar.
 - O `Execution Brief` existe antes da primeira escrita.
 - Cada escrita respeita task, owner, target files, allowed/forbidden writes,
   scoped domains, validators e gates; nenhuma sobreposição concorrente existe.
+- Cada domain Write Agent aplicavel executou seu proprio preflight; task state,
+  `LokiRunState` e Response preservam roots/docs read, freshness, conflitos,
+  gaps, precedence, result e next input. Brief/docs do caller nao contam como
+  substituto.
+- Consumer-doc targets usam somente `catalogador` com
+  `calling_workflow: loki-run-plan` e `write_mode: task_scoped_writer`; ausencia
+  bloqueia sem fallback.
 - Validators foram executados ou objetivamente justificados, com evidência.
 - Handoffs atingiram estado terminal e runtime/percepção não foi declarado
   validado sem controle humano aplicável.
@@ -264,7 +321,8 @@ ausente; `Execution Brief` insuficiente; handoff sem destino; conflito de
 writers; validator obrigatório ausente, falho ou inconclusivo; gate/approval
 material pendente; decisão humana necessária; target fora da task; escrita
 sensível sem skill/owner/validator/gate; ou `scoped-writer` sem envelope
-completo. Não declare conclusão enquanto qualquer condição permanecer ativa.
+completo; preflight pessoal `blocked`/ausente; gap material sem substitute/route;
+ou consumer-doc target sem `catalogador` disponivel. Não declare conclusão enquanto qualquer condição permanecer ativa.
 
 ## Resume Contract
 
@@ -274,3 +332,7 @@ owners, allowed/forbidden writes, arquivos afetados, validations e evidências,
 Human Loop, approvals/gates, etapas concluídas, blockers, riscos, próxima ação e
 condição necessária para continuar. Preserve a evidência e retome desse estado;
 não reinicie o fluxo quando ele bastar.
+Por task/agent, inclua durable root, docs read, freshness, current sources,
+conflicts, gaps/materiality/substitutes, cross-domain/durable-gap handoffs,
+source precedence, result e minimum next input. Para consumer docs, inclua
+caller/mode, disponibilidade do `catalogador`, destinations e blocker retomavel.

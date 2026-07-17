@@ -1,9 +1,9 @@
 ---
 name: loki-init
-description: Run the Loki `loki-init` command bundle in Codex. Bootstrap or audit consumer documentation under docs/** and resumable operational state under planos/000-init-loki/** through controlled discovery, domain inventory writers, one final catalogador pass, completion records, evidence capture by the orchestrator, validators, gates, and strict write boundaries.
+description: Run the Loki `loki-init` command bundle in Codex. Bootstrap, refresh or audit consumer documentation through read-only investigators, accepted research packets, serial catalogador bootstrap/publication/reconciliation, resumable planos/000-init-loki state, evidence, validators, gates, and strict write boundaries.
 when_to_use:
   - "Use when bootstrapping or auditing Loki consumer documentation and planos/000-init-loki state."
-  - "Use when initialization requires project classification, domain inventory fan-out, final cataloging, completion records, evidence capture, validators, and resumable state without touching consumer runtime."
+  - "Use when initialization requires project classification, resumable investigator fan-out, packet acceptance, serial catalogador publication, terminal coverage, completion records, evidence capture, validators, and resumable state without touching consumer runtime."
 argument-hint: "[consumer_project_root, docs_root, plan_root, mode, engine_hint, project_type_hint, max_scan_depth, include_patterns, exclude_patterns]"
 arguments:
   required: []
@@ -29,7 +29,7 @@ adapter_projection:
   claude_code: "May map to command frontmatter where supported."
 escalation_signals:
   - consumer documentation bootstrap
-  - multi-agent fan-out and serial consolidation
+  - resumable investigator fan-out and serial catalogador publication
   - consumer write boundary ambiguity
 context: standard
 agent: main

@@ -1,8 +1,8 @@
 ---
 name: lf-template-library
-description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, agent-session evidence, or agentic v2 XML state artifacts that should follow the package templates.
+description: Use installed Loki templates from Codex. Trigger when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, Loki init schema-v1 research packets or publication batches, agent-session evidence, or agentic v2 XML state artifacts that should follow the package templates.
 when_to_use:
-  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, agent-session evidence, or agentic v2 XML state artifacts."
+  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, Loki init research packets or publication batches, agent-session evidence, or agentic v2 XML state artifacts."
   - "Use when an installed package template should be loaded before writing an artifact."
 argument-hint: "[template kind, artifact destination]"
 arguments:
@@ -61,6 +61,12 @@ inspection mirror.
   [component-contract-template.md](references/templates/component-contract-template.md)
 - Project docs index:
   [project-doc-index-template.xml](references/templates/project-doc-index-template.xml)
+- Loki init research packet schema v1, emitted by a read-only/proposal-only
+  domain investigator:
+  [loki-init-research-packet-template.xml](references/templates/loki-init-research-packet-template.xml)
+- Loki init publication batch schema v1, assembled by the orchestrator for
+  serial materialization by `catalogador`:
+  [loki-init-publication-batch-template.xml](references/templates/loki-init-publication-batch-template.xml)
 - Agentic run manifest:
   [agentic-run-manifest-template.xml](references/templates/agentic-run-manifest-template.xml)
 - Agentic analysis manifest:

@@ -179,6 +179,25 @@ Use `catalogador` para docs project-specific e atualize `docs/index.xml` na
 mesma promoção. `AGENTS.md`/`CLAUDE.md` recebem apenas roteamento mínimo; detalhe
 de negócio permanece em docs. Não coloque fatos do consumidor no pacote.
 
+### Catalogador Caller/Mode Contract
+
+Todo handoff ao `catalogador` envia explicitamente
+`calling_workflow: loki-continuous-improvement` e
+`write_mode: task_scoped_writer`. Somente esse
+par e valido; caller/mode ausente, desconhecido ou cruzado falha antes da
+primeira escrita no `failure_destination`.
+
+Rejeite `init-bootstrap-cataloger`, `init-publication-batch` e
+`init-final-reconciliation`. Packets, batches, ledger, bootstrap, coverage e
+final reconciliation do init nunca sao inputs, precondicoes ou semantica deste
+caller. Preserve o envelope nao-init existente com targets, consumer root,
+allowed/forbidden writes, owner, approval, validators, gates e destinations.
+
+Se `catalogador` estiver indisponivel, bloqueie pre-write. Nao use escrita
+direta do orquestrador nem writer alternativo em consumer docs. Preserve
+candidato e resume state com caller/mode, targets, approvals, validators,
+gates, `blocked_by`, success/failure destinations e condicao de retomada.
+
 ## Root-Cause Learning Phase And Boundary
 
 Todo candidato declara `root_cause_learning.required`. Marque `true` para erro
@@ -195,7 +214,9 @@ Quando `true`, antes de destino final, proposta ou escrita:
    of truth, semântica surpreendente ou causa suspeita.
 3. Delegue a `retrospective-digester` busca de padrão em fontes retrospectivas.
 4. Use `standards-curator` para confirmar mudança de escopo/destino/gate e
-   `catalogador` quando a causa project-specific virar docs.
+   `catalogador` quando a causa project-specific virar docs, sempre com
+   `calling_workflow: loki-continuous-improvement` e
+   `write_mode: task_scoped_writer`.
 5. Receba somente `source_research` e `retrospective_digest` estruturados com
    fontes, fatos, inferências, conflitos, lacunas, causa, regra preventiva e
    riscos. Reabra bruto apenas se o handoff exigir.
@@ -229,12 +250,13 @@ exata da busca ao usuário.
    Ampliação material invalida gates e retorna à proposta, review e approval;
    `needs-human-review` é `blocked` e retorna ao `technical-review`, seguido
    obrigatoriamente de nova auditoria.
-7. Para outros destinos, delegue ao Write Agent apropriado e preserve seus
-   gates e validators existentes.
+7. Para consumer docs project-specific, delegue exclusivamente ao `catalogador`
+   com o par caller/mode fixo. Para outros destinos, delegue ao Write Agent
+   apropriado e preserve seus gates e validators existentes.
 8. Responda com candidatos, artefatos, evidência, handoffs, gates, riscos,
    backlog e resume state.
 
-## Write Ownership And Direct-Write Exception
+## Write Ownership And Named Writer Routing
 
 Leituras independentes podem ser paralelas; nenhuma promoção, patch,
 catalogação ou atualização escreve em paralelo. Atribua owner único por arquivo,
@@ -242,11 +264,16 @@ detecte overlap e serialize writes.
 
 Antes de criar, modificar, mover ou remover, selecione Write Agent apropriado e
 entregue target files, alteração, allowed/forbidden writes, validators, gates,
-evidências e handoff. Escrita direta pelo orquestrador só após verificar e
-registrar ausência de Write Agent; conveniência, velocidade ou tamanho não são
-justificativa. Declare previamente o envelope completo, pare se insuficiente e
-registre na retrospectiva tipo de implementação, motivo da ausência,
-oportunidade/escopo do futuro writer, evidências e riscos.
+evidências e handoff. `consumer-docs-fallback: prohibited`: somente o
+`catalogador` escreve consumer docs, e sua indisponibilidade bloqueia pre-write
+sem escrita direta do orquestrador ou writer alternativo.
+
+Para package, use exclusivamente `framework-artifact-writer`; para outro
+destino nao-consumer, use o applicable-domain-writer nomeado pelo envelope.
+Ausencia do writer exigido bloqueia ou retorna ao orquestrador para
+reclassificacao/replanejamento; nunca converta o target para outra classe por
+conveniencia, velocidade ou tamanho. Preserve target files, allowed/forbidden
+writes, owner, validators, gates, evidências e destinations em qualquer rota.
 
 Na ramificação `package`, `framework-artifact-writer` é owner exclusivo dos
 `target_files` e sync files declarados; o auditor tem sandbox read-only e não
@@ -270,6 +297,9 @@ target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
 - Docs duradouros atualizam `docs/index.xml`; roteamento em AGENTS/CLAUDE é
   mínimo e detalhe fica em docs.
 - Writers e handoffs têm envelope, owner, estado terminal e evidência.
+- Handoff ao `catalogador` declara exatamente caller/mode deste workflow;
+  init modes/payloads falham pre-write e indisponibilidade bloqueia sem
+  fallback documental.
 - Gate/approval requerido está satisfeito antes da escrita; validators passam
   antes de conclusão.
 - Destino `package` tem Writer, checks mecânicos e parecer independente
@@ -416,6 +446,8 @@ caso isolado sem project-specific; tentativa de relaxar gate; regra consumidora
 proposta para pacote; root-cause required incompleta e não bloqueada; dependência
 indisponível; handoff sem destino; conflito de writers; validator ausente/falho;
 gate/approval/decisão humana pendente; ou superfície sem validação verificável.
+Pare tambem antes de consumer-doc write se `catalogador` estiver indisponivel,
+caller/mode divergir ou o envelope exigir qualquer precondicao init.
 Para `destination_scope: package`, pare também se o Writer ou auditor estiver
 indisponível, se auditoria tiver finding/inconclusão/human review, se o auditor
 tentar editar produção, ou se uma correção ampliar materialmente o envelope sem
@@ -435,6 +467,9 @@ e envelope do Writer, target/discovered files, evidência de checks, auditor e
 seus estados interno/externo, findings, iteração, gates invalidados e próximo
 destino. Após correção ou decisão humana, o estado volta a `auditor.pending`;
 apenas uma nova auditoria `approved` permite conclusão.
+Para consumer docs project-specific, registre caller/mode fixo, estado do
+handoff ao `catalogador`, `blocked_by`, targets, destinations e condicao exata
+de retomada; nunca substitua o writer.
 # Evidence-first learning sources
 
 Prefer validated retrospective outputs, evidence audits and completion records

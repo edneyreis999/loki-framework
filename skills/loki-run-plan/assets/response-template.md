@@ -28,6 +28,14 @@
 
 <origem, destino, estado e evidência dos handoffs; gates e approvals concluídos ou pendentes>
 
+## Domain Context Preflight
+
+<por task/agent aplicavel: durable_context_root; README/docs read; freshness current | stale | absent | unavailable | uncertain; current source locators; conflicts e current-source-prevails; gaps/materiality/substitutes; cross-domain lookup e durable-gap handoff; result ready | ready-with-gaps | blocked; result reason; minimum_next_input. Confirmar que docs/brief do orquestrador nao substituiu o preflight pessoal; use none quando a formula canonica nao se aplicar>
+
+## Consumer docs ownership
+
+<targets consumer docs; owner catalogador; calling_workflow loki-run-plan; write_mode task_scoped_writer; disponibilidade; success/failure destinations; blocker/resume condition. Declarar no-fallback; use none quando nao aplicavel>
+
 ## Retrospectiva técnica
 
 <iniciada | recomendada | não aplicável, com destino ou próximo owner>
@@ -42,4 +50,4 @@
 
 ## LokiRunState
 
-<plano, fase, task, status, brief, DAG, fontes, handoffs, owners, writes, arquivos, validations, human loop, blockers e condição de retomada>
+<plano, fase, task, status, brief, DAG, fontes, handoffs, owners, writes, arquivos, validations, human loop, blockers e condição de retomada; por preflight incluir durable root/docs, freshness, current sources, conflicts, gaps/materiality/substitutes, precedence, handoffs, result e minimum next input; para consumer docs incluir catalogador caller/mode, disponibilidade e destinations>

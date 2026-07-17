@@ -36,6 +36,8 @@ type: skill
 status: draft
 used_by:
   - loki-run-plan
+required_skills:
+  - lf-domain-context-preflight
 ---
 
 # lf-run-plan-execution
@@ -81,27 +83,44 @@ decisoes humanas e validators em uma execucao rastreavel.
    executavel, approval, validator ou skill tecnica exigida.
 9. Carregar `<technology_required_skills>` apenas quando o usuario, a task, o
    contexto detectado ou retrospectiva aprovada indicar uma tecnologia.
-10. Executar tasks uma por vez na ordem topologica dentro do escopo terminal.
+10. Antes de cada task write aplicavel, selecionar pela formula canonica
+    `installed_in_consumer AND category == Write Agent AND task_write_mode
+    includes task_scoped_writer AND durable_context_root declared AND domain
+    agent`. O proprio agent executa `lf-domain-context-preflight`; Execution
+    Brief, docs ou brief entregues pelo orquestrador nao substituem essa leitura
+    seletiva pessoal.
+11. Registrar durable root/README/docs read, freshness, current sources,
+    conflitos, gaps/materialidade/substitutes, precedence, cross-domain/gap
+    handoffs, result `ready|ready-with-gaps|blocked` e minimum next input.
+    Fonte atual prevalece sobre doc stale. Root absent so segue
+    `ready-with-gaps` sem gap material; bloqueie stale/unavailable/conflict/gap
+    material sem substitute ou route. Use `bibliotecario` read-only para lookup
+    cross-domain estreito; o Write Agent nunca autoedita consumer docs.
+12. Se target resolver em consumer docs, owner exclusivo e `catalogador` com
+    `calling_workflow: loki-run-plan` e `write_mode: task_scoped_writer`.
+    Indisponibilidade bloqueia pre-write com estado retomavel, sem escrita do
+    orquestrador, domain agent ou writer alternativo.
+13. Executar tasks uma por vez na ordem topologica dentro do escopo terminal.
     Leitura pode ser paralela;
     escrita e serializada por owner e arquivo. O owner pode ser o orquestrador
     ou um agente `scoped-writer` quando a task aprovada declarar
     `target_files`, `allowed_writes`, validators e gates.
-11. Antes de cada escrita, verificar que o arquivo, superficie, `<domain_ids>`,
+14. Antes de cada escrita, verificar que o arquivo, superficie, `<domain_ids>`,
     integration point, owner, `scoped_write_domains` e gate estao cobertos pela
     task ativa.
-12. Rodar validators declarados. Registrar comando/checklist, resultado,
+15. Rodar validators declarados. Registrar comando/checklist, resultado,
     evidencia e justificativa quando um validator nao se aplicar.
-13. Nao declarar comportamento perceptivel, runtime, integracao, estado
+16. Nao declarar comportamento perceptivel, runtime, integracao, estado
     persistido ou artefato gerado como validado sem `<human_validation_gate>`.
-14. Ao terminar cada task, executar checkpoint obrigatorio antes de liberar
+17. Ao terminar cada task, executar checkpoint obrigatorio antes de liberar
     dependentes: validators/evidencias, status em `task-N.M.md` e `tasks.md`,
     `LokiRunState` completo (incluindo blockers e `next_action`) e proxima task
     pronta na DAG. Atualizar `builds/faseN/` e `interaction/faseN/` apenas conforme permitido.
-15. Depois de checkpoint valido, seguir automaticamente para a proxima task
+18. Depois de checkpoint valido, seguir automaticamente para a proxima task
     pronta; nao encerrar entre tasks. Quando a plataforma oferecer compactacao
     de contexto, ela pode ocorrer depois do checkpoint, mas sua ausencia/falha
     nunca bloqueia a continuacao pelo estado persistido.
-16. Quando uma task tiver `pending-technical-review` ou qualquer input humano
+19. Quando uma task tiver `pending-technical-review` ou qualquer input humano
     material pendente, persista esse estado no checkpoint. Só emita o disclaimer
     destacado na resposta terminal causada por esse bloqueio real, usando o
     status exato como titulo e bullets concretos do que falta esclarecer,
@@ -116,7 +135,7 @@ decisoes humanas e validators em uma execucao rastreavel.
     - Confirmar ...
     - Responder ...
     ```
-16. Ao concluir a fase, recomendar `loki-retrospectiva-tecnica` com resumo de
+20. Ao concluir a fase, recomendar `loki-retrospectiva-tecnica` com resumo de
     arquivos afetados, validators, gates humanos, riscos residuais, comandos e
     scripts executados, outputs inesperados, inferencias uteis e incorretas,
     mismatches de ambiente, correcoes do usuario e desperdicios que a proxima
@@ -142,6 +161,8 @@ decisoes humanas e validators em uma execucao rastreavel.
   `target_files` e validators da task.
 - Atualizacao de status em `tasks.md` e `task-N.M.md`.
 - `LokiRunState` retomavel.
+- Registros de `domain_context_preflight` por task/agent com durable roots/docs,
+  freshness, conflicts, gaps, source precedence, result e next input.
 - Disclaimer final destacado quando o status depender de input humano material
   nao resolvido pelo plano aprovado, como `technical-review`,
   `human-validation`, `approval`, `interview` ou outro gate pendente.
@@ -160,6 +181,8 @@ decisoes humanas e validators em uma execucao rastreavel.
 - Nao permita handoff solto escrever no projeto consumidor. Escrita por agente
   exige `mode: scoped-writer`, task aprovada, `target_files`, `allowed_writes`,
   ownership exclusivo, validators e gates aplicaveis.
+- Nao permita domain agent ou orquestrador escrever consumer docs; use somente
+  `catalogador` com caller/mode fixo e bloqueie sem fallback se indisponivel.
 - Quando o plano aprovado exigir retrospectiva tecnica por agente, o agente
   escreve somente o proprio `target_retrospective` exato sob
   `retrospetivas/faseN/`. Essa excecao nao se aplica a docs duradouros,
@@ -205,6 +228,11 @@ decisoes humanas e validators em uma execucao rastreavel.
 - `Execution Brief` foi produzido antes da primeira escrita.
 - Toda escrita ficou dentro do escopo da task ativa, com owner e `target_files`
   rastreados.
+- Preflight pessoal aplicavel foi executado pelo proprio Write Agent e os campos
+  de root/docs/freshness/conflicts/gaps/precedence/result/next input foram
+  persistidos; caller context nao foi aceito como substituto.
+- Consumer docs pertencem ao `catalogador` com caller/mode esperado e ausencia
+  resulta em blocker retomavel sem fallback.
 - Validators foram executados ou justificados.
 - Human gates pendentes nao foram marcados como aprovados quando dependiam de
   input humano material fora do plano aprovado.

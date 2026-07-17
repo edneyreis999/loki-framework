@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<loki_init_research_packet schema_version="1">
+  <identity>
+    <run_id required="true" type="loki-run-id">{{run_id}}</run_id>
+    <investigator required="true">{{investigator}}</investigator>
+    <investigator_invocation_id required="true" type="investigator-invocation-id">{{investigator_invocation_id}}</investigator_invocation_id>
+    <packet_id required="true" type="research-packet-id">{{packet_id}}</packet_id>
+    <packet_revision required="true" type="positive-integer">{{packet_revision}}</packet_revision>
+    <sequence required="true" type="positive-integer">{{sequence}}</sequence>
+    <topic_id required="true">{{topic_id}}</topic_id>
+    <topic_title required="true">{{topic_title}}</topic_title>
+    <packet_hash required="true" algorithm="sha-256" scope="canonical-content-excluding-packet-hash">{{packet_sha256}}</packet_hash>
+    <supersedes>
+      <packet_ref id="{{superseded_packet_id}}" revision="{{superseded_packet_revision}}" hash="{{superseded_packet_sha256}}" />
+    </supersedes>
+  </identity>
+  <status required="true" enum="emitted|partial|blocked">{{packet_status}}</status>
+  <scope>
+    <objective required="true">{{objective}}</objective>
+    <examined>
+      <item>{{examined_item}}</item>
+    </examined>
+    <excluded>
+      <item>{{excluded_item}}</item>
+    </excluded>
+    <source_frontier>
+      <item>{{source_frontier_item}}</item>
+    </source_frontier>
+  </scope>
+  <sources>
+    <attempted>
+      <source source_id="{{attempted_source_id}}">
+        <locator required="true">{{attempted_source_locator}}</locator>
+        <outcome required="true" enum="read|missing|inaccessible|not-relevant">{{attempt_outcome}}</outcome>
+        <reason>{{attempt_reason}}</reason>
+      </source>
+    </attempted>
+    <read>
+      <source source_id="{{source_id}}" required="true">
+        <path>{{source_path_or_null}}</path>
+        <locator required="true">{{source_locator}}</locator>
+        <relevance required="true">{{source_relevance}}</relevance>
+        <freshness_marker required="true">{{source_freshness_marker}}</freshness_marker>
+      </source>
+    </read>
+  </sources>
+  <findings>
+    <facts>
+      <fact finding_id="{{fact_id}}" required="true">
+        <statement required="true">{{fact_statement}}</statement>
+        <source_refs required="true" min_items="1">
+          <source_ref source_id="{{fact_source_id}}" />
+        </source_refs>
+        <confidence required="true">{{fact_confidence}}</confidence>
+      </fact>
+    </facts>
+    <inferences>
+      <inference finding_id="{{inference_id}}">
+        <statement required="true">{{inference_statement}}</statement>
+        <basis_refs><source_ref source_id="{{inference_source_id}}" /></basis_refs>
+        <confidence required="true">{{inference_confidence}}</confidence>
+      </inference>
+    </inferences>
+    <unknowns>
+      <unknown finding_id="{{unknown_id}}">{{unknown_statement}}</unknown>
+    </unknowns>
+    <contradictions>
+      <contradiction finding_id="{{contradiction_id}}">
+        <statement required="true">{{contradiction_statement}}</statement>
+        <source_refs required="true" min_items="2">
+          <source_ref source_id="{{contradiction_source_id_a}}" />
+          <source_ref source_id="{{contradiction_source_id_b}}" />
+        </source_refs>
+      </contradiction>
+    </contradictions>
+    <do_not_assume>
+      <item>{{do_not_assume_item}}</item>
+    </do_not_assume>
+  </findings>
+  <coverage_delta>
+    <requirement requirement_id="{{requirement_id}}" required="true">
+      <required_depth required="true" enum="map|deep">{{required_depth}}</required_depth>
+      <state required="true" enum="covered|mapped|not_found|not_applicable|deferred|blocked">{{coverage_state}}</state>
+      <evidence_refs>
+        <evidence_ref>{{coverage_evidence_ref}}</evidence_ref>
+      </evidence_refs>
+      <reason>{{coverage_reason}}</reason>
+    </requirement>
+  </coverage_delta>
+  <publication_intent>
+    <domain_root required="true">docs/loki-init/{{investigator}}/</domain_root>
+    <suggested_documents><document>{{suggested_document}}</document></suggested_documents>
+    <suggested_sections><section>{{suggested_section}}</section></suggested_sections>
+    <cross_links><link>{{suggested_cross_link}}</link></cross_links>
+  </publication_intent>
+  <continuation>
+    <logical_status required="true" enum="continue|complete|blocked">{{continuation_status}}</logical_status>
+    <next_topics><topic>{{next_topic}}</topic></next_topics>
+    <sources_already_read><source_ref source_id="{{already_read_source_id}}" /></sources_already_read>
+    <minimum_next_input>{{minimum_next_input}}</minimum_next_input>
+  </continuation>
+  <validation>
+    <schema_status required="true" enum="pending|passed|failed">{{schema_status}}</schema_status>
+    <acceptance_status required="true" enum="pending|accepted|rejected|superseded">{{acceptance_status}}</acceptance_status>
+    <rejection_reasons><reason>{{rejection_reason}}</reason></rejection_reasons>
+  </validation>
+  <invariants>
+    <invariant id="accepted-packet-immutable">An accepted packet is immutable.</invariant>
+    <invariant id="identical-retry-no-op">A retry with the same packet_id and packet_hash is recorded as a no-op.</invariant>
+    <invariant id="divergent-retry-requires-lineage">Different content for an existing packet_id is invalid unless packet_revision advances and supersedes identifies the prior packet.</invariant>
+    <invariant id="fact-source-required">Every fact has at least one source_ref resolving to sources/read/source/@source_id.</invariant>
+    <invariant id="coverage-not-promoted">Deferred or blocked coverage does not satisfy successful terminal coverage.</invariant>
+    <invariant id="read-only-evidence">This packet grants no write authority and remains separate from completion and session evidence.</invariant>
+  </invariants>
+</loki_init_research_packet>

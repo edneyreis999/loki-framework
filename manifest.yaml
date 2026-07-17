@@ -157,13 +157,17 @@ agentic_agent_metadata:
     parallel_safe: true
     technology_skill_routes: []
   runtime-qa:
-    capability_tags: ["runtime-validation", "human-validation", "evidence"]
+    capability_tags: ["runtime-validation", "human-validation", "evidence", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["validation", "qa"]
-    agentic_modes: ["scoped-writer", "report"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer", "report"]
     write_classes: ["validation-report", "plan-evidence"]
     risk_tags: ["runtime", "human-validation"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   execution-context-reader:
     capability_tags: ["context-extraction", "source-map", "preflight"]
     phase_roles: ["analysis", "execution-context"]
@@ -181,13 +185,17 @@ agentic_agent_metadata:
     parallel_safe: true
     technology_skill_routes: []
   technical-implementer:
-    capability_tags: ["implementation", "code-change", "validator"]
+    capability_tags: ["implementation", "code-change", "validator", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["implementation", "fix"]
-    agentic_modes: ["scoped-writer", "proposal"]
-    write_classes: ["code", "config", "scripts", "docs"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
+    write_classes: ["code", "config", "scripts", "package-skill-contracts", "package-templates", "task-local-evidence"]
     risk_tags: ["write-conflict", "integration"]
     parallel_safe: false
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   bibliotecario:
     capability_tags: ["documentation-navigation", "context-routing"]
     phase_roles: ["context", "lookup"]
@@ -197,117 +205,173 @@ agentic_agent_metadata:
     parallel_safe: true
     technology_skill_routes: []
   catalogador:
-    capability_tags: ["documentation-catalog", "indexing"]
-    phase_roles: ["documentation", "catalog"]
+    capability_tags: ["documentation-catalog", "indexing", "serial-materialization", "caller-mode-validation"]
+    phase_roles: ["documentation", "catalog", "init-publication"]
     agentic_modes: ["scoped-writer"]
     write_classes: ["docs-index", "docs"]
     risk_tags: ["shared-index-write"]
     parallel_safe: false
     technology_skill_routes: []
+    init_role: "serial-consumer-docs-materializer"
+    allowed_callers: ["loki-init", "loki-continuous-improvement", "loki-catalogar-docs", "loki-run-plan"]
+    scoped_write_modes: ["init-bootstrap-cataloger", "init-publication-batch", "init-final-reconciliation", "task_scoped_writer", "proposal-only"]
+    domain_context_preflight: "caller-validated"
   game-product-owner:
-    capability_tags: ["product", "acceptance", "priority"]
+    capability_tags: ["product", "acceptance", "priority", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "acceptance"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["spec", "plan-evidence"]
     risk_tags: ["scope"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   game-business-analyst:
-    capability_tags: ["requirements", "rules", "gap-analysis"]
+    capability_tags: ["requirements", "rules", "gap-analysis", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "requirements"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["requirements", "spec"]
     risk_tags: ["requirement-ambiguity"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   game-designer:
-    capability_tags: ["game-design", "mechanics", "tuning"]
+    capability_tags: ["game-design", "mechanics", "tuning", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "design", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["spec", "tuning", "content"]
     risk_tags: ["gameplay-balance"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   narrative-designer:
-    capability_tags: ["narrative", "characters", "scenes"]
+    capability_tags: ["narrative", "characters", "scenes", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["narrative", "dialogue", "spec"]
     risk_tags: ["continuity"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   ux-ui-designer:
-    capability_tags: ["ux", "ui", "interaction"]
+    capability_tags: ["ux", "ui", "interaction", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "design-review"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["ux-spec", "ui-copy", "plan-evidence"]
     risk_tags: ["perceptible-behavior"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   gameplay-engineer:
-    capability_tags: ["gameplay-code", "mechanics", "runtime"]
+    capability_tags: ["gameplay-code", "mechanics", "runtime", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["implementation", "validation"]
-    agentic_modes: ["scoped-writer", "proposal"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["code", "data", "config"]
     risk_tags: ["runtime", "integration", "write-conflict"]
     parallel_safe: false
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   narrative-qa:
-    capability_tags: ["narrative-qa", "continuity", "regression"]
+    capability_tags: ["narrative-qa", "continuity", "regression", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["validation", "review"]
-    agentic_modes: ["read-only", "report"]
+    agentic_modes: ["read-only", "proposal", "report"]
     write_classes: ["validation-report"]
     risk_tags: ["content-regression"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   level-designer:
-    capability_tags: ["level-design", "encounters", "navigation"]
+    capability_tags: ["level-design", "encounters", "navigation", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["level-spec", "content"]
     risk_tags: ["spatial-flow"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   balance-economy-designer:
-    capability_tags: ["balance", "economy", "progression"]
+    capability_tags: ["balance", "economy", "progression", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "tuning"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["tuning", "economy-spec"]
     risk_tags: ["balance-regression"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   scene-presentation-designer:
-    capability_tags: ["scene-presentation", "beats", "visual-flow"]
+    capability_tags: ["scene-presentation", "beats", "visual-flow", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["scene-spec", "presentation-notes"]
     risk_tags: ["perceptible-behavior"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   audio-designer:
-    capability_tags: ["audio", "music", "sfx"]
+    capability_tags: ["audio", "music", "sfx", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["audio-spec", "content"]
     risk_tags: ["perceptible-behavior"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   quest-content-designer:
-    capability_tags: ["quest", "objectives", "rewards"]
+    capability_tags: ["quest", "objectives", "rewards", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "content"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["quest-spec", "content"]
     risk_tags: ["quest-state"]
     parallel_safe: true
     technology_skill_routes: []
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   technical-artist:
-    capability_tags: ["technical-art", "assets", "presentation"]
+    capability_tags: ["technical-art", "assets", "presentation", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["analysis", "validation"]
-    agentic_modes: ["proposal", "scoped-writer"]
+    agentic_modes: ["read-only", "proposal", "scoped-writer"]
     write_classes: ["asset-spec", "pipeline-notes"]
     risk_tags: ["asset-pipeline", "perceptible-behavior"]
     parallel_safe: true
     technology_skill_routes: ["<technology_required_skills>"]
+    init_role: "init_inventory_domain_investigator"
+    init_execution_modes: ["read-only", "proposal-only"]
+    init_output_contract: "loki_init_research_packet schema v1"
+    domain_context_preflight: "lf-domain-context-preflight"
   framework-artifact-writer:
     capability_tags: ["package-authoring", "scoped-write", "contract-sync"]
     phase_roles: ["implementation", "package-promotion"]
@@ -362,6 +426,10 @@ scripts:
     file: "scripts/validate-agentic-run-state.py"
     status: draft
     purpose: "Validate Loki agentic v2 XML run state, handoff IDs, gates, writer contracts, parallel target conflicts and completion reports."
+  - name: "validate-loki-init-catalogador-contracts"
+    file: "scripts/validate-loki-init-catalogador-contracts.py"
+    status: draft
+    purpose: "Validate schema-v1 init packets and publication batches, catalogador caller/mode and ownership rules, fixtures, and current-tree agent projections."
 
 install_scope_sources:
   - name: "install-scopes"
@@ -519,6 +587,9 @@ skills:
       response_template: "assets/response-template.md"
   - name: "lf-run-plan-execution"
     file: "skills/lf-run-plan-execution/SKILL.md"
+    status: draft
+  - name: "lf-domain-context-preflight"
+    file: "skills/lf-domain-context-preflight/SKILL.md"
     status: draft
   - name: "loki-retrospectiva-tecnica"
     file: "skills/loki-retrospectiva-tecnica/SKILL.md"
@@ -937,6 +1008,12 @@ templates:
     status: draft
   - name: "technical-analysis-template"
     file: "templates/technical-analysis-template.md"
+    status: draft
+  - name: "loki-init-research-packet-template"
+    file: "templates/loki-init-research-packet-template.xml"
+    status: draft
+  - name: "loki-init-publication-batch-template"
+    file: "templates/loki-init-publication-batch-template.xml"
     status: draft
 
 docs:

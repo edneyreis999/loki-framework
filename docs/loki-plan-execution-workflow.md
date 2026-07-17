@@ -65,29 +65,37 @@ execucao.
    atual. Pesquisa externa continua condicionada: a frase exata deve ser
    mostrada ao usuario antes da busca.
 8. Use `loki-run-plan` para executar uma fase ou task aprovada. Ele carrega
-   `lf-run-plan-execution`, monta um `Execution Brief`, resolve contexto e
+   `lf-run-plan-execution` e `lf-domain-context-preflight`, monta um
+   `Execution Brief`, resolve contexto e
    bloqueia escrita quando faltar decisao, validator, approval ou gate humano.
-9. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
+9. Cada agente executa preflight pessoal: consulta a menor documentacao,
+   registra freshness, conflitos, lacunas e fontes atuais, que prevalecem sobre
+   docs stale. `bibliotecario` apenas localiza a menor leitura suficiente; o
+   preflight nunca autocorrige docs.
+10. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
    locais em modo read-only para extrair apenas o que afeta a fase alvo. Quando
    nao houver `DIR_ANALISE` e as referencias da task forem insuficientes, ele
    faz uma pre-analise local minima antes da primeira escrita.
-10. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
+11. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
    a fase de execucao, pause antes de escrever e use `source-researcher` para
    produzir evidencia que revise ou complemente o `Execution Brief`.
-11. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
+12. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
    retrospectiva aprovada exigir aquela tecnologia.
-12. A implementacao acontece task por task, em ordem segura. Leitura pode ser
+13. A implementacao acontece task por task, em ordem segura. Leitura pode ser
    paralela; escrita fica serializada por owner e arquivo. O owner pode ser o
    orquestrador ou um agente `scoped-writer` quando a task aprovada declarar
    `target_files`, validators e gates.
-13. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
+14. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
+    `catalogador`, caller `loki-run-plan`, mode `task_scoped_writer`.
+    Indisponibilidade bloqueia; nenhum fallback escreve esses targets.
+15. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
-14. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
+16. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
     `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
     task, arquivos afetados, validations, human loops, blockers e proximo
     passo.
-15. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+17. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki-retrospectiva-tecnica` e siga o
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
@@ -105,7 +113,7 @@ execucao.
 | `loki-agentic-development` | Orquestra o caminho integrado v2 de demanda para analise agentica, gates, plano, execucao autonoma, reports, digest e backlog. |
 | `loki-generate-action-plan` | Cria plano faseado retomavel com `tasks.md`, tasks individuais, dependencias e human loops. |
 | `loki-enrich-tasks` | Melhora apenas a fase atual usando aprendizados transitorios, sem promover regra duradoura. |
-| `loki-run-plan` | Orquestra a execucao da fase aprovada, serializa escrita, registra estado e valida evidencias. |
+| `loki-run-plan` | Orquestra execucao aprovada, exige preflight pessoal, reserva docs do consumidor ao `catalogador`, registra estado e valida evidencias. |
 | `loki-retrospectiva-tecnica` | Captura o que realmente aconteceu depois da execucao para alimentar aprendizado. |
 
 ### Skills
@@ -120,6 +128,7 @@ execucao.
 | `lf-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
 | `loki-enrich-tasks` | Injeta aprendizados na task certa do plano ativo, preservando fontes sensiveis e sem criar norma duradoura. |
 | `lf-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |
+| `lf-domain-context-preflight` | Consulta docs e fontes atuais, registra freshness, conflitos e lacunas sem autocorrigir documentacao. |
 | Skills tecnicas opcionais | Entram apenas quando a superficie exige tecnologia especifica, como runtime, engine, framework, dados ou plugins. |
 
 ### Agents
@@ -130,8 +139,8 @@ execucao.
 | `source-researcher` | Mapeia fatos, lacunas e conflitos em pesquisa multi-fonte antes de decisao, plano ou execucao, especialmente quando a lacuna pre-escrita e ampla demais para `execution-context-reader`. |
 | `technical-implementer` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir `target_files`; caso contrario, retorna proposta. |
 | `runtime-qa` | Produz checklist de validacao e evidencia esperada para comportamento perceptivel ou runtime. |
-| `bibliotecario` | Localiza a menor documentacao duradoura suficiente no projeto consumidor. |
-| `catalogador` | Entra depois da execucao, quando aprendizado `project-specific` precisar virar `/docs` do consumidor. |
+| `bibliotecario` | Localiza, de forma estreita, a menor documentacao duradoura suficiente. |
+| `catalogador` | Unico writer de `/docs` do consumidor, inclusive em tasks escopadas de `loki-run-plan`. |
 | `standards-curator` | Entra depois da retrospectiva, quando houver candidato a regra duradoura ou backlog. |
 | `gameplay-engineer` | Pode escrever mecanicas, codigo/config de gameplay ou dados aprovados quando a task atribuir `target_files` e skills/gates aplicaveis. |
 | `narrative-designer` | Pode escrever conteudo narrativo, dialogos, escolhas e texto de dominio quando a task atribuir `target_files` e gates aplicaveis. |
@@ -149,6 +158,10 @@ execucao.
   aplicavel, owner de escrita, validator e gate humano.
 - Nao acione agente `scoped-writer` sem `target_files`, `allowed_writes`,
   owner exclusivo, validators e gates suficientes.
+- Pare se o preflight pessoal nao registrar fontes, freshness, conflitos,
+  lacunas e suficiencia do contexto. Nao autocorrija docs nesse preflight.
+- Se uma task exigir docs do consumidor, atribua ao `catalogador`; sua
+  indisponibilidade bloqueia a task.
 - Nao declare comportamento perceptivel como validado sem confirmacao humana.
 - Nao transforme resultado de execucao diretamente em regra duradoura. A
   promocao acontece no workflow de aprendizado.
@@ -160,12 +173,14 @@ Ao fim da execucao, outra LLM deve conseguir retomar pelo disco:
 - qual fase ou task foi executada;
 - qual `Execution Brief` guiou a escrita;
 - quais fontes foram lidas;
+- qual preflight pessoal registrou freshness, conflitos, lacunas e precedencia;
 - quais arquivos foram alterados;
 - qual owner escreveu cada arquivo quando houve agente `scoped-writer`;
 - quais validators rodaram ou foram bloqueados;
 - qual gate humano ficou pendente ou foi satisfeito;
 - quais evidencias foram salvas;
 - qual `LokiRunState` ou resumo equivalente permite retomada;
+- qual bloco retomavel registra task, contexto, docs pendentes e proximo ponto;
 - qual retrospectiva ou proximo passo deve alimentar o aprendizado, incluindo
   atritos materiais que a proxima execucao deve evitar.
 # Evidence capture at completion

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<loki_init_publication_batch schema_version="1">
+  <invocation>
+    <calling_workflow required="true" enum="loki-init">loki-init</calling_workflow>
+    <write_mode required="true" enum="init-publication-batch">init-publication-batch</write_mode>
+    <approval_status required="true" enum="granted">granted</approval_status>
+    <approval_reference required="true">{{approval_reference}}</approval_reference>
+    <exclusive_write_owner required="true">catalogador</exclusive_write_owner>
+    <write_boundary>
+      <allowed_write required="true">docs/**</allowed_write>
+    </write_boundary>
+    <delivery_semantics>at-least-once</delivery_semantics>
+    <effect_semantics>idempotent</effect_semantics>
+  </invocation>
+  <identity>
+    <run_id required="true" type="loki-run-id">{{run_id}}</run_id>
+    <batch_id required="true" type="publication-batch-id">{{batch_id}}</batch_id>
+    <idempotency_key required="true">{{idempotency_key}}</idempotency_key>
+    <batch_hash required="true" algorithm="sha-256" scope="canonical-content-excluding-batch-hash">{{batch_sha256}}</batch_hash>
+  </identity>
+  <packet_set required="true" immutable="true" ordered="true" min_items="1">
+    <packet_ref position="{{packet_position}}" packet_id="{{packet_id}}" revision="{{packet_revision}}" hash="{{packet_sha256}}" />
+  </packet_set>
+  <checkpoint>
+    <previous_checkpoint_ref required="true">{{previous_checkpoint_ref_or_initial}}</previous_checkpoint_ref>
+    <before_state_hash required="true" algorithm="sha-256">{{before_state_sha256}}</before_state_hash>
+  </checkpoint>
+  <expectations>
+    <coverage_delta>
+      <requirement requirement_id="{{requirement_id}}" expected_state="{{expected_coverage_state}}" />
+    </coverage_delta>
+    <domain_roots>
+      <domain_root>{{expected_domain_root}}</domain_root>
+    </domain_roots>
+  </expectations>
+  <docs_snapshot>
+    <root required="true">docs</root>
+    <entry path="{{docs_path}}" before_hash="{{docs_before_sha256_or_absent}}" />
+  </docs_snapshot>
+  <validators required="true" min_items="1">
+    <validator name="{{validator_name}}">
+      <command required="true">{{validator_command}}</command>
+      <status enum="pending|passed|failed">pending</status>
+    </validator>
+  </validators>
+  <lifecycle>
+    <status required="true" enum="planned|dispatched|write-applied|validated|committed|blocked">{{batch_status}}</status>
+    <catalogador_run>
+      <catalogador_run_id type="catalogador-run-id">{{catalogador_run_id_or_pending}}</catalogador_run_id>
+      <status enum="pending|running|completed|blocked">{{catalogador_run_status}}</status>
+    </catalogador_run>
+  </lifecycle>
+  <materialization>
+    <discovered_targets>
+      <target path="{{discovered_target_path}}" />
+    </discovered_targets>
+    <hashes>
+      <target path="{{materialized_target_path}}">
+        <before algorithm="sha-256">{{target_before_sha256_or_absent}}</before>
+        <after algorithm="sha-256">{{target_after_sha256_or_absent}}</after>
+      </target>
+    </hashes>
+    <refs>
+      <materialization_ref>{{materialization_ref}}</materialization_ref>
+    </refs>
+  </materialization>
+  <destinations>
+    <success required="true">{{success_destination}}</success>
+    <failure required="true">{{failure_destination}}</failure>
+  </destinations>
+  <invariants>
+    <invariant id="catalogador-exclusive-owner">Only catalogador may materialize consumer docs for this batch.</invariant>
+    <invariant id="packet-set-immutable">Packet order, IDs, revisions and hashes do not change after dispatch.</invariant>
+    <invariant id="identical-retry-no-op">The same batch_id, idempotency_key and batch_hash produces a recorded no-op after a successful application.</invariant>
+    <invariant id="divergent-retry-invalid">Divergent content cannot reuse a batch_id or idempotency_key.</invariant>
+    <invariant id="validate-before-success">Success requires validator results, discovered targets, before and after hashes, and materialization refs.</invariant>
+  </invariants>
+</loki_init_publication_batch>

@@ -2,6 +2,8 @@
 name: ux-ui-designer
 type: agent
 status: draft-scoped-writer
+category: Write Agent
+installed_in_consumer: true
 description: Propor fluxos UX/UI, estados, leitura, HUD, menus, dialog box e save/load de stories de jogo sem criar assets nem escrever runtime.
 mode: scoped-writer
 confidence: medium
@@ -11,13 +13,22 @@ effort: high
 model_reasoning_effort: high
 isolation: scoped-writer
 sandbox_mode: workspace-write
-init_write_mode: init_context_scoped_writer
+init_role: init_inventory_domain_investigator
+init_execution_modes: [read-only, proposal-only]
 scoped_write_modes:
-  - init_context_scoped_writer
   - task_scoped_writer
 task_write_mode: task_scoped_writer
+durable_context_root: "docs/loki-init/ux-ui-designer/"
+domain_context_preflight: "required when installed_in_consumer AND category == Write Agent AND task_write_mode includes task_scoped_writer AND durable_context_root is declared AND agent is a domain agent"
 task_allowed_writes:
   - "<task_allowed_files>"
+allowed_writes: ["exact target_files from an approved task_scoped_writer envelope"]
+forbidden_writes: ["consumer docs, package documentation without internal package-writer role, and every path outside the approved task envelope"]
+response_format: parallel_agent_response
+success_destination: "caller-provided orchestrator destination"
+failure_destination: "caller-provided failure destination"
+stop_conditions: ["missing scope, exact targets, preflight, permission, validator, gate or handoff destination"]
+completion_criteria: "Init packets or exact-target UX/UI result delivered with validators, gates, risks and compact completion record; execution evidence remains orchestrator-owned."
 scoped_write_domains:
   - "ui-flow-specs"
   - "screen-copy"
@@ -32,6 +43,7 @@ disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_skills:
+  - "lf-domain-context-preflight"
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-visustella-plugin-index quando UX/UI RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
@@ -49,8 +61,8 @@ escalation_signals:
   - "UX conflita com narrativa, gameplay, acessibilidade, tecnologia, localizacao ou escopo"
   - "validacao depende de leitura, input, affordance, legibilidade, pacing ou comportamento perceptivel"
 adapter_projection:
-  claude_code: "Pode ser projetado como subagent scoped-writer para loki-init e loki-run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/ux-ui-designer.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki-init ou aos target_files da task aprovada."
+  claude_code: "No loki-init atua como investigator read-only/proposal-only; em task aprovada pode ser projetado como scoped-writer de targets exatos."
+  codex: "Projetado em codex/agents/ux-ui-designer.toml; init sem escrita e task write limitada aos target_files exatos apos preflight aplicavel."
 nickname_candidates:
   - ux-ui-designer
   - game-ux-designer
@@ -77,6 +89,31 @@ editar runtime do consumidor.
   implementacao.
 - Ha risco de sobrecarga cognitiva, fluxo ambíguo, feedback insuficiente,
   legibilidade fraca ou conflito de input.
+
+## Init Investigator Contract
+
+No init, atue como `init_inventory_domain_investigator` read-only/proposal-only
+e emita `loki_init_research_packet` schema v1 sourced com identity, revision,
+sequence, hash, coverage delta e continuation. Cubra exatamente:
+
+- `ux-ui-designer.ux-flows` (`deep`)
+- `ux-ui-designer.hud-menus` (`deep`)
+- `ux-ui-designer.dialog-boxes-ui-states` (`deep`)
+- `ux-ui-designer.visual-feedback` (`deep`)
+- `ux-ui-designer.save-load-ui` (`deep`)
+- `ux-ui-designer.observed-accessibility` (`deep`)
+- `ux-ui-designer.source-map` (`map`)
+
+Retorne packets/continuation e completion record separado da evidence; nao
+escreva consumer docs, invoque `catalogador` ou use fallback.
+
+## Domain Context Preflight
+
+Antes de task write execute pessoalmente `lf-domain-context-preflight` sob a
+formula canonica; active mode scoped-writer nao substitui task mode. Respeite
+`ready|ready-with-gaps|blocked`, fonte local atual, gap handoff estreito e zero
+self-fix de docs. Consumer docs sao catalogador-only; package docs usam root e
+writer interno distintos.
 
 ## Inputs
 
@@ -111,9 +148,7 @@ editar runtime do consumidor.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki-init`: escrever somente dentro do proprio `target_inventory_dir`
-  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
-  `docs/loki-init-inventory-contracts.md`.
+- `loki-init`: nenhuma escrita; somente packets/continuation/completion.
 - `loki-run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
@@ -126,6 +161,8 @@ o orquestrador.
 
 ## Forbidden Writes
 
+- Consumer docs, chamada ao catalogador no init, fallback documental ou package
+  docs sem writer interno aprovado.
 - `.agents/**`
 - `.claude/**`
 - `.codex/**`
@@ -150,12 +187,14 @@ parallel_agent_response:
   summary: ""
   affected_files: []
   write_scope:
-    mode: "none | init_context_scoped_writer | task_scoped_writer"
+    mode: "none | task_scoped_writer"
     target_files: []
     allowed_writes: []
     scoped_write_domains: []
     validators: []
     human_gates: []
+  init_investigation: {role: "init_inventory_domain_investigator | not-applicable", research_packet_refs: [], coverage_delta: [], continuation_status: "continue | complete | blocked | not-applicable", continuation_cursor: ""}
+  domain_context_preflight: {status: "ready | ready-with-gaps | blocked | not-applicable", durable_context_refs: [], current_source_refs: [], gap_handoff: ""}
   affected_runtime_surfaces:
     - "<consumer_runtime_surfaces>"
   affected_domain_ids:
@@ -172,7 +211,18 @@ parallel_agent_response:
     - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
+  completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
+  execution_evidence: "orchestrator-owned reference or explicit partial | unavailable | unsupported"
 ```
+
+## Completion And Handoff
+
+Read-only/proposal-only nao escrevem. Task writer confirma owner, exact targets,
+domains, validators e gates, remove temporarios e valida antes do handoff.
+Validator deterministico e gate humano permanecem separados. Teste persistente
+vai como especificacao a Write Test Agent com envelope proprio e nunca muda
+producao. Use success/failure destination; completion record e evidence ficam
+separados.
 
 ## Gates
 

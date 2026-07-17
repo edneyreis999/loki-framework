@@ -130,17 +130,16 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - `proposal-only` continua proibindo escrita em docs duradouros, runtime, codigo,
   assets, config, inventarios finais, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` e `.claude/**`, salvo approval explicito em outro contrato.
-- `loki-init` pode classificar agentes de dominio como
-  `init_inventory_domain_writer` e conceder uma excecao estreita: cada agente
-  escreve somente dentro do proprio `target_inventory_dir` em
-  `docs/loki-init/<agent-name>/**`, validado contra
-  `docs/loki-init-inventory-contracts.md`. Essa excecao nao autoriza
-  `docs/index.xml`, `planos/000-init-loki/tasks.md`, runtime, assets, dados,
-  `AGENTS.md`, `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
-- `loki-init` deve manter `catalogador` fora do fan-out paralelo de inventarios.
-  Quando invocado, ele e `init_final_cataloger`: roda uma vez na consolidacao
-  serial, usa as pastas de inventario validadas como fontes e so escreve os
-  destinos de catalogacao explicitamente declarados no envelope.
+- `loki-init` classifica investigadores como
+  `init_inventory_domain_investigator`. Eles sao read-only/proposal-only e
+  retornam `loki_init_research_packet` schema v1 com fontes, fatos, inferencias,
+  lacunas, conflitos e cobertura; nao escrevem `/docs`, nao invocam
+  `catalogador` e nao recebem excecao de escrita como fallback.
+- Somente `catalogador` escreve documentacao duradoura do consumidor. No init,
+  a sequencia serial usa `init-bootstrap-cataloger`,
+  `init-publication-batch` e `init-final-reconciliation`, com caller, mode,
+  fontes e targets explicitos, cobertura, continuacao, materializacao e
+  retomada. Indisponibilidade bloqueia; nao existe writer alternativo.
 - Quando `loki-init` exigir retrospectiva tecnica por agente, todo agente
   invocado pode receber tambem uma excecao estreita para escrever somente o
   proprio `target_retrospective` exato em
@@ -152,6 +151,11 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
   por task. O envelope deve declarar `target_files`, `allowed_writes`,
   `scoped_write_domains`, validators e gates; nenhum agente escreve fora desses
   arquivos.
+- Antes de cada task, `loki-run-plan` aplica `lf-domain-context-preflight`:
+  consulta o catalogo, prefere fontes atuais quando docs estiverem stale,
+  registra freshness, conflitos e lacunas e usa `bibliotecario` apenas para a
+  menor leitura suficiente. O preflight nao autocorrige `/docs`; tasks de docs
+  do consumidor pertencem ao `catalogador`.
 - Workflows Loki que exijam retrospectiva tecnica por agente podem conceder
   permissao estreita para o proprio `target_retrospective` exato sob o
   diretorio de retrospectivas da fase ativa, como
@@ -222,6 +226,9 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - `index.md` do pacote e navegacao interna do framework. `docs/index.xml` do
   consumidor e navegacao da documentacao local do projeto. Nao confundir as
   duas superficies.
+- A exclusividade de `catalogador` vale para docs duradouros do consumidor.
+  Docs dentro do package root continuam sob autoridade escopada de
+  `framework-artifact-writer`; essa autoridade nao se estende ao consumidor.
 
 ## Placement Matrix para Promocao de Contexto
 

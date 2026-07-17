@@ -2,26 +2,69 @@
 
 ## Purpose And Observable Contract
 
-Este command é o orquestrador que cria ou audita documentação mínima duradoura e
-estado operacional retomável de um consumidor recém-instalado, sem modificar o
-runtime do projeto.
+Este command orquestra a criacao, atualizacao ou auditoria de documentacao
+duradoura de um consumidor sem modificar seu runtime. Discovery e investigacao
+sao read-only; o orquestrador aceita packets, controla coverage, batches,
+ledger e evidence; somente `catalogador` materializa consumer docs.
 
-- Início: Input normalizado, raiz consumidora resolvida, destinos dentro das
-  fronteiras permitidas e modo válido.
-- Conclusão: inventário comum, contexto de tecnologia, inventários de domínio,
-  catálogo e estado do plano foram materializados ou auditados; cada agente e
-  handoff atingiu estado terminal; validators e gates foram registrados; e não
-  resta stop condition ativa.
-- Resultado verificável: `docs/**` e `planos/000-init-loki/**` contêm os outputs
-  aplicáveis, completion records, evidência sanitizada ou gaps explícitos, e
-  `loki_init_state` retomável.
-- Saídas obrigatórias: cumpra integralmente `references/response.md` e os Output
-  Contracts abaixo.
+- Inicio: Input normalizado, roots resolvidos dentro das fronteiras aprovadas,
+  modo valido, capability/catalog preflight e estado retomavel carregado ou
+  inicializado.
+- Conclusao de escrita: common discovery e investigadores selecionados estao
+  terminais; packets, batches, coverage e materializacoes estao reconciliados;
+  a reconciliacao final passou; validators e gates aplicaveis foram registrados;
+  e nao resta stop condition ativa.
+- Conclusao de auditoria: `audit-only` leu e validou as superficies permitidas,
+  nao escreveu arquivo e reportou estado observado, gaps e proximo passo.
+- Resultado verificavel: consumer `docs/**` foi escrito somente por chamadas
+  seriais do `catalogador`; `planos/000-init-loki/**` contem o ledger resumido e
+  payloads operacionais retomaveis escritos somente pelo orquestrador; runtime e
+  superficies proibidas permaneceram intactos.
+- Saidas: cumpra `references/response.md`; ate a revisao especifica dessa
+  Response, inclua no estado e no resumo todos os campos operacionais definidos
+  aqui, mesmo quando o template ainda nao os apresentar individualmente.
 
-`loki-init` é a identidade canônica; `init-loki` pode ser alias de adapter, sem
+`loki-init` e a identidade canonica. `init-loki` pode ser alias de adapter, sem
 criar outro workflow.
 
-## Execution Profile
+## Command Contract
+
+```yaml
+command_contract:
+  name: "loki-init"
+  purpose: "Materializar ou auditar documentacao inicial por packets aceitos e um catalogador serial."
+  start_condition: "Input normalizado, roots seguros, modo valido e preflights concluidos."
+  completion_condition: "Todo trabalho selecionado, packet, batch, coverage, validator e gate esta terminal; escrita exige reconciliacao final committed."
+  outputs:
+    - "consumer docs materializados pelo catalogador, quando o modo permite escrita"
+    - "loki_init_state e payloads operacionais no plan root, quando o modo permite escrita"
+    - "resposta terminal conforme references/response.md"
+  allowed_writes:
+    - "<consumer_project_root>/docs/** somente pelo catalogador"
+    - "<consumer_project_root>/planos/000-init-loki/** somente pelo orquestrador"
+  forbidden_writes:
+    - "<consumer_runtime_surfaces>"
+    - "<sensitive_write_patterns>"
+    - ".agents/**"
+    - ".codex/**"
+    - ".claude/**"
+    - "AGENTS.md"
+    - "CLAUDE.md"
+  required_skills: []
+  required_commands: []
+  validators:
+    - "packet, batch, lifecycle, ownership, coverage, docs integrity and boundary validators"
+  human_gates:
+    - "approval"
+    - "interview"
+    - "human-validation"
+    - "technical-review only for package-contract changes"
+  stop_conditions:
+    - "missing input, permission, dependency, writer, validator, gate, handoff destination or safe resume state"
+  resume_contract: "loki_init_state plus immutable packet/batch artifacts is sufficient without conversation memory or a live agent instance"
+```
+
+## Execution Profile And Dependencies
 
 ```yaml
 execution_profile:
@@ -30,371 +73,540 @@ execution_profile:
   max_effort: xhigh
   escalation_signals:
     - consumer documentation bootstrap
-    - multi-agent fan-out and serial consolidation
-    - consumer write boundaries
-  handoff_effort:
-    research: medium
-    coding: low
-    documentation_transient: medium
-    documentation_durable: high
-    validator: medium
-```
-
-## Orchestrator Responsibilities
-
-Coordene Input, Execution e Response. Decomponha o fluxo em unidades com
-responsáveis, selecione agentes, forneça contexto autocontido, acompanhe todos
-os handoffs até sucesso, falha, bloqueio ou parada explícita, aplique validators,
-gates e approvals e consolide outputs, evidências, riscos e próximos passos.
-Mantenha responsabilidade pelo progresso e estado global depois de delegar.
-
-## Dependencies And Conditional Skills
-
-```yaml
+    - resumable multi-agent investigation
+    - serial consumer-doc publication
+    - consumer write boundary ambiguity
 required_skills: []
 required_commands: []
 ```
 
 Carregue `lf-index-navigator` somente quando `docs/index.xml` existir e precisar
-ser lido. Carregue `<technology_required_skills>` somente quando inventário,
-usuário ou especialista declarar tecnologia concreta. O core passa tecnologia e
-skills candidatas aos envelopes, mas não executa regra de engine. Todo agente
-invocado devolve completion record; o orquestrador captura evidence sanitizada
-ou declara gap explícito, sem auto-retrospectiva.
-
-## Mandatory Inventory Contract
+ser lido. Carregue `<technology_required_skills>` somente depois de tecnologia
+concreta ser sustentada por fonte ou decisao. `lf-domain-context-preflight` nao
+e precondicao automatica dos investigadores init, do `catalogador` ou dos
+agentes support-only: ele se aplica ao preflight cotidiano de um domain Write
+Agent e sera adotado pelos contratos desses agentes em sua migracao propria.
 
 Leia integralmente
 [`docs/loki-init-inventory-contracts.md`](../../../docs/loki-init-inventory-contracts.md)
-antes de construir envelopes. Ele é a fonte obrigatória para contrato universal,
-frescor e cobertura de cada pasta de domínio. Valide a pasta inteira; não imponha
-nome, quantidade de arquivos ou seções que o contrato não exige.
+antes de criar coverage plans ou envelopes. Esse contrato define requisitos,
+profundidade e cobertura; nao concede autoria documental a investigadores.
 
-## Allowed And Forbidden Writes
+## Authority And Write Boundaries
 
-`allowed_writes` do consumidor:
+O orquestrador e owner exclusivo de discovery comum, selecao, packet intake,
+acceptance, coverage, batching, checkpoints, `loki_init_state`, completion
+records recebidos e captura de session evidence. Ele pode criar ou atualizar
+somente os paths exatos sob o `plan_root` aprovado. Payloads extensos ficam em
+artefatos separados; `tasks.md` mantem o ledger resumido e autoritativo.
 
-- `docs/**` dentro de `consumer_project_root`;
-- `planos/000-init-loki/**` dentro de `consumer_project_root`.
+`catalogador` e o unico writer de consumer `docs/**`, inclusive
+`project-inventory.md`, technology/engine context, roots de dominio,
+READMEs, conflitos, perguntas e `docs/index.xml`. Toda mutacao de consumer docs
+e um handoff ao `catalogador`; o orquestrador, investigadores e support-only
+nunca criam, editam, movem ou removem esses paths.
 
-A invocação aprova somente esses destinos. Preserve conteúdo existente em modo
-merge/audit; nunca sobrescreva silenciosamente. `forbidden_writes` inclui
-runtime, engine, código, assets, dados gerados, build outputs, dependências,
-`<consumer_runtime_surfaces>`, `<sensitive_write_patterns>`, `.agents/**`,
-`.codex/**`, `.claude/**`, `AGENTS.md`, `CLAUDE.md` e qualquer path fora dos
-dois roots.
+`consumer-docs-fallback: prohibited`. Se `catalogador` estiver ausente,
+indisponivel ou falhar preflight, bloqueie toda escrita em consumer docs e
+preserve resume state. Nao use escrita direta, outro agente ou o orquestrador
+como fallback. Package `docs/**`, quando resolvido sob o package root, e classe
+`package-documentation` distinta e nao recebe autoridade deste command.
 
-## Preflight And Execution Plan
+Os 15 investigadores nao recebem `allowed_writes` em consumer docs. Support-only
+nao recebe escrita documental. Escritas no plan root nunca autorizam escrita em
+docs. Fora de docs root e plan root, proiba runtime, engine, codigo, assets,
+dados, config, dependencias, outputs gerados, `.agents/**`, `.codex/**`,
+`.claude/**`, `AGENTS.md`, `CLAUDE.md` e qualquer escape por traversal ou
+symlink divergente.
 
-1. Consuma o registro normalizado e monte plano com etapas, dependências,
-   responsáveis, envelopes, writes, validators, gates e critérios de conclusão.
-2. Declare allowed/forbidden writes e crie ou audite `docs/`, plan root,
-   `interaction/fase1/`, `builds/fase1/` e `retrospetivas/fase1/` somente quando
-   necessários ao modo ativo.
-3. Faça preflight explícito da capacidade de agentes/delegação do adapter antes
-   de alegar indisponibilidade. Em Codex, solicite a capacidade e use descoberta
-   dirigida de ferramentas multi-agent/subagent; namespaces descobertos são
-   evidência da sessão, não contrato universal.
-4. Verifique se o adapter concede a cada agente escrita escopada em seu
-   `target_inventory_dir` quando aplicável e no próprio
-   evidence capture pelo orquestrador. Marque `blocked` ou `skipped` com motivo antes do
-   fan-out quando não conceder.
-5. Faça preflight do catálogo. Use uma fonte de catálogo disponível na instalação
-   atual que declare `supported_project_types`, `agent_project_tag_policy` e
-   `agents[].project_tags`; `manifest.yaml` do package pode ser usado somente
-   quando estiver acessível, nunca como dependência obrigatória. Superfícies
-   aprovadas como `.codex/agents`, `.agents/agents`, `agents/`, `codex/agents/`
-   ou lista equivalente comprovam disponibilidade, não tags nem autorização de
-   escrita. Sem uma fonte de catálogo verificável, registre o blocker e não
-   execute fan-out dependente de tags.
-6. Registre fonte do catálogo, tipos suportados, base tag, tags por agente,
-   agentes disponíveis, ferramentas e limites de descoberta.
-7. Replaneje explicitamente quando capability, catálogo, hint, evidência,
-   validator ou handoff invalidar seleção, ordem, owner ou etapa posterior.
+Em `audit-only`, `allowed_writes` e vazio para todos, inclusive plan root e
+catalogador. Produza somente a resposta da sessao; nao "atualize o estado" para
+registrar a auditoria.
 
-## Common Inventory And Technology Context
+## Mode Semantics
 
-Execute primeiro o inventário comum sequencial: mapeie árvore com
-`max_scan_depth`, includes e excludes; filtre binários, gerados e arquivos
-grandes; registre docs, manifests, comandos, stack, áreas, concerns, lacunas e
-superfícies sensíveis. Git é evidência auxiliar, nunca requisito. Produza ou
-audite `docs/loki-init/project-inventory.md`; se impossível, registre falha
-estruturada em `builds/fase1/`.
+| Mode | Investigacao | Consumer docs | Plan state | Honest terminal meaning |
+| --- | --- | --- | --- | --- |
+| `full-init` | common + todos os requeridos | bootstrap, batches e final reconciliation | write | `completed` somente com coverage global terminal |
+| `refresh-docs` | redescoberta dirigida por frescor e coverage | somente deltas aceitos, depois reconciliation | write | `completed` para o refresh selecionado; gaps globais preservados |
+| `audit-only` | leitura e validacao somente | none | none | `audited`, nunca `completed` por materializacao nova |
+| `agent-only:<agent>` | common minimo + um investigador selecionado | bootstrap se necessario, batches do agente e reconciliation parcial | write | `partial-completed`/`blocked`; nunca coverage global completed |
 
-Depois detecte ou aplique hints de projeto, engine e framework. Selecione
-exatamente um `selected_project_type` de `supported_project_types`; `core` é tag
-base sempre incluída, não tipo classificável. Hint fora da lista vira conflito
-ou open question antes do fan-out. Registre evidência, confiança, skills
-técnicas candidatas, superfícies sensíveis, validators e gates em
-`technology-context.md` ou `engine-context.md`.
+`agent-only` nao permite nome desconhecido, support-only ou `catalogador`. Em
+refresh, nao reinvestigue packet aceito sem invalidacao observavel de fonte,
+coverage ou frescor. Em audit, nunca dispare modo init com escrita.
 
-## Agent Classification
+## Preflight And Plan
 
-Construa `inventory_required` como união ordenada, sem duplicatas, dos agentes
-com tag base `core` e dos agentes com `selected_project_type`. Registre
-`inventory_required_reasons` por agente. Para `software-development`, apenas
-agentes `core` são válidos enquanto não houver especialista com essa tag.
+1. Carregue `loki_init_state` e payloads referenciados diretamente do disco;
+   arquivos ignorados ou untracked contam quando existem e validam.
+2. Valide roots, mode, approvals, merge policy, filtros, current docs snapshot,
+   symlinks e write boundaries. Nao sobrescreva silenciosamente.
+3. Verifique capability real de delegacao do adapter antes de alegar
+   indisponibilidade. Registre ferramenta, limites configurado/observado e
+   degradacao; disponibilidade de namespace nao prova tags ou write authority.
+4. Resolva uma fonte de catalogo que declare `supported_project_types`, base
+   `core`, `agent_project_tag_policy` e `agents[].project_tags`. `manifest.yaml`
+   pode ser fonte quando instalado e legivel, nunca dependencia universal.
+5. Selecione exatamente um `selected_project_type` suportado. Hint e hipotese;
+   conflito material vira interview antes do fan-out. `core` e base tag, nao
+   project type.
+6. Crie matriz `available -> required -> selected -> planned -> invoked |
+   blocked | skipped`, com razoes, classes, coverage plan e status.
+7. Monte DAG, envelopes autocontidos, checkpoints, owners, validators, gates,
+   success/failure destinations e stop conditions. Replaneje quando uma fonte,
+   capability, acceptance, coverage, batch, validator ou gate invalidar etapa
+   dependente.
+8. Confirme que nenhum writer de consumer docs esta ativo. No maximo uma chamada
+   init do `catalogador` pode estar em `dispatched`, `writing`, `running` ou
+   `write-applied`.
 
-Classifique os 15 Write Agents de domínio como
-`init_inventory_domain_writer`:
+## Common Discovery Before The First Docs Write
+
+O orquestrador executa discovery read-only sequencial. Mapeie arvore ate
+`max_scan_depth`; aplique includes/excludes; filtre binarios, gerados e arquivos
+grandes; registre manifests, comandos, stack, areas, docs existentes, concerns,
+lacunas, superficies sensiveis e Git quando disponivel. Nao escreva docs.
+
+Produza sob o plan root pelo menos:
+
+- um `common inventory` research packet schema v1;
+- um `technology context` research packet schema v1;
+- um packet ou registro imutavel de selecao e coverage plan dos investigadores.
+
+Trate os packets comuns como research packets: identidade, revision, SHA-256,
+sources, fatos/inferencias tipados, coverage delta, acceptance e continuation.
+Eles devem estar `accepted` no registry antes da primeira escrita em docs. A
+classificacao de tecnologia registra evidencia, confianca, selected type,
+skills candidatas, superficies sensiveis, validators e gates sem hardcode de
+engine.
+
+## Agent Classification And Bootstrap Order
+
+Construa `inventory_required` como uniao ordenada sem duplicatas dos agentes com
+tag base `core` e dos agentes com `selected_project_type`. Para
+`software-development`, somente `core` e valido enquanto nao houver agente com
+essa tag. Classifique os seguintes 15 papeis como
+`init_inventory_domain_investigator`, read-only/proposal-only no init:
 
 - `audio-designer`, `balance-economy-designer`, `game-business-analyst`,
-  `game-designer`, `game-product-owner`,
-  `gameplay-engineer`, `level-designer`, `narrative-designer`, `narrative-qa`,
-  `quest-content-designer`, `runtime-qa`, `scene-presentation-designer`,
-  `technical-artist`, `technical-implementer` e `ux-ui-designer`.
+  `game-designer`, `game-product-owner`, `gameplay-engineer`, `level-designer`,
+  `narrative-designer`, `narrative-qa`, `quest-content-designer`, `runtime-qa`,
+  `scene-presentation-designer`, `technical-artist`, `technical-implementer` e
+  `ux-ui-designer`.
 
-Classifique somente `catalogador` como `init_final_cataloger`. Classifique
+Classifique apenas `catalogador` como `init_serial_cataloger`. Classifique
 `standards-curator`, `retrospective-digester`, `execution-context-reader`,
-`source-researcher` e `bibliotecario` como `init_support_only`.
+`source-researcher` e `bibliotecario` como `init_support_only`. Support-only
+retorna resultado estruturado read-only/proposal-only e nunca recebe consumer
+docs writes. Investigador nao chama catalogador.
 
-Mantenha `catalogador` fora do fan-out mesmo quando requerido. Agentes support
-only são invocados somente para leitura, pesquisa, validação, classificação ou
-orientação necessária; não recebem `target_inventory_dir` nem escrevem docs
-finais, runtime, assets, código ou config.
+A ordem obrigatoria e:
 
-## Self-Contained Agent Envelope
+1. capability e catalog preflight;
+2. common discovery e classificacao de projeto/tecnologia;
+3. selecao dos investigadores e coverage plan por requirement/domain;
+4. acceptance dos packets comuns e checkpoint do registry;
+5. checkpoint do bootstrap como `dispatched` antes do handoff;
+6. primeira escrita de docs: uma chamada serial ao `catalogador` com
+   `calling_workflow: loki-init` e `write_mode: init-bootstrap-cataloger`;
+7. validacao e commit do bootstrap;
+8. somente entao fan-out dependente dos investigadores.
 
-Delegue análise, pesquisa, implementação, teste e revisão ao agente que possua a
-responsabilidade correspondente sempre que possível; mantenha no command apenas
-coordenação, acompanhamento e consolidação.
+O bootstrap materializa common inventory, technology context, navegacao inicial
+e README substancial para cada investigador cuja invocacao sera tentada. Cada
+README inclui identidade, selection reason, escopo, fontes comuns, status real e
+coverage plan. Root existente ou README criado nao equivale a coverage terminal.
+Falha posterior deve ser reconciliada como `blocked` ou `invocation-failed`.
 
-Antes de invocar qualquer agente, entregue objetivo/motivo, unidade de trabalho,
-fatos, decisões, restrições, sources, dependências, escopo, allowed/forbidden
-writes, owner, critérios de sucesso/falha/conclusão, validators, gates,
-approvals, output esperado e destino/condições do handoff. Proíba referências
-implícitas como “continue” ou “use o contexto acima”.
+## Self-Contained Handoffs
 
-Cada domain writer recebe no mínimo:
+Todo handoff declara objetivo, unidade, fatos, decisoes, restricoes, fontes,
+dependencias, scope, targets, `allowed_writes`, `forbidden_writes`, owner,
+identidades/parentage, success/failure criteria e destinations, validators,
+gates, approvals, formato de output e proximo destino. Nao use "continue" ou
+"contexto acima". Acompanhe-o ate sucesso, falha, bloqueio ou stop explicito.
+
+Envelope minimo de investigador:
 
 ```yaml
-agent_init_envelope:
-  agent: "<agent-name>"
-  project_tags: []
+investigator_handoff:
+  calling_workflow: "loki-init"
+  run_id: ""
+  handoff_id: ""
+  investigator: ""
+  investigator_invocation_id: ""
+  init_class: "init_inventory_domain_investigator"
+  execution_mode: "read-only | proposal-only"
+  objective: ""
+  topic_scope: []
+  selected_project_type: ""
   selection_reason: []
-  init_class: "init_inventory_domain_writer"
-  target_inventory_dir: "docs/loki-init/<agent-name>/"
-  inventory_contract: "docs/loki-init-inventory-contracts.md"
-  allowed_writes:
-    - "docs/loki-init/<agent-name>/**"
-  allowed_sources:
-    - "docs/loki-init/project-inventory.md"
-    - "docs/loki-init/technology-context.md"
-    - "docs/index.xml"
-    - "<agent-specific-source>"
+  common_packet_refs: []
+  accepted_packet_registry_refs: []
+  coverage_plan_refs: []
+  pending_requirement_ids: []
+  sources_already_read: []
+  continuation_cursor: "initial | <opaque-logical-cursor>"
+  allowed_writes: []
   forbidden_writes:
-    - ".agents/**"
-    - ".codex/**"
-    - ".claude/**"
-    - "AGENTS.md"
-    - "CLAUDE.md"
+    - "docs/**"
+    - "planos/000-init-loki/**"
     - "<consumer_runtime_surfaces>"
-  completion_record:
-    required: true
-    evidence_capture_owner: "orchestrator"
-    gap_states: ["partial", "unavailable", "unsupported"]
-    source_scope:
-      - "own execution trace"
-      - "own target_inventory_dir or structured support result"
-      - "own validations, blockers, useful and bad inferences, tool friction and residual risks"
-  write_mode:
-    final_artifacts: "direct-target-inventory-dir"
+  output:
+    packet_batch: "1..N loki_init_research_packet schema v1 artifacts returned to orchestrator"
+    invocation_completion: "compact completion record"
+    continuation: "continue | complete | blocked plus cursor"
+  success_destination: "loki-init packet intake"
+  failure_destination: "loki-init blocker intake"
 ```
 
-Support-only recebe o mesmo contrato sem inventory dir, com
-`final_artifacts: structured-support-result-only`. Catalogador recebe envelope
-final apenas na consolidação, com pastas validadas em `allowed_sources` e
-destinos exatos em `allowed_writes`; ambos devolvem completion record.
+Cada invocacao emite de 1 a N packets versionados e um cursor. A instancia viva
+e opcional: o trabalho logico continua por reinvocacao do mesmo papel com
+registry, coverage pendente, fontes ja lidas e cursor. Nunca exija session resume
+do provider. O investigator fica terminal apenas quando seu coverage plan esta
+terminal ou ha blocker explicito.
 
-Registre para cada handoff origem, destino, objetivo, entrada, resultado
-esperado, status, evidência recebida e próximo destino. Acompanhe até estado
-terminal; invocação não é conclusão.
+Envelope de `catalogador` exige `calling_workflow: loki-init`, exatamente um
+destes `write_mode`: `init-bootstrap-cataloger`, `init-publication-batch` ou
+`init-final-reconciliation`, approval `granted`, `exclusive_write_owner:
+catalogador`, docs snapshot, targets/roots, packet/ledger refs imutaveis,
+validators, gates e destinations. Caller ausente/desconhecido, mode ausente ou
+par cruzado falha antes da primeira escrita.
 
-## Fan-Out, Write Ownership And Direct-Write Exception
+## Packet Intake And Acceptance
 
-Registre a matriz `available -> inventory_required -> selected -> planned ->
-invoked | blocked | skipped`, com motivos, classe, output, inventory dir e
-completion/evidence state por agente. Todo requerido deve alcançar uma dessas categorias.
+Para cada packet retornado, antes de continuar o investigador ou montar batch:
 
-Execute domain writers em lotes conservadores. Use `agents.max_threads` quando
-conhecido; caso contrário, use 6 como teto inicial. Registre limites configurado
-e observado e feche agentes concluídos antes de abrir novo lote. Leituras
-independentes podem ser paralelas; atribua owner único por arquivo, detecte
-overlap e serialize writes compartilhados.
+1. parseie `loki_init_research_packet` com `schema_version="1"`;
+2. valide `run_id`, investigator/invocation, packet ID, revision, sequence,
+   canonical SHA-256 e lineage;
+3. valide sources attempted/read, source refs de cada fato, tipos de finding,
+   scope, coverage delta, publication intent e continuation;
+4. compare com registry: mesmo ID/revision/hash e no-op registrado; mesmo ID com
+   conteudo divergente e rejeitado; revision maior so entra com `supersedes`
+   exato para ID/revision/hash aceito anterior;
+5. classifique `accepted | rejected | superseded` com razoes; packet rejeitado
+   nunca entra em batch nem satisfaz coverage;
+6. persista payload e checkpoint de acceptance no plan root; so depois marque o
+   registry aceito e continue.
 
-Cada domain writer escreve a própria pasta e devolve completion record; o
-handoff do orquestrador não os substitui. Sem conteúdo útil, o agente devolve
-falha estruturada. Support-only não escreve artefato persistente por padrão.
+Packet aceito e imutavel. O registry mantem status de materializacao separado:
+`unbatched | batched | materialized | blocked`. Todo accepted packet deve chegar
+a `materialized`, `superseded` ou `blocked` explicado antes da conclusao. Packet
+`pending`, `accepted` sem destino terminal ou sem continuation vira orfao e
+bloqueia reconciliacao final.
 
-Qualquer criação, alteração, movimento ou remoção deve ser delegada ao Write
-Agent apropriado sempre que ele existir. Escrita direta pelo orquestrador é
-exceção somente após registrar indisponibilidade de Write Agent; conveniência,
-velocidade ou tamanho não justificam. Declare antes target files,
-allowed/forbidden writes, owner único, validators, gates/approvals, critérios e
-evidências. Pare se o envelope não cobrir a mudança. Registre no completion
-record o tipo de implementação direta, motivo da ausência, oportunidade/escopo
-de futuro Write Agent, evidências e riscos.
+## Coverage Contract
 
-## Serial Consolidation
+Cada requirement tem ID estavel, domain ID, `required_depth: map | deep`, estado
+e evidence refs. Estados operacionais sao `pending | mapped | covered |
+not_found | not_applicable | deferred | blocked`.
 
-Depois do fan-out:
+- `map` e terminal com `mapped`, `covered`, `not_found` ou `not_applicable`,
+  sustentado por evidence aceita.
+- `deep` e terminal com `covered`, `not_found` ou `not_applicable`, sustentado
+  por evidence aceita; `mapped` nao satisfaz deep.
+- `deferred` nunca e terminal para status global `completed`.
+- `blocked` e terminal somente para resultado global `blocked` ou parcial
+  explicitamente permitido pelo mode; nunca vira sucesso silencioso.
+- bootstrap root/README nao altera coverage para terminal.
 
-1. Valide a materialização de cada inventory dir e completion/evidence state requerido.
-2. Valide cada pasta inteira contra o contrato obrigatório.
-3. Reabra docs/fontes atuais antes de conclusão duradoura sensível a frescor;
-   não faça rescan amplo quando frescor não importar.
-4. Invoque `catalogador` exatamente uma vez, depois das validações, com fontes e
-   destinos exatos. Ele não recebe inventory dir próprio.
-5. Consolide conflitos e perguntas em `conflicts-and-decisions.md` e
-   `open-questions.md`; atualize `docs/index.xml`, `docs/loki-init/README.md`,
-   estado/tasks do init e próximo command recomendado.
+Atualize a coverage matrix apenas depois de acceptance. Uma revisao superseded
+remove sua contribuicao ativa e aponta para a nova evidence. Coverage sem packet
+aceito e invalida.
 
-## Output Contracts
+## Publication Batches And Serial Catalogador
 
-Documentação permitida inclui `docs/index.xml`, `docs/loki-init/README.md`,
-`project-inventory.md`, technology/engine context, open questions, conflicts and
-decisions e `docs/loki-init/<agent-name>/**`.
+Agrupe somente packets aceitos, coerentes e ainda nao materializados. Cada
+`loki_init_publication_batch` schema v1 possui conjunto imutavel e ordenado de
+IDs/revisions/hashes, `run_id`, `batch_id`, `idempotency_key`, `batch_hash`,
+checkpoint anterior, before-state hash, docs snapshot, coverage esperado,
+validators e success/failure destinations.
 
-Estado permitido inclui `tasks.md`, `task-1.1.md` quando materializado,
-`interaction/fase1/**`, `builds/fase1/**` e `retrospetivas/fase1/**` sob plan
-root.
+Lifecycle obrigatorio:
 
-Domain inventory contém fontes, fatos separados de inferências, mapa, cobertura,
-limites e falha estruturada quando necessário. Resultado do catalogador lista
-fontes, destinos, conflitos e lacunas. Support result contém `Status`, `Sources
-Attempted`, `Sources Read`, `Evidence Map`, `Missing Evidence`, `Minimum Next
-Question`, `Do Not Assume` e `Context Budget Used`. Cada retrospectiva contém
-objetivo, status, artefatos, validações, decisões, atritos, inferências úteis e
-ruins, ferramentas, mismatches, riscos e próximo caminho mínimo.
+| Before | Allowed after | Checkpoint/effect |
+| --- | --- | --- |
+| `planned` | `dispatched`, `blocked` | persista batch imutavel e dispatch checkpoint antes da chamada |
+| `dispatched` | `write-applied`, `blocked` | uma chamada serial do catalogador; nenhum outro init writer ativo |
+| `write-applied` | `validated`, `blocked` | registre retorno, targets, before/after hashes e materialization refs |
+| `validated` | `committed`, `blocked` | validators passam antes de commit no ledger |
+| `committed` | none | terminal; retries identicos sao no-op |
+| `blocked` | none | terminal com motivo e recovery action |
 
-## Validators
+Uma nova tentativa le o checkpoint e o estado atual antes de agir. Entrega e
+`at-least-once` com efeitos idempotentes, nunca `exactly-once`. Mesmo batch ID,
+key, hash e packet set ja committed retorna no-op sem escrita. ID/key reutilizado
+com conteudo divergente bloqueia. Crash depois de docs write e antes do commit
+exige comparar hashes/materialization refs: commit/reconcile o efeito completo,
+aplique somente delta seguro se parcial ou bloqueie ambiguidade; nunca replay
+cego. Nao dispare proximo batch enquanto o anterior nao estiver `committed` ou
+`blocked` explicado.
 
-- Apenas docs root e plan root foram escritos; runtime, assets, dados gerados,
-  mirrors e arquivos de contexto proibidos permaneceram intactos.
-- `project-inventory.md` existe ou há falha estruturada em builds.
-- Contexto de tecnologia registra evidência, confiança,
-  `selected_project_type` e skills sugeridas sem hardcode de engine.
-- Tipo selecionado pertence aos tipos suportados; base tag é `core`, `core` não
-  é tipo suportado, cada agente tem tags não vazias/válidas e cada
-  `codex_agents[].source_agent` aponta para agente existente.
-- Fan-out registra capability preflight, discovery, catálogo, tipos, tags,
-  available, required, planned, invoked, blocked e skipped com motivos.
-- Capacidade de escrita de retrospective foi registrada ou bloqueio/pulo
-  justificado; classes domain, final cataloger e support-only estão separadas.
-- Required inventory é exatamente a união ordenada por tags; todo requerido tem
-  estado rastreado; regra de software-development/core foi respeitada.
-- Catalogador está somente na classe final, nunca no fan-out paralelo.
-- Cada domain writer materializou e validou sua pasta contra o contrato.
-- Conclusões freshness-sensitive foram rechecadas sem rescan desnecessário.
-- Catalogador rodou no máximo uma vez, somente depois das validações.
-- Cada agente invocado devolveu completion record; o orquestrador capturou
-  evidence ou registrou gap explícito, sem retrospectiva automática.
-- Support-only não escreveu docs finais, index, tasks ou runtime.
-- `docs/index.xml` foi atualizado quando docs duradouros foram criados.
-- Tasks e resume state refletem status, conflitos, validators e próximo command.
-- Nenhum comportamento perceptível, runtime, integração, save/load, gameplay,
-  UI, áudio, build ou persistência foi declarado validado sem human validation.
+## Completion Records And Session Evidence
 
-Registre cada validator, resultado, evidência e justificativa de não
-aplicabilidade. Validator obrigatório ausente, falho ou inconclusivo interrompe
-o fluxo.
+O research packet contem findings, sources, coverage e continuation. O compact
+completion record contem somente identidade/parentage, terminal status, resumo,
+arquivos lidos ou retornados, packet/batch/materialization refs, validations,
+gates, tentativas materiais, erros conhecidos, decisoes, riscos e proximo
+destino. Ele nao carrega payload integral, runtime locator, token usage ou
+raciocinio privado.
 
-## Human Gates
+Depois do retorno, o evidence collector/orquestrador correlaciona `run_id`,
+`agent_run_id`, `handoff_id`, agent e locators tipados; captura apenas snapshot
+sanitizado quando suportado; registra SHA-256/integridade e estados
+`complete | partial | pointer-only | unavailable | unsupported` por dimensao.
+Token usage precisa de proveniencia run-scoped; cumulativo/account-window nao e
+consumo por agente. Lacuna continua lacuna, sem auto-retrospectiva ou evidence
+fabricada. O executing agent nunca descobre ou inventa seus IDs tecnicos.
 
-- `approval` para destino fora dos dois roots ou escrita sensível.
-- `technical-review` para contrato de pacote, agent, skill, template ou
-  validator.
-- `human-validation` antes de declarar runtime, comportamento, integração,
-  build, gameplay, UI, áudio ou persistência validados.
-- `interview` para root, destino, modo, conflito ou classificação material
-  ambígua.
+## Final Reconciliation
 
-Aplique cada gate antes da ação dependente. Validação automática não substitui
-gate humano. Pare quando gate/approval obrigatório estiver ausente, pendente ou
-rejeitado.
+So planeje `init-final-reconciliation` quando:
 
-## Stop Conditions
+- common discovery, selecao e todo investigator iniciado estao terminais;
+- todo packet esta `rejected`, `superseded`, `materialized` ou `blocked` com
+  destino final; nenhum pending/accepted orfao existe;
+- todo batch esta `committed` ou `blocked` explicado; nenhum planned,
+  dispatched, write-applied ou validated permanece;
+- coverage de cada requirement/domain respeita required depth e e terminal para
+  o status solicitado; completed nao admite pending, deferred, mapped-for-deep
+  ou blocker;
+- todo root selecionado possui materializacao factual ou blocker honesto; root
+  de bootstrap sozinho nao satisfaz a condicao;
+- nao ha outro catalogador init ativo.
 
-Pare diante de root/destino/modo ambíguo; escopo ou permissão insuficiente;
-destino fora dos roots; conflito sem merge seguro; dependência ou handoff sem
-destino; writer concorrente; validator ausente/falho; gate/approval ou decisão
-humana pendente; inventário comum/falha estruturada impossível; domain writer
-sem capacidade para pasta ou falha; agente sem retrospective; catalogador antes
-da validação ou sem envelope exato; ou pedido runtime sem skill, validator e
-human validation. Não declare conclusão com qualquer condição ativa.
+Persista um reconciliation dispatch checkpoint e invoque uma vez o
+`catalogador` com `calling_workflow: loki-init` e `write_mode:
+init-final-reconciliation`. Ele reconcilia roots, READMEs, gaps, conflitos,
+perguntas, links, navegacao e `docs/index.xml`; retorna hashes, validators e
+materialization refs. Valide antes de marcar `final_reconciliation.status:
+committed`. Falha mantem estado retomavel e impede `completed`.
 
-## Resume Contract
+## Checkpoints And Resume Algorithm
 
-Mantenha `loki_init_state` em `tasks.md` ou build report equivalente com roots,
-modo, fase/status, paths criados/auditados, arquivos escaneados/lidos, filtros,
-áreas, tipos/engines detectados, selected type, git availability, agent outputs,
-capability/discovery/catalog source, supported types, tag policy/tags,
-available/required/reasons/classes/selected/planned/invoked/blocked/skipped,
-inventory dirs/contracts, catalog/support/retrospective outputs, retrospective
-write capability, batch limits, write modes, conflicts, open questions,
-validators, gates, blockers, etapas concluídas, próximo command/ação e condição
-para continuar. Preserve evidência e retome desse estado sem reiniciar.
+Checkpointe atomicamente no plan root depois de: preflight; common discovery;
+packet persistence; packet acceptance; bootstrap/batch/reconciliation
+`planned`; imediatamente antes de cada catalogador call (`dispatched`); retorno
+(`write-applied`); validators (`validated`); ledger commit; cada investigator
+continuation; e mudanca terminal de coverage/blocker.
 
-Use esta forma mínima estável:
+Ao retomar:
+
+1. leia e valide ledger + hashes dos payloads; nao use memoria da conversa;
+2. se packet ja aceito com mesmo ID/hash, nao reinvestigue nem reaceite; use o
+   registry e cursor;
+3. se investigator nao terminal, reinvoque logicamente com coverage pendente,
+   sources read e cursor, independentemente da instancia anterior;
+4. se batch/bootstrap/reconciliation esta `dispatched` ou `write-applied`, reabra
+   docs e compare snapshot/hashes/materialization antes de qualquer retry;
+5. se batch esta `committed`, nunca o reenvie; retry identico e no-op;
+6. retome do primeiro estado nao terminal cuja dependencia esteja satisfeita;
+7. divergencia, checksum mismatch ou lineage ambigua bloqueia e pede recovery,
+   sem apagar conhecimento para forcar o snapshot.
+
+## Authoritative `loki_init_state`
+
+Estenda estado existente; nao o substitua nem embuta payloads extensos:
 
 ```yaml
 loki_init_state:
+  schema_version: "2"
   consumer_project_root: ""
   docs_root: "docs"
   plan_root: "planos/000-init-loki"
   mode: "full-init"
-  current_phase: "fase1"
-  status: ""
+  current_phase: ""
+  status: "pending | running | partial-completed | audited | blocked | completed"
   created_or_audited_paths: []
-  inventory:
+  discovery:
     files_scanned: []
     files_deep_read: []
     ignored_patterns: []
     project_areas: []
-    detected_project_type: []
+    detected_project_types: []
     selected_project_type: ""
     detected_engines: []
     git_available: false
-  agent_outputs: {}
-  agent_fanout:
+    common_inventory_packet_refs: []
+    technology_context_packet_refs: []
+    selection_packet_refs: []
+  capability_and_catalog:
     capability_preflight: ""
     discovery_method: ""
-    agent_catalog_source: []
+    catalog_source: []
     supported_project_types: []
-    agent_project_tag_policy:
-      base_tag: ""
-      selection_rule: ""
+    agent_project_tag_policy: {}
     agent_project_tags: {}
     compatible_tools_found: []
     available: []
-    inventory_required: []
-    inventory_required_reasons: {}
-    init_inventory_domain_writers: []
-    init_final_cataloger: []
-    init_support_only_agents: []
+    required: []
     selected: []
-    planned: []
-    invoked: []
     blocked: []
     skipped: []
-    skipped_reasons: {}
-    target_inventory_dirs: {}
-    inventory_contracts: {}
-    cataloger_outputs: {}
-    target_retrospectives: {}
-    retrospective_write_capability: {}
-    support_outputs: {}
-    retrospective_outputs: {}
-    batch_limit_configured: null
-    batch_limit_observed: null
-    write_mode_by_agent: {}
+  investigator_registry:
+    <agent>:
+      init_class: "init_inventory_domain_investigator"
+      selection_reasons: []
+      status: "planned | invoked | continuing | complete | blocked | skipped"
+      invocation_ids: []
+      continuation_cursor: ""
+      sources_already_read: []
+      pending_requirement_ids: []
+      completion_record_refs: []
+      evidence_manifest_refs: []
+  packet_registry:
+    <packet_id>:
+      revision: 1
+      hash: ""
+      investigator: ""
+      path: ""
+      acceptance_status: "pending | accepted | rejected | superseded"
+      materialization_status: "unbatched | batched | materialized | blocked"
+      supersedes_ref: ""
+      continuation_status: "continue | complete | blocked"
+      batch_id: ""
+      materialization_refs: []
+      blocker: ""
+  coverage_matrix:
+    <requirement_id>:
+      domain_id: ""
+      required_depth: "map | deep"
+      state: "pending | mapped | covered | not_found | not_applicable | deferred | blocked"
+      evidence_packet_refs: []
+      materialization_refs: []
+      reason: ""
+  bootstrap:
+    operation_id: ""
+    idempotency_key: ""
+    hash: ""
+    status: "not-planned | planned | dispatched | write-applied | validated | committed | blocked"
+    packet_refs: []
+    selected_domain_roots: []
+    materialization_refs: []
+  publication_batches:
+    <batch_id>:
+      idempotency_key: ""
+      hash: ""
+      path: ""
+      packet_refs: []
+      previous_checkpoint_ref: ""
+      before_state_hash: ""
+      status: "planned | dispatched | write-applied | validated | committed | blocked"
+      catalogador_run_id: ""
+      targets: []
+      materialization_refs: []
+      blocker: ""
+  final_reconciliation:
+    operation_id: ""
+    idempotency_key: ""
+    ledger_hash: ""
+    status: "not-planned | planned | dispatched | write-applied | validated | committed | blocked"
+    materialization_refs: []
+    blockers: []
+  catalogador_single_writer:
+    active_run_id: ""
+    active_mode: ""
+    active_status: "none | dispatched | writing | write-applied"
+    last_terminal_run_id: ""
+  completion_records: []
+  session_evidence: []
   conflicts: []
   open_questions: []
   validators_run: []
   gates: []
-  completed_steps: []
   blocked_by: []
+  completed_steps: []
   next_recommended_command: ""
   next_action: ""
   resume_condition: ""
 ```
+
+## Validators And Lifecycle Assertions
+
+Execute e registre validator, resultado, evidencia e justificativa de N/A:
+
+1. somente docs root e plan root mudaram; no plan root apenas orquestrador e em
+   docs apenas catalogador; nenhum investigator possui docs `allowed_writes`,
+   target inventory dir ou direct-target writer mode;
+2. common inventory e technology packets foram aceitos antes da primeira docs
+   write, que e `catalogador/init-bootstrap-cataloger`;
+3. caller/mode exatos existem em toda chamada e caller ausente, mode desconhecido
+   ou par cruzado falha antes de escrever;
+4. no maximo um catalogador init esta ativo e nenhum fallback de consumer docs
+   existe quando ele esta indisponivel;
+5. todo packet parseia, correlaciona identidade/hash/sources/facts/coverage/
+   continuation; retry identico e no-op; divergencia sem lineage e rejeitada;
+6. accepted packet precede batch; packet set do batch e imutavel; lifecycle segue
+   `planned -> dispatched -> write-applied -> validated -> committed` ou
+   termina `blocked`;
+7. todo accepted packet termina materialized, superseded ou blocked; nenhum
+   packet orfao permanece;
+8. coverage terminal respeita required depth; bootstrap root nao satisfaz
+   coverage; completed rejeita pending/deferred, mapped-for-deep ou blocker;
+9. final reconciliation so ocorre com investigadores, packets, batches e
+   coverage terminais;
+10. `docs/index.xml` parseia, paths e links tocados resolvem, campos minimos
+    existem e nao ha entrada duplicada/orfa ou ID transitorio necessario a
+    descoberta;
+11. cada handoff tem completion record e o collector capturou session evidence
+    sanitizada ou gap tipado, sem raciocinio privado nem token inventado;
+12. nenhum runtime, build behavior, gameplay, UI, audio ou persistencia e
+    declarado validado sem human-validation.
+
+Fixtures/assertions minimas de cold start e resume:
+
+| Fixture | Assertion |
+| --- | --- |
+| cold start | packets comuns accepted; primeira docs write e bootstrap catalogador |
+| investigator continuation | nova instancia recebe cursor/registry e nao repete source/packet aceito |
+| identical packet retry | mesmo ID/revision/hash resulta no-op |
+| divergent packet retry | mesma identidade com hash divergente sem supersedes e rejected |
+| batch lifecycle | somente transicoes da tabela passam |
+| crash after write | hashes permitem reconcile/commit ou bloqueiam; nunca replay cego |
+| committed batch resume | batch nao e redispatched |
+| concurrent writers | segundo catalogador init e rejeitado antes da escrita |
+| premature final | pending/deferred/orphan/deep-mapped bloqueia reconciliation completed |
+| audit-only | zero writes em docs e plan root |
+
+Use `python3 scripts/validate-loki-init-catalogador-contracts.py` para schemas,
+caller/mode, ownership, single-writer, transitions e retry fixtures. O modo
+`--enforce-current-tree` e gate pos-migracao: enquanto agents/callers posteriores
+a esta task ainda nao tiverem migrado, registre a falha isolada como dependencia
+futura; os checks task-scoped do bundle `loki-init` devem passar. Aplique tambem
+entry/reference routing, command checklist 24/24, forbidden-reference scan
+documentado, ownership scan focal, Markdown/frontmatter parse e `git diff
+--check`.
+
+## Human Gates
+
+- `approval` antes de qualquer destino ou write scope sensivel nao coberto pelo
+  Input normalizado; ausencia bloqueia sem ampliar autoridade.
+- `interview` para root, mode, merge, classificacao ou conflito material
+  ambiguo.
+- `human-validation` antes de declarar clareza/navegabilidade nao deterministica
+  ou comportamento de runtime, build, gameplay, UI, audio e persistencia.
+- `technical-review` para alteracao deste package contract, agent, skill,
+  template ou validator; nao e substituido por teste automatico.
+
+## Stop Conditions
+
+Pare diante de root/mode/destino ambiguo; path escape; permission/approval
+insuficiente; merge inseguro; catalog source ausente; dependency ou handoff sem
+destino; packet/schema/hash/lineage invalido; coverage sem evidence; packet
+orfao; writer concorrente; catalogador indisponivel; tentativa de fallback em
+consumer docs; batch nao terminal; retry divergente; checksum mismatch;
+validator necessario ausente/falho/inconclusivo; gate pendente; ou pedido de
+runtime sem skill, validator e human-validation. Preserve o ultimo checkpoint,
+registre `blocked_by`, `next_action` e `resume_condition`, e nao declare
+conclusao enquanto qualquer condicao material permanecer.
+
+## Terminal Handoff And Response
+
+Antes da Response, confira status, artefatos, packets/batches/materialization
+refs, coverage, validators, completion records, evidence states, handoffs,
+gates, riscos, blockers, next action e resume condition. Encaminhe ao humano em
+Markdown recuperavel conforme `references/response.md` e
+`assets/response-template.md`. `completed` e proibido com validator, gate,
+approval, handoff, packet, batch, coverage ou reconciliation material pendente.

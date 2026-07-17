@@ -130,6 +130,7 @@ Antes de invocar qualquer subagente, entregue contexto autocontido contendo:
 - paths e fontes exatos, com relevancia;
 - dependencias e resultados dos batches filhos;
 - `command: loki-catalogar-docs`;
+- `calling_workflow: loki-catalogar-docs`;
 - `write_mode: task_scoped_writer` ou `proposal-only`;
 - `target_files` exatos e `allowed_writes` iguais ou mais restritos;
 - `scoped_write_domains: ["consumer-docs", "docs-index"]`;
@@ -141,6 +142,17 @@ Antes de invocar qualquer subagente, entregue contexto autocontido contendo:
 Nao use referencias implicitas como "conforme discutido", "continue" ou "use
 o contexto acima". O `catalogador` nao decide escopo, recursao, paralelismo,
 limites nem permissao de escrita; devolve a lacuna ao orquestrador sem escrever.
+
+Valide o par caller/mode antes da primeira escrita. Este command aceita apenas
+`calling_workflow: loki-catalogar-docs` com
+`write_mode: task_scoped_writer` ou `write_mode: proposal-only`;
+`proposal-only` nunca
+escreve persistencia. Caller/mode ausente, desconhecido ou cruzado falha
+pre-write no `failure_destination`.
+
+Rejeite `init-bootstrap-cataloger`, `init-publication-batch` e
+`init-final-reconciliation`. Packets, batches, ledger, bootstrap, coverage e
+final reconciliation do init nunca sao inputs ou precondicoes deste workflow.
 
 Registre para cada handoff origem, destino, objetivo, entrada entregue,
 resultado esperado, status, evidencia recebida e proximo destino. Acompanhe-o
@@ -159,18 +171,17 @@ de delegar, interrompa writers concorrentes e serialize toda escrita
 compartilhada. Depois que os batches filhos terminarem ou entregarem propostas,
 execute uma unica consolidacao serial de `docs/index.xml` e indices pais.
 
-## Direct-Write Exception
+## Catalogador Unavailability And No Fallback
 
-Escrita direta pelo orquestrador e proibida enquanto `catalogador` ou outro
-Write Agent apropriado estiver disponivel. Somente se nenhum Write Agent
-apropriado existir, registre essa ausencia e assuma explicitamente um envelope
-com target exato, allowed/forbidden writes, owner unico, validators, gates,
-approvals, criterios de sucesso/falha e evidencias. Conveniencia, velocidade ou
-tamanho da mudanca nao justificam a excecao.
+Consumer docs pertencem exclusivamente ao `catalogador`. Se ele estiver
+ausente ou indisponivel, bloqueie antes da primeira escrita; orquestrador,
+domain agent, framework writer ou writer alternativo nao pode assumir targets.
+Conveniencia, velocidade e tamanho nao criam excecao.
 
-Se a excecao ocorrer, registre no completion record o tipo de escrita, o
-motivo da ausencia, a oportunidade e o escopo de um futuro Write Agent, as
-evidencias e os riscos. Nao encerre sem esse registro.
+Preserve resume state com caller/mode, arvore e ordem bottom-up, batches
+terminais/pendentes, targets, owners, approvals, validators, gates,
+`blocked_by: catalogador-unavailable`, success/failure destinations e proxima
+acao. Nao avance ao indice compartilhado nem declare conclusao.
 
 ## Workflow
 
@@ -193,7 +204,11 @@ evidencias e os riscos. Nao encerre sem esse registro.
 - Profundidade `<= 10`, total `<= 100` e `LARGE_TREE_CONFIRMATION` presente
   quando total `> 20`.
 - Todo handoff contem contexto autocontido, `target_files`, `allowed_writes`,
-  `write_mode`, `scoped_write_domains`, owner, validators, gates e destinos.
+  `calling_workflow: loki-catalogar-docs`, `write_mode` permitido,
+  `scoped_write_domains`, owner, validators, gates e destinos.
+- Fixtures aceitam `task_scoped_writer`/`proposal-only` somente com
+  `loki-catalogar-docs` e rejeitam caller/mode ausente, par cruzado, init modes
+  e qualquer payload/precondicao init antes da escrita.
 - Batches paralelos possuem `target_files` disjuntos; indices compartilhados
   possuem uma unica escrita serial.
 - Se `docs/index.xml` mudar, parseie-o como XML valido; cada documento
@@ -242,6 +257,8 @@ escopada nao autoriza altera-los sem inclui-los explicitamente no escopo.
 - `target_files` sobrepostos, conflito de owners, writer concorrente ou indice
   compartilhado planejado em paralelo.
 - Handoff incompleto ou sem destino; dependencia indisponivel.
+- `catalogador` indisponivel, caller/mode invalido ou packet, batch, ledger,
+  bootstrap ou reconciliation init usado como precondicao.
 - Approval/gate pendente ou rejeitado; validator ausente, falho ou inconclusivo.
 - Proxima acao exige forbidden write ou decisao humana ausente.
 
@@ -259,3 +276,6 @@ envelopes e handoffs com status, `target_files`, allowed writes, owners,
 conflitos, arquivos afetados, validators e evidencias, gates e approvals,
 etapas concluidas, `blocked_by`, riscos, proxima acao e condicao para continuar.
 Retome desse estado sem reiniciar o trabalho ja validado.
+Inclua `calling_workflow: loki-catalogar-docs`, write mode por handoff,
+disponibilidade do `catalogador` e destinations. Estado
+`catalogador-unavailable` retoma somente com o mesmo writer, nunca por fallback.

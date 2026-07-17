@@ -34,7 +34,7 @@ não existe projection ou command físico separado.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `loki-init` | `mvp` | Inicializar documentacao duradoura do consumidor em `docs/**` e estado operacional em `planos/000-init-loki/**`, usando inventario comum, pastas de inventario por agentes `init_context_scoped_writer` e consolidacao serial de indice/tasks. |
+| `loki-init` | `mvp` | Inicializar docs do consumidor com `init_inventory_domain_investigator` read-only/proposal-only, packets schema v1 e materializacao serial exclusiva por `catalogador` em bootstrap, publication batch e final reconciliation, com cobertura e retomada. |
 | `loki-catalogar-docs` | `mvp` | Catalogar documentacao duradoura do consumidor em `/docs` com validacao de caminho, limites de recursao, bottom-up e fan-out disjunto via envelopes do `catalogador`, consolidando `docs/index.xml` de forma serial. |
 | `loki-criar-branch` | `mvp` | Criar branch Git local com base, nome, colisao e mudancas locais validadas antes de qualquer escrita. |
 | `loki-commit` | `mvp` | Criar commit local com staging explicito, mensagem convencional, bloqueio de branch default e validacao de diff/status. |
@@ -45,7 +45,7 @@ não existe projection ou command físico separado.
 | `loki-agentic-development` | `mvp` | Executar o caminho integrado v2: receber demanda simples, conduzir analise agentica, resolver gates materiais antes do plano, gerar plano, executar fases autonomamente, registrar evidencias, digest e backlog, preservando `loki-run-plan` como executor manual. |
 | `loki-generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
-| `loki-run-plan` | `mvp` | Executar fase planejada com leitura paralela, escrita serializada, validators e gates. |
+| `loki-run-plan` | `mvp` | Executar fase planejada com preflight pessoal de contexto, escrita serializada, `catalogador` exclusivo para docs do consumidor, validators, gates e retomada. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
@@ -60,6 +60,12 @@ não existe projection ou command físico separado.
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
+A matriz caller/mode do `catalogador` e fechada: `loki-init` usa
+`init-bootstrap-cataloger`, `init-publication-batch` e
+`init-final-reconciliation`; `loki-continuous-improvement` e `loki-run-plan`
+usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
+`proposal-only`. Combinacoes ausentes ou cruzadas bloqueiam antes da escrita.
+
 ## Support Skills
 
 Esta seção lista skills `lf-*` e de domínio/tecnologia. Elas fornecem
@@ -71,7 +77,8 @@ bundles.
 | `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `lf-run-plan-execution` | `mvp` | Procedimento de preflight e execucao de fase com Execution Brief, dependencias, contexto read-only, owners `scoped-writer`, escrita serializada, validators e estado retomavel. |
+| `lf-run-plan-execution` | `mvp` | Procedimento de execucao com Execution Brief, dependencias, preflight pessoal de dominio, owners escopados, escrita serializada, validators e estado retomavel. |
+| `lf-domain-context-preflight` | `mvp` | Preflight pessoal reutilizavel para docs minimas, fontes atuais, freshness, conflitos e lacunas, sem autocorrecao de docs. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | `mvp` | Auditar o impacto de aprendizados externos em artefatos e workflows do Loki usando `docs/operational-inventory.md`. |
 | `lf-git-workflow` | `mvp` | Procedimento compartilhado para branch, commit e PR com preflight Git, staging seguro, gates humanos e GitHub MCP/`gh` fallback. |
@@ -102,7 +109,7 @@ bundles.
 | `session-evidence-auditor` | `mvp` | Auditar em modo read-only manifests de evidencia de sessao ja validados, sem inventar identidade, transcritos, uso de tokens ou raciocinio privado. |
 | `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
-| `catalogador` | `mvp` | Manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima em `AGENTS.md` e `CLAUDE.md` do consumidor. |
+| `catalogador` | `mvp` | Unico writer de docs duradouros do consumidor; exige caller/mode, fontes e targets explicitos para manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima aprovada. |
 | `game-product-owner` | `mvp` | Refinar objetivos, valor, prioridade e criterios de aceite para stories de jogo. |
 | `game-business-analyst` | `mvp` | Converter brief de jogo em requisitos, regras e lacunas verificaveis para refinamento. |
 | `game-designer` | `mvp` | Pode escrever specs, regras, tuning e criterios de jogabilidade quando a task atribuir target_files. |
@@ -181,7 +188,7 @@ bundles.
 | `docs/model-effort-guidance.md` | `mvp` | Definir classes provider-neutral de modelo, effort, sinais de escalamento e projecao por adaptador para artefatos Loki. |
 | `docs/package-authoring-guardrails.md` | `mvp` | Registrar preflight, regras estruturais, classificacao de referencias e validacoes para evoluir o pacote. |
 | `docs/project-context-catalog.md` | `mvp` | Definir como o Loki usa `/docs` e `docs/index.xml` do projeto consumidor sem contaminar o pacote. |
-| `docs/loki-init-inventory-contracts.md` | `mvp` | Definir contrato compartilhado de conteudo minimo para pastas de inventario por agente produzidas por `loki-init`. |
+| `docs/loki-init-inventory-contracts.md` | `mvp` | Definir packet schema v1, lotes, cobertura, continuacao, materializacao serial por `catalogador` e retomada do init. |
 | `docs/self-containment-audit.md` | `mvp` | Registrar a auditoria e checklist de autocontencao do pacote. |
 | `README.md` | `mvp` | Explicar instalacao local em Claude Code e Codex. |
 | `manifest.yaml` | `mvp` | Declarar pacote, versao, componentes, destinos locais e tags de tipo de projeto consumidas por `loki-init` para selecao de agentes. |

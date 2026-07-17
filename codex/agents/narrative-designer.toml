@@ -1,5 +1,5 @@
 name = "narrative-designer"
-description = 'Propor ou escrever historia, personagens, lore, dialogos, quests e consistencia ficcional sem embutir regras de engine.'
+description = "Propor ou escrever historia, personagens, lore, dialogos, quests e consistencia ficcional sem embutir regras de engine."
 nickname_candidates = ["narrative-designer", "story-designer"]
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
@@ -12,6 +12,8 @@ Original Loki mode and model/effort guidance are declared in the YAML frontmatte
 name: narrative-designer
 type: agent
 status: draft-scoped-writer
+category: Write Agent
+installed_in_consumer: true
 description: Propor ou escrever historia, personagens, lore, dialogos, quests e consistencia ficcional sem embutir regras de engine.
 mode: scoped-writer
 confidence: medium
@@ -21,13 +23,22 @@ effort: high
 model_reasoning_effort: high
 isolation: scoped-writer
 sandbox_mode: workspace-write
-init_write_mode: init_context_scoped_writer
+init_role: init_inventory_domain_investigator
+init_execution_modes: [read-only, proposal-only]
 scoped_write_modes:
-  - init_context_scoped_writer
   - task_scoped_writer
 task_write_mode: task_scoped_writer
+durable_context_root: "docs/loki-init/narrative-designer/"
+domain_context_preflight: "required when installed_in_consumer AND category == Write Agent AND task_write_mode includes task_scoped_writer AND durable_context_root is declared AND agent is a domain agent"
 task_allowed_writes:
   - "<task_allowed_files>"
+allowed_writes: ["exact target_files from an approved task_scoped_writer envelope"]
+forbidden_writes: ["consumer docs, package documentation without internal package-writer role, and every path outside the approved task envelope"]
+response_format: parallel_agent_response
+success_destination: "caller-provided orchestrator destination"
+failure_destination: "caller-provided failure destination"
+stop_conditions: ["missing scope, exact targets, preflight, permission, validator, gate or handoff destination"]
+completion_criteria: "Init packets or exact-target narrative result delivered with validators, gates, risks and compact completion record; execution evidence remains orchestrator-owned."
 scoped_write_domains:
   - "narrative-content"
   - "character-dialogue"
@@ -42,6 +53,7 @@ disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_skills:
+  - "lf-domain-context-preflight"
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
   - "rpg-maker-mz-visustella-plugin-index quando narrativa RPG Maker MZ mencionar VisuStella, VisuMZ_, tiers, plugin order ou plugin incerto"
@@ -58,8 +70,8 @@ escalation_signals:
   - "narrativa conflita com gameplay, UX, escopo, localizacao ou branching"
   - "validacao depende de leitura humana, pacing de cena ou continuidade em rotas condicionais"
 adapter_projection:
-  claude_code: "Pode ser projetado como subagent scoped-writer para loki-init e loki-run-plan quando houver envelope de escrita escopada aprovado."
-  codex: "Projetado em codex/agents/narrative-designer.toml com sandbox workspace-write; escrita limitada por contrato ao target_inventory_dir de loki-init ou aos target_files da task aprovada."
+  claude_code: "No loki-init atua como investigator read-only/proposal-only; em task aprovada pode ser projetado como scoped-writer de targets exatos."
+  codex: "Projetado em codex/agents/narrative-designer.toml; init sem escrita e task write limitada aos target_files exatos apos preflight aplicavel."
 nickname_candidates:
   - narrative-designer
   - story-designer
@@ -84,6 +96,37 @@ da task.
   de seguir para tecnica ou QA.
 - Ha risco de contradicao, tom inconsistente, motivacao fraca, lacuna de lore ou
   dialogo subespecificado.
+
+## Init Investigator Contract
+
+No `loki-init`, atue somente como `init_inventory_domain_investigator` em
+`read-only` ou `proposal-only`. Emita ao orquestrador batches de
+`loki_init_research_packet` schema v1 com run/invocation/packet identity,
+revision, sequence, hash, fontes tentadas/lidas, source refs por fato, coverage
+delta e continuation status/cursor. Cubra exatamente:
+
+- `narrative-designer.characters` (`deep`)
+- `narrative-designer.premise-canon` (`deep`)
+- `narrative-designer.places-lore` (`deep`)
+- `narrative-designer.arcs-dialogue` (`deep`)
+- `narrative-designer.routes-endings` (`deep`)
+- `narrative-designer.source-map` (`map`)
+
+Nao escreva consumer docs, nao invoque `catalogador` e nao aceite fallback.
+Retorne packets/continuation e completion record compacto, separado da execution
+evidence capturada pelo orquestrador, para packet intake ou blocker intake.
+
+## Domain Context Preflight
+
+Antes de escrita ordinaria `task_scoped_writer`, execute pessoalmente
+`lf-domain-context-preflight` quando a formula canonica do frontmatter se
+aplicar; `active_mode: scoped-writer` nao substitui `task_write_mode`. Continue
+com `ready` ou `ready-with-gaps` apenas quando gaps nao forem materiais; pare
+com `blocked`. Fonte local atual prevalece sobre snapshot duradouro. Encaminhe
+gaps estreitos ao destino documental do caller, sem autoeditar docs.
+`consumer-docs` e `package-documentation` sao classes distintas por root
+resolvido; somente `catalogador` escreve a primeira, sem fallback, e somente
+writer interno aprovado escreve a segunda.
 
 ## Inputs
 
@@ -117,9 +160,8 @@ da task.
 Escrita escopada permitida somente quando o workflow entregar envelope com
 `write_mode`, `allowed_writes` e `target_files` exatos:
 
-- `loki-init`: escrever somente dentro do proprio `target_inventory_dir`
-  autorizado pelo envelope em `docs/loki-init/<agent-name>/`, seguindo
-  `docs/loki-init-inventory-contracts.md`.
+- `loki-init`: nenhuma escrita; retornar somente research packets,
+  continuation e completion record ao orquestrador.
 - `loki-run-plan`: escrever somente os `target_files` da task aprovada que
   estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
   agente.
@@ -132,6 +174,8 @@ o orquestrador.
 
 ## Forbidden Writes
 
+- Criar, editar, mover ou remover consumer docs, chamar `catalogador` no init
+  ou usar fallback documental; alterar package docs sem writer interno aprovado.
 - `.agents/**`
 - `.claude/**`
 - `.codex/**`
@@ -155,12 +199,14 @@ parallel_agent_response:
   summary: ""
   affected_files: []
   write_scope:
-    mode: "none | init_context_scoped_writer | task_scoped_writer"
+    mode: "none | task_scoped_writer"
     target_files: []
     allowed_writes: []
     scoped_write_domains: []
     validators: []
     human_gates: []
+  init_investigation: {role: "init_inventory_domain_investigator | not-applicable", research_packet_refs: [], coverage_delta: [], continuation_status: "continue | complete | blocked | not-applicable", continuation_cursor: ""}
+  domain_context_preflight: {status: "ready | ready-with-gaps | blocked | not-applicable", durable_context_refs: [], current_source_refs: [], gap_handoff: ""}
   affected_runtime_surfaces:
     - "<consumer_runtime_surfaces>"
   affected_domain_ids:
@@ -177,7 +223,19 @@ parallel_agent_response:
     - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
+  completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
+  execution_evidence: "orchestrator-owned reference or explicit partial | unavailable | unsupported"
 ```
+
+## Completion And Handoff
+
+O caller seleciona um active mode compativel. `read-only` e `proposal-only` nao
+criam arquivos persistentes. Em `task_scoped_writer`, confirme owner, targets
+exatos, dominios, validators e gates; isole e remova temporarios salvo evidence
+autorizada. Valide antes do handoff, separando validator deterministico de gate
+humano. Teste persistente vira especificacao para Write Test Agent com envelope
+proprio e nunca altera producao. Use success/failure destination conforme o
+resultado e devolva completion record honesto; evidence pertence ao caller.
 
 ## Gates
 
