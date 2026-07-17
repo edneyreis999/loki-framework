@@ -43,7 +43,6 @@ preserve responsabilidade pelo fluxo depois de delegar.
 
 ## Forbidden Writes
 
-- Commit em `main`, `master` ou default sem pedido explicito.
 - Staging de arquivo nao revisado ou fora do escopo.
 - `.claude/**`, `.agents/**` e `.codex/**`, salvo pedido e escopo aprovados.
 - Push, PR, merge, rebase destrutivo, reset ou checkout destrutivo.
