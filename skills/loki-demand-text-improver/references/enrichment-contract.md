@@ -42,7 +42,7 @@ O arquivo final deve ser standalone e conter, nesta ordem adaptável ao idioma:
 3. objetivo e resultado esperado;
 4. contexto observado;
 5. escopo;
-6. fora de escopo;
+6. mandato para o próximo executor;
 7. requisitos;
 8. restrições;
 9. critérios de aceite;
@@ -53,6 +53,18 @@ O arquivo final deve ser standalone e conter, nesta ordem adaptável ao idioma:
 14. referências e provenance;
 15. few-shots opcionais;
 16. matriz de cobertura da intenção original.
+
+O mandato deve declarar, sem depender da conversa, o resultado downstream
+pretendido, as responsabilidades necessárias para cumprir requisitos e critérios
+de aceite, as decisões delegadas e os gates pendentes. Quando o próximo workflow
+ainda não tiver sido escolhido, registre essa lacuna sem selecioná-lo nem
+invocá-lo.
+
+Limites de autoridade, escrita e execução deste command pertencem ao workflow de
+enriquecimento e não podem virar exclusões do escopo do produto. Exclusões
+explicitamente presentes na entrada ou aprovadas pelo usuário permanecem
+rastreáveis em Escopo ou Restrições; não invente exclusões para preencher a
+estrutura.
 
 Não invente conteúdo para preencher uma seção. Use `none identified` no idioma
 predominante e explique a lacuna quando a seção for obrigatória mas não houver
@@ -100,5 +112,12 @@ registro do motivo. Nunca invente exemplo para completar o formato.
 - Assumptions são reversíveis e têm validator.
 - Itens `validate_later` têm owner, momento e evidência esperada.
 - Few-shots passam o gate ou estão omitidos com motivo.
+- Uma LLM que receba somente o arquivo final identifica intenção, resultado
+  esperado, próximo passo autorizado ou pendente, responsabilidades, requisitos,
+  decisões abertas, validators e gates sem recorrer à conversa.
+- Limites operacionais deste command não aparecem como exclusões do produto;
+  definições técnicas ausentes que sejam necessárias para cumprir requisitos ou
+  critérios de aceite permanecem lacunas ou responsabilidades do próximo passo.
 - A saída não contém análise técnica, decisão arquitetural, action plan,
-  execução ou implementação.
+  execução, implementação ou alegação de validação runtime, nem invoca workflow
+  downstream.
