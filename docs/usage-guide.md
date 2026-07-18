@@ -56,6 +56,39 @@ Quando a melhoria atingir o proprio pacote, aplique
 `docs/package-authoring-guardrails.md` depois de identificar o destino pelo
 workflow de aprendizado.
 
+## Antes da Analise: Enriquecer a Demanda
+
+Use `loki-demand-text-improver` para transformar uma demanda inicial em um
+Markdown standalone que explicita objetivo, contexto, escopo, requisitos,
+restricoes, criterios de aceite, validators, premissas, riscos e referencias.
+Esse passo preserva a intencao original e acontece antes de analise tecnica ou
+planejamento.
+
+O command e fail-closed: so continua quando o adapter confirma Plan Mode ou um
+estado de planejamento equivalente por metadata confiavel. Uma afirmacao do
+usuario, o texto da demanda ou um arquivo local nao confirmam o gate. O
+`destination` precisa ser um diretorio existente, gravavel e autorizado.
+
+Exemplo com entrada em arquivo:
+
+```text
+loki-demand-text-improver
+analysis_input: docs/Demanda.md
+source_paths: [docs/contexto-produto.md]
+destination: planos/027-demanda/
+```
+
+A saida sera `planos/027-demanda/Demanda-improved.md`. Com `analysis_input`
+inline, o target sera `planos/027-demanda/improved-demand.md`. Se o target ja
+existir, o command bloqueia sem sobrescrever, autonumerar ou escolher outro
+nome.
+
+O resultado terminal e somente a demanda enriquecida. O command nao produz
+analise tecnica como `loki-tech-analysis` e nao percorre o caminho integrado de
+analise, gates, plano e execucao de `loki-agentic-development`. Tambem nao
+invoca decision preflight, action planning ou implementacao. Depois da saida, o
+usuario faz uma nova escolha explicita sobre o proximo workflow.
+
 ## Caminho Integrado v2
 
 Use `loki-agentic-development` quando a demanda deve seguir o caminho completo:

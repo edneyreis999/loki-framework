@@ -18,6 +18,7 @@
 | `loki-deep-research` | `skills/loki-deep-research/SKILL.md` |
 | `loki-retrospectiva-tecnica` | `skills/loki-retrospectiva-tecnica/SKILL.md` |
 | `loki-run-plan` | `skills/loki-run-plan/SKILL.md` |
+| `loki-demand-text-improver` | `skills/loki-demand-text-improver/SKILL.md` |
 | `loki-tech-analysis` | `skills/loki-tech-analysis/SKILL.md` |
 
 ## Procedure

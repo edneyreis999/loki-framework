@@ -40,6 +40,7 @@ não existe projection ou command físico separado.
 | `loki-commit` | `mvp` | Criar commit local com staging explicito, mensagem convencional, bloqueio de branch default e validacao de diff/status. |
 | `loki-abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
 | `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
+| `loki-demand-text-improver` | `mvp` | Enriquecer uma demanda inicial em um unico Markdown antes de analise ou planejamento, com planning state confirmado por metadata confiavel, destination existente e gravavel, naming deterministico e nenhum workflow posterior automatico. |
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
 | `loki-agentic-development` | `mvp` | Executar o caminho integrado v2: receber demanda simples, conduzir analise agentica, resolver gates materiais antes do plano, gerar plano, executar fases autonomamente, registrar evidencias, digest e backlog, preservando `loki-run-plan` como executor manual. |

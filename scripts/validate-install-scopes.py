@@ -37,7 +37,7 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_LOKI_COMMAND_COUNT = 17
+FINAL_LOKI_COMMAND_COUNT = 18
 FINAL_BUNDLE_RESOURCES = (
     "references/execution.md",
     "references/response.md",

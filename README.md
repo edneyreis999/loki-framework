@@ -24,6 +24,9 @@ como catalogo navegavel.
 
 Fluxos principais:
 
+- `loki-demand-text-improver`: enriquece uma demanda inicial antes de analise
+  ou planejamento e termina em um unico Markdown, sem executar etapas
+  posteriores.
 - `loki-agentic-development`: caminho integrado v2 de demanda para analise
   agentica, gates antes do plano, action plan, execucao autonoma, digest e
   backlog.
@@ -32,6 +35,26 @@ Fluxos principais:
 - `loki-run-plan`: executor manual por fase ou task planejada.
 - `loki-continuous-improvement`: promocao posterior e controlada de
   aprendizados validados.
+
+Use `loki-demand-text-improver` quando a demanda ainda precisar explicitar
+objetivo, contexto, escopo, requisitos, restricoes, aceite, validators,
+premissas, riscos ou referencias. O adapter precisa confirmar Plan Mode ou
+estado de planejamento equivalente por metadata confiavel; uma declaracao do
+usuario nao satisfaz esse gate. O `destination` deve ser um diretorio existente
+e gravavel. Exemplo com entrada em arquivo:
+
+```text
+loki-demand-text-improver
+analysis_input: docs/Demanda.md
+source_paths: [docs/contexto-produto.md]
+destination: planos/027-demanda/
+```
+
+Nesse caso, o target e `planos/027-demanda/Demanda-improved.md`. Para texto
+inline, o nome e `improved-demand.md`. Uma colisao bloqueia sem sobrescrever ou
+autonumerar. O command termina nesse Markdown enriquecido: nao inicia
+`loki-tech-analysis`, decisao humana, plano, `loki-agentic-development` ou
+execucao. O usuario escolhe o proximo workflow em um novo pedido.
 
 Identidade operacional:
 
@@ -87,7 +110,7 @@ copiaria artefatos `internal-only`.
 
 Dry-run manual recomendado antes de aplicar: gere e revise a lista exata a
 partir de `install-scopes.json`, confirme que cada destino ainda não existe e
-registre essa lista para rollback. Para `consumer`, a lista esperada contém 47
+registre essa lista para rollback. Para `consumer`, a lista esperada contém 49
 skills e 22 agents; templates Markdown são copiados separadamente.
 
 ```bash

@@ -124,6 +124,7 @@
       "lf-domain-context-preflight": "both",
       "loki-self-healing": "internal-only",
       "lf-skill-creator": "both",
+      "loki-demand-text-improver": "both",
       "loki-tech-analysis": "both",
       "lf-tech-analysis-authoring": "both",
       "lf-template-library": "both",

@@ -519,6 +519,16 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
+  - name: "loki-demand-text-improver"
+    file: "skills/loki-demand-text-improver/SKILL.md"
+    status: draft
+    operational_role: command
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-tech-analysis"
     file: "skills/loki-tech-analysis/SKILL.md"
     status: draft
