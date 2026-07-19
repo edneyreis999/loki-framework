@@ -1,0 +1,41 @@
+{
+  "schema_version": "1",
+  "policy_id": "analytic-inference-policy-v1",
+  "status": "active",
+  "approved_candidate_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
+  "approved_candidate": {
+    "candidate_id": "analytic-inference-policy-v1-candidate-001",
+    "policy_source": "PC-BALANCED",
+    "schema_version": "1",
+    "status": "proposed",
+    "values": {
+      "catalog_limit": 3,
+      "cost_budget": 6,
+      "fan_out_limit": 2,
+      "handoff_timeout_ticks": 3,
+      "promotion_min": 12,
+      "purge_review_max": -4,
+      "removals_per_cycle": 1,
+      "reorganization_max": 2,
+      "score_weights": {
+        "false_positive": -6,
+        "investigated": 1,
+        "material_finding": 5,
+        "repeated_evidence": -4,
+        "selected": 0,
+        "stale": -2,
+        "task_helped": 8,
+        "validated": 3
+      }
+    }
+  },
+  "semantics": {
+    "approved_candidate_status_is_identity_bound": true,
+    "thresholds_are_inclusive": true,
+    "score_is_eligibility_only": true,
+    "automatic_mutation": false,
+    "purge_requires_independent_just_in_time_approval": true,
+    "consumer_overlay_v1": false,
+    "initial_catalog": "empty"
+  }
+}

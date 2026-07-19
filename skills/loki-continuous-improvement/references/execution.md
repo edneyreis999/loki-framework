@@ -6,8 +6,8 @@ Este command é o orquestrador que transforma aprendizados validados em proposta
 ou promoção duradoura rastreável para o projeto consumidor ou pacote Loki, ou os
 mantém em backlog quando a evidência não sustenta normatização.
 
-- Início: Input normalizado, retrospectiva elegível e fronteiras de escopo
-  conhecidas.
+- Início: Input normalizado, pelo menos uma fonte elegível e fronteiras de
+  escopo conhecidas.
 - Conclusão: cada candidato tem fonte, classificação, root-cause decision,
   destino, ação, gates, validators, status e risco; todos os handoffs estão
   terminais e nenhuma stop condition permanece ativa.
@@ -60,6 +60,9 @@ Use `loki-retrospectiva-tecnica` como fonte auditável. Carregue
 `lf-command-creator` para command/template de command/orquestração,
 `lf-agent-creator` para agent ou dúvida agent-skill-command e
 `lf-skill-creator` para skill, layout e progressive disclosure.
+Quando o Input contiver eventos ou candidatos especializados de inferência,
+carregue também [lf-analytic-inference](../../lf-analytic-inference/SKILL.md) e
+seus contratos; não carregue essa skill para melhoria contínua não relacionada.
 
 ## Allowed And Forbidden Writes
 
@@ -164,6 +167,222 @@ materialidade, claim typing/confidence, gaps, sanitização e promotion status
 `unreviewed`. Deduplicate por lineage/capture ID e preserve contradições. Uma
 entry não substitui `retrospective_source`, root-cause learning, technical
 review ou approval; capture nunca promove automaticamente.
+
+## Conditional Analytic-Inference Intake And Reconciliation
+
+Ative esta ramificação somente quando uma fonte persistida contiver relatório
+de deep analysis com `inference_events` e/ou `generated_candidates`, ou
+retrospectiva com `analytic_inference_candidates`. Ela adapta os itens ao
+lifecycle existente; não cria outro workflow de promoção nem altera candidatos
+genéricos.
+
+### Source and item validation
+
+1. Resolva o locator dentro do escopo de leitura e registre tipo da fonte,
+   locator canônico, digest canônico da fonte e blocos encontrados. Locator
+   ausente, ilegível, fora do escopo ou incompatível com provenance bloqueia o
+   intake afetado; nunca invente substituto.
+2. Para cada `inference_event`, valide integralmente schema v1, `event_id`,
+   `source.analysis_ref`, run/handoff/evidence refs, inference ID/revision,
+   stage, outcome, reason, capability e custos. `analysis_ref` deve identificar
+   a fonte persistida ou ter lineage observável até ela.
+3. Para cada `generated_candidate`, exija schema v1, stable `candidate_id`,
+   `origin: generated`, status exatamente `unreviewed`, statement, demand
+   relation, applicability, provenance com `generated_in_report`, evidence
+   refs/freshness, investigation, distinction e downstream sem autorização de
+   mutação.
+4. Para cada `analytic_inference_candidate`, exija schema v1, stable
+   `candidate_id`, `candidate_type: analytic-inference`, observation type
+   reconhecido, status exatamente `unreviewed`, `capture_id`, locator da
+   retrospectiva, lineage, applicability, provenance, classificação da
+   evidência, validation, investigation, distinction, guidance e downstream
+   sem autorização de mutação. Capture e locator são obrigatórios; valores
+   `unavailable` permanecem explícitos.
+5. Preserve facts, inferences e hypotheses separados. Contradição, schema
+   inválido, provenance quebrada, status diferente de `unreviewed` ou pedido de
+   mutação na fonte resulta em `block`; lista vazia é válida somente com motivo.
+
+### Stable intake identity, replay and conflicts
+
+Produza ledger transitório determinístico. A identidade é o par tipado
+`event:<event_id>` ou `candidate:<candidate_id>`; registre locator da fonte,
+digest da fonte, digest SHA-256 do payload JSON canônico e lineage/capture
+observados. Os namespaces são distintos. O payload canônico usa UTF-8, chaves
+ordenadas e separadores compactos, sem campos inventados.
+
+- Primeiro ID/payload válido: `accepted`.
+- Mesmo ID e payload canônico idêntico: `replayed-no-op`; não incremente
+  contador, denominador, evidência ou candidato.
+- Mesmo ID e payload divergente: `conflict-blocked`; preserve as duas
+  provenances e não escolha vencedor.
+- Deduplicate eventos globalmente por `event_id` e candidatos por
+  `candidate_id`. Capture ID e locator auditam a origem, mas não substituem as
+  chaves de idempotência.
+- Retry parcial reabre o ledger e converge ao mesmo conjunto aceito. Nunca
+  conte novamente item já aceito.
+
+Similaridade semântica pode gerar `near-duplicate-review`, mas nunca equivale a
+identidade, deduplicação exata, merge, redirect, reorganização ou remoção.
+
+### Deterministic reconciliation and policy
+
+Para cada inference ID/revision catalogada, combine somente eventos aceitos com
+o ledger histórico e execute o reducer stdlib
+`../../lf-analytic-inference/scripts/reconcile_events.py <events.json>
+--policy ../../lf-analytic-inference/references/policy-v1.json`, acrescentando
+`--protected` quando o registro validado tiver status `protected`. A entrada é
+JSON array ou objeto com `events`; o reducer retorna JSON read-only e
+`mutation_applied: false`. Exit diferente de zero ou status `blocked` bloqueia
+a proposta afetada.
+
+Reconstrua e exponha os nove componentes, inclusive `rejected_count`,
+`denominators.unique_events`, `as_of_event`, freshness, score,
+algorithm/policy, `applied_event_ids`, `replayed_event_ids` e diagnostics. Não
+confie em contador mutável observado.
+
+Valide o catálogo antes e depois do diff proposto com
+`../../lf-analytic-inference/scripts/validate_catalog.py <index.json>
+--policy ../../lf-analytic-inference/references/policy-v1.json`. Exija schema,
+IDs, locators contidos, revisions, lineage acíclica, paridade exata índice ↔
+registro, `active_limit` compatível e policy ID
+`analytic-inference-policy-v1` com digest exato
+`cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130`.
+Snapshot observado que divergir da reconstrução é inválido.
+
+O score usa apenas pesos aprovados: investigated `1`, validated `3`, material
+finding `5`, task helped `8`, false positive `-6`, repeated evidence `-4`,
+stale `-2` e selected `0`. Compare inclusivamente e reporte somente:
+
+- `promotion_eligible: score >= 12`;
+- `reorganization_eligible: score <= 2`;
+- `purge_review_eligible: status != protected and score <= -4`.
+
+Esses booleans são elegibilidade, não decisão. Seleção nunca melhora o score e
+registro protegido nunca é purge-review eligible. Eles apenas permitem avaliar
+os contratos gated de reorganização e purge abaixo; não autorizam ação,
+equivalência por similaridade ou mutação automática.
+
+### Candidate disposition and promotion-only proposal
+
+Mapeie cada candidato especializado ao schema existente, preservando um bloco
+`analytic_inference` com source type, intake identity, payload digest,
+capture/lineage/provenance, reconstrução, score e elegibilidade. Escolha uma
+disposição:
+
+- `record-only`: evidência insuficiente, não elegível ou investigação futura;
+- `block`: conflito, schema/locator/lineage/provenance/policy inválido ou gate
+  material ausente;
+- `propose-promotion`: evidência e elegibilidade sustentam somente proposta.
+
+O status permanece `unreviewed` em todas as três disposições. Só aplicação
+duradoura posterior, com todos os gates e validators resolvidos, pode mudar o
+lifecycle. Nunca trate score, replay, relatório, retrospectiva ou similaridade
+como aprovação.
+
+Proposta de promoção lista targets exatos de índice/registro, before/after,
+eventos e snapshot esperados, lineage/provenance, dry validation e riscos. Para
+`destination_scope: package`, exija `technical-review` e `approval` antes de
+qualquer escrita duradoura; depois, `framework-artifact-writer` é o único
+writer e `framework-artifact-quality-auditor` revisa read-only o patch real. O
+auditor não substitui gates e o writer não se autoaprova. Esta etapa registra
+somente proposta: `catalog_mutation_applied: false`.
+
+### Reorganization proposal contract
+
+Somente estado reconstruído com `reorganization_eligible: true` (`score <= 2`)
+pode originar proposta; elegibilidade é necessária e não executa ação. A
+proposta declara operation ID, inference IDs/revisions, targets exatos,
+before/after por target, lineage antes/depois, evidência validada preservada,
+motivo, risco e validators determinísticos. Preserve registros `protected` e
+todo conhecimento validado; perda, ambiguidade ou lineage irresolúvel bloqueia.
+
+Operações permitidas na proposta são `generalize`, `merge`, `deduplicate`,
+`rewrite` e `reorder`. Similaridade semântica é somente sinal para review,
+nunca identidade, igualdade ou autorização de merge/deduplication. Antes de
+qualquer aplicação, exija `technical-review` e approval vinculados à proposta;
+então serialize os targets sob owner único `framework-artifact-writer`, rode
+validação determinística de schema, identidade, lineage, paridade e snapshot e
+entregue o patch real ao `framework-artifact-quality-auditor` read-only. O
+auditor não escreve nem substitui os gates. Sem todos os controles, registre
+somente `reorganization_proposed: true` e `catalog_mutation_applied: false`.
+Projete sempre estados separados: `reorganization_eligible` é informativo;
+`reorganization_proposed` registra somente a proposta gated;
+`reorganization_applied` só pode ser `true` após aplicação e validação completas.
+`catalog_mutation_applied` reflete o efeito real e permanece `false` em
+eligibility ou proposal.
+
+### Physical purge contract
+
+`purge_review_eligible: true` exige registro não protegido e score reconstruído
+`<= -4`, mas é apenas condição necessária. Purge é físico, irreversível,
+catalog-owned, sem rollback e falha fechado. Nunca use limite, score,
+similaridade, proposal approval ou policy approval como approval da operação.
+
+#### Read-only dry-run and canonical target manifest
+
+Antes de solicitar approval, um dry-run read-only resolve o catalog root e cria
+um manifesto canônico sem remover nada. O manifesto contém:
+
+- stable `operation_id`, sequence monotônica, `generated_at` determinístico,
+  inference IDs/revisions exatos e catalog root canônico;
+- para **todos** os rastros catalog-owned desses IDs: artifact kind,
+  canonical contained catalog path, selector quando o rastro estiver embutido
+  e SHA-256 do estado anterior;
+- record, index entry, snapshot, eventos, aliases, redirects, tombstones e todo
+  identificador controlado pelo catálogo, inclusive referências cruzadas;
+- exclusões explícitas e refs externas com hashes de preservação, incluindo
+  relatórios, retrospectivas, evidências e o próprio approval record;
+- policy ID/digest exatos, `removals_per_cycle`, target count e digest SHA-256
+  do manifesto canônico completo sem o próprio campo de digest.
+
+Normalize paths fisicamente, resolva symlinks e exija que cada target permaneça
+sob o catalog root aprovado. Path absoluto na fonte, escape, symlink para fora,
+artifact kind sem target, rastro catalog-owned omitido, hash ausente ou external
+ref incluída como target bloqueia o dry-run. O dry-run retorna sempre
+`mutation_applied: false`.
+
+#### Independent just-in-time approval
+
+Cada operação exige approval separado, não reutilizável, emitido depois do
+dry-run. O registro deve vincular exatamente `operation_id`, inference IDs,
+canonical paths, target-set/dry-run digest, policy digest, approver identity,
+source locator, status explícito `approved` e expiry ou freshness verificável.
+Approval ausente, pending/rejected, expirado/stale, já consumido, emitido antes
+do dry-run, de outra operação, ou com qualquer divergência de ID/path/target
+set/digest/policy bloqueia sem escrita. Fixture e exemplo nunca constituem
+approval real.
+
+#### Pre-delete, serialized execution and failure
+
+Imediatamente antes da primeira exclusão, reconstrua score/eligibility e
+revalide atomicamente: registro não protegido; identity/revision; canonical
+containment e ausência de symlink escape; conjunto completo e sem target extra;
+before hashes; dry-run/target-set e policy digests; approval JIT íntegro;
+`active_limit`; e `removals_per_cycle: 1`. Drift ou mais de um ID no ciclo
+bloqueia antes da escrita.
+
+Somente `framework-artifact-writer`, como owner único, executa a operação
+serialmente. Remova fisicamente cada rastro aprovado; não crie rollback,
+tombstone, redirect, alias, event ou ID catalog-owned substituto. O approval
+record e fontes externas permanecem fora do catálogo e fora do target set. O
+`framework-artifact-quality-auditor` atua read-only após a operação e não pode
+corrigir produção.
+
+Qualquer interrupção depois da primeira exclusão é `failed` e `blocked`:
+registre targets removidos, rastros residuais, hashes observados, writes
+tentados e minimum next path. Nunca declare rollback, sucesso, ausência total
+de rastros ou aprovação reutilizável depois de falha parcial.
+
+#### Post-validation
+
+Após execução simulada ou real autorizada, valide paridade e integridade do
+catálogo restante, ausência de **todos** os rastros catalog-owned aprovados,
+ausência dos IDs em aliases/redirects/tombstones/events/snapshots/index/records,
+hashes inalterados de cada external ref e ausência de write não aprovado. Só
+resultado completo, auditor `approved/pass` e approval marcado consumido podem
+ser terminal. Qualquer residual, mudança externa, target extra, falha de
+paridade ou auditor inconclusivo é `failed`/`blocked`; nunca reporte
+`zero_catalog_traces` sem prova enumerada.
 
 ## Classification And Placement Matrix
 
@@ -290,6 +509,29 @@ target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
 
 ## Validators
 
+- Intake de inferência valida locator, schema, status `unreviewed`,
+  capture/lineage/provenance e digest canônico por ID.
+- Replay idêntico é no-op com snapshot idêntico; ID divergente bloqueia e nenhum
+  item altera contador ou denominador mais de uma vez.
+- Reducer reconstrói componentes, denominadores, último evento, freshness e
+  score; catalog validator confirma locators, lineage, paridade índice-registro,
+  policy ID e digest exatos.
+- Thresholds são inclusivos e apenas classificam eligibility; seleção pesa zero,
+  protected nunca é purge-review eligible e nenhuma mutação é inferida.
+- Candidato especializado permanece `unreviewed` e usa `record-only`, `block`
+  ou `propose-promotion`; proposta lista targets, before/after, dry validation,
+  Writer, auditor read-only, technical-review e approval.
+- Reorganização exige score inclusivo `<= 2`, targets/before-after/lineage
+  exatos, preservação de protected/validated knowledge, gates prévios, Writer
+  único, auditor read-only e validação determinística; similaridade não é
+  identidade.
+- Purge exige unprotected score inclusivo `<= -4`, manifesto read-only completo,
+  hashes/digests e approval JIT por operação; pre-delete revalida containment,
+  symlinks, identidade, target set, hashes, policy, gates, active limit e
+  `removals_per_cycle: 1`.
+- Post-purge prova ausência de cada rastro catalog-owned aprovado, paridade do
+  catálogo restante, external refs inalteradas e nenhum write extra. Residual
+  ou falha parcial é `failed`/`blocked`, nunca sucesso ou zero traces.
 - Toda proposta cita fonte aceita/reproduzível, separa evidência transitória de
   destino duradouro e nomeia target concreto.
 - Explica por que a superfície preveniria o erro ou reduziria repetição.
@@ -361,7 +603,7 @@ continuous_improvement_candidate:
     suspected_cause: ""
   execution_friction:
     categories:
-      - "inference-good | inference-bad | file-discovery | script-command | unexpected-output | environment-mismatch | tool-friction | validation-friction | source-friction | handoff-friction | state-friction | dependency-friction | format-friction | external-research-friction | user-correction | communication-waste | search-waste | scope-waste | safety-gate-friction | minimum-next-path"
+      - "inference-good | inference-bad | inference-missing | file-discovery | script-command | unexpected-output | environment-mismatch | tool-friction | validation-friction | source-friction | handoff-friction | state-friction | dependency-friction | format-friction | external-research-friction | user-correction | communication-waste | search-waste | scope-waste | safety-gate-friction | minimum-next-path"
     observed_sequence: ""
     useful_attempts: []
     failed_attempts: []
@@ -426,6 +668,87 @@ continuous_improvement_candidate:
     - "diff revisado"
     - "validacao de estrutura"
   residual_risk: []
+  analytic_inference_applicability:
+    state: "applicable | not-applicable"
+    reason: "<non-empty source/type reason>"
+  analytic_inference:
+    schema_version: 1
+    source:
+      source_type: "deep-analysis-report | technical-retrospective"
+      locator: "<exact persisted source locator>"
+    intake_identity:
+      namespace: "event | candidate"
+      id: "<event_id | candidate_id>"
+      stable_key: "<event:event_id | candidate:candidate_id>"
+    source_digest_sha256: "<canonical source digest>"
+    payload_digest_sha256: "<canonical item payload digest>"
+    capture_id: "<observed capture ID | null>"
+    lineage:
+      run_id: "<observed | unavailable>"
+      phase: "<observed | unavailable>"
+      task_id: "<observed | unavailable>"
+      agent_run_id: "<observed | unavailable>"
+      handoff_id: "<observed | unavailable>"
+      evidence_id: "<observed | unavailable>"
+    provenance:
+      source_refs: []
+      evidence_refs: []
+      freshness: "current | stale | unknown"
+    status: unreviewed
+    disposition: "record-only | block | propose-promotion"
+    intake_reconciliation:
+      state: "accepted | replayed-no-op | conflict-blocked"
+      counted: "true | false"
+      replayed_identity: "<stable_key | null>"
+      conflict:
+        state: "none | blocked"
+        conflicting_source_locators: []
+        payload_digests_sha256: []
+    reconstructed_snapshot:
+      algorithm_version: "analytic-inference-policy-v1"
+      components:
+        selected_count: 0
+        investigated_count: 0
+        validated_count: 0
+        rejected_count: 0
+        material_findings_count: 0
+        tasks_helped_count: 0
+        false_positive_count: 0
+        repeated_evidence_count: 0
+        stale_count: 0
+      denominators:
+        unique_events: 0
+      as_of_event: "<event_id | null>"
+      freshness: "current | stale | unknown | unsupported"
+      score: 0
+      policy:
+        policy_id: "analytic-inference-policy-v1"
+        policy_digest_sha256: "<verified exact digest>"
+    eligibility:
+      promotion: "true | false"
+      reorganization: "true | false"
+      purge_review: "true | false"
+    target_proposal:
+      state: "none | proposed | blocked"
+      operation: "promotion | none"
+      inference_ids: []
+      exact_targets: []
+      before: "<exact prior state | null>"
+      after: "<exact proposed state | null>"
+      lineage_before: "<observed lineage | null>"
+      lineage_after: "<proposed lineage | null>"
+      dry_validation: []
+      required_gates:
+        technical_review: "pending | approved | rejected | not-applicable"
+        approval: "pending | approved | rejected | not-applicable"
+      writer:
+        agent: "framework-artifact-writer | none"
+        status: "pending | completed | blocked | not-required"
+      auditor:
+        agent: "framework-artifact-quality-auditor | none"
+        mode: "read-only | not-required"
+        status: "pending | approved | blocked | not-required"
+      catalog_mutation_applied: false
   promotion_execution:
     package_artifact_flow_required: "true | false"
     writer:
@@ -447,6 +770,16 @@ continuous_improvement_candidate:
     next_destination: "writer | technical-review | orchestrator | none"
 ```
 
+`analytic_inference` é condicional. Para candidato genérico,
+`analytic_inference_applicability.state` deve ser `not-applicable`, sua `reason`
+deve ser não vazia e o bloco inteiro `analytic_inference` deve ser `null`; não
+preencha locator, digests, lineage, snapshot ou eligibility por conveniência.
+Quando `state: applicable`, o bloco completo acima é obrigatório, status deve
+ser exatamente `unreviewed` e nenhuma chave pode ser omitida. Source/intake
+identity/digests, replay/conflict/counting, snapshot/policy/eligibility,
+disposition, target proposal, gates, writer/auditor e mutation state devem
+round-trip sem perda para Response e Resume Contract.
+
 ## Stop Conditions
 
 Pare diante de required input ausente; fonte inelegível/insuficiente;
@@ -455,6 +788,15 @@ caso isolado sem project-specific; tentativa de relaxar gate; regra consumidora
 proposta para pacote; root-cause required incompleta e não bloqueada; dependência
 indisponível; handoff sem destino; conflito de writers; validator ausente/falho;
 gate/approval/decisão humana pendente; ou superfície sem validação verificável.
+No intake de inferência, pare também diante de locator/source incompatível,
+schema/status inválido, capture/lineage/provenance quebrada, mesmo ID com payload
+divergente, policy ID/digest divergente, reducer/validator bloqueado, snapshot
+irreconstruível ou mutação automática. Para reorganização, pare sem
+elegibilidade, preservação de protected/validated knowledge, targets,
+before/after, lineage, gates, Writer ou auditor. Para purge, pare em qualquer
+falha de manifesto, containment/symlink, identity, hashes, target set, digest,
+approval JIT, limite, owner, serialização ou post-validation; falha parcial
+permanece `failed`/`blocked` com rastros residuais.
 Pare tambem antes de consumer-doc write se `catalogador` estiver indisponivel,
 caller/mode divergir ou o envelope exigir qualquer precondicao init.
 Para `destination_scope: package`, pare também se o Writer ou auditor estiver
@@ -470,6 +812,20 @@ execution friction, `root_cause_learning`, ação, owner/writes, handoffs, gates
 validators, artefatos impactados, diff esperado, approval, status, risco,
 etapas concluídas, próxima ação e condição de retomada. Preserve a evidência e
 retome sem reiniciar quando esse estado bastar.
+
+Para candidato de inferência, registre ledger, source/payload digests,
+replay/conflict, conjunto contado, policy ID/digest, reducer/validator,
+snapshot/componentes/denominadores/as-of/freshness/score, eligibility,
+disposição, status `unreviewed`, target proposal, Writer/auditor/gates e
+`catalog_mutation_applied: false`.
+
+Para reorganização, preserve operation ID, eligibility, operação proposta,
+targets, before/after, lineage, evidência preservada, Writer/auditor,
+validators, gates e mutation state. Para purge, preserve dry-run manifest e
+digest, IDs/paths/artifact kinds/before hashes, exclusions/external hashes,
+policy, approval JIT e consumo, pre-delete checks, sequência serial, targets
+removidos/residuais, post-validation, auditor e minimum next path. Nunca use o
+fixture sintético como approval ou prova de execução.
 
 Para `destination_scope: package`, registre também `promotion_execution`: owner
 e envelope do Writer, target/discovered files, evidência de checks, auditor e

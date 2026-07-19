@@ -42,6 +42,7 @@ não existe projection ou command físico separado.
 | `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki-demand-text-improver` | `mvp` | Enriquecer uma demanda inicial em um unico Markdown antes de analise ou planejamento, com planning state confirmado por metadata confiavel, destination existente e gravavel, naming deterministico e nenhum workflow posterior automatico. |
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
+| `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
 | `loki-agentic-development` | `mvp` | Executar o caminho integrado v2, persistir completion/evidence antes de capture paralelo não bloqueante, registrar knowledge state, digest e backlog, preservando `loki-run-plan` como executor manual. |
 | `loki-generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
@@ -61,6 +62,11 @@ não existe projection ou command físico separado.
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
+O pacote possui 19 command bundles `loki-*` ativos. O router publico
+`lf-command-workflows` expoe 17 deles; os dois bundles `internal-only`,
+`loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados
+exclusivamente por `lf-internal-command-workflows`.
+
 A matriz caller/mode do `catalogador` e fechada: `loki-init` usa
 `init-bootstrap-cataloger`, `init-publication-batch` e
 `init-final-reconciliation`; `loki-continuous-improvement` e `loki-run-plan`
@@ -75,7 +81,7 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para carregar comandos Loki compartilhados disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki publicos disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
 | `lf-run-plan-execution` | `mvp` | Procedimento de execucao com Execution Brief, dependencias, preflight pessoal de dominio, owners escopados, escrita serializada, validators e estado retomavel. |
@@ -90,6 +96,7 @@ bundles.
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `lf-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
+| `lf-analytic-inference` | `mvp` | Compartilhar entre Codex e Claude Code o contrato de consulta seletiva, schemas, eventos, snapshots e score deterministico de inferencias; informa elegibilidade e propostas de manutencao sem mutar o catalogo, cuja base v1 inicia vazia e nao possui overlay duradouro por consumidor. |
 | `lf-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
 | `lf-command-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar command bundles com Input, Execution, Response, owners, gates, validators e retomada. |
 | `lf-agent-creator` | `mvp` | Fonte compartilhada do contrato de agents por capacidades e modos, com envelope de escrita, validação e handoff claro. |

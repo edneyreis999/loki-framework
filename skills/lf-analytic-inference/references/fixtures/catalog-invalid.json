@@ -1,0 +1,84 @@
+{
+  "schema_version": "1",
+  "fixture_type": "analytic-inference-catalog-validation-cases",
+  "cases": [
+    {
+      "fixture_id": "catalog-invalid-schema-version",
+      "cli": "validate_catalog.py",
+      "input": {
+        "schema_version": "1",
+        "catalog_id": "fixture-invalid-schema",
+        "technology": "base",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": []
+      },
+      "expected": {
+        "exit_code": 2,
+        "status": "blocked",
+        "diagnostic_contains": ["index:SCHEMA_VERSION"],
+        "mutation_applied": false
+      }
+    },
+    {
+      "fixture_id": "catalog-invalid-locator-escape",
+      "cli": "validate_catalog.py",
+      "input": {
+        "schema_version": 1,
+        "catalog_id": "fixture-locator-escape",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {
+            "inference_id": "inf-escape",
+            "revision": 1,
+            "status": "active",
+            "summary": "Escaping locator must fail closed.",
+            "technologies": ["python"],
+            "surfaces": ["validator"],
+            "objectives": ["catalog-integrity"],
+            "signals": ["locator-escape"],
+            "locator": "../outside-catalog.json"
+          }
+        ]
+      },
+      "expected": {
+        "exit_code": 2,
+        "status": "blocked",
+        "diagnostic_contains": ["LOCATOR_ESCAPE", "catalog:INDEX_RECORD_PARITY"],
+        "mutation_applied": false
+      }
+    },
+    {
+      "fixture_id": "catalog-invalid-index-record-parity",
+      "cli": "validate_catalog.py",
+      "input": {
+        "schema_version": 1,
+        "catalog_id": "fixture-missing-record",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {
+            "inference_id": "inf-missing",
+            "revision": 1,
+            "status": "active",
+            "summary": "Missing record must fail parity.",
+            "technologies": ["python"],
+            "surfaces": ["validator"],
+            "objectives": ["catalog-integrity"],
+            "signals": ["missing-record"],
+            "locator": "records/inf-missing.json"
+          }
+        ]
+      },
+      "expected": {
+        "exit_code": 2,
+        "status": "blocked",
+        "diagnostic_contains": ["LOCATOR_MISSING", "catalog:INDEX_RECORD_PARITY"],
+        "mutation_applied": false
+      }
+    }
+  ]
+}

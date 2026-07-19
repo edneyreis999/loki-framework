@@ -112,6 +112,12 @@ causas, metricas, validacoes, outputs, atritos, approvals ou destino. Normalize
 objetivo, resultado, parametros, escopo, restricoes, destino, evidencias,
 decisoes, approvals, gates e lacunas para Execution.
 
+Quando as fontes contiverem observacao material de inferencia util, incorreta ou
+ausente, normalize tambem o `capture_id`, o locator da retrospectiva, lineage
+observavel e evidencias candidatas para roteamento condicional por
+`lf-analytic-inference`. Nao carregue essa skill nem fabrique candidato quando a
+retrospectiva nao tiver esse tipo de observacao.
+
 Durante Input nao redija a retrospectiva, promova aprendizados, altere arquivos,
 execute validadores ou declare sucesso.
 

@@ -38,7 +38,8 @@ confiavel do adapter, recebe um `destination` existente e gravavel e usa naming
 deterministico: `<stem>-improved.md` para arquivo ou `improved-demand.md` para
 texto inline. Estado nao confirmado ou colisao bloqueiam sem escrita.
 
-O caminho manual continua sendo explicito: `loki-tech-analysis`,
+O caminho manual continua sendo explicito: uma rota de analise
+(`loki-tech-analysis` por padrao ou `loki-deep-analysis` opt-in),
 `loki-human-decision-preflight`, `loki-generate-action-plan`,
 `loki-enrich-tasks` quando aplicavel e `loki-run-plan` por fase ou task.
 
@@ -68,6 +69,12 @@ execucao.
    riscos, superficies afetadas, pesquisa condicionada, validators ou gates.
    Quando as fontes forem ruidosas, desconhecidas ou multi-fonte, acione
    `source-researcher` em modo read-only antes da matriz de decisao.
+   Quando a demanda exigir descoberta de tecnologias, consulta seletiva a um
+   catalogo de inferencias, candidatos contextuais ou investigacoes
+   independentes, use `loki-deep-analysis` de forma opt-in nessa mesma etapa,
+   antes do decision preflight. Ele nao aninha `loki-tech-analysis`; seu report,
+   eventos e candidatos nao alteram o catalogo nem constituem validacao de
+   runtime.
 6. Use `loki-human-decision-preflight` quando a analise ou brief tiver
    perguntas humanas pendentes antes do plano. Ele separa `must_ask_now`,
    `can_delegate_to_plan`, `can_validate_later` e
@@ -122,6 +129,9 @@ execucao.
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
     mismatches de ambiente, correcoes humanas e desperdicios relevantes.
+    Eventos e candidatos analiticos seguem depois para
+    `loki-continuous-improvement`; captura ou score nunca os promove
+    automaticamente.
 
 ## Artefatos participantes
 
@@ -132,6 +142,7 @@ execucao.
 | `loki-feedback` | Normaliza feedback humano, investiga causas e evita escrever com premissas fracas. |
 | `loki-demand-text-improver` | Enriquece uma demanda antes da analise ou do plano e termina em um Markdown, sem iniciar workflow downstream. |
 | `loki-tech-analysis` | Converte demanda em analise baseada em evidencias, riscos, alternativas, validators e gates. |
+| `loki-deep-analysis` | Oferece uma rota opt-in assistida por catalogo antes de decision preflight e action planning, sem aninhar a analise padrao, mutar catalogo ou validar runtime. |
 | `loki-human-decision-preflight` | Classifica decisoes humanas pendentes antes do plano e evita perguntar o que a LLM deve resolver por fonte local. |
 | `loki-agentic-development` | Orquestra o caminho integrado v2 de demanda para analise agentica, gates, plano, execucao autonoma, reports, digest e backlog. |
 | `loki-generate-action-plan` | Cria plano faseado retomavel com `tasks.md`, tasks individuais, dependencias e human loops. |
@@ -145,6 +156,7 @@ execucao.
 | --- | --- |
 | `loki-feedback` | Define o protocolo de uma pergunta por vez, hipoteses com evidencia e proposta so depois de contexto suficiente. |
 | `lf-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
+| `lf-analytic-inference` | Compartilha consulta seletiva, eventos, snapshots, score e elegibilidade sem permitir mutacao automatica do catalogo. |
 | `loki-human-decision-preflight` | Classifica perguntas humanas antes do plano e registra quando o proximo passo ja pode seguir para action planning. |
 | `loki-agentic-development` | Wrapper Codex para carregar o contrato integrado v2. |
 | `lf-agentic-orchestration` | Regras reutilizaveis de preflight de agentes, fan-out, estado XML, gates, reports, liveness, invalidacao, digest e backlog. |

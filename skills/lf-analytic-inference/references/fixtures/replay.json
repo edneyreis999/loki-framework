@@ -1,0 +1,202 @@
+{
+  "schema_version": "1",
+  "fixture_type": "analytic-inference-event-reconciliation-cases",
+  "cases": [
+    {
+      "fixture_id": "events-clean-independent-stages",
+      "cli": "reconcile_events.py",
+      "input": {
+        "events": [
+          {
+            "schema_version": 1,
+            "event_id": "event-001",
+            "sequence": 1,
+            "source": {
+              "analysis_ref": "fixture://analysis/1",
+              "run_id": "run-fixture-1",
+              "handoff_id": "handoff-fixture-1",
+              "evidence_refs": ["fixture://evidence/selected"]
+            },
+            "inference_id": "inf-fixture-1",
+            "inference_revision": 1,
+            "stage": "selected",
+            "outcome": "selected-for-investigation",
+            "reason": "Matched the fixture demand.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": "unknown", "tools": 0}
+          },
+          {
+            "schema_version": 1,
+            "event_id": "event-002",
+            "sequence": 2,
+            "source": {
+              "analysis_ref": "fixture://analysis/1",
+              "run_id": "run-fixture-1",
+              "handoff_id": "handoff-fixture-1",
+              "evidence_refs": ["fixture://evidence/validated"]
+            },
+            "inference_id": "inf-fixture-1",
+            "inference_revision": 1,
+            "stage": "validated",
+            "outcome": "evidence-consistent",
+            "reason": "Fixture evidence supports validation.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": 1, "tools": "unsupported"}
+          }
+        ]
+      },
+      "expected": {
+        "exit_code": 0,
+        "status": "valid",
+        "applied_event_ids": ["event-001", "event-002"],
+        "replayed_event_ids": [],
+        "components": {
+          "false_positive_count": 0,
+          "investigated_count": 0,
+          "material_findings_count": 0,
+          "rejected_count": 0,
+          "repeated_evidence_count": 0,
+          "selected_count": 1,
+          "stale_count": 0,
+          "tasks_helped_count": 0,
+          "validated_count": 1
+        },
+        "score": 3,
+        "eligibility": {"promotion": false, "purge_review": false, "reorganization": false},
+        "mutation_applied": false
+      }
+    },
+    {
+      "fixture_id": "events-identical-replay-noop",
+      "cli": "reconcile_events.py",
+      "input": {
+        "events": [
+          {
+            "schema_version": 1,
+            "event_id": "event-002",
+            "sequence": 2,
+            "source": {
+              "analysis_ref": "fixture://analysis/1",
+              "run_id": "run-fixture-1",
+              "handoff_id": "handoff-fixture-1",
+              "evidence_refs": ["fixture://evidence/validated"]
+            },
+            "inference_id": "inf-fixture-1",
+            "inference_revision": 1,
+            "stage": "validated",
+            "outcome": "evidence-consistent",
+            "reason": "Fixture evidence supports validation.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": 1, "tools": "unsupported"}
+          },
+          {
+            "schema_version": 1,
+            "event_id": "event-001",
+            "sequence": 1,
+            "source": {
+              "analysis_ref": "fixture://analysis/1",
+              "run_id": "run-fixture-1",
+              "handoff_id": "handoff-fixture-1",
+              "evidence_refs": ["fixture://evidence/selected"]
+            },
+            "inference_id": "inf-fixture-1",
+            "inference_revision": 1,
+            "stage": "selected",
+            "outcome": "selected-for-investigation",
+            "reason": "Matched the fixture demand.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": "unknown", "tools": 0}
+          },
+          {
+            "schema_version": 1,
+            "event_id": "event-002",
+            "sequence": 2,
+            "source": {
+              "analysis_ref": "fixture://analysis/1",
+              "run_id": "run-fixture-1",
+              "handoff_id": "handoff-fixture-1",
+              "evidence_refs": ["fixture://evidence/validated"]
+            },
+            "inference_id": "inf-fixture-1",
+            "inference_revision": 1,
+            "stage": "validated",
+            "outcome": "evidence-consistent",
+            "reason": "Fixture evidence supports validation.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": 1, "tools": "unsupported"}
+          }
+        ]
+      },
+      "expected": {
+        "exit_code": 0,
+        "status": "valid",
+        "applied_event_ids": ["event-001", "event-002"],
+        "replayed_event_ids": ["event-002"],
+        "components": {
+          "false_positive_count": 0,
+          "investigated_count": 0,
+          "material_findings_count": 0,
+          "rejected_count": 0,
+          "repeated_evidence_count": 0,
+          "selected_count": 1,
+          "stale_count": 0,
+          "tasks_helped_count": 0,
+          "validated_count": 1
+        },
+        "score": 3,
+        "eligibility": {"promotion": false, "purge_review": false, "reorganization": false},
+        "mutation_applied": false
+      }
+    },
+    {
+      "fixture_id": "events-divergent-replay-conflict",
+      "cli": "reconcile_events.py",
+      "input": {
+        "events": [
+          {
+            "schema_version": 1,
+            "event_id": "event-conflict",
+            "sequence": 1,
+            "source": {
+              "analysis_ref": "fixture://analysis/2",
+              "run_id": "run-fixture-2",
+              "handoff_id": "handoff-fixture-2",
+              "evidence_refs": ["fixture://evidence/one"]
+            },
+            "inference_id": "inf-fixture-2",
+            "inference_revision": 1,
+            "stage": "selected",
+            "outcome": "selected",
+            "reason": "First payload.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": 0, "tools": 0}
+          },
+          {
+            "schema_version": 1,
+            "event_id": "event-conflict",
+            "sequence": 1,
+            "source": {
+              "analysis_ref": "fixture://analysis/2",
+              "run_id": "run-fixture-2",
+              "handoff_id": "handoff-fixture-2",
+              "evidence_refs": ["fixture://evidence/two"]
+            },
+            "inference_id": "inf-fixture-2",
+            "inference_revision": 1,
+            "stage": "validated",
+            "outcome": "changed-payload",
+            "reason": "Conflicting payload.",
+            "agent_capability": "analytic-review",
+            "cost": {"context": 0, "tools": 0}
+          }
+        ]
+      },
+      "expected": {
+        "exit_code": 2,
+        "status": "blocked",
+        "diagnostic_contains": ["EVENT_ID_PAYLOAD_CONFLICT:event-conflict"],
+        "mutation_applied": false
+      }
+    }
+  ]
+}

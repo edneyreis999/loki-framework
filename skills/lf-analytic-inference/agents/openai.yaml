@@ -1,0 +1,8 @@
+interface:
+  display_name: "Loki Analytic Inference"
+  short_description: "Retrieve and validate reusable analytic inferences."
+  default_prompt: "Use $lf-analytic-inference to selectively retrieve or validate analytic-inference state, preserve provenance, and report eligibility without applying durable mutations."
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools: []

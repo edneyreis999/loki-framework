@@ -12,6 +12,70 @@
 
 <ids, type, severity, scope, destino, ação e status>
 
+## Intake de inferência
+
+<use none quando a ramificação especializada não estiver ativa>
+
+| Source type/locator | Intake identity | Source/payload digest | Status | Capture/lineage/provenance | Counted |
+| --- | --- | --- | --- | --- | --- |
+| <deep-analysis/retrospective + locator> | <event:event_id ou candidate:candidate_id> | <digests> | <accepted/replayed-no-op/conflict-blocked> | <refs> | <yes/no + reason> |
+
+- Replay no-op: <IDs e confirmação de nenhuma dupla contagem | none>
+- Conflitos: <ID, payloads/provenances e blocker | none>
+- Itens rejeitados no intake: <ID + schema/locator/status/lineage/provenance reason | none>
+
+## Reconciliação, snapshot e elegibilidade
+
+- Policy ID/digest: <analytic-inference-policy-v1 + digest verificado>
+- Reducer/validator: <comando/interface, status e diagnostics>
+- Snapshot reconstruído: <algorithm, as_of_event, freshness>
+- Componentes: <selected, investigated, validated, rejected, material findings, tasks helped, false positives, repeated evidence, stale>
+- Denominadores: <unique_events e outros observados>
+- Score: <valor + pesos aprovados; selected weight 0>
+- Promotion eligible (`score >= 12`): <true/false>
+- Reorganization eligible (`score <= 2`): <true/false; informativo>
+- Purge-review eligible (`unprotected && score <= -4`): <true/false; protected sempre false; informativo>
+- Disposição: <record-only | block | propose-promotion>
+- Candidate status: <unreviewed>
+
+## Proposta de promoção de inferência
+
+<use none para record-only/block ou quando a ramificação estiver inativa>
+
+- Targets exatos: <index e record>
+- Before/after: <diff esperado>
+- Dry validation: <index-record parity, reducer/snapshot e resultados>
+- Writer exclusivo: <framework-artifact-writer + envelope>
+- Auditor independente read-only: <framework-artifact-quality-auditor + status>
+- Gates antes de durable write: <technical-review + approval + fontes>
+- Catalog mutation applied: false
+
+## Reorganização de inferência
+
+- Reorganization eligible: <true/false; somente informativo>
+- Reorganization proposed: <true/false>
+- Allowed operation: <generalize | merge | deduplicate | rewrite | reorder | none>
+- Operation ID e targets exatos: <IDs/revisions/paths | none>
+- Before/after e lineage: <estado preservado | none>
+- Protected/validated knowledge preservation: <validated result | pending | blocked | none>
+- Writer/auditor: <framework-artifact-writer + framework-artifact-quality-auditor read-only | none>
+- Technical-review + approval: <status e fontes | none>
+- Deterministic validators: <schema/identity/lineage/parity/snapshot + results | none>
+- Reorganization applied: <true somente após todos os controles; senão false>
+- Catalog mutation applied: <igual ao efeito observado desta operação; false para eligibility/proposal>
+- Semantic similarity used as identity/authority: false
+
+## Purge físico de inferência
+
+- Purge-review eligible: <true/false; necessário, nunca suficiente>
+- Purge proposed: <true/false>
+- Dry-run: <not-run | valid + operation ID/manifest/digest | blocked + reason>
+- Exact JIT approval: <missing | blocked | valid + source/issued_at/expiry/freshness | consumed>
+- Execution: <not-run | blocked | failed + residuals | applied + post-validation>
+- External reports/retrospectives/evidence/approval targeted: false
+- Semantic similarity used as authority: false
+- Catalog mutation applied: <true somente para execução completa autorizada e validada; senão false>
+
 ## Causa raiz e execution friction
 
 <required/status, fontes, causa, regra fortalecida, atritos e minimum next path>

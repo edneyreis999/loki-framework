@@ -93,7 +93,8 @@ acompanhe ate estado terminal.
 3. Registre validacoes feitas, nao feitas, bloqueadas, inconclusivas ou humanas.
 4. Registre decisoes, correcoes, mudancas de escopo e pendencias.
 5. Reconstitua somente o rastro operacional material; nao exponha cadeia de pensamento.
-6. Classifique atritos materiais e inferencias boas/ruins pela taxonomia abaixo.
+6. Classifique atritos materiais e inferencias boas, incorretas ou ausentes pela
+   taxonomia abaixo.
 7. Para script/comando/validator, registre objetivo, entrada, esperado,
    observado, surpresa, artefato, utilidade e reuso.
 8. Para mismatch de ambiente, registre expectativa, estado real, deteccao,
@@ -110,6 +111,8 @@ Registre somente categorias com ocorrencia material; nao invente atrito:
 
 - `inference-good`: evidencia confiavel, ganho e lookup repetivel.
 - `inference-bad`: plausibilidade inicial, falha, correcao e check preventivo.
+- `inference-missing`: oportunidade de investigacao util que esteve ausente,
+  com evidencia do gap e de como poderia ser confirmada ou rejeitada.
 - `file-discovery`: arquivo, simbolo, contrato, symlink, mirror ou fonte dificil.
 - `script-command`: comando, cwd, objetivo, entrada, resultado, artefato, custo e reuso.
 - `unexpected-output`: resultado vazio, truncado, ruidoso ou contraditorio.
@@ -146,6 +149,110 @@ esperado/real, contexto, causa suspeita, evidencia de resolucao, categoria de
 atrito, caminho minimo, reuse/avoid guidance, waste impact qualitativo e fonte.
 Marque hipoteses e correcoes parciais como nao validadas.
 
+## Specialized Analytic Inference Candidate
+
+Use este contrato somente quando a retrospectiva contiver evidencia material de
+`inference-good`, `inference-bad` ou `inference-missing`. Nesse caso, leia
+[lf-analytic-inference](../../lf-analytic-inference/SKILL.md) e sua referencia
+de lifecycle antes de validar ou emitir o candidato. Retrospectivas sem
+observacao material de inferencia nao carregam essa skill e registram
+`analytic_inference_candidates: []` com motivo nao vazio.
+
+Uma observacao e material somente quando possui fonte persistida, relacao com a
+execucao, evidencia capaz de sustentar a classificacao e utilidade downstream
+verificavel. `inference-good` exige evidencia de que a inferencia foi util ou
+confirmada; `inference-bad` exige evidencia observavel de incorrecao, falso
+positivo ou contradicao e sua correcao/condicao de verificacao;
+`inference-missing` exige oportunidade ausente concreta, impacto e forma de
+confirmar ou rejeitar. Nao emita item apenas para preencher quantidade.
+Para `inference-good` e `inference-bad`, `expected` e `actual` devem ser
+observaveis e `missing_opportunity` fica `not-applicable`; para
+`inference-missing`, `missing_opportunity` e obrigatoria e os campos sem fato
+observado ficam `not-applicable` em vez de inventados.
+
+Cada candidato emitido segue schema v1:
+
+```yaml
+analytic_inference_candidate:
+  schema_version: 1
+  candidate_id: "<stable candidate ID>"
+  candidate_type: analytic-inference
+  observation_type: "<inference-good | inference-bad | inference-missing>"
+  status: unreviewed
+  capture_id: "<observed stable capture ID>"
+  source:
+    retrospective_locator: "<exact persisted retrospective locator>"
+  lineage:
+    run_id: "<observed | unavailable>"
+    phase: "<observed | unavailable>"
+    task_id: "<observed | unavailable>"
+    agent_run_id: "<observed | unavailable>"
+    handoff_id: "<observed | unavailable>"
+    evidence_id: "<observed | unavailable>"
+  statement_or_testable_question: "<statement or question>"
+  observation:
+    expected: "<expected behavior | not-applicable>"
+    actual: "<actual behavior | not-applicable>"
+    missing_opportunity: "<missing opportunity | not-applicable>"
+  applicability:
+    technologies: []
+    versions: []
+    surfaces: []
+    objectives: []
+    signals: []
+    exclusions: []
+  provenance:
+    source_refs: []
+    evidence_refs: []
+    freshness: "<current | stale | unknown>"
+  evidence_classification:
+    facts: []
+    inferences: []
+    hypotheses: []
+  validation:
+    state: "<validated | partial | unvalidated | conflicting | unsupported>"
+    validator_refs: []
+    reason: "<non-empty reason>"
+  investigation:
+    confirm_or_reject_evidence: []
+    potential_impact: "<impact>"
+    cost: "<low | medium | high | unknown | unsupported>"
+    stop_condition: "<observable condition>"
+    suggested_capabilities: []
+  distinction:
+    exact_duplicate_hints: []
+    near_duplicate_hints: []
+    distinction_reason: "<observable difference or lookup gap>"
+  guidance:
+    reuse: "<reuse guidance | none>"
+    avoid: "<avoid guidance | none>"
+  downstream:
+    owner: loki-continuous-improvement
+    eligible_for_ci_evaluation: true
+    durable_mutation_authorized: false
+```
+
+`capture_id` e o locator persistido da retrospectiva sao obrigatorios; se
+ausentes, nao emita candidato e registre a lacuna. Gere `candidate_id` de forma
+deterministica a partir do tuple canonico `capture_id`, `observation_type`,
+`statement_or_testable_question` e `retrospective_locator`. O mesmo tuple deve
+reproduzir o mesmo ID; colisao com payload divergente bloqueia. Nao invente
+`run_id`, phase, `task_id`, `agent_run_id`, `handoff_id`, `evidence_id`,
+tecnologia, versao, custo, validator ou evidence; use `unavailable`, `unknown`
+ou lista vazia com motivo conforme o campo permitir.
+
+Preserve separacao entre fatos, inferencias e hipoteses. Uma inferencia parcial
+ou hipotese continua assim rotulada; a retrospectiva e seu proprio score nao
+provam validade. `inference-bad` evidencia que uma inferencia foi incorreta ou
+falsa, mas nao autoriza delecao, purge, reorganizacao ou alteracao de score.
+`inference-missing` e apenas candidato. Nenhum tipo autoriza escrita, promocao,
+merge, reorganizacao ou purge do catalogo.
+
+`loki-continuous-improvement` e o unico proximo owner permitido para avaliar,
+deduplicar e decidir destino duradouro com seus validators, technical review e
+approvals. Esta retrospectiva apenas persiste candidatos `unreviewed` dentro do
+proprio target autorizado.
+
 ## Write Ownership And Serialization
 
 Selecione Write Agent apropriado com target exato, writes, validators, gates,
@@ -166,6 +273,10 @@ de writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 - Scripts, inferencias, mismatches e desperdicios possuem os campos aplicaveis.
 - Somente evidencia validada ou que resolveu o problema vira aprendizado.
 - Candidato duradouro sai como proposta/handoff, nunca promocao aplicada.
+- Candidato de inferencia possui schema, ID/capture/lineage, provenance,
+  validacao, distinction e downstream completos; ausencia material produz
+  lista vazia com motivo.
+- `inference-bad` e `inference-missing` nao autorizam mutacao do catalogo.
 - Gate, validator ou handoff pendente interrompe conclusao.
 
 ## Human Gates

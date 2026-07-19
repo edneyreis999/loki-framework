@@ -60,6 +60,36 @@ auditor de dominio aplicaveis; os dois agentes de artefatos nao sao instalados
 nem recebem permissao nesses destinos.
 16. A promocao termina com diff, validacao e registro do risco residual.
 
+## Inferencias Analiticas no Aprendizado
+
+`loki-deep-analysis` pode emitir `inference_events` imutaveis e
+`generated_candidates`. A retrospectiva pode emitir candidatos especializados
+para observacoes materiais `inference-good`, `inference-bad` e
+`inference-missing`, sempre com `capture_id`, locator, lineage e provenance.
+Todo candidato nasce com status `unreviewed`; report, captura, evidencia e
+retrospectiva nao promovem conhecimento e nao autorizam mutacao do catalogo.
+O unico destino desse material para avaliacao duradoura e
+`loki-continuous-improvement`.
+
+No intake, melhoria continua valida locator, schema, status, capture, lineage,
+provenance e digests. Eventos e candidatos usam identidades estaveis: replay
+com ID e payload canonico identicos e no-op e nao conta novamente; o mesmo ID
+com payload divergente bloqueia. Um reducer deterministico reconstrói snapshot,
+componentes, denominadores, freshness e score. Limites de score determinam
+somente elegibilidade para promocao, reorganizacao ou revisao de purge; nao
+autorizam nenhuma dessas operacoes.
+
+Promocao e reorganizacao exigem targets exatos, before/after, lineage,
+validators, `technical-review`, approval, writer e auditor aplicaveis. Purge e
+exclusao fisica e irreversivel apenas de registros nao protegidos elegiveis e
+de todos os seus rastros pertencentes ao catalogo. A elegibilidade ainda e
+insuficiente: primeiro ha dry-run com manifesto canonico completo e, depois,
+approval novo e just-in-time para a operacao, inference IDs, paths,
+target-set digest e policy digest exatos. Relatorios externos, retrospectivas,
+evidencias, approvals e demais artefatos fora do catalogo sao preservados. Uma
+falha ou rastro residual deixa a operacao em estado bloqueado, nunca em sucesso
+parcial silencioso.
+
 ## Artefatos participantes
 
 ### Command bundles
@@ -67,6 +97,7 @@ nem recebem permissao nesses destinos.
 | Command | Contribuicao no workflow |
 | --- | --- |
 | `loki-enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
+| `loki-deep-analysis` | Emite report, eventos imutaveis e candidatos `unreviewed` para avaliacao posterior, sem mutar o catalogo. |
 | `loki-retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
 | `loki-continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
 | `loki-agentic-development` | Pode produzir digest, backlog, completion/evidence e refs de execution knowledge para melhoria futura, sem promocao automatica. |
@@ -80,6 +111,7 @@ nem recebem permissao nesses destinos.
 | `lf-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
 | `lf-execution-knowledge-capture` | Define o contrato de captura transitoria que CI pode consumir, mas nunca promove por conta propria. |
+| `lf-analytic-inference` | Define lookup seletivo, schemas, replay idempotente, snapshot, score e elegibilidade de manutencao sem mutacao automatica. |
 | `lf-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
 | `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
 | `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |

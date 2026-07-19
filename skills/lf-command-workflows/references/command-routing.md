@@ -15,6 +15,7 @@
 | `loki-generate-action-plan` | `skills/loki-generate-action-plan/SKILL.md` |
 | `loki-human-decision-preflight` | `skills/loki-human-decision-preflight/SKILL.md` |
 | `loki-agentic-development` | `skills/loki-agentic-development/SKILL.md` |
+| `loki-deep-analysis` | `skills/loki-deep-analysis/SKILL.md` |
 | `loki-deep-research` | `skills/loki-deep-research/SKILL.md` |
 | `loki-retrospectiva-tecnica` | `skills/loki-retrospectiva-tecnica/SKILL.md` |
 | `loki-run-plan` | `skills/loki-run-plan/SKILL.md` |

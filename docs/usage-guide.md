@@ -89,6 +89,27 @@ analise, gates, plano e execucao de `loki-agentic-development`. Tambem nao
 invoca decision preflight, action planning ou implementacao. Depois da saida, o
 usuario faz uma nova escolha explicita sobre o proximo workflow.
 
+## Analise Padrao e Analise Profunda
+
+Use `loki-tech-analysis` como rota padrao de analise pre-plano baseada em
+evidencias. Ela organiza fontes, fatos, inferencias, hipoteses, alternativas,
+risco, validators e gates para o decision preflight e o action plan.
+
+Use `loki-deep-analysis` de forma opt-in quando a demanda se beneficiar de
+descoberta de tecnologias, consulta seletiva a inferencias catalogadas,
+geracao contextual de candidatos ou investigacoes independentes. Essa e uma
+rota especializada para a mesma etapa: ela nao chama nem aninha
+`loki-tech-analysis`. Seu report, seus eventos imutaveis e seus candidatos
+`unreviewed` sao evidencia rastreavel; nao alteram o catalogo e nao comprovam
+validacao de runtime.
+
+As duas projecoes suportadas, Codex e Claude Code, compartilham
+`lf-analytic-inference` com escopo de instalacao `both`. Na v1, o catalogo base
+comeca vazio e fixtures nao sao seed data. Um overlay duradouro especifico por
+projeto consumidor esta fora da v1; contexto do consumidor permanece nas
+fontes transitorias, na documentacao propria ou em backlog ate existir contrato
+aprovado.
+
 ## Caminho Integrado v2
 
 Use `loki-agentic-development` quando a demanda deve seguir o caminho completo:
@@ -97,7 +118,8 @@ action plan, execucao autonoma, completion reports, digest e backlog.
 
 Use o caminho manual quando precisar controlar cada etapa separadamente:
 `loki-deep-research` quando depender de pesquisa web citada,
-`loki-tech-analysis`, `loki-human-decision-preflight`,
+uma rota de analise (`loki-tech-analysis` por padrao ou `loki-deep-analysis`
+opt-in), `loki-human-decision-preflight`,
 `loki-generate-action-plan`, `loki-enrich-tasks` quando aplicavel e
 `loki-run-plan` por fase ou task.
 
@@ -246,6 +268,7 @@ proposta de PR. Consulte `docs/loki-git-workflow.md`.
 ## Command Bundles, Skills Core e Extensoes
 
 Os command bundles instaláveis (`loki-init`, `loki-feedback`,
+`loki-tech-analysis`, `loki-deep-analysis`,
 `loki-human-decision-preflight`, `loki-agentic-development`,
 `loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
 meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
@@ -253,7 +276,7 @@ meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais
 As skills core (`lf-agentic-orchestration`, `lf-run-plan-execution`,
 `lf-execution-knowledge-capture`,
 `lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
-`lf-index-navigator`, `lf-tech-analysis-authoring`,
+`lf-index-navigator`, `lf-tech-analysis-authoring`, `lf-analytic-inference`,
 `lf-action-plan-authoring` e `lf-template-library`) fornecem conhecimento e
 procedimentos reutilizáveis chamados pelos commands.
 

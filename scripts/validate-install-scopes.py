@@ -37,7 +37,7 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_LOKI_COMMAND_COUNT = 18
+FINAL_LOKI_COMMAND_COUNT = 17
 FINAL_BUNDLE_RESOURCES = (
     "references/execution.md",
     "references/response.md",
@@ -955,10 +955,13 @@ def validate_final_loki_bundles(
 ) -> None:
     skill_scopes = artifact_scopes(data, "skills")
     loki_names = sorted(name for name in skill_scopes if name.startswith("loki-"))
-    if require_full_inventory and len(loki_names) != FINAL_LOKI_COMMAND_COUNT:
+    public_loki_names = sorted(
+        name for name in loki_names if skill_scopes[name] != "internal-only"
+    )
+    if require_full_inventory and len(public_loki_names) != FINAL_LOKI_COMMAND_COUNT:
         raise ValueError(
-            f"schema 2 must declare {FINAL_LOKI_COMMAND_COUNT} loki command bundles; "
-            f"found {len(loki_names)}"
+            f"schema 2 must declare {FINAL_LOKI_COMMAND_COUNT} public Loki command bundles; "
+            f"found {len(public_loki_names)}"
         )
 
     failures: list[str] = []
@@ -1123,7 +1126,7 @@ def validate_final_neutrality(package_root: Path, data: dict) -> None:
         raise ValueError("neutrality failures:\n- " + "\n- ".join(failures))
 
 
-def validate_final_manifest(package_root: Path) -> None:
+def validate_final_manifest(package_root: Path, data: dict) -> None:
     manifest_path = package_root / "manifest.yaml"
     text = manifest_path.read_text(encoding="utf-8")
     failures: list[str] = []
@@ -1133,9 +1136,15 @@ def validate_final_manifest(package_root: Path) -> None:
         failures.append("manifest contains a legacy commands/projection field")
     catalog = parse_manifest_skill_catalog(package_root)
     loki_entries = {name: metadata for name, metadata in catalog.items() if name.startswith("loki-")}
-    if len(loki_entries) != FINAL_LOKI_COMMAND_COUNT:
+    skill_scopes = artifact_scopes(data, "skills")
+    public_loki_entries = {
+        name: metadata
+        for name, metadata in loki_entries.items()
+        if skill_scopes.get(name) != "internal-only"
+    }
+    if len(public_loki_entries) != FINAL_LOKI_COMMAND_COUNT:
         failures.append(
-            f"manifest must contain {FINAL_LOKI_COMMAND_COUNT} loki skill entries"
+            f"manifest must contain {FINAL_LOKI_COMMAND_COUNT} public Loki skill entries"
         )
     for name, metadata in sorted(loki_entries.items()):
         if metadata.get("operational_role") != "command":
@@ -1223,7 +1232,7 @@ def main(argv: list[str] | None = None) -> int:
         validate_toml(package_root)
         validate_manifest_entries(package_root)
         if schema_version == 2:
-            validate_final_manifest(package_root)
+            validate_final_manifest(package_root, data)
         else:
             validate_manifest_command_projection_identity(package_root)
         validate_agent_project_tags(package_root)

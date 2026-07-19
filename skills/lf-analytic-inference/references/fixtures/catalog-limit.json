@@ -1,0 +1,137 @@
+{
+  "schema_version": "1",
+  "fixture_type": "analytic-inference-catalog-limit-cases",
+  "record_blueprints": {
+    "inf-active-1": {
+      "schema_version": 1,
+      "inference_id": "inf-active-1",
+      "revision": 1,
+      "status": "active",
+      "statement": "First active occupancy fixture.",
+      "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "exclusions": []},
+      "investigation": {"demand_relation": "Exercise active occupancy.", "confirm_or_reject_evidence": [], "potential_impact": "Limit validation.", "cost": "low", "stop_condition": "Validator returns.", "suggested_capabilities": []},
+      "provenance": {"source_refs": ["fixture://catalog-limit/active-1"], "accepted_evidence_refs": [], "freshness": "current"},
+      "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+      "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 0, "as_of_event": null, "freshness": "current", "denominators": {}}
+    },
+    "inf-active-2": {
+      "schema_version": 1,
+      "inference_id": "inf-active-2",
+      "revision": 1,
+      "status": "active",
+      "statement": "Second active occupancy fixture.",
+      "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "exclusions": []},
+      "investigation": {"demand_relation": "Exercise active occupancy.", "confirm_or_reject_evidence": [], "potential_impact": "Limit validation.", "cost": "low", "stop_condition": "Validator returns.", "suggested_capabilities": []},
+      "provenance": {"source_refs": ["fixture://catalog-limit/active-2"], "accepted_evidence_refs": [], "freshness": "current"},
+      "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+      "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 0, "as_of_event": null, "freshness": "current", "denominators": {}}
+    },
+    "inf-active-3": {
+      "schema_version": 1,
+      "inference_id": "inf-active-3",
+      "revision": 1,
+      "status": "active",
+      "statement": "Third active occupancy fixture.",
+      "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "exclusions": []},
+      "investigation": {"demand_relation": "Exercise active occupancy.", "confirm_or_reject_evidence": [], "potential_impact": "Limit validation.", "cost": "low", "stop_condition": "Validator returns.", "suggested_capabilities": []},
+      "provenance": {"source_refs": ["fixture://catalog-limit/active-3"], "accepted_evidence_refs": [], "freshness": "current"},
+      "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+      "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 0, "as_of_event": null, "freshness": "current", "denominators": {}}
+    },
+    "inf-protected-1": {
+      "schema_version": 1,
+      "inference_id": "inf-protected-1",
+      "revision": 1,
+      "status": "protected",
+      "statement": "First protected occupancy fixture.",
+      "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "exclusions": []},
+      "investigation": {"demand_relation": "Exercise protected occupancy.", "confirm_or_reject_evidence": [], "potential_impact": "Limit validation.", "cost": "low", "stop_condition": "Validator returns.", "suggested_capabilities": []},
+      "provenance": {"source_refs": ["fixture://catalog-limit/protected-1"], "accepted_evidence_refs": [], "freshness": "current"},
+      "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+      "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 0, "as_of_event": null, "freshness": "current", "denominators": {}}
+    },
+    "inf-protected-2": {
+      "schema_version": 1,
+      "inference_id": "inf-protected-2",
+      "revision": 1,
+      "status": "protected",
+      "statement": "Second protected occupancy fixture.",
+      "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "exclusions": []},
+      "investigation": {"demand_relation": "Exercise protected occupancy.", "confirm_or_reject_evidence": [], "potential_impact": "Limit validation.", "cost": "low", "stop_condition": "Validator returns.", "suggested_capabilities": []},
+      "provenance": {"source_refs": ["fixture://catalog-limit/protected-2"], "accepted_evidence_refs": [], "freshness": "current"},
+      "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+      "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 0, "as_of_event": null, "freshness": "current", "denominators": {}}
+    }
+  },
+  "cases": [
+    {
+      "fixture_id": "catalog-limit-at-mixed-active-protected",
+      "index": {
+        "schema_version": 1,
+        "catalog_id": "fixture-limit-at-mixed",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {"inference_id": "inf-active-1", "revision": 1, "status": "active", "summary": "Active one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-1.json"},
+          {"inference_id": "inf-active-2", "revision": 1, "status": "active", "summary": "Active two.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-2.json"},
+          {"inference_id": "inf-protected-1", "revision": 1, "status": "protected", "summary": "Protected one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "locator": "records/inf-protected-1.json"}
+        ]
+      },
+      "records": ["inf-active-1", "inf-active-2", "inf-protected-1"],
+      "expected": {"exit_code": 0, "status": "valid", "diagnostic_contains": [], "active_occupancy": 3, "active_limit": 3, "status_counts": {"active": 2, "protected": 1, "redirect": 0, "tombstone": 0}}
+    },
+    {
+      "fixture_id": "catalog-limit-below-with-protected",
+      "index": {
+        "schema_version": 1,
+        "catalog_id": "fixture-limit-below-protected",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {"inference_id": "inf-active-1", "revision": 1, "status": "active", "summary": "Active one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-1.json"},
+          {"inference_id": "inf-protected-1", "revision": 1, "status": "protected", "summary": "Protected one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "locator": "records/inf-protected-1.json"}
+        ]
+      },
+      "records": ["inf-active-1", "inf-protected-1"],
+      "expected": {"exit_code": 0, "status": "valid", "diagnostic_contains": [], "active_occupancy": 2, "active_limit": 3, "status_counts": {"active": 1, "protected": 1, "redirect": 0, "tombstone": 0}}
+    },
+    {
+      "fixture_id": "catalog-limit-above-by-active",
+      "index": {
+        "schema_version": 1,
+        "catalog_id": "fixture-limit-above-active",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {"inference_id": "inf-active-1", "revision": 1, "status": "active", "summary": "Active one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-1.json"},
+          {"inference_id": "inf-active-2", "revision": 1, "status": "active", "summary": "Active two.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-2.json"},
+          {"inference_id": "inf-active-3", "revision": 1, "status": "active", "summary": "Active three.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-3.json"},
+          {"inference_id": "inf-protected-1", "revision": 1, "status": "protected", "summary": "Protected one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "locator": "records/inf-protected-1.json"}
+        ]
+      },
+      "records": ["inf-active-1", "inf-active-2", "inf-active-3", "inf-protected-1"],
+      "expected": {"exit_code": 2, "status": "blocked", "diagnostic_contains": ["catalog:ACTIVE_OCCUPANCY_EXCEEDS_LIMIT"], "active_occupancy": 4, "active_limit": 3, "status_counts": {"active": 3, "protected": 1, "redirect": 0, "tombstone": 0}}
+    },
+    {
+      "fixture_id": "catalog-limit-above-by-protected",
+      "index": {
+        "schema_version": 1,
+        "catalog_id": "fixture-limit-above-protected",
+        "technology": "python",
+        "aliases": [],
+        "active_limit": 3,
+        "entries": [
+          {"inference_id": "inf-active-1", "revision": 1, "status": "active", "summary": "Active one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-1.json"},
+          {"inference_id": "inf-active-2", "revision": 1, "status": "active", "summary": "Active two.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["active"], "locator": "records/inf-active-2.json"},
+          {"inference_id": "inf-protected-1", "revision": 1, "status": "protected", "summary": "Protected one.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "locator": "records/inf-protected-1.json"},
+          {"inference_id": "inf-protected-2", "revision": 1, "status": "protected", "summary": "Protected two.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["catalog-limit"], "signals": ["protected"], "locator": "records/inf-protected-2.json"}
+        ]
+      },
+      "records": ["inf-active-1", "inf-active-2", "inf-protected-1", "inf-protected-2"],
+      "expected": {"exit_code": 2, "status": "blocked", "diagnostic_contains": ["catalog:ACTIVE_OCCUPANCY_EXCEEDS_LIMIT"], "active_occupancy": 4, "active_limit": 3, "status_counts": {"active": 2, "protected": 2, "redirect": 0, "tombstone": 0}}
+    }
+  ]
+}

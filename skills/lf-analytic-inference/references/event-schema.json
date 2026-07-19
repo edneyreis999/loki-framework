@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loki-framework.local/schemas/analytic-inference-event-v1.json",
+  "title": "Analytic Inference Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "source", "inference_id", "inference_revision", "stage", "outcome", "reason", "agent_capability", "cost"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "event_id": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 0},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["analysis_ref", "run_id", "handoff_id", "evidence_refs"],
+      "properties": {
+        "analysis_ref": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "handoff_id": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "inference_id": {"type": "string", "minLength": 1},
+    "inference_revision": {"type": "integer", "minimum": 1},
+    "stage": {"enum": ["selected", "investigated", "validated", "rejected", "material-finding", "task-helped", "false-positive", "repeated-evidence", "stale"]},
+    "outcome": {"type": ["string", "number", "integer", "boolean", "object", "array", "null"]},
+    "reason": {"type": "string", "minLength": 1},
+    "agent_capability": {"type": "string", "minLength": 1},
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["context", "tools"],
+      "properties": {
+        "context": {"$ref": "#/$defs/cost_value"},
+        "tools": {"$ref": "#/$defs/cost_value"}
+      }
+    }
+  },
+  "$defs": {
+    "cost_value": {
+      "oneOf": [
+        {"type": "number", "minimum": 0},
+        {"enum": ["unknown", "unsupported"]}
+      ]
+    }
+  }
+}

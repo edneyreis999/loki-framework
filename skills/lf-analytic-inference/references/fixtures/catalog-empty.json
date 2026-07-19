@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "catalog_id": "fixture-empty-catalog-v1",
+  "technology": "base",
+  "aliases": [],
+  "active_limit": 3,
+  "entries": []
+}
