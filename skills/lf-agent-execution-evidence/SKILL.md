@@ -1,6 +1,6 @@
 ---
 name: lf-agent-execution-evidence
-description: Define and review provider-neutral agent execution evidence when an orchestrator or collector must record typed run identity, sanitized snapshots, completeness, runtime locators, or token-usage provenance without claiming private reasoning.
+description: Define provider-neutral agent execution evidence and its boundary from derived execution knowledge, including typed identity, sanitized snapshots, completeness, runtime locators and usage provenance without private reasoning.
 when_to_use:
   - "Use when defining, collecting, reviewing, or validating execution evidence for an agent run."
   - "Use when an adapter must degrade evidence capability explicitly instead of fabricating IDs, transcripts, or token usage."
@@ -48,6 +48,8 @@ private reasoning into a stronger claim than it is.
    the collector, not the executing agent, owns technical correlation.
 2. Apply the typed identity, evidence, completeness, usage, and security rules
    in [evidence-contract.md](references/evidence-contract.md).
+3. Persist evidence before any execution-knowledge cataloger runs. Knowledge
+   may cite this manifest but never replace it or duplicate its snapshot.
 3. Apply the collector's narrow write envelope, sanitization, atomic-write, and
    integrity rules in [collector-contract.md](references/collector-contract.md).
 4. Select only capability states supported by the adapter record in

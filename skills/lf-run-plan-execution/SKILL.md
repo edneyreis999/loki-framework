@@ -1,9 +1,9 @@
 ---
 name: lf-run-plan-execution
-description: Execute approved Loki action-plan phases from `tasks.md` and `task-N.M.md` files. Use for `loki-run-plan` preflight, phase/task onboarding, execution briefs, dependency checks, read-only context extraction routing, serialized writes, validators, human gates, build evidence, and resumable task state.
+description: Execute approved Loki action-plan phases with preflight, execution briefs, serialized writes, validators, resumable state and non-blocking execution-knowledge capture from persisted completion/evidence.
 when_to_use:
   - "Use for loki-run-plan preflight and phase execution from approved tasks.md and task-N.M.md files."
-  - "Use when checking dependencies, execution briefs, read-only context routing, serialized writes, validators, gates, build evidence, and resumable state."
+  - "Use when checking dependencies, execution briefs, read-only context routing, serialized writes, validators, gates, build evidence, execution-knowledge capture and resumable state."
 argument-hint: "[phase, tasks.md, task target, analysis directory]"
 arguments:
   required: []
@@ -135,7 +135,12 @@ decisoes humanas e validators em uma execucao rastreavel.
     - Confirmar ...
     - Responder ...
     ```
-20. Ao concluir a fase, recomendar `loki-retrospectiva-tecnica` com resumo de
+20. Em cada checkpoint, persista primeiro completion/evidence mínimo. Aplique
+    `lf-execution-knowledge-capture`: despache cataloger somente para target
+    exclusivo, continue sem esperar e reconcilie o estado serialmente depois.
+    Interrompa/cancele no final e registre `partial` se ainda não terminal;
+    falha de capture/validator nunca bloqueia implementação validada.
+21. Ao concluir a fase, recomendar `loki-retrospectiva-tecnica` com resumo de
     arquivos afetados, validators, gates humanos, riscos residuais, comandos e
     scripts executados, outputs inesperados, inferencias uteis e incorretas,
     mismatches de ambiente, correcoes do usuario e desperdicios que a proxima
@@ -167,6 +172,7 @@ decisoes humanas e validators em uma execucao rastreavel.
   nao resolvido pelo plano aprovado, como `technical-review`,
   `human-validation`, `approval`, `interview` ou outro gate pendente.
 - Recomendacao de retrospectiva ao fim da fase.
+- Entry refs ou estados degradados de execution knowledge, sem promoção.
 
 ## Limits
 
@@ -188,6 +194,11 @@ decisoes humanas e validators em uma execucao rastreavel.
   `retrospetivas/faseN/`. Essa excecao nao se aplica a docs duradouros,
   inventarios finais, runtime, codigo, assets, config, `AGENTS.md`,
   `CLAUDE.md`, `.agents/**`, `.codex/**` ou `.claude/**`.
+- O execution-knowledge cataloger não escreve shared state e sua falha,
+  indisponibilidade ou demora nunca bloqueia conclusão de implementação.
+- Stop conditions de dependency, handoff e validator se aplicam à implementação,
+  write safety e resumability mínima. O cataloger é excluído; interrupção final
+  reconciliada como `partial` com reason/`minimum_next_path` é terminal.
 
 ## Required Gates
 

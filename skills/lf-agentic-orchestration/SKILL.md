@@ -1,9 +1,9 @@
 ---
 name: lf-agentic-orchestration
-description: "Coordinate the reusable Loki agentic development workflow pieces: agent preflight, selected fan-out, XML run state, decision gates, cross-review, synthesis, plan handoff, autonomous execution checkpoints, completion reports, liveness, invalidation, digest, backlog, and agent retrospectives."
+description: "Coordinate Loki agentic development: preflight, selected fan-out, XML state, gates, autonomous checkpoints, completion/evidence, non-blocking execution-knowledge capture, liveness, digest and backlog."
 when_to_use:
   - "Use when a Loki workflow needs agentic analysis before planning or autonomous phase execution with resumable state."
-  - "Use when coordinating selected agents, XML run state, decision gates, completion reports, digest, backlog, or per-agent retrospectives."
+  - "Use when coordinating selected agents, XML run state, decision gates, completion reports, execution-knowledge capture, digest, backlog, or per-agent retrospectives."
 argument-hint: "[run directory, demand, optional scope]"
 arguments:
   required: []
@@ -77,6 +77,12 @@ parallel writes, hand off to planning and execution, and record completion.
     records an explicit `partial`, `unavailable` or `unsupported` gap. A
     retrospective is human- or explicitly-command-invoked; never auto-invoke
     one as a fallback for absent evidence.
+11. Persist completion/evidence before dispatching any knowledge enrichment.
+    Apply `lf-execution-knowledge-capture`, use a unique entry target per
+    material handoff, continue without waiting, and reconcile capture state
+    serially at existing checkpoints. At final completion interrupt/cancel a
+    non-terminal cataloger and record `partial`; capture failure never blocks a
+    validated implementation or promotes policy.
 11. Validate state with the available agentic run-state validator before
     treating the run as resumable or fixture-ready.
 
@@ -99,6 +105,7 @@ parallel writes, hand off to planning and execution, and record completion.
 - Agent run reports with `agent_run_id`, `handoff_id`, owner, target files,
   validators, gates, evidence, completion status and blockers.
 - Digest and backlog records.
+- Execution-knowledge entry references or explicit degraded capture states.
 - Explicit retrospective eligibility for material agent work; no automatic run.
 
 ## Limits
@@ -116,6 +123,8 @@ parallel writes, hand off to planning and execution, and record completion.
   when the invoking workflow reaches planned execution.
 - Do not promote learnings into durable rules automatically. Record digest and
   backlog items for a later improvement workflow.
+- Do not let a cataloger write shared run state, manifest, digest or backlog,
+  and do not make its availability, latency or validator a completion gate.
 
 ## Required Gates
 
@@ -139,3 +148,5 @@ parallel writes, hand off to planning and execution, and record completion.
 - No unresolved `must_ask_now` gate exists before plan generation.
 - Parallel groups have no target-file conflict.
 - Completed agent runs include status, report path and evidence.
+- Every knowledge capture has a unique target and one typed state; only a valid
+  entry may be `captured`, and degraded states preserve reason/next path.

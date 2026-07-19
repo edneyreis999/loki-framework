@@ -7,11 +7,13 @@ Use este contrato para a fase de execução.
 ## Purpose And Observable Contract
 
 Este command orquestra demanda → análise agentic → decision preflight → plano →
-execução autônoma por fases → completion/evidence → digest/backlog, sem
+execução autônoma por fases → completion/evidence → execution knowledge →
+digest/backlog, sem
 substituir `loki-run-plan` como executor manual. Inicia com Input normalizado e
 diretório aprovado; termina com todos os handoffs e validators terminais e um
 estado `completed`, `blocked` ou `pending-human-validation`. Produz manifest XML,
-POVs/síntese, plano, completion records, evidências/gaps, digest e backlog.
+POVs/síntese, plano, completion records, evidências/gaps, knowledge
+entries/degraded states, digest e backlog.
 
 ## Orchestrator Responsibilities
 
@@ -22,7 +24,8 @@ riscos e próximos passos. Delegação não transfere responsabilidade global.
 
 ## Dependencies And Allowed Writes
 
-Carregue `lf-agentic-orchestration`. Use, nessa ordem condicional,
+Carregue `lf-agentic-orchestration` e `lf-execution-knowledge-capture`. Use,
+nessa ordem condicional,
 `loki-human-decision-preflight`, `loki-generate-action-plan` e `loki-run-plan`.
 Carregue também cada
 `<technology_required_skills>` quando a demanda, a análise ou o plano aprovado
@@ -30,7 +33,8 @@ exigir tecnologia específica. Allowed writes: estado/evidência dentro do run
 aprovado, plano no destino aprovado e targets autorizados pelas tasks quando
 executados por `loki-run-plan`. Forbidden: alterar `loki-run-plan`; `.claude/**`,
 `.agents/**`, `.codex/**`; qualquer target fora do plano; runtime/sensível sem
-owner, validator e gate; promoção automática de retrospectiva.
+owner, validator e gate; promoção automática de retrospectiva ou execution
+knowledge.
 
 ## Plan, Preflight And Agent Handoffs
 
@@ -63,9 +67,19 @@ disjuntos; serialize overlaps.
 6. Gere plano executável com dependências, writers, validators, loops e resume.
 7. Execute uma fase topológica por vez via `loki-run-plan`, sem perguntar ao
    humano no meio da execução autônoma; converta limites em blocker/backlog.
-8. Registre completion records, evidências ou gaps, validators, digest e
-   backlog; finalize o estado e o próximo passo. Retrospectiva é ação explícita,
-   nunca fallback.
+8. Em cada checkpoint material, persista primeiro o completion/evidence mínimo
+   sanitizado. Só depois, quando suportado, invoque
+   `execution-knowledge-cataloger` em paralelo para um target exclusivo em
+   `<run>/execution-knowledge/entries/<capture-id>.xml`; a implementação
+   continua sem esperar pelo enriquecimento.
+9. Reconcilie serialmente `captured`, `partial`, `failed`, `unsupported` ou
+   `skipped-nonmaterial` no checkpoint/run state/digest. No checkpoint final,
+   não espere por handoff não terminal: interrompa/cancele e registre `partial`
+   com reason e `minimum_next_path`. Falha ou validator de knowledge nunca
+   invalida implementação já validada.
+10. Registre validators, digest e backlog; finalize o estado e o próximo passo.
+   Retrospectiva é ação explícita, nunca fallback, e somente
+   `loki-continuous-improvement` promove conhecimento.
 
 ## Write Ownership And Direct-Write Exception
 
@@ -87,6 +101,11 @@ approval para instalação/política/sensível, human-validation para runtime e
 technical-review para artefatos duradouros. Pare se qualquer controle falhar ou
 estiver pendente; validator não substitui gate humano.
 
+Para execution knowledge, valide target exclusivo, lineage para fontes
+persistidas, materialidade, enum e sanitização. Falha desse validator degrada
+somente o estado de capture. O cataloger jamais escreve manifest/digest/backlog,
+run state, plano, runtime ou policy.
+
 ## Packaging Checks
 
 O entrypoint esperado é `skills/loki-agentic-development/SKILL.md` e a helper
@@ -101,11 +120,17 @@ Pare sem demanda/escopo/run aprovado; sem orchestration skill; com must-ask
 pendente; síntese ou experience wave impossível sem inventar; plano inválido;
 run-plan blocker/out-of-scope; overlap; trabalho material sem owner/exceção;
 necessidade de nova pergunta durante execução; validator de estado ausente; ou
-dependência/handoff/gate indisponível. Não declare conclusão com condição ativa.
+dependência/handoff/gate da implementação indisponível. Estas stop conditions
+cobrem implementação, write safety e resumability mínima; não cobrem
+availability, failure, timeout, handoff ou validator do
+`execution-knowledge-cataloger`. Um cataloger interrompido no checkpoint final e
+reconciliado como `partial` com reason e `minimum_next_path` é terminal para a
+conclusão genérica. Não declare conclusão com outra condição ativa.
 
 ## Resume Contract
 
 Registre demanda, run directory, agentes selecionados/pulados e motivos,
 handoffs, gates, síntese, experience checkpoint/waves, plano, fase/task atual,
-agent runs, targets, owners, validators, completion/evidence states, blockers,
-backlog, status e próximo passo. Retome sem reiniciar quando suficiente.
+agent runs, targets, owners, validators, completion/evidence states, capture
+IDs, knowledge target/status/reason/minimum next path, blockers, backlog, status
+e próximo passo. Retome sem reiniciar quando suficiente.

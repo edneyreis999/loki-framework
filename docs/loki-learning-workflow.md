@@ -21,8 +21,8 @@ O Loki nao aprende por memoria magica da conversa. Ele aprende por evidencia: um
 
 Tasks, builds, interactions e validacoes sao fontes transitorias. Elas ajudam a entender o que aconteceu, mas nao sao o lugar final de uma regra duradoura.
 
-O fluxo integrado `loki-agentic-development` pode gerar digest, backlog,
-completion reports e retrospectivas por agente. Esses artefatos tambem sao
+Os executores podem gerar digest, backlog, completion reports e entries de
+execution knowledge a partir de fontes persistidas. Esses artefatos tambem sao
 fontes de evidencia, nao promocao automatica. Qualquer aprendizado duradouro
 continua passando por `loki-continuous-improvement` e pelos gates aplicaveis.
 
@@ -39,7 +39,9 @@ formal ou auditoria interna de conformidade do pacote.
 3. Primeiro resolva o problema de fato. Nao transforme tentativa promissora em regra.
 4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki-retrospectiva-tecnica`.
 5. A retrospectiva registra objetivo, artefatos, validacoes, decisoes humanas, evidencia do que resolveu, riscos e candidatos de melhoria.
-6. Quando o sinal vier de `loki-agentic-development`, trate digest, backlog e completion reports como evidencia de entrada. Nao promova nada so porque apareceu no digest.
+6. Quando o sinal vier de um executor, trate digest, backlog, completion
+   reports e execution-knowledge entries validadas como evidencia de entrada.
+   Deduplicate por lineage/capture ID e nao promova nada so porque foi capturado.
 7. Quando o sinal vier de artefatos externos, use `loki-knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki-continuous-improvement`, sem aplicar mudancas duradouras diretamente.
 8. So depois use `loki-continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
 9. Todo candidato declara `root_cause_learning.required`. Quando for `true`, rode a fase read-only de causa raiz antes de escolher destino, diff ou patch: normalmente `source-researcher` para fonte de verdade/conflitos e `retrospective-digester` para padroes em retros. Pesquisa externa continua exigindo consentimento explicito.
@@ -67,7 +69,7 @@ nem recebem permissao nesses destinos.
 | `loki-enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
 | `loki-retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
 | `loki-continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
-| `loki-agentic-development` | Pode produzir digest, backlog, completion reports e retrospectivas por agente como evidencia para melhoria futura, sem promocao automatica. |
+| `loki-agentic-development` | Pode produzir digest, backlog, completion/evidence e refs de execution knowledge para melhoria futura, sem promocao automatica. |
 | `loki-knowledge-extraction-analysis` | Analisa artefatos externos e entrega aprendizados rastreaveis para `loki-continuous-improvement`, sem promover mudanca diretamente. |
 | `loki-self-healing` | Audita artefatos internos do pacote e aplica correcoes escopadas no working tree, sem stage ou commit automatico. |
 
@@ -77,6 +79,7 @@ nem recebem permissao nesses destinos.
 | --- | --- |
 | `lf-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
 | `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
+| `lf-execution-knowledge-capture` | Define o contrato de captura transitoria que CI pode consumir, mas nunca promove por conta propria. |
 | `lf-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
 | `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
 | `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
@@ -94,6 +97,7 @@ nem recebem permissao nesses destinos.
 | `runtime-qa` | Fornece evidencia de validacao humana ou checklist quando o aprendizado depende de comportamento perceptivel. |
 | `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nao substitui writers de consumidor/runtime. |
 | `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui `technical-review` nem `approval`. |
+| `execution-knowledge-cataloger` | Produz entry transitoria sanitizada e nao promovida; nao participa da decisao normativa. |
 
 ## Destinos corretos
 

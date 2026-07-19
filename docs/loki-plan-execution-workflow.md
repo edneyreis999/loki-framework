@@ -111,7 +111,13 @@ execucao.
     `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
     task, arquivos afetados, validations, human loops, blockers e proximo
     passo.
-18. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+18. No mesmo checkpoint, persista primeiro completion/evidence mínimo. Quando
+    o evento for material, despache `execution-knowledge-cataloger` em paralelo
+    para uma entry exclusiva; continue sem esperar e reconcilie depois um dos
+    estados `captured`, `partial`, `failed`, `unsupported` ou
+    `skipped-nonmaterial`. No final, cancele/interrompa captura não terminal sem
+    bloquear a execução validada.
+19. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki-retrospectiva-tecnica` e siga o
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
@@ -145,6 +151,7 @@ execucao.
 | `lf-action-plan-authoring` | Garante que o plano tenha fases, tasks, dependencias, referencias, validators, gates e retomada por disco. |
 | `loki-enrich-tasks` | Injeta aprendizados na task certa do plano ativo, preservando fontes sensiveis e sem criar norma duradoura. |
 | `lf-run-plan-execution` | Faz preflight, `Execution Brief`, ordem topologica, roteamento de contexto com ou sem `DIR_ANALISE`, escrita serializada, validators e `LokiRunState`. |
+| `lf-execution-knowledge-capture` | Define materialidade, entry exclusiva, estados degradados e a regra não bloqueante de checkpoint. |
 | `lf-domain-context-preflight` | Consulta docs e fontes atuais, registra freshness, conflitos e lacunas sem autocorrigir documentacao. |
 | Skills tecnicas opcionais | Entram apenas quando a superficie exige tecnologia especifica, como runtime, engine, framework, dados ou plugins. |
 
@@ -158,6 +165,7 @@ execucao.
 | `runtime-qa` | Produz checklist de validacao e evidencia esperada para comportamento perceptivel ou runtime. |
 | `bibliotecario` | Localiza, de forma estreita, a menor documentacao duradoura suficiente. |
 | `catalogador` | Unico writer de `/docs` do consumidor, inclusive em tasks escopadas de `loki-run-plan`. |
+| `execution-knowledge-cataloger` | Escreve uma entry run-local exclusiva a partir de fontes persistidas, sem tocar shared state nem promoção. |
 | `standards-curator` | Entra depois da retrospectiva, quando houver candidato a regra duradoura ou backlog. |
 | `gameplay-engineer` | Pode escrever mecanicas, codigo/config de gameplay ou dados aprovados quando a task atribuir `target_files` e skills/gates aplicaveis. |
 | `narrative-designer` | Pode escrever conteudo narrativo, dialogos, escolhas e texto de dominio quando a task atribuir `target_files` e gates aplicaveis. |
@@ -200,6 +208,8 @@ Ao fim da execucao, outra LLM deve conseguir retomar pelo disco:
 - qual bloco retomavel registra task, contexto, docs pendentes e proximo ponto;
 - qual retrospectiva ou proximo passo deve alimentar o aprendizado, incluindo
   atritos materiais que a proxima execucao deve evitar.
+- quais capture IDs, entry refs ou estados degradados preservam conhecimento sem
+  depender da conversa.
 # Evidence capture at completion
 
 At each terminal handoff, the orchestrator correlates run, agent-run and

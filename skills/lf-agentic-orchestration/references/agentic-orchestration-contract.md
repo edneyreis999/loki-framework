@@ -177,6 +177,24 @@ writers emit schema v2 and record evidence-first policy. Retrospectives remain
 an explicit evidence input. Durable promotion is a separate improvement
 workflow with its own gate.
 
+## Execution knowledge capture and liveness
+
+Evidence and execution knowledge are separate. At each material handoff or task
+checkpoint, the orchestrator first persists the minimal sanitized completion
+and evidence envelope. It may then dispatch `execution-knowledge-cataloger` in
+parallel with a unique immutable target under
+`<run>/execution-knowledge/entries/<capture-id>.xml`. The cataloger reads only
+the supplied persisted sources and never writes a shared manifest, run state,
+digest, backlog, plan, runtime or normative surface.
+
+The implementation path never waits for enrichment. At normal checkpoints the
+orchestrator serially reconciles `captured`, `partial`, `failed`, `unsupported`
+or `skipped-nonmaterial`. At the final checkpoint, interrupt or cancel a
+non-terminal cataloger and record `partial`, reason and `minimum_next_path`.
+Knowledge validation failure degrades capture only. Only
+`loki-continuous-improvement` may later deduplicate lineage and promote through
+its normal root-cause and human gates.
+
 ## Stop Conditions
 
 - Missing run directory or impossible-to-resolve state path.
@@ -189,3 +207,8 @@ workflow with its own gate.
 - Autonomous execution would need a new human question mid-run.
 - Material analysis, writing or validation remains in the main thread without a
   recorded exception and validation owner.
+
+Cataloger availability/failure/timeout/handoff/validator is explicitly excluded
+from these stop conditions. A final interrupted cataloger reconciled as
+`partial` with reason and `minimum_next_path` is terminal for generic handoff
+completion.

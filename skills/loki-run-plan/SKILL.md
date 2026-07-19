@@ -1,9 +1,9 @@
 ---
 name: loki-run-plan
-description: Run the Loki `loki-run-plan` command bundle in Codex. Use when executing an approved plan phase or task from tasks.md and task-N.M.md with an Execution Brief, dependency DAG, scoped writers, validators, non-ceremonial human gates, evidence, task-state updates, and resumable LokiRunState.
+description: Run the Loki `loki-run-plan` command bundle in Codex. Execute an approved plan task, phase or plan with scoped writers, validators, resumable state and non-blocking execution-knowledge capture from persisted evidence.
 when_to_use:
   - "Use when executing an approved Loki plan phase or task from tasks.md and task-N.M.md."
-  - "Use when phase execution requires an Execution Brief, dependency checks, scoped writers, validators, human gates, evidence, task-state updates, and resumable state."
+  - "Use when phase execution requires an Execution Brief, dependency checks, scoped writers, validators, human gates, evidence, non-blocking knowledge capture, task-state updates, and resumable state."
 argument-hint: "[TASKS_MD, EXECUTION_SCOPE=task|fase|plano, optional FASE_ATUAL, TASK_TARGET, DIR_ANALISE, task_files, interaction_records]"
 arguments:
   required:
@@ -43,6 +43,7 @@ domain: execution
 required_skills:
   - lf-run-plan-execution
   - lf-domain-context-preflight
+  - lf-execution-knowledge-capture
 required_commands: []
 status: draft
 used_by:

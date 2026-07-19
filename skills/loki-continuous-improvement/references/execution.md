@@ -158,6 +158,13 @@ tentativas úteis/falhas, impacto estimado, avoid-next-time e caminho mínimo.
 Não promova atrito diretamente: converta-o em regra, skill, validator,
 preflight, doc ou backlog somente quando reutilizável e evidenciado.
 
+Aceite `execution_knowledge_entry` schema v1 validada como `learning_source`
+adicional. Confira source refs, capture ID, run/task/agent lineage,
+materialidade, claim typing/confidence, gaps, sanitização e promotion status
+`unreviewed`. Deduplicate por lineage/capture ID e preserve contradições. Uma
+entry não substitui `retrospective_source`, root-cause learning, technical
+review ou approval; capture nunca promove automaticamente.
+
 ## Classification And Placement Matrix
 
 Classifique `type`, `severity` e `scope` de cada candidato. Prefira a menor
@@ -344,6 +351,8 @@ continuous_improvement_candidate:
   source:
     file: "retrospetivas/faseN/retrospectiva-faseN-<slug>.md"
     evidence: "Resumo curto do fato observado."
+    execution_knowledge_refs: []
+    evidence_lineage: []
   mistake:
     description: ""
     expected_behavior: ""
@@ -472,8 +481,9 @@ handoff ao `catalogador`, `blocked_by`, targets, destinations e condicao exata
 de retomada; nunca substitua o writer.
 # Evidence-first learning sources
 
-Prefer validated retrospective outputs, evidence audits and completion records
-as `learning_sources`. Deduplicate candidates by evidence lineage and keep
+Prefer validated retrospective outputs, evidence audits, completion records
+and validated execution-knowledge entries as `learning_sources`. Deduplicate
+candidates by evidence lineage/capture ID and keep
 contradictions as conflicts for human/technical review. A transient evidence
 source never directly promotes a durable rule, and raw runtime traces are not a
 default input.

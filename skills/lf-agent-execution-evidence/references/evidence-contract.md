@@ -96,6 +96,15 @@ field) and an integrity result of `verified`, `unverified`, or `mismatch`.
 Checksum mismatch makes `complete` invalid. A pointer-only or unavailable
 manifest records why no payload checksum exists.
 
+## Boundary from execution knowledge
+
+This manifest is observable evidence, not a learning summary. A later
+execution-knowledge entry may reference its sanitized path and lineage but must
+not copy the snapshot or change evidence status. The orchestrator persists this
+evidence first, then may dispatch a non-blocking cataloger. Cataloger failure,
+timeout or validation never changes the evidence manifest and never invalidates
+an implementation result established by separate validators.
+
 The retrospective policy is evidence-first: no automatic agent retrospective,
 no dual capture, and no legacy retrospective fallback. An evidence gap remains
 a gap; it cannot reactivate a narrative fallback.

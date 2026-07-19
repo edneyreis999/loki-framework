@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agent_run_report schema_version="3">
+<agent_run_report schema_version="4">
   <identity>
     <run_id>{{run_id}}</run_id>
     <phase>{{phase}}</phase>
@@ -15,6 +15,14 @@
     <capture_trigger>{{capture_trigger}}</capture_trigger>
     <capture_target>{{capture_target}}</capture_target>
   </evidence>
+  <execution_knowledge>
+    <capture_id>{{capture_id}}</capture_id>
+    <material>{{capture_material}}</material>
+    <target_entry>{{knowledge_target_entry}}</target_entry>
+    <state>{{knowledge_capture_state}}</state>
+    <reason>{{knowledge_capture_reason}}</reason>
+    <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
+  </execution_knowledge>
   <selection>
     <selection_reason>{{selection_reason}}</selection_reason>
   </selection>

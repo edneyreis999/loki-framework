@@ -16,8 +16,9 @@ validators, gates humanos materiais e estado retomável.
   `LokiRunState` suficiente para retomada.
 - Saídas obrigatórias: `Execution Brief`, artefatos ou diffs da fase, lista de
   tasks executadas/bloqueadas/puladas com motivo, resultados de validators,
-  registros de gates e handoffs, completion/evidence state, plano atualizado e
-  `LokiRunState`. Retrospectiva só é recomendada quando explicitamente prevista.
+  registros de gates e handoffs, completion/evidence state, capture state,
+  plano atualizado e `LokiRunState`. Retrospectiva só é recomendada quando
+  explicitamente prevista.
 
 ## Execution Profile
 
@@ -53,10 +54,12 @@ responsabilidade pelo progresso nem pelo estado global do fluxo.
 required_skills:
   - lf-run-plan-execution
   - lf-domain-context-preflight
+  - lf-execution-knowledge-capture
 required_commands: []
 ```
 
-Carregue `lf-run-plan-execution` e `lf-domain-context-preflight` antes de
+Carregue `lf-run-plan-execution`, `lf-domain-context-preflight` e
+`lf-execution-knowledge-capture` antes de
 planejar ou aplicar a execução. A segunda e obrigatoria somente quando a
 formula canonica de applicability selecionar um domain Write Agent. Não há
 skill técnica default do core. Carregue `<technology_required_skills>` somente
@@ -243,11 +246,22 @@ Para cada task na ordem topológica dentro do escopo terminal:
 4. Consolide o retorno e execute os validators antes de liberar dependentes.
 5. Registre em `builds/faseN/` comando/checklist, resultado e evidência, ou
    justificativa objetiva quando um validator não se aplicar.
-6. Execute checkpoint obrigatório antes de liberar dependentes: atualize task
+6. Execute checkpoint obrigatório antes de liberar dependentes: persista o
+   completion/evidence mínimo sanitizado e então atualize task
    file, `TASKS_MD` e `LokiRunState` com status, arquivos afetados,
    validations/evidências, Human Loop, `next_action`, blockers e próxima task
    resolvida pela DAG; atualize interaction records quando autorizado.
-7. Não marque comportamento perceptível, runtime, integração, persistência ou
+7. Avalie materialidade conforme `lf-execution-knowledge-capture`. Para trabalho
+   material, quando suportado, invoque `execution-knowledge-cataloger` em
+   paralelo com um target exclusivo em
+   `<run>/execution-knowledge/entries/<capture-id>.xml`. Para trabalho trivial
+   esperado, registre `skipped-nonmaterial` e sua razão. Nunca espere pelo
+   enriquecimento para liberar implementação ou dependentes.
+8. Em checkpoints posteriores, reconcilie serialmente a referência e um dos
+   estados `captured`, `partial`, `failed`, `unsupported` ou
+   `skipped-nonmaterial`. O cataloger não escreve task/LokiRunState/build/digest
+   nem qualquer manifest compartilhado.
+9. Não marque comportamento perceptível, runtime, integração, persistência ou
    output gerado como validado sem validator aplicável e confirmação do gate
    humano exigido.
 
@@ -262,6 +276,12 @@ Ao concluir a fase, recomende retrospectiva técnica apenas quando o plano a
 previr explicitamente, incluindo arquivos afetados, validators, gates, riscos residuais,
 comandos/scripts, outputs inesperados, inferências úteis e incorretas, mismatches
 de ambiente, correções do usuário e desperdícios a evitar.
+
+No checkpoint terminal, não aguarde cataloger não terminal: interrompa/cancele
+o handoff e registre `partial`, reason e `minimum_next_path`. Falha, timeout,
+indisponibilidade ou validator de knowledge degradam apenas capture e nunca
+bloqueiam a conclusão de task/fase/plano já validada por seus próprios
+controles. `loki-continuous-improvement` é o único promotor.
 
 ## Validators
 
@@ -281,6 +301,10 @@ de ambiente, correções do usuário e desperdícios a evitar.
   `calling_workflow: loki-run-plan` e `write_mode: task_scoped_writer`; ausencia
   bloqueia sem fallback.
 - Validators foram executados ou objetivamente justificados, com evidência.
+- Cada capture tem ID/target exclusivo e fonte persistida; `captured` aponta
+  para entry válida, enquanto estado degradado tem reason e
+  `minimum_next_path`. Falha do validator de knowledge não altera validators da
+  implementação.
 - Handoffs atingiram estado terminal e runtime/percepção não foi declarado
   validado sem controle humano aplicável.
 - Status em `tasks.md`, task files, builds e interactions são coerentes com a
@@ -324,6 +348,13 @@ sensível sem skill/owner/validator/gate; ou `scoped-writer` sem envelope
 completo; preflight pessoal `blocked`/ausente; gap material sem substitute/route;
 ou consumer-doc target sem `catalogador` disponivel. Não declare conclusão enquanto qualquer condição permanecer ativa.
 
+Estas condições bloqueiam a implementação, write safety e resumability mínima,
+não o enriquecimento opcional. Availability, failure, timeout, handoff ou
+validator do `execution-knowledge-cataloger` são excluídos: degrade e prossiga.
+Um cataloger interrompido no checkpoint final e reconciliado como `partial`
+com reason e `minimum_next_path` conta como handoff terminal para a conclusão
+genérica.
+
 ## Resume Contract
 
 Mantenha `LokiRunState` com plano e paths resolvidos, escopo terminal, fase, task atual, status,
@@ -332,6 +363,9 @@ owners, allowed/forbidden writes, arquivos afetados, validations e evidências,
 Human Loop, approvals/gates, etapas concluídas, blockers, riscos, próxima ação e
 condição necessária para continuar. Preserve a evidência e retome desse estado;
 não reinicie o fluxo quando ele bastar.
+Inclua capture ID, materialidade, target/ref, estado, reason e
+`minimum_next_path`; retome capture pendente somente quando isso não atrasar a
+execução principal.
 Por task/agent, inclua durable root, docs read, freshness, current sources,
 conflicts, gaps/materiality/substitutes, cross-domain/durable-gap handoffs,
 source precedence, result e minimum next input. Para consumer docs, inclua

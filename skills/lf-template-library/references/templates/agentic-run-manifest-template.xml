@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agentic_run_manifest schema_version="2">
+<agentic_run_manifest schema_version="3">
   <run>
     <run_id>{{run_id}}</run_id>
     <command>loki-agentic-development</command>
@@ -55,6 +55,23 @@
     </handoff>
   </handoffs>
   <evidence_policy><mode>evidence-first</mode><legacy_retrospective_fallback>false</legacy_retrospective_fallback></evidence_policy>
+  <execution_knowledge_policy>
+    <mode>persist-first-nonblocking-enrichment</mode>
+    <promotion_owner>loki-continuous-improvement</promotion_owner>
+    <final_checkpoint_wait>false</final_checkpoint_wait>
+  </execution_knowledge_policy>
+  <execution_knowledge_captures>
+    <capture>
+      <capture_id>{{capture_id}}</capture_id>
+      <agent_run_id>{{agent_run_id}}</agent_run_id>
+      <handoff_id>{{handoff_id}}</handoff_id>
+      <material>{{capture_material}}</material>
+      <target_entry>{{knowledge_target_entry}}</target_entry>
+      <state>{{knowledge_capture_state}}</state>
+      <reason>{{knowledge_capture_reason}}</reason>
+      <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
+    </capture>
+  </execution_knowledge_captures>
   <decision_gates>
     <decision_gate id="{{decision_gate_id}}">
       <category>{{decision_gate_category}}</category>

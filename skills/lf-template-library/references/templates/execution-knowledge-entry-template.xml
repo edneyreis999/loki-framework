@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<execution_knowledge_entry schema_version="1">
+  <identity>
+    <capture_id>{{capture_id}}</capture_id>
+    <calling_workflow>{{calling_workflow}}</calling_workflow>
+    <run_id>{{run_id}}</run_id>
+    <run_directory>{{run_directory}}</run_directory>
+    <phase>{{phase_or_none}}</phase>
+    <task_id>{{task_id_or_none}}</task_id>
+    <agent_run_id>{{agent_run_id_or_none}}</agent_run_id>
+    <handoff_id>{{handoff_id_or_none}}</handoff_id>
+  </identity>
+  <lineage>
+    <target_entry>{{target_entry}}</target_entry>
+    <source_refs>
+      <source_ref type="completion-record" authorization="run-contained">{{completion_record_path}}</source_ref>
+      <source_ref type="evidence-manifest" authorization="run-contained">{{evidence_manifest_path}}</source_ref>
+    </source_refs>
+  </lineage>
+  <materiality>
+    <material>{{material_false_until_evidenced}}</material>
+    <reason>{{materiality_reason}}</reason>
+  </materiality>
+  <capture>
+    <state>{{capture_state_partial_until_validated}}</state>
+    <reason>{{capture_reason_or_empty}}</reason>
+    <minimum_next_path>{{minimum_next_path_or_empty}}</minimum_next_path>
+  </capture>
+  <knowledge>
+    <claims>
+      <claim type="{{claim_type_inference_until_evidenced}}" confidence="{{claim_confidence_unknown}}">
+        <statement>{{claim_statement}}</statement>
+        <evidence_ref>{{claim_evidence_ref}}</evidence_ref>
+      </claim>
+    </claims>
+    <attempts>
+      <attempt>
+        <action>{{attempt_action}}</action>
+        <outcome>{{attempt_outcome}}</outcome>
+        <evidence_ref>{{attempt_evidence_ref}}</evidence_ref>
+      </attempt>
+    </attempts>
+    <resolution status="{{resolution_status_unresolved}}" confidence="{{resolution_confidence_unknown}}">
+      <statement>{{resolution_or_unknown}}</statement>
+      <evidence_ref>{{resolution_evidence_ref}}</evidence_ref>
+    </resolution>
+    <cause status="{{cause_status_unknown}}" confidence="{{cause_confidence_unknown}}">
+      <statement>{{cause_or_unknown}}</statement>
+      <evidence_ref>{{cause_evidence_ref}}</evidence_ref>
+    </cause>
+    <gaps>
+      <gap>{{gap_or_none}}</gap>
+    </gaps>
+    <reuse_guidance>{{reuse_guidance}}</reuse_guidance>
+    <avoid_next_time>{{avoid_next_time}}</avoid_next_time>
+  </knowledge>
+  <security>
+    <sanitized>true</sanitized>
+    <raw_payload_included>false</raw_payload_included>
+    <private_reasoning_included>false</private_reasoning_included>
+  </security>
+  <promotion>
+    <owner>loki-continuous-improvement</owner>
+    <status>unreviewed</status>
+  </promotion>
+</execution_knowledge_entry>

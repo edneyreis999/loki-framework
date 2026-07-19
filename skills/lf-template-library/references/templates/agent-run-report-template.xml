@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agent_run_report schema_version="2">
+<agent_run_report schema_version="4">
   <identity>
     <run_id>{{run_id}}</run_id>
     <phase>{{phase}}</phase>
@@ -15,6 +15,14 @@
     <capture_trigger>{{capture_trigger}}</capture_trigger>
     <capture_target>{{capture_target}}</capture_target>
   </evidence>
+  <execution_knowledge>
+    <capture_id>{{capture_id}}</capture_id>
+    <material>{{capture_material}}</material>
+    <target_entry>{{knowledge_target_entry}}</target_entry>
+    <state>{{knowledge_capture_state}}</state>
+    <reason>{{knowledge_capture_reason}}</reason>
+    <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
+  </execution_knowledge>
   <selection>
     <selection_reason>{{selection_reason}}</selection_reason>
   </selection>
@@ -47,6 +55,27 @@
     <upstream_output>{{upstream_output}}</upstream_output>
     <decision_gate_id>{{decision_gate_id}}</decision_gate_id>
   </freshness_signature>
+  <operational_refs>
+    <research_packets>
+      <packet_ref packet_id="{{packet_id}}" revision="{{packet_revision}}">
+        <path>{{packet_path}}</path>
+        <hash algorithm="sha-256">{{packet_sha256}}</hash>
+      </packet_ref>
+    </research_packets>
+    <publication_batches>
+      <batch_ref batch_id="{{batch_id}}">
+        <path>{{batch_path}}</path>
+      </batch_ref>
+    </publication_batches>
+    <continuation>
+      <logical_status>{{continuation_status}}</logical_status>
+      <continuation_ref>{{continuation_ref_or_null}}</continuation_ref>
+      <next_destination>{{continuation_destination_or_null}}</next_destination>
+    </continuation>
+    <materialization>
+      <materialization_ref>{{materialization_ref}}</materialization_ref>
+    </materialization>
+  </operational_refs>
   <completion>
     <status>pending</status>
     <report_path>{{report_path}}</report_path>

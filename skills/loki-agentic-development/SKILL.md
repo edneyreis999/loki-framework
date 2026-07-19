@@ -1,9 +1,9 @@
 ---
 name: loki-agentic-development
-description: Run the Loki `loki-agentic-development` command bundle. Turn a demand into agentic analysis, material decision gates, an executable plan, autonomous phase execution, completion records, evidence capture or explicit gaps, digest and backlog.
+description: Run the Loki `loki-agentic-development` command bundle. Turn a demand into agentic analysis, material decision gates, an executable plan, autonomous phase execution, completion/evidence, non-blocking execution-knowledge capture, digest and backlog.
 when_to_use:
   - "Use when a demand should pass through multi-agent analysis, planning and autonomous Loki plan execution."
-  - "Use when the run requires resumable XML state, scoped writers, validators, human gates, completion records, evidence capture and digest."
+  - "Use when the run requires resumable XML state, scoped writers, validators, human gates, completion/evidence, non-blocking execution-knowledge capture and digest."
 argument-hint: "[demand, run_directory, allowed_scope, optional out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
 arguments:
   required: [demand, run_directory, allowed_scope]
@@ -36,7 +36,7 @@ shell: bash
 type: command
 serialization: skill-bundle
 domain: orchestration
-required_skills: [lf-agentic-orchestration]
+required_skills: [lf-agentic-orchestration, lf-execution-knowledge-capture]
 required_commands: [loki-human-decision-preflight, loki-generate-action-plan, loki-run-plan]
 status: draft
 used_by: [loki-agentic-development]

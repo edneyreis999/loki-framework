@@ -63,7 +63,7 @@ parameters:
     input_type: list[path_or_mapping]
     requirement: optional
     default: []
-    description: Retrospectivas, audits e manifests com lineage; sem promocao direta.
+    description: Retrospectivas, audits, completion/evidence manifests e execution-knowledge entries validadas com lineage; sem promocao direta.
   - key: retrospective_source
     input_type: path[file_or_directory] | list[path[file]]
     requirement: required
@@ -97,7 +97,8 @@ parameters:
 
 Valide que `retrospective_source` resolve apenas arquivos legíveis de
 retrospectiva ou um diretório legível enumerável. Valide existência de paths em
-`interactions`, `builds` e `package_root`, tipos das mappings e compatibilidade
+`learning_sources`, `interactions`, `builds` e `package_root`, tipos das
+mappings e compatibilidade
 entre `scope` e `target_surface`. Rejeite fontes ainda em execução, dificuldades
 não resolvidas, destinos transitórios tratados como normativos e qualquer path
 fora do escopo, explicando como corrigir.
@@ -105,6 +106,10 @@ fora do escopo, explicando como corrigir.
 Identifique e solicite cada informação obrigatória ausente. Não invente fonte,
 evidência, escopo, destino, classificação, causa, approval ou gate; não avance
 enquanto a lacuna impedir avaliação segura.
+
+Execution-knowledge entries são fontes adicionais: valide schema, lineage,
+sanitização e promotion status não aplicado. Elas não substituem a
+retrospectiva elegível, análise de causa raiz nem gates.
 
 Normalize objetivo, parâmetros, fontes, evidências transitórias, erro observado
 quando aplicável, atritos de execução, escopo, restrições, destino candidato,

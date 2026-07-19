@@ -107,6 +107,13 @@ integrado tambem nao promove aprendizado duradouro automaticamente. Digest,
 backlog, reports e retrospectivas viram entrada para
 `loki-continuous-improvement` somente por decisao posterior.
 
+Nos dois executores, completion/evidence mínimo é persistido primeiro. Quando
+há atrito ou aprendizado material, `execution-knowledge-cataloger` pode criar
+em paralelo uma entry exclusiva no run. O fluxo principal não espera por esse
+enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`; lookup
+trivial pode ser `skipped-nonmaterial`. Somente
+`loki-continuous-improvement` promove conhecimento depois.
+
 ## Evidencia de Sessao
 
 Use `lf-agent-execution-evidence` quando o orquestrador ou collector precisar
@@ -244,6 +251,7 @@ Os command bundles instaláveis (`loki-init`, `loki-feedback`,
 meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
 
 As skills core (`lf-agentic-orchestration`, `lf-run-plan-execution`,
+`lf-execution-knowledge-capture`,
 `lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
 `lf-index-navigator`, `lf-tech-analysis-authoring`,
 `lf-action-plan-authoring` e `lf-template-library`) fornecem conhecimento e
@@ -315,6 +323,9 @@ duradoura e backlog.
 ## Agents
 
 - `standards-curator`: classifica aprendizados como universal, provavel-universal, project-specific ou backlog.
+- `execution-knowledge-cataloger`: lê somente completion/evidence sanitizados
+  persistidos e escreve uma única entry run-local; não altera shared state nem
+  promove policy, e sua falha não bloqueia implementação.
 - `retrospective-digester`: digere retrospectivas tecnicas em modo read-only,
   com fan-out por arquivo quando `loki-continuous-improvement` recebe multiplas
   retros.

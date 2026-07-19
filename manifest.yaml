@@ -132,6 +132,14 @@ agentic_selection_policy:
     - "technology_skill_routes"
 
 agentic_agent_metadata:
+  execution-knowledge-cataloger:
+    capability_tags: ["execution-knowledge", "evidence-lineage", "cataloging"]
+    phase_roles: ["execution", "capture"]
+    agentic_modes: ["scoped-writer"]
+    write_classes: ["execution-knowledge-entry"]
+    risk_tags: ["privacy", "evidence-integrity", "liveness"]
+    parallel_safe: true
+    technology_skill_routes: []
   session-evidence-auditor:
     capability_tags: ["evidence", "audit", "lineage"]
     phase_roles: ["audit", "retrospective"]
@@ -425,7 +433,11 @@ scripts:
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
-    purpose: "Validate Loki agentic v2 XML run state, handoff IDs, gates, writer contracts, parallel target conflicts and completion reports."
+    purpose: "Validate current and legacy Loki agentic XML run state, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
+  - name: "validate-execution-knowledge"
+    file: "scripts/validate-execution-knowledge.py"
+    status: draft
+    purpose: "Validate provider-neutral execution-knowledge schema-v1 entries, lineage, materiality, capture states, exclusive targets, sanitization and unpromoted status."
   - name: "validate-loki-init-catalogador-contracts"
     file: "scripts/validate-loki-init-catalogador-contracts.py"
     status: draft
@@ -564,6 +576,9 @@ skills:
     status: draft
   - name: "lf-agent-execution-evidence"
     file: "skills/lf-agent-execution-evidence/SKILL.md"
+    status: draft
+  - name: "lf-execution-knowledge-capture"
+    file: "skills/lf-execution-knowledge-capture/SKILL.md"
     status: draft
   - name: "loki-generate-action-plan"
     file: "skills/loki-generate-action-plan/SKILL.md"
@@ -769,6 +784,11 @@ agents:
     status: draft-read-only
     project_tags:
       - "core"
+  - name: "execution-knowledge-cataloger"
+    file: "agents/execution-knowledge-cataloger.md"
+    status: draft-scoped-writer
+    project_tags:
+      - "core"
   - name: "standards-curator"
     file: "agents/standards-curator.md"
     status: draft
@@ -888,6 +908,10 @@ codex_agents:
     file: "codex/agents/session-evidence-auditor.toml"
     source_agent: "agents/session-evidence-auditor.md"
     status: draft-derived
+  - name: "execution-knowledge-cataloger"
+    file: "codex/agents/execution-knowledge-cataloger.toml"
+    source_agent: "agents/execution-knowledge-cataloger.md"
+    status: draft-derived-scoped-writer
   - name: "bibliotecario"
     file: "codex/agents/bibliotecario.toml"
     source_agent: "agents/bibliotecario.md"
@@ -994,6 +1018,9 @@ templates:
     status: draft
   - name: "agent-session-evidence-template"
     file: "templates/agent-session-evidence-template.xml"
+    status: draft
+  - name: "execution-knowledge-entry-template"
+    file: "templates/execution-knowledge-entry-template.xml"
     status: draft
   - name: "agentic-run-digest-template"
     file: "templates/agentic-run-digest-template.xml"
