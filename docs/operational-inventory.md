@@ -49,7 +49,7 @@ não existe projection ou command físico separado.
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki-run-plan` | `mvp` | Executar fase planejada com preflight, escrita serializada, validators, retomada e capture paralelo não bloqueante de execution knowledge a partir de fontes persistidas. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana. |
+| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana; no destino package, exige perfil LLM-facing do Writer e parecer v2 independente do Auditor sem alterar destinos nao-package. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
 | `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
@@ -127,6 +127,7 @@ bundles.
 | `lf-command-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar command bundles com Input, Execution, Response, owners, gates, validators e retomada. |
 | `lf-agent-creator` | `mvp` | Fonte compartilhada do contrato de agents por capacidades e modos, com envelope de escrita, validação e handoff claro. |
 | `lf-skill-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar skills com capacidade única, metadata válida, progressive disclosure e forward testing. |
+| `lf-documentation-writing` | `mvp` | Classificar modo documental e aplicabilidade LLM-facing de forma independente; rotear artefatos aplicaveis aos requisitos de autoria e ao contrato canonico de perfil, fixtures e auditoria independente. |
 | `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `lf-run-plan-execution`. |
 | `brainstorm-character` | `backlog` | Apoio futuro para design de personagens e bosses. |
 
@@ -137,8 +138,8 @@ bundles.
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
-| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: recebe envelope de task com targets exatos, aplica promocao package-only e entrega checks ao auditor; nao atua em consumidor ou runtime. |
-| `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only: executa checks e rubrica independente sobre patch de pacote, bloqueia findings/incertezas e nunca corrige producao. |
+| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: recebe envelope com targets exatos, aplica promocao package-only, emite perfil LLM-facing e selecao justificada de fixtures, executa checks mecanicos e entrega evidencia ao Auditor; nao autoaprova nem atua em consumidor/runtime. |
+| `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only e independente: valida perfil, rubrica v2, fixtures, revisao isolada e bias controls sobre o patch real; emite o parecer LLM-facing, bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki-run-plan` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
 | `session-evidence-auditor` | `mvp` | Auditar em modo read-only manifests de evidencia de sessao ja validados, sem inventar identidade, transcritos, uso de tokens ou raciocinio privado. |

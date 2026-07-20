@@ -381,19 +381,19 @@ agentic_agent_metadata:
     init_output_contract: "loki_init_research_packet schema v1"
     domain_context_preflight: "lf-domain-context-preflight"
   framework-artifact-writer:
-    capability_tags: ["package-authoring", "scoped-write", "contract-sync"]
+    capability_tags: ["package-authoring", "scoped-write", "contract-sync", "llm-artifact-profile"]
     phase_roles: ["implementation", "package-promotion"]
     agentic_modes: ["scoped-writer", "proposal"]
     write_classes: ["package-contract", "manifest", "documentation"]
-    risk_tags: ["durable-policy", "write-conflict", "projection-drift"]
+    risk_tags: ["durable-policy", "write-conflict", "projection-drift", "llm-interpretation"]
     parallel_safe: false
     technology_skill_routes: []
   framework-artifact-quality-auditor:
-    capability_tags: ["write-test", "quality-audit", "contract-review"]
+    capability_tags: ["write-test", "quality-audit", "contract-review", "llm-consumption-quality", "isolated-review"]
     phase_roles: ["validation", "audit"]
     agentic_modes: ["write-test", "proposal"]
     write_classes: []
-    risk_tags: ["quality-regression", "normative-ambiguity"]
+    risk_tags: ["quality-regression", "normative-ambiguity", "llm-interpretation"]
     parallel_safe: true
     technology_skill_routes: []
 

@@ -59,6 +59,28 @@ Review:
 
 If forward testing only succeeds with leaked context, tighten the skill or split references differently.
 
+## Conditional LLM-Facing Quality Gate
+
+Before delivery, classify the created or revised skill with
+[lf-documentation-writing](../../lf-documentation-writing/SKILL.md). When the
+classification is positively LLM-facing, require a complete
+`llm_artifact_profile`, application of the
+[canonical LLM artifact quality contract](../../lf-documentation-writing/references/llm-artifact-quality-validation.md),
+and an independent `llm_consumption_quality` result in which every applicable
+fixture passes. Do not copy the canonical rubric, schemas, or fixture
+definitions into this creator contract.
+
+Use these terminal semantics:
+
+- positive LLM-facing classification without the complete profile, canonical
+  contract, independent result, or with any non-passing applicable fixture:
+  mark checklist item 15 `não` and block delivery;
+- positive LLM-facing classification with the complete profile and independent
+  result approved: item 15 may be `sim`, and completion remains subject to all
+  other checklist items and existing gates;
+- exclusively human-facing: record `not-applicable` with a concrete human-only
+  reason and do not run irrelevant fixtures.
+
 ## Canonical 24/24 checklist
 
 Before delivery, record `sim|não`, file and heading for every item. Any `não`
@@ -68,7 +90,8 @@ and non-scope; (3) no full workflow orchestration; (4) installable layout;
 (8) observable use/exclusions; (9) coherent multi-adapter metadata; (10)
 objective purpose; (11) required/optional inputs and missing-input handling;
 (12) imperative procedure; (13) outputs plus success/failure/partial states;
-(14) limits/prohibitions/stops; (15) validators/evidence/gates; (16) degree of
+(14) limits/prohibitions/stops; (15) validators/evidence/gates, including the
+conditional LLM-facing gate above when applicable; (16) degree of
 freedom proportional to risk; (17) focused SKILL.md; (18) conditional detail in
 references; (19) conditional reference routing; (20) deterministic scripts
 tested; (21) assets only as output resources; (22) no contradiction/duplication;

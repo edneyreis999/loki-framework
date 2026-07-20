@@ -52,6 +52,7 @@ required_skills:
   - lf-command-creator
   - lf-agent-creator
   - lf-skill-creator
+  - lf-documentation-writing
 required_commands:
   - loki-retrospectiva-tecnica
 ```
@@ -60,6 +61,8 @@ Use `loki-retrospectiva-tecnica` como fonte auditável. Carregue
 `lf-command-creator` para command/template de command/orquestração,
 `lf-agent-creator` para agent ou dúvida agent-skill-command e
 `lf-skill-creator` para skill, layout e progressive disclosure.
+Carregue `lf-documentation-writing` somente na ramificação package para
+classificar aplicabilidade LLM-facing e rotear seu contrato canônico.
 Quando o Input contiver eventos ou candidatos especializados de inferência,
 carregue também [lf-analytic-inference](../../lf-analytic-inference/SKILL.md) e
 seus contratos; não carregue essa skill para melhoria contínua não relacionada.
@@ -498,11 +501,33 @@ exata da busca ao usuário.
 6. Para `destination_scope: package`, entregue o envelope aprovado ao
    `framework-artifact-writer` somente após o preflight de manutenção interna;
    se falhar, bloqueie com retorno executável ao orquestrador. Quando passar,
-   serialize os arquivos e execute validators e
-   packaging checks. Em seguida entregue o patch real, baseline, arquivos
-   descobertos, checks e iteração ao `framework-artifact-quality-auditor`.
-   Somente `approved` sem finding/inconclusão é terminal. Finding corrigível
-   dentro do envelope volta ao Writer, repete checks e exige nova auditoria.
+   classifique o artefato com `lf-documentation-writing`. O Writer deve emitir
+   `llm_artifact_profile` completo e particionar os dez fixture IDs canônicos
+   exatamente uma vez entre selecionados e skips justificados. Se a
+   classificação for positiva, carregue o
+   [contrato canônico de qualidade LLM-facing](../../lf-documentation-writing/references/llm-artifact-quality-validation.md),
+   aplique seus critérios de autoria, serialize os arquivos e execute somente
+   validators mecânicos e packaging checks. Se for human-only, preserve profile
+   completo com `not-applicable` justificado e os dez skips; não execute
+   fixtures irrelevantes. Para human-only, registre
+   `second_family_calibration: not-run` e uma
+   limitation explícita de que revisão isolada e segunda família não são
+   requeridas pela classificação validada. O parecer independente human-only
+   usa internal `not-applicable`, external `approved`, `block_reason: none` e
+   `llm_consumption_quality.status: not-applicable`; os gates existentes
+   continuam obrigatórios. Em seguida entregue patch real,
+   baseline, arquivos descobertos, profile, checks, evidência e iteração ao
+   `framework-artifact-quality-auditor`.
+   O Auditor read-only valida o profile e emite `llm_consumption_quality`
+   completo com `llm-artifact-quality-v1`, `rubric-v2` e `prompt-v2`. Para
+   aplicável, ele executa nove heurísticas, fixtures selecionados em ao menos uma
+   revisão isolada e bias controls antes do status. Somente `approved` sem
+   finding, inconclusão, baixa confiança material, fixture aplicável omitido,
+   skip injustificado ou bias check falho é terminal. Conflito normativo gera
+   internal `needs-human-review`, external `blocked` e
+   `block_reason: human_review_required`. Finding corrigível
+   dentro do envelope volta ao Writer, repete checks e exige replay completo da
+   auditoria.
    Ampliação material invalida gates e retorna à proposta, review e approval;
    `needs-human-review` é `blocked` e retorna ao `technical-review`, seguido
    obrigatoriamente de nova auditoria.
@@ -511,6 +536,12 @@ exata da busca ao usuário.
    apropriado e preserve seus gates e validators existentes.
 8. Responda com candidatos, artefatos, evidência, handoffs, gates, riscos,
    backlog e resume state.
+
+O gate LLM-facing acima existe somente em `destination_scope: package`. Para
+`consumer-context`, `consumer-operational-state`, runtime, inference e backlog,
+preserve routing, owners, validators, gates e terminal states existentes; não
+carregue o contrato, não execute seus fixtures e mantenha
+`llm_artifact_quality: null`.
 
 ## Write Ownership And Named Writer Routing
 
@@ -540,6 +571,10 @@ Na ramificação `package`, `framework-artifact-writer` é owner exclusivo dos
 recebe permissão de escrita em produção. O Writer não pode autoatestar a própria
 mudança. Finding retorna ao owner somente se não ampliar objetivo, destino,
 target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
+O Writer entrega o profile mas nunca preenche `llm_consumption_quality`; o
+Auditor entrega o parecer mas nunca recebe write access. Ausência de qualquer
+agente obrigatório, profile completo, partição 10/10, evidência mecânica ou
+parecer completo bloqueia sem fallback.
 
 ## Validators
 
@@ -587,8 +622,11 @@ target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
 - Gate/approval requerido está satisfeito antes da escrita; validators passam
   antes de conclusão.
 - Destino `package` tem Writer, checks mecânicos e parecer independente
-  `approved`; auditor ausente, `blocked`, finding, inconclusão ou human review
-  impede terminal.
+  `approved`; Writer/Auditor ausente, profile incompleto, partição inválida,
+  audit result ausente, `blocked`, finding, inconclusão, baixa confiança
+  material, fixture aplicável omitido, skip injustificado, bias falho ou human
+  review impede terminal. Human-only exige `not-applicable` justificado e não
+  executa fixtures irrelevantes.
 
 ## Human Gates
 
@@ -794,6 +832,16 @@ continuous_improvement_candidate:
       catalog_mutation_applied: false
   promotion_execution:
     package_artifact_flow_required: "true | false"
+    llm_artifact_quality:
+      state: "applicable | not-applicable | not-evaluated"
+      canonical_contract: "skills/lf-documentation-writing/references/llm-artifact-quality-validation.md | not-loaded"
+      llm_artifact_profile: "<complete object | null>"
+      profile_evidence: []
+      llm_consumption_quality: "<complete object | null>"
+      audit_evidence: []
+      limitations: []
+      second_family_calibration: "completed | unavailable | not-run"
+      correction_replay_required: "true | false"
     writer:
       agent: "framework-artifact-writer | applicable-domain-writer | none"
       envelope_status: "pending | valid | invalid"
@@ -801,11 +849,13 @@ continuous_improvement_candidate:
       discovered_target_files: []
       status: "pending | completed | blocked | failed | not-required"
       validator_evidence: []
+      profile_status: "pending | complete | invalid | not-required"
     auditor:
       agent: "framework-artifact-quality-auditor | applicable-domain-auditor | none"
       required: "true | false"
       status: "pending | approved | blocked | not-required"
-      internal_status: "pending | pass | finding | inconclusive | needs-human-review | not-required"
+      internal_status: "pending | approved | blocked | needs-human-review | not-applicable | not-required"
+      block_reason: "finding_open | validation_inconclusive | low_material_confidence | fixture_omitted | bias_check_failed | human_review_required | handoff_incomplete | none"
       findings: []
       residual_risks: []
     iteration: 0
@@ -844,9 +894,12 @@ executadas aqui.
 Pare tambem antes de consumer-doc write se `catalogador` estiver indisponivel,
 caller/mode divergir ou o envelope exigir qualquer precondicao init.
 Para `destination_scope: package`, pare também se o Writer ou auditor estiver
-indisponível, se auditoria tiver finding/inconclusão/human review, se o auditor
-tentar editar produção, ou se uma correção ampliar materialmente o envelope sem
-invalidar e renovar os gates.
+indisponível; profile, partição 10/10, checks ou audit result estiver ausente ou
+inválido; auditoria tiver finding, inconclusão, baixa confiança material,
+fixture aplicável omitido, skip injustificado, bias falho ou human review; se o
+auditor tentar editar produção; ou se uma correção não invalidar o parecer
+anterior e disparar replay completo. Se a correção ampliar materialmente o
+envelope, invalide e renove também os gates.
 Não declare conclusão com condição ativa.
 
 ## Resume Contract
@@ -873,10 +926,15 @@ um workflow separado de purge físico. Nunca registre targets removidos nem use 
 approval ou prova de execução.
 
 Para `destination_scope: package`, registre também `promotion_execution`: owner
-e envelope do Writer, target/discovered files, evidência de checks, auditor e
-seus estados interno/externo, findings, iteração, gates invalidados e próximo
-destino. Após correção ou decisão humana, o estado volta a `auditor.pending`;
-apenas uma nova auditoria `approved` permite conclusão.
+e envelope do Writer, target/discovered files, `llm_artifact_profile` completo,
+partição selecionados/skips, evidência de checks, `llm_consumption_quality`
+completo, profile/audit evidence, limitações, segunda família, auditor e seus
+estados interno/externo, findings, iteração, gates invalidados, replay requerido
+e próximo destino. Após correção ou decisão humana, marque o audit result
+anterior `invalidated_by_correction: true`, incremente a iteração, preserve a
+evidência anterior, volte a `auditor.pending` e execute replay completo; apenas
+uma nova auditoria `approved` permite conclusão. Em destinos não-package,
+registre `llm_artifact_quality: null` e preserve o resume state anterior.
 Para consumer docs project-specific, registre caller/mode fixo, estado do
 handoff ao `catalogador`, `blocked_by`, targets, destinations e condicao exata
 de retomada; nunca substitua o writer.

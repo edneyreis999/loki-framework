@@ -50,11 +50,22 @@ formal ou auditoria interna de conformidade do pacote.
 12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
 13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
 14. Quando `destination_scope: package`, depois dos gates o
-    `framework-artifact-writer` aplica o patch sob envelope exclusivo, os checks
-    mecanicos rodam e o `framework-artifact-quality-auditor` revisa o estado real
-    sem editar producao. Somente `approved` conclui; finding retorna ao Writer,
-    enquanto incerteza ou mudanca material bloqueia para os gates aplicaveis e
-    exige nova auditoria.
+    `framework-artifact-writer` aplica o patch sob envelope exclusivo, classifica
+    a aplicabilidade LLM-facing independentemente do modo documental e emite o
+    `llm_artifact_profile`. As seis classes positivas sao `agent-facing`,
+    `instruction-bearing`, `routing`, `prompt-assembly`, `context-hydration` e
+    `validation-contract`; human-only usa `not-applicable` justificado. Se
+    aplicavel, o Writer segue a fonte canonica
+    [LLM Artifact Quality Validation Contract](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md),
+    aplica os requisitos de autoria e entrega perfil, particao dos dez fixture
+    IDs, arquivos e checks ao `framework-artifact-quality-auditor` independente.
+    O Auditor read-only emite `llm_consumption_quality` com `rubric-v2`,
+    `prompt-v2`, revisao isolada e bias controls; o Writer nunca autoaprova.
+    Finding, inconclusao, baixa confianca material, fixture omitido, skip
+    injustificado, bias ou validator falho bloqueiam; conflito normativo retorna
+    `needs-human-review`. Toda correcao invalida o parecer anterior e exige
+    replay completo. Destinos nao-package preservam integralmente seus routing,
+    owners, validators, formatos e permissoes anteriores.
 15. Quando `destination_scope: consumer-operational-state`, resolva e registre
     o `consumer_root` internamente a partir do `pwd` canonico e derive exclusivamente
     `<consumer-root>/.loki/analytic-inference/v2/`. O `technical-implementer`
@@ -179,6 +190,8 @@ Use esta regra simples:
 - Nao guardar regra de negocio do consumidor no pacote Loki.
 - Nao duplicar regra longa em `AGENTS.md` ou `CLAUDE.md`; esses arquivos devem rotear para a fonte certa.
 - Nao alterar pacote, instalacao ou contexto duradouro sem gate exigido.
+- Nao aplicar o gate LLM-facing package a destinos consumer, runtime ou
+  backlog, nem permitir que o Writer aprove o proprio artefato.
 
 ## Checklist rapido
 

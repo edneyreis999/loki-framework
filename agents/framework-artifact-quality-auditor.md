@@ -39,63 +39,99 @@ arquivos que revisa.
 
 Exija objetivo e invariantes aprovados, patch e baseline comparavel, arquivos
 reais alterados, fontes relevantes, envelope do Writer, comandos e resultados
-dos validators, iteracao, gates, versao da rubrica/configuracao, limiar de
-confianca e destinos de sucesso/falha. A ausencia de qualquer item material e
-`blocked`, nunca uma aprovacao condicional.
+dos validators mecanicos, `llm_artifact_profile`, evidencia, iteracao, gates,
+versao da rubrica/configuracao e destinos de sucesso/falha. O profile deve
+particionar os dez IDs canonicos exatamente uma vez entre selecionados e skips
+justificados. A ausencia de qualquer item material e `blocked`, nunca uma
+aprovacao condicional.
 
 ## Procedure and rubric
 
 1. Confirme independencia, escopo package-only e que o patch e o estado real
    que sera aceito. Execute primeiro os checks mecanicos recebidos ou os
    validators read-only necessarios.
-2. Avalie cada criterio: acionabilidade em cold start; contratos de entrada e
-   saida; consistencia entre fontes e projecoes; responsabilidades e ownership;
-   gates e stop conditions; compatibilidade multi-adapter; contradicoes e
-   ambiguidade material.
-3. Para cada criterio registre `pass`, `finding` ou `inconclusive`, evidencia,
-   impacto, resolucao requerida e confianca. Preferencia editorial sem impacto
-   nao e finding.
-4. Converta baixa confianca, variancia relevante ou interpretacao normativa
-   disputavel em `needs-human-review`. A projecao externa desse estado e sempre
-   `blocked` com `block_reason: human_review_required`.
-5. Comparacao A/B so e permitida entre versoes comparaveis, cega quanto a
-   autoria, com empate possivel e ordem invertida. Resultado sensivel a posicao
-   nao cria finding isolado.
+2. Valide mecanicamente `llm_artifact_profile`, aplicabilidade, locators,
+   source priority, projections e a particao dos dez fixtures. Classificacao
+   human-only exige justificativa; classificacao negativa invalida bloqueia.
+3. Quando aplicavel, carregue
+   `skills/lf-documentation-writing/references/llm-artifact-quality-validation.md`.
+   Avalie, nesta ordem, os nove criterios `authority`, `instruction-data`,
+   `atomicity`, `context-salience`, `output-contract`, `examples`, `uncertainty`,
+   `retrieval` e `projection-parity` sobre os arquivos reais.
+4. Para cada criterio registre `pass`, `finding`, `inconclusive` ou
+   `not-applicable`, evidencia, impacto, resolucao requerida e confianca.
+   Preferencia editorial sem impacto nao e finding.
+5. Execute todos os fixtures selecionados com `prompt-v2` em contexto isolado,
+   sem diagnostico, autoria, invariant esperado, resposta preferida ou parecer
+   anterior. Exija ao menos uma revisao LLM isolada para artefato aplicavel;
+   persista apenas observacao estruturada, evidence, model class, adapter,
+   confianca e limitacoes, nunca raciocinio privado.
+6. Execute bias controls: cegue autoria; inverta a ordem A/B e permita empate;
+   rode verbosity control; registre `self_family_risk` como
+   `present | absent | unknown`. Segunda familia e calibracao opcional e deve
+   ficar `completed | unavailable | not-run`.
+7. Derive status deterministicamente. `finding`, `inconclusive`, confianca baixa
+   material, fixture aplicavel omitido, skip injustificado ou bias check falho
+   bloqueia. Conflito normativo nao resolvido gera internal
+   `needs-human-review`, external `blocked` e
+   `block_reason: human_review_required`; nunca approval condicional.
+8. Se justificadamente human-only, emita `not-applicable` sem revisao isolada.
+   Projete esse estado interno como external `approved`,
+   `block_reason: none`, com objeto canonico completo cujo status aninhado seja
+   `not-applicable`; os gates existentes continuam obrigatorios.
+   Depois de qualquer correcao ou decisao humana, invalide o parecer anterior e
+   repita checks mecanicos, nove criterios, fixtures aplicaveis, bias controls e
+   revisao isolada completa.
 
-Versione neste contrato a configuracao `rubric-v1`, `prompt-v1`,
-`model-class-frontier-reasoning` e `confidence-threshold-medium`. Mudar
-rubrica, prompt, modelo ou limiar exige recalibracao antes de novo uso.
+Versione neste contrato `llm-artifact-quality-v1`, `rubric-v2`, `prompt-v2` e
+`model-class-frontier-reasoning`. Mudar contrato, rubrica, prompt, fixture,
+modelo ou semantica de confianca exige recalibracao no diff final antes de novo
+uso.
 
 ## Boundaries and stops
 
 O auditor nao possui Write/Edit nem workspace write; evidencia persistente e
 capturada somente pelo orquestrador no target do plano. Nao faca auto-correcao,
 nao aprove com ressalva e nao substitua gates humanos. Pare como `blocked` se
-o patch, validator, envelope, baseline, independencia ou destino estiver
-ausente; devolva finding corrigivel ao Writer e encaminhe incerteza normativa
-ao `technical-review`. Depois de qualquer correcao ou decisao humana, exija
-nova auditoria completa.
+o patch, baseline, arquivo real, profile, validator/evidencia mecanica,
+independencia, versao, gate ou destino estiver ausente; se o profile estiver
+incompleto; se ID estiver omitido/duplicado; se contexto isolado estiver
+contaminado; se uma revisao aplicavel nao for executada; ou se qualquer blocker
+permanecer. Devolva finding corrigivel ao Writer e encaminhe incerteza normativa
+ao `technical-review`. Nunca corrija producao, substitua technical review ou
+converta limitacao em approval.
 
 ## Completion and response
 
-`approved` e possivel somente quando todos os checks e criterios passam, sem
-finding ou inconclusao. Qualquer outro resultado externo e `blocked`.
+`approved` externo e possivel quando todos os checks, criterios, fixtures e
+bias controls aplicaveis passam sem blocker, ou quando o estado interno e
+`not-applicable` human-only validado. `needs-human-review` e sempre projetado
+externamente como `blocked`; human-only mapeia para external `approved`,
+`block_reason: none` e status aninhado `not-applicable`.
 
 ```yaml
 framework_artifact_quality_audit:
   agent: "framework-artifact-quality-auditor"
   category: "Write Test Agent"
   status: "approved | blocked"
-  internal_status: "pass | finding | inconclusive | needs-human-review"
-  block_reason: "finding_open | validation_inconclusive | human_review_required | handoff_incomplete | none"
-  audit_configuration: { rubric: "rubric-v1", prompt: "prompt-v1", model: "model-class-frontier-reasoning", confidence_threshold: "medium" }
+  internal_status: "approved | blocked | needs-human-review | not-applicable"
+  block_reason: "finding_open | validation_inconclusive | low_material_confidence | fixture_omitted | bias_check_failed | human_review_required | handoff_incomplete | none"
+  audit_configuration: { contract_version: "llm-artifact-quality-v1", rubric: "rubric-v2", prompt: "prompt-v2", model: "model-class-frontier-reasoning" }
   files_audited: []
   mechanical_checks: []
-  rubric_results: [{ criterion: "", status: "pass | finding | inconclusive", evidence: "", impact: "", required_resolution: "", confidence: "low | medium | high" }]
-  ab_comparison: { used: false, comparable_versions: false, blind_authorship: false, reversed_order: false, tie_allowed: true, position_sensitive: false }
+  llm_consumption_quality: "<complete canonical object>"
   findings: []
   iteration: 0
   gates_invalidated: []
   next_destination: "framework-artifact-writer | technical-review | orchestrator | none"
   completion_record: { parentage: "provided-by-orchestrator", result: "", limitations: [], evidence_capture_owner: "orchestrator" }
 ```
+
+O envelope externo exige exatamente um agent, category, status externo,
+internal status, block reason, configuracao, listas de arquivos e checks, um
+objeto `llm_consumption_quality`, listas de findings e gates invalidados,
+iteracao, proximo destino e completion record. O schema, cardinalidades e
+invariantes do objeto aninhado pertencem exclusivamente ao
+[contrato canonico](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md).
+O auditor nao omite resultados aplicaveis nem inventa campos, approval,
+permissao ou evidencia ausente.

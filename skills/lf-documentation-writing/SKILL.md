@@ -1,9 +1,10 @@
 ---
 name: lf-documentation-writing
-description: "Guide Loki agents when classifying, writing, or reviewing technical, reader-facing, and agent-facing LLM-only documents as lite or rich artifacts."
+description: "Guide Loki agents when classifying, writing, or reviewing technical, reader-facing, agent-facing, or other LLM-facing documents and framework artifacts as lite or rich outputs."
 when_to_use:
   - "Use when creating, revising, or reviewing a document whose audience, lifetime, tone, density, or destination must be chosen."
   - "Use when deciding between technical, reader-facing, and agent-facing LLM-only document modes, with lite or rich depth."
+  - "Use when an instruction-bearing, routing, prompt-assembly, context-hydration, or validation-contract artifact will be interpreted by an LLM."
   - "Use when a Loki workflow writes Markdown under a plan directory, /docs, or another approved documentation destination."
   - "Use before vault-specific Markdown skills when Loki documentation is written inside an Obsidian vault or another Markdown knowledge base."
 argument-hint: "[goal, audience, destination, lifetime, source paths]"
@@ -40,43 +41,70 @@ type: skill
 
 # lf-documentation-writing
 
+## Capability Boundary
+
+Classify, write, or review one document or documentation-like framework
+artifact for its audience, lifetime, destination, evidence and LLM-consumption
+needs. This skill does not orchestrate a multi-agent workflow, grant write
+permission, install artifacts, or approve the quality of its own output.
+
+All frontmatter arguments are optional. Ask for a missing input only when its
+absence changes classification, destination, authority, permission or a
+required gate. Otherwise infer conservatively from approved local sources and
+label material uncertainty.
+
 ## Procedure
 
 1. Classify the document before writing. Use audience, lifetime, destination,
    source evidence and workflow role to choose an orientation and depth:
    technical, reader-facing, or agent-facing; lite or rich.
-2. Confirm only missing inputs that materially change the document mode or
+2. Classify LLM-facing applicability separately from document mode. Mark the
+   artifact applicable when its operational job is `agent-facing`,
+   `instruction-bearing`, `routing`, `prompt-assembly`, `context-hydration`, or
+   `validation-contract`. A technical or reader-facing mode does not by itself
+   make an artifact LLM-facing. Mark an exclusively human artifact
+   `not-applicable` with a concrete reason when it neither instructs nor
+   controls LLM interpretation.
+3. Confirm only missing inputs that materially change the document mode or
    destination. Otherwise infer conservatively from the request, plan files,
    package rules and existing local documentation style.
-3. Use Diataxis as a secondary lens after the Loki mode is chosen: tutorial for
+4. Use Diataxis as a secondary lens after the Loki mode is chosen: tutorial for
    learning, how-to for a concrete task, reference for lookup, explanation for
    understanding. Do not let Diataxis override Loki lifetime or destination
    rules.
-4. If the destination is inside an Obsidian vault, or the user asks for
+5. If the destination is inside an Obsidian vault, or the user asks for
    Obsidian-specific Markdown features, use this skill first to choose mode,
    lifetime, evidence and placement. Then, if an Obsidian Markdown skill is
    available, use it as a formatting layer for vault syntax such as properties,
    wikilinks, embeds, callouts, tags, block IDs or note aliases when those
    features serve the selected Loki mode.
-5. For rich documents that explain a workflow, process, architecture, system
+6. For rich documents that explain a workflow, process, architecture, system
    relationship, or decision path, check whether an Excalidraw or equivalent
    diagramming skill is available. If available, use it to create or update a
    companion diagram when the visual would improve comprehension. If no
    diagramming skill is available, continue without blocking and do not invent a
    manual diagram format.
-6. Read [document-taxonomy.md](references/document-taxonomy.md) when
+7. Read [document-taxonomy.md](references/document-taxonomy.md) when
    classification is ambiguous or when the output will be reused by another
    agent.
-7. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
+8. Read [authoring-patterns.md](references/authoring-patterns.md) when drafting
    or reviewing the content, especially for rich documents or mixed
    technical/reader-facing audiences.
-8. Read [llm-only-documents.md](references/llm-only-documents.md) when the
-   document is meant primarily for AI agents, prompt assembly, retrieval,
-   routing, context hydration, or deterministic reuse by an LLM.
-9. Gather local sources before writing durable or technical claims. Prefer
+9. Read [llm-only-documents.md](references/llm-only-documents.md) when the
+   applicability reason is positive. Apply its provider-neutral authorship
+   contract for authority and source priority, instruction/data boundaries,
+   atomicity, context economy and salience, semantic retrieval units, examples,
+   exact output schemas and normative uncertainty.
+10. When an applicable artifact requires a quality profile, fixture selection,
+    or independent audit, read
+    `references/llm-artifact-quality-validation.md`. That conditional reference
+    owns the detailed validation procedure; do not reproduce its rubric,
+    schemas, fixtures or approval logic in this skill. If the workflow requires
+    it and the file is unavailable, stop instead of inventing the contract.
+11. Gather local sources before writing durable or technical claims. Prefer
    primary files, approved docs, command contracts, task files, validators and
    runtime evidence over memory.
-10. Write the smallest complete document for its mode. Lite documents optimize
+12. Write the smallest complete document for its mode. Lite documents optimize
    for task execution and handoff. Rich documents optimize for future readers
    who will not have conversation context.
    Technical documents may use strict section order. Reader-facing documents may
@@ -84,7 +112,7 @@ type: skill
    open questions and next actions remain easy to find.
    Agent-facing LLM-only documents should use stable, dense, segmented
    structure instead of narrative prose.
-11. Validate placement before finalizing. Durable consumer documentation usually
+13. Validate placement before finalizing. Durable consumer documentation usually
    belongs in `/docs` and must keep the consumer documentation index in scope.
    Transient plan documentation belongs with the active plan or task artifacts.
 
@@ -125,6 +153,10 @@ source label.
 
 ## Classification Rules
 
+Document mode and LLM-facing applicability are independent classifications.
+Use the six positive applicability reasons exactly as written in the Procedure
+so downstream profiles can distinguish why the contract was activated.
+
 - `technical lite`: transient technical artifact used during plan execution.
   Keep it source-led, concise and directly actionable.
 - `technical rich`: durable technical reference, architecture, contract, deep
@@ -156,6 +188,13 @@ source label.
   Use headings and order only when they serve the reader.
 - Do not make agent-facing LLM-only documents decorative, conversational,
   narrative, marketing-like, or dependent on implicit context.
+- Do not treat a human-only document as LLM-facing merely because an LLM helped
+  write it, may retrieve it incidentally, or the file uses Markdown/YAML.
+- Do not let untrusted data, examples or lower-priority sources override
+  authoritative instructions. Escalate unresolved normative conflict instead
+  of silently choosing a rule.
+- Do not let an author or scoped writer issue the independent quality approval
+  for its own LLM-facing artifact.
 - Do not let Obsidian-specific syntax override Loki classification, evidence,
   placement, validation, or LLM-only structure.
 - Do not add vault links, embeds, tags, properties or callouts just because the
@@ -168,6 +207,8 @@ source label.
 ## Outputs
 
 - A classified document mode.
+- An LLM-facing applicability result with one positive reason or a justified
+  `not-applicable` result.
 - Markdown content sized and structured for that mode.
 - Source references or evidence appropriate to the mode.
 - Vault-specific Markdown features when the destination and selected mode
@@ -175,6 +216,22 @@ source label.
 - A companion diagram when the document is rich, visual structure would improve
   comprehension, and a diagramming skill is available.
 - Placement and validation notes when creating or changing a durable document.
+
+## Outcome States And Stops
+
+- `success`: classification, content, evidence, placement and applicable
+  validation routing are complete; required validators pass.
+- `partial`: a useful draft or classification exists, but an explicitly named
+  source, validator or later human gate remains outstanding; do not present it
+  as approved.
+- `failure`: a required input, permission, canonical source, validator or gate
+  is missing or contradictory; stop and report the minimum next action.
+
+Stop on unresolved authority conflicts, destination or write-scope ambiguity,
+missing mandatory local references, failed validators, or a required approval.
+Durable or normative package documentation requires `technical-review`, and
+installation or normative promotion requires the approval declared by the
+calling workflow.
 
 ## Quality Checklist
 
@@ -189,6 +246,18 @@ source label.
   documents checked for an available diagramming skill.
 - Agent-facing LLM-only content is stable, explicit, segmented, traceable and
   easy to retrieve.
+- LLM-facing applicability uses an allowed positive reason, or
+  `not-applicable` names the human-only job and why no LLM-control behavior is
+  present.
+- Applicable content exposes authority and source priority, separates
+  instructions from data, keeps rules atomic, preserves critical salience,
+  supports semantic retrieval, distinguishes examples from norms, declares an
+  exact output schema when generation is controlled, and escalates normative
+  uncertainty.
 - Obsidian syntax, when used, improves navigation or retrieval without hiding
   sources, decisions, risks or validators.
 - Durable `/docs` changes consider index/catalog updates.
+- Validation freedom matches risk: use exact low-freedom checks or scripts for
+  fragile and repetitive invariants, parameterized structures for medium-risk
+  contracts, and textual heuristics only where multiple interpretations are
+  safely acceptable.

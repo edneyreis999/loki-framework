@@ -91,6 +91,28 @@ resumo, artefatos, evidências/validators, handoffs, gates/approvals, riscos e
 próximos passos. Não declare conclusão com validator, gate, approval ou handoff
 material pendente.
 
+## Conditional LLM-Facing Quality Gate
+
+Before delivery, classify the created or revised command with
+[lf-documentation-writing](../../lf-documentation-writing/SKILL.md). When the
+classification is positively LLM-facing, require a complete
+`llm_artifact_profile`, application of the
+[canonical LLM artifact quality contract](../../lf-documentation-writing/references/llm-artifact-quality-validation.md),
+and an independent `llm_consumption_quality` result in which every applicable
+fixture passes. Do not copy the canonical rubric, schemas, or fixture
+definitions into this creator contract.
+
+Use these terminal semantics:
+
+- positive LLM-facing classification without the complete profile, canonical
+  contract, independent result, or with any non-passing applicable fixture:
+  mark checklist item 13 `não` and block delivery;
+- positive LLM-facing classification with the complete profile and independent
+  result approved: item 13 may be `sim`, and completion remains subject to all
+  other checklist items and existing gates;
+- exclusively human-facing: record `not-applicable` with a concrete human-only
+  reason and do not run irrelevant fixtures.
+
 ## Checklist binária 24/24
 
 Marque cada item com `sim|não`, arquivo e heading; todo `não` bloqueia entrega.
@@ -107,7 +129,8 @@ Marque cada item com `sim|não`, arquivo e heading; todo `não` bloqueia entrega
 10. Agentes, validators, handoffs e envelopes autocontidos.
 11. Delegação ao papel apropriado quando disponível.
 12. Acompanhamento terminal dos handoffs.
-13. Validators, gates e approvals antes de ações dependentes.
+13. Validators, gates e approvals antes de ações dependentes, incluindo o gate
+    LLM-facing condicional acima quando aplicável.
 14. Escritas serializadas e owner único.
 15. Write Agent apropriado para mudanças.
 16. Escrita direta só sem Write Agent apropriado.

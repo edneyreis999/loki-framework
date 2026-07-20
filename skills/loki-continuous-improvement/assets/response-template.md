@@ -106,17 +106,39 @@
 
 - Writer/owner: <agent e envelope_status>
 - Arquivos: <target_files e discovered_target_files>
+- Classificação LLM-facing: <applicable + classes | not-applicable + justificativa human-only | none para destino não-package>
+- `llm_artifact_profile`: <objeto completo ou evidence locator; inclua selected/skipped partition 10/10>
+- Contrato de qualidade: <contract_version llm-artifact-quality-v1 + rubric-v2 + prompt-v2 | not-loaded>
 - Checks mecânicos: <comandos, resultados e evidência>
-- Auditor: <agent, status externo, internal_status e configuração>
+- Auditor: <agent, `status: pending | approved | blocked | not-required`, `internal_status: pending | approved | blocked | needs-human-review | not-applicable | not-required`, `block_reason: finding_open | validation_inconclusive | low_material_confidence | fixture_omitted | bias_check_failed | human_review_required | handoff_incomplete | none` e configuração>
+- `llm_consumption_quality`: <objeto completo ou evidence locator; use `none` exclusivamente quando `destination_scope` não for package; package human-only exige parecer independente completo com `status: not-applicable` validado>
+- `profile_evidence` / `audit_evidence`: <locators | none>
+- `limitations`: <limitações materiais | none>
+- `second_family_calibration`: <completed | unavailable | not-run>
 - Findings: <critério, evidência, impacto, resolução, confiança; use none>
-- Iteração: <número>
-- Gates invalidados: <true/false e quais>
-- Próximo destino: <writer | technical-review | orchestrator | none>
+- `iteration`: <número>
+- `invalidated_by_correction` / `correction_replay_required`: <true/false + estado do replay completo>
+- `gates_invalidated`: <true/false e quais>
+- `next_destination`: <writer | technical-review | orchestrator | none>
 
-`completed` ou `applied` neste destino requer auditor `approved`/`pass`, sem
-findings, inconclusão, human review ou gate invalidado. Para
-`needs-human-review`, use `blocked` com `block_reason: human_review_required`;
-depois de correção ou decisão humana, declare rerun obrigatório do auditor.
+`completed` ou `applied` neste destino é válido somente em um destes casos:
+
+- package aplicável: parecer independente `approved`, sem findings,
+  inconclusão, baixa confiança material, fixture aplicável omitido, skip
+  injustificado, bias falho, human review ou gate invalidado;
+- package human-only: profile com `not-applicable` justificado e dez skips mais
+  `llm_consumption_quality.status: not-applicable` validado pelo Auditor
+  independente, `second_family_calibration: not-run` e limitation explícita de
+  que revisão isolada e segunda família não são requeridas, sempre sujeito aos
+  gates existentes e sem fixtures irrelevantes; projete external `approved`,
+  internal `not-applicable` e `block_reason: none`.
+
+Para `needs-human-review`, use `blocked` com
+`block_reason: human_review_required`; depois de correção ou decisão humana,
+declare rerun completo obrigatório do Auditor. Use
+`llm_consumption_quality: none` exclusivamente para destino não-package; nesse
+caso use `none` nesta seção e preserve routing, owner, validators, gates e
+resposta existentes.
 
 ## Handoffs, gates e approvals
 

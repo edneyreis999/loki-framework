@@ -239,11 +239,34 @@ handed to the caller-provided documentation route and never self-fixed in docs.
 Classify `consumer-docs` versus `package-documentation` from the resolved root;
 only the approved internal package-writer role may maintain package docs.
 
+## Conditional LLM-Facing Quality Gate
+
+Before delivery, classify the created or revised agent with
+[lf-documentation-writing](../../lf-documentation-writing/SKILL.md). When the
+classification is positively LLM-facing, require a complete
+`llm_artifact_profile`, application of the
+[canonical LLM artifact quality contract](../../lf-documentation-writing/references/llm-artifact-quality-validation.md),
+and an independent `llm_consumption_quality` result in which every applicable
+fixture passes. Do not copy the canonical rubric, schemas, or fixture
+definitions into this creator contract.
+
+Use these terminal semantics:
+
+- positive LLM-facing classification without the complete profile, canonical
+  contract, independent result, or with any non-passing applicable fixture:
+  mark the existing validation/gate item `não` and block delivery;
+- positive LLM-facing classification with the complete profile and independent
+  result approved: the conditional gate is `sim`, and completion remains
+  subject to every existing gate in this checklist;
+- exclusively human-facing: record `not-applicable` with a concrete human-only
+  reason and do not run irrelevant fixtures.
+
 Before handoff record `sim|não`, file and heading for: (1) capability/mode
 contract; (2) narrow responsibility; (3) mode bounded by capability/envelope;
 (4) triggers/inputs/outputs/completion; (5) scoped allowed writes; (6)
 forbidden writes; (7–8) known success/failure destinations; (9) deterministic
-validation distinct from human gate; (10) stop conditions; (11) structured
+validation distinct from human gate, including the conditional LLM-facing gate
+above when applicable; (10) stop conditions; (11) structured
 response; (12) minimum tools/permissions/gates; (13–19) scoped-writer envelope,
 validation, temporary isolation/removal, deterministic-test specification,
 human-test route and honest completion record; (20) relevant preflight docs;

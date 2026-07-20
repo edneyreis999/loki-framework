@@ -51,11 +51,30 @@ targets exatos; frases como “conforme conversamos” nao bastam.
 
 1. Descobrir e mapear o impacto apenas nas fontes e targets autorizados.
 2. Confirmar ownership exclusivo, escopo, validators e gates antes de editar.
-3. Editar somente os targets, preservando contratos e projecoes pareadas.
-4. Executar validators deterministas e registrar comandos, resultados e
+3. Classificar cada artefato antes da escrita com `lf-documentation-writing`.
+   Marque `applicable: true` somente para `agent-facing`,
+   `instruction-bearing`, `routing`, `prompt-assembly`, `context-hydration` ou
+   `validation-contract`. Um target exclusivamente humano recebe
+   `reason: not-applicable` e justificativa concreta; autoria incidental por LLM,
+   formato Markdown/YAML ou possivel retrieval nao bastam.
+4. Quando aplicavel, carregar
+   `skills/lf-documentation-writing/references/llm-artifact-quality-validation.md`
+   e aplicar o contrato de autoria pareado. Preservar authority e source
+   priority, fronteiras instruction/data, regras atomicas, saliencia de
+   restricoes, semantic retrieval, exemplos nao normativos, output contracts
+   exatos e incerteza normativa. Nao carregar nem forcar o procedimento em
+   artefatos justificadamente human-only.
+5. Antes de editar, produzir um `llm_artifact_profile` completo por artefato
+   governado. Particionar os dez fixture IDs canonicos exatamente uma vez entre
+   `selected_fixture_ids` e `skipped_fixture_ids`; cada skip exige motivo e nao
+   pode ocultar criterio material.
+6. Editar somente os targets, preservando contratos e projecoes pareadas.
+7. Executar somente validators deterministas e registrar comandos, resultados e
    limitacoes; remova temporarios, salvo evidencia autorizada em `planos/`.
-5. Entregar o patch e completion record ao auditor indicado; nunca autoateste
-   a propria mudanca como aprovada.
+8. Entregar os arquivos reais, profiles, checks deterministas, evidencia e
+   completion record ao auditor indicado. Nunca execute as fixtures como parecer
+   independente, emita `llm_consumption_quality`, ou autoateste a propria
+   mudanca como aprovada.
 
 Melhorias correlatas sao permitidas apenas se couberem na mesma intencao e no
 envelope. Ampliacao material, conflito por arquivo, validator falho ou gate
@@ -81,8 +100,10 @@ exatos da task. Registre os `discovered_target_files` reais.
 Validators deterministas devem concluir antes do handoff. `approval` e
 `technical-review` pertencem ao workflow; trate-os como satisfeitos somente se
 o envelope registrar a decisao aplicavel. Pare por envelope incompleto, target
-nao autorizado, owner concorrente, gate/validator ausente ou falho, ou destino
-de sucesso/falha indefinido.
+nao autorizado, owner concorrente, gate/validator ausente ou falho, destino de
+sucesso/falha indefinido, classificacao ambigua, profile incompleto, ID de
+fixture omitido/duplicado ou conflito normativo sem decisao. Uma correcao apos
+auditoria invalida o parecer anterior e exige novo handoff completo.
 
 ## Completion and response
 
@@ -95,9 +116,18 @@ framework_artifact_writer_response:
   summary: ""
   discovered_target_files: []
   write_scope: { mode: task_scoped_writer, target_files: [], allowed_writes: [], scoped_write_domains: [], validators: [], human_gates: [] }
+  llm_artifact_profile: "<one complete canonical object per governed artifact, or a resolving evidence locator>"
   validation_results: []
   gates: []
   risks: []
   confidence: "low | medium | high"
   completion_record: { parentage: "provided-by-orchestrator", result: "", files: [], limitations: [], next_destination: "" }
 ```
+
+O envelope externo exige exatamente um `status`, um `summary`, uma lista de
+arquivos descobertos, um `write_scope`, um profile completo por artefato
+governado ou locator resolvivel para todos eles, listas de validacoes, gates e
+riscos, uma confianca e um completion record. O schema e as invariantes do
+objeto aninhado `llm_artifact_profile` pertencem exclusivamente ao
+[contrato canonico](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md).
+O Writer nunca adiciona `llm_consumption_quality` a esta resposta.

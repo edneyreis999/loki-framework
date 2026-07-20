@@ -262,6 +262,60 @@ Ao auditar uma referencia fora do pacote, classifique antes de editar:
 
 ## Validacoes Minimas
 
+### Qualidade de artefatos para consumo por LLM
+
+Classifique a aplicabilidade LLM-facing separadamente do modo documental e
+antes de validar uma mudanca do pacote. A classificacao e positiva somente
+quando o artefato exerce ao menos uma destas seis funcoes operacionais:
+`agent-facing`, `instruction-bearing`, `routing`, `prompt-assembly`,
+`context-hydration` ou `validation-contract`. Um artefato exclusivamente
+humano, que nao exerce nenhuma dessas funcoes, recebe `not-applicable` com uma
+justificativa concreta; autoria por LLM, Markdown/YAML, densidade tecnica ou
+possivel retrieval incidental nao tornam o artefato aplicavel.
+
+A fonte canonica dos schemas, rubrica, prompt, fixtures, derivacao de status e
+protocolo de replay e o
+[LLM Artifact Quality Validation Contract](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md).
+Nao copie esses detalhes para agents, creators, commands ou docs. Use tambem os
+requisitos de autoria LLM-facing roteados por `lf-documentation-writing`:
+autoridade e prioridade recuperaveis, instrucao separada de dados, regras
+atomicas, restricoes salientes, unidades de retrieval autocontidas, exemplos
+nao normativos, output exato quando houver geracao e incerteza normativa
+explicita.
+
+Este gate vale somente para criacao, alteracao ou promocao com
+`destination_scope: package`:
+
+1. O `framework-artifact-writer` classifica os arquivos reais, aplica os
+   requisitos de autoria, emite `llm_artifact_profile`, particiona os dez IDs
+   canonicos entre selecionados e skips justificados e executa apenas checks
+   mecanicos e de empacotamento.
+2. O Writer entrega arquivos, perfil, checks e limitacoes ao
+   `framework-artifact-quality-auditor`; ele nunca preenche
+   `llm_consumption_quality` nem aprova o proprio artefato.
+3. O Auditor permanece read-only e independente. Para artefato aplicavel, usa
+   `llm-artifact-quality-v1`, `rubric-v2`, `prompt-v2`, todas as heuristicas,
+   fixtures aplicaveis, revisao isolada e bias controls. Para human-only,
+   valida a justificativa e retorna `not-applicable` sem executar fixtures
+   irrelevantes.
+4. Finding, inconclusao, baixa confianca material, fixture aplicavel omitido,
+   skip injustificado, bias check falho ou validator falho bloqueiam. Conflito
+   entre fontes normativas retorna `needs-human-review` para
+   `technical-review`; nunca produz approval condicional.
+5. Toda correcao invalida o parecer anterior. Repita checks mecanicos, nove
+   criterios, fixtures aplicaveis, bias controls e revisao isolada sobre o
+   estado corrigido antes de reutilizar qualquer resultado terminal.
+
+Pare e retorne o bloqueador minimo se a aplicabilidade, classe, prioridade de
+fontes, perfil, particao 10/10 ou campo obrigatorio nao puder ser estabelecido;
+se a revisao exigir credencial, SDK, automacao de provider, score numerico ou
+raciocinio privado; se o pacote isolado revelar diagnostico, autoria, expected
+answer ou parecer anterior; se Writer e Auditor forem a mesma autoridade; se
+source/projection divergirem; ou se a mudanca ampliar targets, permissoes ou
+semantica aprovada. O gate nao altera routing, owners, validators, formatos ou
+permissoes de destinos consumer, runtime, backlog ou qualquer outro destino
+nao-package.
+
 Ao concluir uma mudanca no pacote, validar pelo menos:
 
 ```bash
