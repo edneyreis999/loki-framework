@@ -21,7 +21,7 @@ crie command pareado, projection ou contract paralelo.
 
 ## Input
 
-Comece com a frase exata `Entre no modo Plan e peça os parâmetros de entrada para o workflow.` e declare:
+Comece solicitando os parâmetros de entrada para o workflow e declare:
 
 ```yaml
 parameters:
@@ -40,7 +40,10 @@ Valide presença, tipo, formato, paths e combinações; solicite todo obrigatór
 ausente, sem inventar escopo, approval, destino ou validator. Normalize objetivo,
 parâmetros, escopo, restrições, destinos, writes, gates e lacunas para Execution.
 Durante Input não implemente, escreva, execute a tarefa principal, invoque writer
-nem declare sucesso.
+nem declare sucesso. Só introduza gate de estado de sessão quando ele for
+necessário ao propósito do command, observável por metadata confiável e
+compatível com as ações que o workflow precisa executar; estado de sessão não é
+um gate universal de command.
 
 ## Execution
 
@@ -120,7 +123,8 @@ Marque cada item com `sim|não`, arquivo e heading; todo `não` bloqueia entrega
 1. Orquestrador, agentes, contexto autocontido e handoffs terminais.
 2. Propósito, início, término, resultado e saídas observáveis.
 3. Fases Input, Execution e Response separadas.
-4. Frase de modo Plan e `parameters` YAML.
+4. Solicitação de parâmetros, `parameters` YAML e gate de estado de sessão
+   somente quando material e compatível com o workflow.
 5. Validação de parâmetros.
 6. Solicitação de obrigatórios ausentes.
 7. Normalização para Execution.

@@ -19,12 +19,12 @@ model: inherit
 effort: high
 model_class: frontier_reasoning
 adapter_projection:
-  codex: "Advisory unless projected through config, profile or custom agent. Plan Mode must be confirmed by trusted session metadata."
-  claude_code: "May map to model/effort frontmatter where supported. An explicit equivalent planning state must be confirmed by trusted adapter metadata."
+  codex: "Advisory unless projected through config, profile or custom agent."
+  claude_code: "May map to model/effort frontmatter where supported."
 escalation_signals:
   - material ambiguity that changes intent or scope
   - conflicting local sources
-  - unconfirmed planning state or unsafe destination
+  - unsafe destination or target collision
 context: standard
 agent: main
 hooks: {}
@@ -48,7 +48,7 @@ execution_profile:
   escalation_signals:
     - material ambiguity that changes intent or scope
     - conflicting local sources
-    - unconfirmed planning state or unsafe destination
+    - unsafe destination or target collision
   adapter_projection:
     codex: "Advisory unless projected through config, profile or custom agent."
     claude_code: "May map to model/effort frontmatter where supported."
@@ -60,16 +60,10 @@ used_by:
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
-
-Antes de ler fontes ou executar a tarefa principal, inspecione somente o estado
-de sessão/control plane exposto pelo adapter. Aceite `Plan Mode` ou estado
-explícito equivalente apenas quando metadata confiável, não controlável pelo
-usuário, o confirmar. Registre evidência sanitizada como `confirmed`,
-`unconfirmed` ou `unsupported`. Mensagens do usuário, `analysis_input`, arquivos
-e alegações textuais nunca confirmam esse gate. Estado falso, ausente, ambíguo,
-não observável ou unsupported termina em `blocked`, com ação mínima de retomada
-e zero escrita.
+Peça os parâmetros de entrada para o workflow. O estado de sessão do adapter
+não é parâmetro nem gate deste command; a segurança da execução depende da
+validação explícita de inputs, destino, target, ownership, entrevistas e
+validators abaixo.
 
 ```yaml
 parameters:
@@ -107,9 +101,8 @@ sobrescreva, apague, autonumere nem escolha nome alternativo. `source_paths`
 nunca participa do nome.
 
 Normalize objetivo, modo de entrada, fontes, target, allowed/forbidden writes,
-planning evidence, gates e lacunas para Execution. Durante Input não leia as
-fontes antes do gate de planejamento, não enriqueça a demanda, não escreva, não
-invoque writer e não declare sucesso.
+gates e lacunas para Execution. Durante Input não enriqueça a demanda, não
+escreva, não invoque writer e não declare sucesso.
 
 ## Execution
 

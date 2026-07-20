@@ -39,7 +39,7 @@ used_by: []
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
+Peça os parâmetros de entrada para o workflow.
 
 ```yaml
 parameters:
@@ -89,9 +89,11 @@ Do not add projection, command_name, package_projection or command_contract.
 This bundle must implement the canonical contract in
 `skills/lf-command-creator/references/command-contract-template.md`. It must
 declare observable purpose/start/end/output; keep Input limited to the exact
-Plan prompt, YAML parameters, validation, missing-input request and normalized
-handoff; orchestrate, replan, serialize owners/writes, validate gates and track
-handoffs in Execution; and declare LLM/Humano/Both terminal formats in Response.
+parameter request, YAML parameters, validation, missing-input request and
+normalized handoff; add a session-state gate only when it is material,
+trustworthily observable and compatible with the workflow; orchestrate, replan,
+serialize owners/writes, validate gates and track handoffs in Execution; and
+declare LLM/Humano/Both terminal formats in Response.
 
 The execution contract must define `allowed_writes`, `forbidden_writes`, owner,
 required skills/commands, validators, human gates, stop conditions and resume

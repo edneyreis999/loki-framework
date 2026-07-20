@@ -38,10 +38,10 @@ Fluxos principais:
 
 Use `loki-demand-text-improver` quando a demanda ainda precisar explicitar
 objetivo, contexto, escopo, requisitos, restricoes, aceite, validators,
-premissas, riscos ou referencias. O adapter precisa confirmar Plan Mode ou
-estado de planejamento equivalente por metadata confiavel; uma declaracao do
-usuario nao satisfaz esse gate. O `destination` deve ser um diretorio existente
-e gravavel. Exemplo com entrada em arquivo:
+premissas, riscos ou referencias. O command valida diretamente os inputs, o
+destino e o target; ele não exige Plan Mode nem outro estado de sessão. O
+`destination` deve ser um diretorio existente e gravavel. Exemplo com entrada
+em arquivo:
 
 ```text
 loki-demand-text-improver

@@ -64,10 +64,10 @@ restricoes, criterios de aceite, validators, premissas, riscos e referencias.
 Esse passo preserva a intencao original e acontece antes de analise tecnica ou
 planejamento.
 
-O command e fail-closed: so continua quando o adapter confirma Plan Mode ou um
-estado de planejamento equivalente por metadata confiavel. Uma afirmacao do
-usuario, o texto da demanda ou um arquivo local nao confirmam o gate. O
-`destination` precisa ser um diretorio existente, gravavel e autorizado.
+O command nao exige Plan Mode nem outro estado de sessao. Ele continua
+fail-closed para inputs ausentes ou invalidos, destination inseguro ou nao
+gravavel, target ocupado, conflito material, gate humano pendente ou validator
+falho. O `destination` precisa ser um diretorio existente, gravavel e autorizado.
 
 Exemplo com entrada em arquivo:
 

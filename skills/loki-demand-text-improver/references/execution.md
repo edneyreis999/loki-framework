@@ -6,17 +6,17 @@
 command_contract:
   name: "loki-demand-text-improver"
   purpose: "Transformar uma demanda inicial em uma demanda enriquecida, fiel, rastreável e pronta para um próximo passo escolhido separadamente."
-  start_condition: "planning state confirmado por metadata confiável e Input normalizado sem blocker"
+  start_condition: "Input normalizado sem blocker"
   completion_condition: "um único Markdown enriquecido escrito no target calculado, validado e reportado, ou estado blocked retomável sem escrita"
   outputs: ["enriched demand Markdown", "terminal response", "resume state"]
   allowed_writes: ["the single calculated target under the approved destination"]
   forbidden_writes: ["input files", "source_paths", "any other destination entry", ".claude/**", ".agents/**", ".codex/**", "<sensitive_write_patterns>", "<consumer_runtime_surfaces>"]
   required_skills: []
   required_commands: []
-  validators: ["planning evidence", "canonical target", "collision recheck", "semantic coverage", "provenance", "required sections", "Markdown readability"]
+  validators: ["canonical target", "collision recheck", "semantic coverage", "provenance", "required sections", "Markdown readability"]
   human_gates: ["interview when must_ask_now exists"]
-  stop_conditions: ["unconfirmed planning state", "missing or invalid input", "unreadable source", "unsafe or unwritable destination", "target collision", "must_ask_now", "unresolved source conflict", "failed validator", "scope or ownership ambiguity"]
-  resume_contract: "terminal response preserves normalized inputs, planning evidence status, classified gaps, answered decisions, target, blockers and minimum next action without relying on conversation memory"
+  stop_conditions: ["missing or invalid input", "unreadable source", "unsafe or unwritable destination", "target collision", "must_ask_now", "unresolved source conflict", "failed validator", "scope or ownership ambiguity"]
+  resume_contract: "terminal response preserves normalized inputs, classified gaps, answered decisions, target, blockers and minimum next action without relying on conversation memory"
 ```
 
 ## Observable workflow
@@ -44,16 +44,15 @@ validator invalidar uma etapa posterior.
 
 Ordem obrigatória:
 
-1. Confirmar o planning-state gate out-of-band.
-2. Validar e normalizar inputs; calcular target sem escrever.
-3. Ler a demanda e depois somente as fontes necessárias.
-4. Executar preflight e classificar todas as lacunas.
-5. Se houver `must_ask_now`, fazer exatamente uma pergunta e parar o turno.
-6. Aplicar o contrato de enriquecimento e validar cobertura/provenance.
-7. Resolver owner e envelope da escrita.
-8. Revalidar destination, parent canônico e ausência do target imediatamente
+1. Validar e normalizar inputs; calcular target sem escrever.
+2. Ler a demanda e depois somente as fontes necessárias.
+3. Executar preflight e classificar todas as lacunas.
+4. Se houver `must_ask_now`, fazer exatamente uma pergunta e parar o turno.
+5. Aplicar o contrato de enriquecimento e validar cobertura/provenance.
+6. Resolver owner e envelope da escrita.
+7. Revalidar destination, parent canônico e ausência do target imediatamente
    antes da escrita.
-9. Escrever uma vez, validar o Markdown e responder.
+8. Escrever uma vez, validar o Markdown e responder.
 
 ## Read-only discovery and handoffs
 
@@ -89,7 +88,6 @@ preflight:
   planned_action: ""
   validation: []
   minimum_next_input: "none | one material answer"
-  planning_evidence: "confirmed | unconfirmed | unsupported"
   target: ""
 ```
 
@@ -122,7 +120,7 @@ direct_write_exception:
   allowed_writes: ["create calculated target exactly once"]
   forbidden_writes: ["overwrite", "delete", "rename", "autonumber", "all other paths"]
   validators: ["canonical parent", "collision recheck", "semantic coverage", "provenance", "required sections", "Markdown readability"]
-  gates: ["planning state confirmed", "no must_ask_now"]
+  gates: ["no must_ask_now"]
   future_writer_opportunity: "Use an adapter-provided scoped Markdown writer when available."
 ```
 
@@ -135,7 +133,6 @@ oportunidade futura de Write Agent.
 
 Antes da escrita:
 
-- planning evidence é `confirmed`;
 - inputs e fontes são válidos;
 - target é filho direto canônico do destination autorizado;
 - target não existe, inclusive como symlink;
@@ -157,7 +154,7 @@ usuário.
 
 Pare antes de escrever por qualquer stop condition do command contract. A
 resposta retomável deve conter: estado, modo/origem da entrada, fontes lidas e
-pendentes, planning evidence sanitizada, preflight, lacunas classificadas,
-respostas incorporadas, target calculado, colisão/validator/gate, pergunta única
+pendentes, preflight, lacunas classificadas, respostas incorporadas, target
+calculado, colisão/validator/gate, pergunta única
 quando houver e `minimum_next_input`. Nunca use escrita parcial como estado de
 entrevista.

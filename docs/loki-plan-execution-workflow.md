@@ -33,10 +33,10 @@ ele passa pelo workflow de aprendizado.
 ## Dois caminhos operacionais
 
 `loki-demand-text-improver` e uma preparacao opcional anterior aos dois
-caminhos. Ele exige Plan Mode ou estado equivalente confirmado por metadata
-confiavel do adapter, recebe um `destination` existente e gravavel e usa naming
-deterministico: `<stem>-improved.md` para arquivo ou `improved-demand.md` para
-texto inline. Estado nao confirmado ou colisao bloqueiam sem escrita.
+caminhos. Ele nao exige um estado de sessao especifico, recebe um `destination`
+existente e gravavel e usa naming deterministico: `<stem>-improved.md` para
+arquivo ou `improved-demand.md` para texto inline. Input invalido, destino
+inseguro ou colisao bloqueiam sem escrita.
 
 O caminho manual continua sendo explicito: uma rota de analise
 (`loki-tech-analysis` por padrao ou `loki-deep-analysis` opt-in),

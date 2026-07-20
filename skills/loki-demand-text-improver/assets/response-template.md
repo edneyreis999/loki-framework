@@ -16,7 +16,6 @@
 
 ## Preflight and evidence
 
-- Planning evidence: `{{confirmed | unconfirmed | unsupported}}`
 - Sources read: {{sources or none}}
 - Validators: {{validator results}}
 - Semantic coverage: {{pass | blocked | not-run}}
@@ -51,12 +50,11 @@ loki_demand_improvement_state:
   status: "{{completed | blocked | partial}}"
   input_mode: "{{inline | file}}"
   sources_read: []
-  planning_evidence: "{{confirmed | unconfirmed | unsupported}}"
   target: "{{path | not-created}}"
   classified_gaps: []
   answered_decisions: []
   blockers: []
-  minimum_next_input: "{{none | one material answer | adapter planning state | safe destination action}}"
+  minimum_next_input: "{{none | one material answer | safe destination action}}"
 ```
 
 ## Next step
