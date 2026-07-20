@@ -7,7 +7,7 @@ Use este contrato para a fase de execução.
 ## Purpose And Observable Contract
 
 Este command orquestra demanda → análise agentic → decision preflight → plano →
-execução autônoma por fases → completion/evidence → execution knowledge →
+execução autônoma do plano em uma chamada → completion/evidence → execution knowledge →
 digest/backlog, sem
 substituir `loki-run-plan` como executor manual. Inicia com Input normalizado e
 diretório aprovado; termina com todos os handoffs e validators terminais e um
@@ -65,8 +65,14 @@ disjuntos; serialize overlaps.
    lacunas pós-MVP materiais existirem, sem lista fixa de agentes.
 5. Execute decision preflight e não avance com `must_ask_now` pendente.
 6. Gere plano executável com dependências, writers, validators, loops e resume.
-7. Execute uma fase topológica por vez via `loki-run-plan`, sem perguntar ao
-   humano no meio da execução autônoma; converta limites em blocker/backlog.
+7. Invoque `loki-run-plan` exatamente uma vez por execução integrada com
+   `EXECUTION_SCOPE=plano` e o `TASKS_MD` aprovado. Se o requested
+   `write_test_review_frequency` foi fornecido, encaminhe-o inalterado; se foi
+   omitido, não fabrique o valor no parent. O executor é o único que valida o
+   enum, aplica o default e resolve internamente a
+   DAG, checkpoints por task/fase/plano, clamp e retomada. Não crie loop por
+   fase, scheduler de review paralelo nem nova pergunta no meio da execução;
+   converta limites em blocker/backlog.
 8. Em cada checkpoint material, persista primeiro o completion/evidence mínimo
    sanitizado. Só depois, quando suportado, invoque
    `execution-knowledge-cataloger` em paralelo para um target exclusivo em
@@ -80,6 +86,11 @@ disjuntos; serialize overlaps.
 10. Registre validators, digest e backlog; finalize o estado e o próximo passo.
    Retrospectiva é ação explícita, nunca fallback, e somente
    `loki-continuous-improvement` promove conhecimento.
+
+Antes da chamada única, persista requested value e provenance, nunca uma policy
+efetiva calculada pelo parent. Depois do retorno, reconcilie a policy/checkpoints
+canônicos fornecidos por `loki-run-plan`: requested divergente ou digest/
+identidade conflitante é stop condition; resultado consultivo do reviewer não é.
 
 ## Write Ownership And Direct-Write Exception
 
@@ -101,6 +112,12 @@ approval para instalação/política/sensível, human-validation para runtime e
 technical-review para artefatos duradouros. Pare se qualquer controle falhar ou
 estiver pendente; validator não substitui gate humano.
 
+Audite estaticamente que os metadados de enum/default coincidem com o executor,
+sem validar ou aplicar o input runtime no parent; valide que a propagação não
+contém `effective_frequency`, que existe uma única chamada integrada com
+`EXECUTION_SCOPE=plano`, e que a policy devolvida é reconciliada sem segundo
+owner de clamp, materialidade, dispatch ou checkpoint.
+
 Para execution knowledge, valide target exclusivo, lineage para fontes
 persistidas, materialidade, enum e sanitização. Falha desse validator degrada
 somente o estado de capture. O cataloger jamais escreve manifest/digest/backlog,
@@ -119,6 +136,7 @@ no cutover, o bundle assume a autoridade conforme schema 2. Execute
 Pare sem demanda/escopo/run aprovado; sem orchestration skill; com must-ask
 pendente; síntese ou experience wave impossível sem inventar; plano inválido;
 run-plan blocker/out-of-scope; overlap; trabalho material sem owner/exceção;
+requested WTR divergente do persistido; policy/checkpoint retornado com conflito;
 necessidade de nova pergunta durante execução; validator de estado ausente; ou
 dependência/handoff/gate da implementação indisponível. Estas stop conditions
 cobrem implementação, write safety e resumability mínima; não cobrem
@@ -133,4 +151,7 @@ Registre demanda, run directory, agentes selecionados/pulados e motivos,
 handoffs, gates, síntese, experience checkpoint/waves, plano, fase/task atual,
 agent runs, targets, owners, validators, completion/evidence states, capture
 IDs, knowledge target/status/reason/minimum next path, blockers, backlog, status
-e próximo passo. Retome sem reiniciar quando suficiente.
+e próximo passo. Para WTR, preserve requested value/provenance, a identidade da
+chamada plan-scope e a referência/digest da policy/checkpoints devolvidos pelo
+executor. Retome a mesma chamada/estado sem loop por fase ou reinício quando
+suficiente.

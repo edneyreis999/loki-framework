@@ -109,6 +109,50 @@ adicional for necessário.
    owner, escopo, validator, gate ou etapa posterior. Registre a mudança e não
    prossiga com plano obsoleto.
 
+## Write Test Review Policy And Checkpoints
+
+`lf-run-plan-execution` é a única autoridade normativa para este mecanismo.
+Aplique diretamente `WTR-INPUT-01`, `WTR-AUTH-01`, `WTR-POLICY-01..03` e
+`WTR-CLAMP-01`; não replique nem altere seus schemas. No cold start, valide o
+requested value ou materialize `task`, selecione por metadata um Write Test
+Agent compatível, derive `effective_frequency = min(requested_frequency,
+terminal_scope)` e persista/releia policy v1 antes de avaliar a primeira
+fronteira. Em resume, policy existente é imutável: ausência ou valor igual a
+reutiliza; valor divergente persiste `policy-conflict` e bloqueia antes de task
+execution ou review dispatch.
+
+Depois de cada completion/evidence mínimo persistido, aplique
+`WTR-MATERIAL-01` ao handoff original. Use somente metadata canônica `category:
+Write Agent`, `mode: task_scoped_writer`, completion terminal, interseção
+normalizada e não vazia com os targets aprovados e evidence correlacionada às
+mesmas identidades. Não use `execution_knowledge.material`, existência de
+arquivo, relatório sem correlação ou handoff read-only/proposal-only como
+substituto. Acumule somente os handoffs materiais exigidos pela fronteira ativa
+de `WTR-BOUNDARY-01`; fronteiras inferiores não geram checkpoints adicionais.
+
+Ao atingir a fronteira efetiva, construa a coverage determinística de
+`WTR-COVERAGE-01` e execute `WTR-CHECKPOINT-01..02` e `WTR-DISPATCH-01` em
+ordem write-ahead. Zero coverage termina `skipped-no-material-write` com zero
+invocações. Agente incompatível ou ausente termina
+`skipped-agent-unavailable` com reason/risco e não bloqueia a implementação.
+Para coverage material e agente selecionado, persista/releia `scheduled`,
+derive e persista/releia o `review_handoff_id` em `dispatched` e só então
+invoque o reviewer com a coverage imutável.
+
+Em cold start ou resume, aplique `WTR-RESUME-01`: reutilize terminal sem
+reinvocar; continue `scheduled` apenas sem identidade/tentativa de dispatch;
+reconcilie `dispatched` pela identidade existente; preserve checkpoint antigo
+e crie outro quando coverage mudar; e converta resultado irrecuperável após
+dispatch em `outcome-unknown`, sem retry automático. Conflito de policy,
+persistência ou integridade é stop condition; outcome do reviewer não é.
+
+Projete clean, findings, raw `blocked`, indisponibilidade, erro e unknown
+somente por `WTR-CONSULTIVE-01..02`, preservando o campo canônico
+`review_agent_raw_status`. `execution_status_effect` permanece `none`; findings
+podem alimentar riscos/evidence e, no fluxo agentic, backlog/digest, mas nunca
+alteram status de task/fase/plano, validators, approvals, human gates,
+technical-review ou iniciam retrabalho, retry ou rollback.
+
 ## Context And Source Handoffs
 
 - Com `DIR_ANALISE`, delegue a uma ou mais instâncias de
@@ -251,6 +295,10 @@ Para cada task na ordem topológica dentro do escopo terminal:
    file, `TASKS_MD` e `LokiRunState` com status, arquivos afetados,
    validations/evidências, Human Loop, `next_action`, blockers e próxima task
    resolvida pela DAG; atualize interaction records quando autorizado.
+   Antes de liberar a próxima unidade, avalie o handoff material e, quando esta
+   task fechar a fronteira efetiva, persista/releia ou reconcilie o checkpoint
+   WTR conforme a seção acima. O reviewer consultivo não muda o status deste
+   checkpoint de implementação.
 7. Avalie materialidade conforme `lf-execution-knowledge-capture`. Para trabalho
    material, quando suportado, invoque `execution-knowledge-cataloger` em
    paralelo com um target exclusivo em
@@ -310,6 +358,14 @@ controles. `loki-continuous-improvement` é o único promotor.
 - Status em `tasks.md`, task files, builds e interactions são coerentes com a
   evidência real.
 - `LokiRunState` permite retomada sem memória da conversa.
+- A policy WTR tem enum/default/provenance válidos, clamp correto para as 12
+  combinações, digest íntegro e boundary igual à effective frequency.
+- Materialidade, coverage, checkpoint e resume satisfazem os contratos `WTR-*`;
+  zero coverage não invoca reviewer, terminal não é reinvocado, dispatched é
+  reconciliado e coverage alterada cria nova identidade.
+- Todo resultado WTR mantém `execution_status_effect: none`; raw `blocked`,
+  findings, indisponibilidade, erro e unknown não alimentam status ou gates da
+  implementação.
 
 Quando a task tocar command, skill, agent, template, validator, manifest ou
 política de pacote, execute também os checks de packaging declarados na task,
@@ -348,6 +404,13 @@ sensível sem skill/owner/validator/gate; ou `scoped-writer` sem envelope
 completo; preflight pessoal `blocked`/ausente; gap material sem substitute/route;
 ou consumer-doc target sem `catalogador` disponivel. Não declare conclusão enquanto qualquer condição permanecer ativa.
 
+Pare também antes da execução diante de `policy-conflict`; antes do dispatch
+diante de falha de persistência/releitura ou `checkpoint-integrity-conflict`;
+e diante de campo WTR obrigatório ausente ou enum/digest/identidade inválido.
+Não pare por raw status, finding, indisponibilidade, timeout, erro consultivo ou
+`outcome-unknown` do reviewer: persista a projeção degradada e prossiga quando
+os validators/gates independentes permitirem.
+
 Estas condições bloqueiam a implementação, write safety e resumability mínima,
 não o enriquecimento opcional. Availability, failure, timeout, handoff ou
 validator do `execution-knowledge-cataloger` são excluídos: degrade e prossiga.
@@ -370,3 +433,9 @@ Por task/agent, inclua durable root, docs read, freshness, current sources,
 conflicts, gaps/materiality/substitutes, cross-domain/durable-gap handoffs,
 source precedence, result e minimum next input. Para consumer docs, inclua
 caller/mode, disponibilidade do `catalogador`, destinations e blocker retomavel.
+Inclua ainda a policy WTR ativa completa por referência/digest, requested e
+effective frequency, source, terminal scope, seleção do reviewer, coverage e
+checkpoints canônicos, state errors, riscos e próxima ação. Preserve IDs de
+checkpoint/review handoff e a reconciliação task-local suficiente para decidir
+entre reuse terminal, continuação scheduled, reconciliação dispatched, nova
+coverage ou `outcome-unknown` sem memória da conversa.

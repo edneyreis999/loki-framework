@@ -70,7 +70,11 @@ parallel writes, hand off to planning and execution, and record completion.
    unresolved material conflict into a gate, targeted read or stop condition.
 8. Hand off to action planning only after analysis state is complete enough to
    generate executable phases without new human questions.
-9. During autonomous execution, record blockers or post-execution items instead
+9. During autonomous execution, propagate the requested Write Test review
+   frequency unchanged when supplied and preserve its absence otherwise, then
+   invoke `loki-run-plan` once with
+   `EXECUTION_SCOPE=plano`. The executor alone derives effective policy,
+   validates/applies enum/default, and owns materiality and checkpoints. Record blockers or post-execution items instead
    of asking new human questions mid-run.
 10. Require a compact completion record for every agent handoff. The
     orchestrator captures a validated evidence manifest after completion or
@@ -119,8 +123,9 @@ parallel writes, hand off to planning and execution, and record completion.
   serialized before writing.
 - Do not mark runtime behavior, integrations, persisted state or perceptible
   output as validated without the relevant human gate.
-- Do not replace `loki-run-plan`; use it as the manual or delegated executor
-  when the invoking workflow reaches planned execution.
+- Do not replace `loki-run-plan` or call it once per phase; use one resumable
+  plan-scope invocation as the executor when the invoking workflow reaches
+  planned execution.
 - Do not promote learnings into durable rules automatically. Record digest and
   backlog items for a later improvement workflow.
 - Do not let a cataloger write shared run state, manifest, digest or backlog,

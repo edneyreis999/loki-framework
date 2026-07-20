@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agentic_run_manifest schema_version="3">
+<agentic_run_manifest schema_version="4">
   <run>
     <run_id>{{run_id}}</run_id>
     <command>loki-agentic-development</command>
@@ -72,6 +72,69 @@
       <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
     </capture>
   </execution_knowledge_captures>
+  <write_test_review schema_version="1" legacy_reader_optional="true">
+    <request>
+      <requested_frequency>{{review_requested_frequency}}</requested_frequency>
+      <provenance>{{review_frequency_provenance}}</provenance>
+    </request>
+    <plan_executor_handoff>
+      <handoff_id>{{plan_executor_handoff_id}}</handoff_id>
+      <execution_scope>plano</execution_scope>
+      <tasks_md>{{tasks_md}}</tasks_md>
+      <status>{{plan_executor_handoff_status}}</status>
+    </plan_executor_handoff>
+    <reconciled_policy>
+      <policy_ref>{{review_policy_ref}}</policy_ref>
+      <policy_digest>{{review_policy_digest}}</policy_digest>
+      <effective_frequency>{{review_effective_frequency}}</effective_frequency>
+      <terminal_scope>{{review_terminal_scope}}</terminal_scope>
+      <selected_agent_name>{{review_selected_agent_or_null}}</selected_agent_name>
+      <selection_reason>{{review_selection_reason}}</selection_reason>
+    </reconciled_policy>
+    <checkpoints>
+      <checkpoint checkpoint_id="{{review_checkpoint_id}}">
+        <execution_id>{{review_execution_id}}</execution_id>
+        <policy_digest>{{review_policy_digest}}</policy_digest>
+        <boundary_type>{{review_boundary_type}}</boundary_type>
+        <boundary_ref>{{review_boundary_ref}}</boundary_ref>
+        <coverage_digest>{{review_coverage_digest}}</coverage_digest>
+        <coverage_manifest schema_version="1">
+          <handoffs>
+            <handoff>
+              <handoff_id>{{covered_write_handoff_id}}</handoff_id>
+              <completion_ref>{{covered_completion_ref}}</completion_ref>
+              <evidence_ref>{{covered_evidence_ref}}</evidence_ref>
+              <changed_files><file><path>{{covered_changed_path}}</path><sha256>{{covered_changed_sha256}}</sha256></file></changed_files>
+            </handoff>
+          </handoffs>
+          <reviewer>
+            <name>{{review_selected_agent_or_null}}</name>
+            <contract_version>{{review_agent_contract_version}}</contract_version>
+            <selection_configuration_digest>{{review_selection_configuration_digest}}</selection_configuration_digest>
+          </reviewer>
+        </coverage_manifest>
+        <covered_write_handoff_ids><handoff_id>{{covered_write_handoff_id}}</handoff_id></covered_write_handoff_ids>
+        <findings/>
+        <status>{{review_checkpoint_status}}</status>
+        <review_handoff_id>{{review_handoff_id_or_null}}</review_handoff_id>
+        <review_agent_run_id>{{review_agent_run_id_or_null}}</review_agent_run_id>
+        <review_agent_raw_status>{{review_agent_raw_status_or_null}}</review_agent_raw_status>
+        <evidence_ref>{{review_evidence_ref_or_null}}</evidence_ref>
+        <risk_refs><risk_ref>{{review_risk_ref}}</risk_ref></risk_refs>
+        <backlog_refs><backlog_ref>{{review_backlog_ref}}</backlog_ref></backlog_refs>
+        <execution_status_effect>none</execution_status_effect>
+        <reason required_for="skipped-no-material-write skipped-agent-unavailable failed-consultive outcome-unknown">{{review_reason_or_null}}</reason>
+      </checkpoint>
+    </checkpoints>
+    <risks><risk_ref>{{review_risk_ref}}</risk_ref></risks>
+    <state_errors>
+      <state_error code="{{review_state_error_code}}">
+        <reason>{{review_state_error_reason}}</reason>
+        <next_action>{{review_state_error_next_action}}</next_action>
+      </state_error>
+    </state_errors>
+    <next_action>{{review_next_action}}</next_action>
+  </write_test_review>
   <decision_gates>
     <decision_gate id="{{decision_gate_id}}">
       <category>{{decision_gate_category}}</category>

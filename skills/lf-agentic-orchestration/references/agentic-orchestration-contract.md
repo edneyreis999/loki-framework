@@ -26,8 +26,11 @@ resumable XML state.
    `must_ask_now` gates remain.
 8. Planning handoff: generate an executable plan only after analysis state is
    complete enough for autonomous execution.
-9. Execution: call the active plan executor for each approved phase or task,
-   preserving serialized writes and validators.
+9. Execution: propagate the requested Write Test review frequency unchanged
+   when supplied and preserve absence otherwise, then call the active plan
+   executor exactly once with terminal scope `plano`; that executor alone
+   validates/applies enum/default and owns the DAG, clamp, materiality, review
+   checkpoints, serialized writes and validators.
 10. Completion: collect a compact completion record, validated evidence or an
    explicit gap, blockers, digest and backlog. Retrospective execution is an
    explicit human or command action, never an automatic fallback.
@@ -122,6 +125,12 @@ Use split state to keep files reviewable and resumable:
 - `digest.xml`: integrated run summary for review.
 - `backlog.md`: postponed or non-blocking items for later handling.
 
+The integrated parent records input presence before dispatch, then persists the
+requested review frequency/provenance returned by the executor and the single
+plan-scope handoff identity. It never persists a parent-derived
+effective frequency. After the executor returns, state references the canonical
+policy/checkpoints and reconciliation result that `loki-run-plan` owns.
+
 ## Freshness and Invalidation
 
 Do not skip work because an output file exists. Each output should carry a
@@ -207,6 +216,9 @@ its normal root-cause and human gates.
 - Autonomous execution would need a new human question mid-run.
 - Material analysis, writing or validation remains in the main thread without a
   recorded exception and validation owner.
+- Requested review frequency conflicts with persisted state, a parent attempts
+  to derive effective policy, or integrated execution would dispatch more than
+  one plan-scope `loki-run-plan` handoff.
 
 Cataloger availability/failure/timeout/handoff/validator is explicitly excluded
 from these stop conditions. A final interrupted cataloger reconciled as

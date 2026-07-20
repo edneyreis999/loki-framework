@@ -4,12 +4,13 @@ description: Run the Loki `loki-run-plan` command bundle in Codex. Execute an ap
 when_to_use:
   - "Use when executing an approved Loki plan phase or task from tasks.md and task-N.M.md."
   - "Use when phase execution requires an Execution Brief, dependency checks, scoped writers, validators, human gates, evidence, non-blocking knowledge capture, task-state updates, and resumable state."
-argument-hint: "[TASKS_MD, EXECUTION_SCOPE=task|fase|plano, optional FASE_ATUAL, TASK_TARGET, DIR_ANALISE, task_files, interaction_records]"
+argument-hint: "[TASKS_MD, EXECUTION_SCOPE=task|fase|plano, optional write_test_review_frequency=write_agent_handoff|task|fase|plano, FASE_ATUAL, TASK_TARGET, DIR_ANALISE, task_files, interaction_records]"
 arguments:
   required:
     - TASKS_MD
     - EXECUTION_SCOPE
   optional:
+    - write_test_review_frequency
     - TASK_TARGET
     - DIR_ANALISE
     - task_files
@@ -91,6 +92,12 @@ parameters:
     requirement: optional
     default: []
     description: Decisoes humanas, approvals e gates ja registrados para a fase ou task alvo.
+  - key: write_test_review_frequency
+    input_type: enum
+    requirement: optional
+    default: task
+    allowed_values: [write_agent_handoff, task, fase, plano]
+    description: Cadencia solicitada para o Write Test review consultivo; o executor aplica o clamp ao escopo terminal.
 ```
 
 Valide presença, tipo e formato dos parâmetros. `TASKS_MD` deve ser arquivo
@@ -104,6 +111,13 @@ approvals registrados são aplicáveis ao mesmo escopo. Confira arquivos ignorad
 ou untracked por leitura direta em disco; nunca use `git status` como única prova
 de existência.
 
+Aplique `WTR-INPUT-01`, `WTR-AUTH-01` e `WTR-POLICY-03` de
+`lf-run-plan-execution`: rejeite valores fora do enum; materialize o default
+`task` somente no cold start sem policy persistida; numa retomada, aceite
+ausência ou o mesmo requested value e pare como `policy-conflict` antes da
+execução quando o valor fornecido divergir. O objeto interno normalizado e seu
+digest não são parâmetros públicos.
+
 Rejeite entrada inválida com explicação acionável. Identifique e solicite toda
 informação obrigatória ausente; não invente path, fase, task, escopo, decisão,
 approval, validator ou gate. Não avance enquanto uma lacuna impedir execução
@@ -113,7 +127,9 @@ Normalize a entrada em registro com objetivo, parâmetros validados, escopo
 terminal, fase inicial e tasks alvo, DAG conhecida, restrições, destinos, `allowed_writes`,
 `forbidden_writes`, approvals, gates, lacunas, metadata canonica dos agents
 selecionados, durable domain roots declarados e destino read-only para lookup
-documental estreito. Docs ou brief fornecidos pelo orquestrador entram como
+documental estreito. Inclua também o requested value e sua provenance, o
+terminal scope e a referência à policy WTR persistida; somente Execution deriva
+e persiste a policy efetiva. Docs ou brief fornecidos pelo orquestrador entram como
 task context, nunca como prova de que o preflight pessoal do Write Agent foi
 executado. Durante Input não implemente,
 altere arquivos, execute a tarefa principal, invoque escritores nem declare

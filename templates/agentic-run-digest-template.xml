@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agentic_run_digest schema_version="3">
+<agentic_run_digest schema_version="4">
   <digest>
     <run_id>{{run_id}}</run_id>
     <status>draft</status>
@@ -29,6 +29,46 @@
       <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
     </capture>
   </execution_knowledge_captures>
+  <write_test_review schema_version="1" legacy_reader_optional="true">
+    <policy_ref>{{review_policy_ref}}</policy_ref>
+    <policy_digest>{{review_policy_digest}}</policy_digest>
+    <requested_frequency>{{review_requested_frequency}}</requested_frequency>
+    <effective_frequency>{{review_effective_frequency}}</effective_frequency>
+    <checkpoints>
+      <checkpoint checkpoint_id="{{review_checkpoint_id}}">
+        <execution_id>{{review_execution_id}}</execution_id>
+        <policy_digest>{{review_policy_digest}}</policy_digest>
+        <status>{{review_checkpoint_status}}</status>
+        <boundary_type>{{review_boundary_type}}</boundary_type>
+        <boundary_ref>{{review_boundary_ref}}</boundary_ref>
+        <coverage_digest>{{review_coverage_digest}}</coverage_digest>
+        <review_handoff_id>{{review_handoff_id_or_null}}</review_handoff_id>
+        <review_agent_run_id>{{review_agent_run_id_or_null}}</review_agent_run_id>
+        <review_agent_raw_status>{{review_agent_raw_status_or_null}}</review_agent_raw_status>
+        <evidence_ref>{{review_evidence_ref_or_null}}</evidence_ref>
+        <risk_refs><risk_ref>{{review_risk_ref}}</risk_ref></risk_refs>
+        <backlog_refs><backlog_ref>{{review_backlog_ref}}</backlog_ref></backlog_refs>
+        <reason required_for="skipped-no-material-write skipped-agent-unavailable failed-consultive outcome-unknown">{{review_reason_or_null}}</reason>
+      </checkpoint>
+    </checkpoints>
+    <findings>
+      <finding finding_id="{{review_finding_id}}">
+        <checkpoint_id>{{review_checkpoint_id}}</checkpoint_id>
+        <review_handoff_id>{{review_handoff_id_or_null}}</review_handoff_id>
+        <agent_run_id>{{review_agent_run_id_or_null}}</agent_run_id>
+        <evidence_ref>{{review_evidence_ref_or_null}}</evidence_ref>
+        <risk_ref>{{review_risk_ref}}</risk_ref>
+        <backlog_ref>{{review_backlog_ref}}</backlog_ref>
+      </finding>
+    </findings>
+    <execution_status_effect>none</execution_status_effect>
+    <state_errors>
+      <state_error code="{{review_state_error_code}}">
+        <reason>{{review_state_error_reason}}</reason>
+        <next_action>{{review_state_error_next_action}}</next_action>
+      </state_error>
+    </state_errors>
+  </write_test_review>
   <validators>
     <validator name="{{validator_name}}">
       <status>{{validator_status}}</status>

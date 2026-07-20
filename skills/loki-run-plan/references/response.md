@@ -28,6 +28,13 @@ decisão exata necessária, evidências disponíveis, handoffs, riscos, próxima
 ação e `LokiRunState` mínimo. Não preencha o resultado terminal nem declare
 conclusão.
 
+Para WTR, uma resposta intermediária distingue explicitamente: conflito de
+policy antes da execução; checkpoint `scheduled`; checkpoint `dispatched` que
+deve ser reconciliado pela identidade existente; falha de persistência ou
+integridade; e `outcome-unknown` terminal consultivo. Exponha o mínimo
+persistido para retomar e nunca apresente resultado do reviewer como sucesso ou
+falha terminal da implementação.
+
 ## Terminal Response
 
 Para o consumidor padrão `Both`, preencha integralmente
@@ -42,6 +49,17 @@ conflicts, gaps/materiality/substitutes, source precedence, cross-domain e
 durable-gap handoffs, result `ready|ready-with-gaps|blocked`, reason e minimum
 `minimum_next_input`. O mesmo registro deve existir no task state e
 `LokiRunState`.
+
+Inclua `write_test_review` por referência aos schemas canônicos de
+`lf-run-plan-execution`: requested/effective frequency, source, terminal scope,
+seleção do reviewer e policy digest; para cada checkpoint, boundary,
+coverage digest/handoffs cobertos, status, `review_agent_raw_status`,
+`execution_status_effect`, evidence, findings, risk/backlog refs, reason e
+próxima ação. Registre explicitamente `skipped-no-material-write` com coverage
+vazia e zero invocações. Findings, inclusive raw `blocked`, unavailable,
+failure e unknown aparecem somente nesta seção consultiva e em riscos; o
+`Status` externo continua derivado de task/fase/plano, validators, gates,
+approvals e integridade do estado.
 
 Declare explicitamente que docs/brief fornecidos pelo orquestrador nao
 substituiram o preflight pessoal. Se target for consumer docs, reporte
@@ -83,6 +101,12 @@ pending-technical-review
   <handoff></handoff>
   <domain_context_preflight></domain_context_preflight>
   <consumer_docs_ownership></consumer_docs_ownership>
+  <write_test_review>
+    <policy></policy>
+    <checkpoints></checkpoints>
+    <risks></risks>
+    <next_action></next_action>
+  </write_test_review>
   <risks></risks>
   <next_steps></next_steps>
 </command_response>

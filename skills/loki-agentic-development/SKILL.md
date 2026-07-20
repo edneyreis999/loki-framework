@@ -4,10 +4,10 @@ description: Run the Loki `loki-agentic-development` command bundle. Turn a dema
 when_to_use:
   - "Use when a demand should pass through multi-agent analysis, planning and autonomous Loki plan execution."
   - "Use when the run requires resumable XML state, scoped writers, validators, human gates, completion/evidence, non-blocking execution-knowledge capture and digest."
-argument-hint: "[demand, run_directory, allowed_scope, optional out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
+argument-hint: "[demand, run_directory, allowed_scope, optional write_test_review_frequency=write_agent_handoff|task|fase|plano, out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
 arguments:
   required: [demand, run_directory, allowed_scope]
-  optional: [out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]
+  optional: [write_test_review_frequency, out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -82,12 +82,27 @@ parameters:
     requirement: optional
     default: null
     description: Catálogo de agentes disponível na instalação ativa.
+  - key: write_test_review_frequency
+    input_type: enum
+    requirement: optional
+    default: task
+    allowed_values: [write_agent_handoff, task, fase, plano]
+    description: Cadencia solicitada a propagar sem clamp para a unica chamada plan-scope de loki-run-plan.
 ```
 
 Valide presença, tipos, paths, destino aprovado, escopo e ausência de conflito
 entre superfícies permitidas/proibidas. Solicite cada obrigatório ausente e não
 invente destino, agente, decisão, approval, validator ou permissão. Normalize
 objetivo, parâmetros, escopo, restrições, decisões, gates, fontes e lacunas.
+Os `allowed_values` e o `default` acima são metadados de interface para o
+caller; não os aplique como um segundo normalizador runtime. Registre se o valor
+foi fornecido, encaminhe o valor fornecido sem alteração ou omita o parâmetro
+quando ausente, e deixe somente `loki-run-plan` validar o enum e aplicar o
+default. Reconcilie depois o requested value e a provenance
+`explicit | default | propagated | resumed` devolvidos pelo executor, e não
+derive `effective_frequency`, materialidade, coverage ou checkpoint. Em retomada,
+reconcilie com o requested value persistido e pare diante de divergência; a
+policy efetiva pertence exclusivamente a `loki-run-plan`.
 Durante Input não crie estado, selecione agentes, gere plano, execute task,
 escreva no projeto nem declare sucesso.
 

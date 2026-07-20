@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agent_run_report schema_version="4">
+<agent_run_report schema_version="5">
   <identity>
     <run_id>{{run_id}}</run_id>
     <phase>{{phase}}</phase>
@@ -23,6 +23,34 @@
     <reason>{{knowledge_capture_reason}}</reason>
     <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
   </execution_knowledge>
+  <write_test_review schema_version="1" legacy_reader_optional="true">
+    <policy_ref>{{review_policy_ref}}</policy_ref>
+    <policy_digest>{{review_policy_digest}}</policy_digest>
+    <execution_id>{{review_execution_id}}</execution_id>
+    <checkpoint_ref checkpoint_id="{{review_checkpoint_id}}">{{review_checkpoint_ref}}</checkpoint_ref>
+    <coverage_digest>{{review_coverage_digest}}</coverage_digest>
+    <covered_write_handoff_ids><handoff_id>{{covered_write_handoff_id}}</handoff_id></covered_write_handoff_ids>
+    <review_lineage>
+      <review_handoff_id>{{review_handoff_id_or_null}}</review_handoff_id>
+      <review_agent_run_id>{{review_agent_run_id_or_null}}</review_agent_run_id>
+      <evidence_ref>{{review_evidence_ref_or_null}}</evidence_ref>
+    </review_lineage>
+    <outcome>
+      <status>{{review_checkpoint_status}}</status>
+      <review_agent_raw_status>{{review_agent_raw_status_or_null}}</review_agent_raw_status>
+      <execution_status_effect>none</execution_status_effect>
+      <reason required_for="skipped-no-material-write skipped-agent-unavailable failed-consultive outcome-unknown">{{review_reason_or_null}}</reason>
+    </outcome>
+    <findings>
+      <finding finding_id="{{review_finding_id}}">
+        <summary>{{review_finding_summary}}</summary>
+        <risk_ref>{{review_risk_ref}}</risk_ref>
+        <backlog_ref>{{review_backlog_ref}}</backlog_ref>
+      </finding>
+    </findings>
+    <risk_refs><risk_ref>{{review_risk_ref}}</risk_ref></risk_refs>
+    <backlog_refs><backlog_ref>{{review_backlog_ref}}</backlog_ref></backlog_refs>
+  </write_test_review>
   <selection>
     <selection_reason>{{selection_reason}}</selection_reason>
   </selection>
