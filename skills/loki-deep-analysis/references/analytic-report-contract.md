@@ -7,6 +7,15 @@ catalog mutation or proof that a candidate deserves promotion.
 
 ## Report identity and terminal status
 
+Record the internally resolved `consumer_root.canonical`, source
+`canonical-pwd`, the derived `state_root`, catalog state
+`absent | empty | loaded | blocked`, registry
+locator, selected catalog/index locators and loaded record locators. Also
+record `mutation_applied: false` and proof that no catalog-owned target was
+created, changed or removed. These values are root-bound and resumable without
+conversation memory; a resumed command must again start with `cwd` at that
+recorded root.
+
 Begin with stable report identity, analysis objective, source provenance,
 policy ID and digest, creation time when observed, destination or
 `response-only`, and exactly one terminal status:
@@ -177,6 +186,9 @@ surface. Events and candidates remain embedded in the immutable report.
 `loki-continuous-improvement` is the only downstream workflow allowed to assess
 durable reconciliation, and it must apply its own writer, validator,
 technical-review and human-approval gates.
+
+Consumer operational state is read-only in this command. An absent or empty
+registry is never bootstrapped here.
 
 ## Validation
 

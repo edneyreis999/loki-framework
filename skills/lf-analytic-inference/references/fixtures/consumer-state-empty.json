@@ -1,0 +1,77 @@
+{
+  "schema_version": "1",
+  "fixture_id": "consumer-state-empty-v2",
+  "fixture_kind": "temporary-consumer-root-scenarios",
+  "production_seed": false,
+  "consumer_root": "<mktemp>/consumer-empty",
+  "state_root": ".loki/analytic-inference/v2",
+  "live_serialization": "canonical-xml-v2",
+  "control_plane_serialization": "json",
+  "bootstrap": {
+    "technology": "python",
+    "aliases": ["py"],
+    "catalog_id": "python-inferences",
+    "active_limit": 3
+  },
+  "expected_registry": {
+    "schema_version": 2,
+    "state_layout": "analytic-inference-consumer-v2",
+    "entries": [
+      {
+        "technology": "python",
+        "aliases": ["py"],
+        "catalog_id": "python-inferences",
+        "locator": "catalogs/python/index.xml"
+      }
+    ]
+  },
+  "expected_catalog": {
+    "schema_version": 1,
+    "catalog_id": "python-inferences",
+    "technology": "python",
+    "aliases": ["py"],
+    "active_limit": 3,
+    "entries": []
+  },
+  "scenarios": [
+    {
+      "id": "absent-read",
+      "operation": "validate",
+      "expected": {"status": "insufficient", "registry_state": "absent", "mutation_applied": false, "created_paths": []}
+    },
+    {
+      "id": "approved-bootstrap",
+      "operation": "bootstrap",
+      "approved_mutation": true,
+      "expected": {"status": "success", "registry_state": "loaded", "registry_published_last": true}
+    },
+    {
+      "id": "post-bootstrap-empty-validate",
+      "operation": "validate",
+      "execution": {"cwd": "<mktemp>/consumer-empty"},
+      "expected": {
+        "exit_code": 0,
+        "status": "insufficient",
+        "registry_state": "loaded",
+        "catalog_state": "empty",
+        "record_count": 0,
+        "loaded_locators": ["catalogs/python/index.xml"],
+        "mutation_applied": false,
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "identical-retry",
+      "operation": "bootstrap",
+      "approved_mutation": true,
+      "expected": {"status": "success", "mutation_applied": false, "published": []}
+    },
+    {
+      "id": "divergent-collision",
+      "operation": "bootstrap",
+      "approved_mutation": true,
+      "mutation": {"path": ".loki/analytic-inference/v2/catalogs/python/index.xml", "decoded_field": "catalog_id", "replace_with": "different"},
+      "expected": {"status": "blocked", "diagnostic_contains": "DIVERGENT_COLLISION", "registry_unchanged": true}
+    }
+  ]
+}

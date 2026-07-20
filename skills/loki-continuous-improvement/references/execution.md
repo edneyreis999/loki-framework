@@ -78,6 +78,22 @@ approval explícito de instalação/sincronização; `.agents/**`; runtime, engi
 framework ou superfície sensível fora do escopo e sem gate humano. Não amplie
 silenciosamente os writes.
 
+Keep roots and owners disjoint. `package_root` bounds reusable package
+contracts, schemas, scripts, policy and package docs; the internal
+`consumer_root`, resolved from canonical `pwd`, bounds only
+`destination_scope: consumer-operational-state` at the fixed derived state
+root `<consumer_root>/.loki/analytic-inference/v2`. Its active live locators are
+`registry.xml`, `catalogs/<technology>/index.xml`, revisioned `rev-N.xml`
+records and `.xml` events. Package writes belong
+to `framework-artifact-writer`, which is forbidden from `.loki/**`. Consumer
+state writes belong exclusively to one `technical-implementer` in
+`task_scoped_writer` mode with canonical root, exact targets, validators and
+gates; that envelope forbids package commands, contracts and docs. Consumer
+docs remain a third surface owned by `catalogador` and never include `.loki`.
+The v1/JSON layout is legacy read-only and copy-only migration source; it is
+never an active lookup fallback or mutation destination.
+Serialize every shared file under one owner and reject overlapping envelopes.
+
 ## Planning, Participants And Handoffs
 
 Transforme o Input normalizado em plano com ingestão, evidência, classificação,
@@ -241,8 +257,9 @@ algorithm/policy, `applied_event_ids`, `replayed_event_ids` e diagnostics. Não
 confie em contador mutável observado.
 
 Valide o catálogo antes e depois do diff proposto com
-`../../lf-analytic-inference/scripts/validate_catalog.py <index.json>
---policy ../../lf-analytic-inference/references/policy-v1.json`. Exija schema,
+`../../lf-analytic-inference/scripts/validate_catalog.py
+--policy ../../lf-analytic-inference/references/policy-v1.json`, executado com
+`cwd` igual à raiz do consumidor. Exija schema,
 IDs, locators contidos, revisions, lineage acíclica, paridade exata índice ↔
 registro, `active_limit` compatível e policy ID
 `analytic-inference-policy-v1` com digest exato
@@ -279,13 +296,14 @@ duradoura posterior, com todos os gates e validators resolvidos, pode mudar o
 lifecycle. Nunca trate score, replay, relatório, retrospectiva ou similaridade
 como aprovação.
 
-Proposta de promoção lista targets exatos de índice/registro, before/after,
+Proposta de promoção usa `destination_scope: consumer-operational-state` e
+lista targets exatos de registry/índice/registro/eventos, before/after,
 eventos e snapshot esperados, lineage/provenance, dry validation e riscos. Para
-`destination_scope: package`, exija `technical-review` e `approval` antes de
-qualquer escrita duradoura; depois, `framework-artifact-writer` é o único
-writer e `framework-artifact-quality-auditor` revisa read-only o patch real. O
-auditor não substitui gates e o writer não se autoaprova. Esta etapa registra
-somente proposta: `catalog_mutation_applied: false`.
+qualquer aplicação, exija exatamente `technical-review` e approval vinculada à
+operação/root/targets/digests; depois, `technical-implementer` é o único state
+writer. O package writer nunca recebe esses targets. Sem ambos os gates, esta
+etapa registra somente proposta/dry-run root-bound:
+`catalog_mutation_applied: false`.
 
 ### Reorganization proposal contract
 
@@ -299,11 +317,11 @@ todo conhecimento validado; perda, ambiguidade ou lineage irresolúvel bloqueia.
 Operações permitidas na proposta são `generalize`, `merge`, `deduplicate`,
 `rewrite` e `reorder`. Similaridade semântica é somente sinal para review,
 nunca identidade, igualdade ou autorização de merge/deduplication. Antes de
-qualquer aplicação, exija `technical-review` e approval vinculados à proposta;
-então serialize os targets sob owner único `framework-artifact-writer`, rode
-validação determinística de schema, identidade, lineage, paridade e snapshot e
-entregue o patch real ao `framework-artifact-quality-auditor` read-only. O
-auditor não escreve nem substitui os gates. Sem todos os controles, registre
+qualquer aplicação, exija exatamente `technical-review` e approval vinculada à
+proposta, consumer root, targets e digests; então serialize os targets sob owner
+único `technical-implementer`, rode validação determinística de schema,
+identidade, lineage, paridade e snapshot. O state writer não escreve contratos
+do pacote e nenhum parecer substitui os gates. Sem todos os controles, registre
 somente `reorganization_proposed: true` e `catalog_mutation_applied: false`.
 Projete sempre estados separados: `reorganization_eligible` é informativo;
 `reorganization_proposed` registra somente a proposta gated;
@@ -311,7 +329,23 @@ Projete sempre estados separados: `reorganization_eligible` é informativo;
 `catalog_mutation_applied` reflete o efeito real e permanece `false` em
 eligibility ou proposal.
 
+For approved promotion or reorganization, prepare immutable revisions/events,
+validate the complete proposed state, and publish the technology index last as
+the commit point. Bootstrap, when required, stages inside the same consumer
+state root and publishes the registry last. Immediately before each write,
+revalidate canonical root identity, `lstat` ancestors, containment, hashes and
+approval binding. Failure before commit preserves prior visible state and lists
+staging residue; failure after commit blocks for audit, enumerates observed
+residue, and never claims rollback. Identical replay is a no-op; divergent
+identity collision blocks.
+
 ### Physical purge contract
+
+This command is limited to deterministic, zero-write purge proposal and dry-run.
+Physical purge is reserved to a separate physical-purge workflow and MUST NOT be executed by this command,
+even when a JIT approval is present. Record the exact approval requirements for
+that future workflow, but keep `catalog_mutation_applied: false`, execution
+`not-run`, and never claim runtime validation or deletion.
 
 `purge_review_eligible: true` exige registro não protegido e score reconstruído
 `<= -4`, mas é apenas condição necessária. Purge é físico, irreversível,
@@ -320,11 +354,12 @@ similaridade, proposal approval ou policy approval como approval da operação.
 
 #### Read-only dry-run and canonical target manifest
 
-Antes de solicitar approval, um dry-run read-only resolve o catalog root e cria
+Antes de solicitar approval, um dry-run read-only resolve o consumer root e o
+state root fixo e cria
 um manifesto canônico sem remover nada. O manifesto contém:
 
 - stable `operation_id`, sequence monotônica, `generated_at` determinístico,
-  inference IDs/revisions exatos e catalog root canônico;
+  inference IDs/revisions exatos e consumer/state roots canônicos;
 - para **todos** os rastros catalog-owned desses IDs: artifact kind,
   canonical contained catalog path, selector quando o rastro estiver embutido
   e SHA-256 do estado anterior;
@@ -336,7 +371,7 @@ um manifesto canônico sem remover nada. O manifesto contém:
   do manifesto canônico completo sem o próprio campo de digest.
 
 Normalize paths fisicamente, resolva symlinks e exija que cada target permaneça
-sob o catalog root aprovado. Path absoluto na fonte, escape, symlink para fora,
+sob o state root aprovado. Path absoluto na fonte, escape, symlink para fora,
 artifact kind sem target, rastro catalog-owned omitido, hash ausente ou external
 ref incluída como target bloqueia o dry-run. O dry-run retorna sempre
 `mutation_applied: false`.
@@ -352,37 +387,32 @@ do dry-run, de outra operação, ou com qualquer divergência de ID/path/target
 set/digest/policy bloqueia sem escrita. Fixture e exemplo nunca constituem
 approval real.
 
-#### Pre-delete, serialized execution and failure
+#### Future separate physical-purge workflow pre-delete and failure contract
 
-Imediatamente antes da primeira exclusão, reconstrua score/eligibility e
+Nesse workflow futuro separado, imediatamente antes da primeira exclusão,
+reconstrua score/eligibility e
 revalide atomicamente: registro não protegido; identity/revision; canonical
 containment e ausência de symlink escape; conjunto completo e sem target extra;
 before hashes; dry-run/target-set e policy digests; approval JIT íntegro;
 `active_limit`; e `removals_per_cycle: 1`. Drift ou mais de um ID no ciclo
 bloqueia antes da escrita.
 
-Somente `framework-artifact-writer`, como owner único, executa a operação
-serialmente. Remova fisicamente cada rastro aprovado; não crie rollback,
-tombstone, redirect, alias, event ou ID catalog-owned substituto. O approval
-record e fontes externas permanecem fora do catálogo e fora do target set. O
-`framework-artifact-quality-auditor` atua read-only após a operação e não pode
-corrigir produção.
+No future physical-purge envelope, only `technical-implementer` may own exact
+consumer-state targets; `framework-artifact-writer` remains forbidden from
+`.loki`. This command emits no such execution envelope and performs no delete.
 
-Qualquer interrupção depois da primeira exclusão é `failed` e `blocked`:
+Nesse workflow separado, qualquer interrupção depois da primeira exclusão é
+`failed` e `blocked`:
 registre targets removidos, rastros residuais, hashes observados, writes
 tentados e minimum next path. Nunca declare rollback, sucesso, ausência total
 de rastros ou aprovação reutilizável depois de falha parcial.
 
 #### Post-validation
 
-Após execução simulada ou real autorizada, valide paridade e integridade do
-catálogo restante, ausência de **todos** os rastros catalog-owned aprovados,
-ausência dos IDs em aliases/redirects/tombstones/events/snapshots/index/records,
-hashes inalterados de cada external ref e ausência de write não aprovado. Só
-resultado completo, auditor `approved/pass` e approval marcado consumido podem
-ser terminal. Qualquer residual, mudança externa, target extra, falha de
-paridade ou auditor inconclusivo é `failed`/`blocked`; nunca reporte
-`zero_catalog_traces` sem prova enumerada.
+Após o dry-run, valide integridade do catálogo observado, completude dos
+selectors/targets/hashes, hashes das referências externas e ausência de write.
+O dry-run completo pode ser terminal apenas como proposta, nunca como purge
+aplicado. Não reporte ausência de rastros: nenhuma exclusão ocorre nesta task.
 
 ## Classification And Placement Matrix
 
@@ -501,6 +531,10 @@ reclassificacao/replanejamento; nunca converta o target para outra classe por
 conveniencia, velocidade ou tamanho. Preserve target files, allowed/forbidden
 writes, owner, validators, gates, evidências e destinations em qualquer rota.
 
+Para `consumer-operational-state`, use exclusivamente `technical-implementer`
+com consumer root e targets exatos; nunca envie `.loki` ao package writer nem
+contratos/docs do pacote ao state writer.
+
 Na ramificação `package`, `framework-artifact-writer` é owner exclusivo dos
 `target_files` e sync files declarados; o auditor tem sandbox read-only e não
 recebe permissão de escrita em produção. O Writer não pode autoatestar a própria
@@ -525,13 +559,14 @@ target set ou semântica aprovada; caso contrário, invalide gates e replaneje.
   exatos, preservação de protected/validated knowledge, gates prévios, Writer
   único, auditor read-only e validação determinística; similaridade não é
   identidade.
-- Purge exige unprotected score inclusivo `<= -4`, manifesto read-only completo,
-  hashes/digests e approval JIT por operação; pre-delete revalida containment,
-  symlinks, identidade, target set, hashes, policy, gates, active limit e
+- Purge review exige unprotected score inclusivo `<= -4` e manifesto read-only
+  completo com roots, hashes/digests e approval JIT requerida para um workflow
+  separado de purge físico; este command valida dry-run e mantém execução
+  `not-run`, mutation false e
   `removals_per_cycle: 1`.
-- Post-purge prova ausência de cada rastro catalog-owned aprovado, paridade do
-  catálogo restante, external refs inalteradas e nenhum write extra. Residual
-  ou falha parcial é `failed`/`blocked`, nunca sucesso ou zero traces.
+- O contrato reserva post-purge e prova de ausência física ao workflow separado
+  de purge físico; neste command, validator prova somente
+  determinismo/completude do manifesto e zero write.
 - Toda proposta cita fonte aceita/reproduzível, separa evidência transitória de
   destino duradouro e nomeia target concreto.
 - Explica por que a superfície preveniria o erro ou reduziria repetição.
@@ -651,11 +686,11 @@ continuous_improvement_candidate:
     ambiguity: ""
     why_this_surface_would_prevent_repeat: ""
   destination:
-    destination_scope: "package | consumer-context | runtime | backlog"
-    artifact_type: "AGENTS.md | CLAUDE.md | project-doc | project-doc-index | command | skill | agent | template | validator | doc | manifest | backlog"
+    destination_scope: "package | consumer-operational-state | consumer-context | runtime | backlog"
+    artifact_type: "analytic-inference-state | AGENTS.md | CLAUDE.md | project-doc | project-doc-index | command | skill | agent | template | validator | doc | manifest | backlog"
     target_file: ""
     sync_files: []
-    delegate: "catalogador | bibliotecario | none"
+    delegate: "technical-implementer | catalogador | bibliotecario | none"
   action: "propose-patch | apply-approved-patch | record-only | block-and-ask"
   proposed_change:
     summary: ""
@@ -673,6 +708,12 @@ continuous_improvement_candidate:
     reason: "<non-empty source/type reason>"
   analytic_inference:
     schema_version: 1
+    state_binding:
+      consumer_root: "<canonical consumer root>"
+      consumer_root_source: "canonical-pwd"
+      state_root: "<derived fixed state root>"
+      registry_locator: "<relative locator | absent>"
+      catalog_locators: []
     source:
       source_type: "deep-analysis-report | technical-retrospective"
       locator: "<exact persisted source locator>"
@@ -742,10 +783,12 @@ continuous_improvement_candidate:
         technical_review: "pending | approved | rejected | not-applicable"
         approval: "pending | approved | rejected | not-applicable"
       writer:
-        agent: "framework-artifact-writer | none"
+        agent: "technical-implementer | none"
+        destination_scope: "consumer-operational-state"
+        package_contract_writes_forbidden: true
         status: "pending | completed | blocked | not-required"
       auditor:
-        agent: "framework-artifact-quality-auditor | none"
+        agent: "runtime-qa | none"
         mode: "read-only | not-required"
         status: "pending | approved | blocked | not-required"
       catalog_mutation_applied: false
@@ -793,10 +836,11 @@ schema/status inválido, capture/lineage/provenance quebrada, mesmo ID com paylo
 divergente, policy ID/digest divergente, reducer/validator bloqueado, snapshot
 irreconstruível ou mutação automática. Para reorganização, pare sem
 elegibilidade, preservação de protected/validated knowledge, targets,
-before/after, lineage, gates, Writer ou auditor. Para purge, pare em qualquer
-falha de manifesto, containment/symlink, identity, hashes, target set, digest,
-approval JIT, limite, owner, serialização ou post-validation; falha parcial
-permanece `failed`/`blocked` com rastros residuais.
+before/after, lineage, gates, Writer ou auditor. Para purge dry-run, pare em
+qualquer falha de manifesto, root binding, containment/symlink, identity,
+hashes, target set ou digest. Approval JIT, delete e post-purge validation são
+precondições futuras do workflow separado de purge físico, não etapas
+executadas aqui.
 Pare tambem antes de consumer-doc write se `catalogador` estiver indisponivel,
 caller/mode divergir ou o envelope exigir qualquer precondicao init.
 Para `destination_scope: package`, pare também se o Writer ou auditor estiver
@@ -823,9 +867,10 @@ Para reorganização, preserve operation ID, eligibility, operação proposta,
 targets, before/after, lineage, evidência preservada, Writer/auditor,
 validators, gates e mutation state. Para purge, preserve dry-run manifest e
 digest, IDs/paths/artifact kinds/before hashes, exclusions/external hashes,
-policy, approval JIT e consumo, pre-delete checks, sequência serial, targets
-removidos/residuais, post-validation, auditor e minimum next path. Nunca use o
-fixture sintético como approval ou prova de execução.
+policy, consumer/state roots, approval JIT requerida mas não emitida/consumida,
+`execution: not-run`, `catalog_mutation_applied: false` e handoff explícito para
+um workflow separado de purge físico. Nunca registre targets removidos nem use fixture sintético como
+approval ou prova de execução.
 
 Para `destination_scope: package`, registre também `promotion_execution`: owner
 e envelope do Writer, target/discovered files, evidência de checks, auditor e

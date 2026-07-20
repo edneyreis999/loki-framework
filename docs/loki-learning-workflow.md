@@ -50,15 +50,26 @@ formal ou auditoria interna de conformidade do pacote.
 12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
 13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
 14. Quando `destination_scope: package`, depois dos gates o
-`framework-artifact-writer` aplica o patch sob envelope exclusivo, os checks
-mecanicos rodam e o `framework-artifact-quality-auditor` revisa o estado real
-sem editar producao. Somente `approved` conclui; finding retorna ao Writer,
-enquanto incerteza ou mudanca material bloqueia para os gates aplicaveis e
-exige nova auditoria.
-15. Para destino consumidor ou runtime, preserve `catalogador` ou o writer e
-auditor de dominio aplicaveis; os dois agentes de artefatos nao sao instalados
-nem recebem permissao nesses destinos.
-16. A promocao termina com diff, validacao e registro do risco residual.
+    `framework-artifact-writer` aplica o patch sob envelope exclusivo, os checks
+    mecanicos rodam e o `framework-artifact-quality-auditor` revisa o estado real
+    sem editar producao. Somente `approved` conclui; finding retorna ao Writer,
+    enquanto incerteza ou mudanca material bloqueia para os gates aplicaveis e
+    exige nova auditoria.
+15. Quando `destination_scope: consumer-operational-state`, resolva e registre
+    o `consumer_root` internamente a partir do `pwd` canonico e derive exclusivamente
+    `<consumer-root>/.loki/analytic-inference/v2/`. O `technical-implementer`
+    recebe envelope `task_scoped_writer`, targets exatos e ownership serial por
+    arquivo. Registry ausente ou vazio permanece read-only e produz zero writes;
+    somente uma mutacao aprovada pode inicializar o estado.
+16. Promocao e reorganizacao nesse state root exigem diff/manifesto, validators,
+    `technical-review` e approval root-bound antes do write. Purge exige dry-run
+    e uma approval JIT propria, posterior, single-use e ligada a root, IDs,
+    paths, hashes e digests exatos. Score indica elegibilidade, nunca autoridade.
+17. Para docs duradouros do consumidor, preserve `catalogador`; para outros
+    destinos de runtime, preserve o writer e auditor de dominio aplicaveis. Os
+    agentes de artefatos do pacote nao sao instalados nem recebem permissao
+    nesses destinos.
+18. A promocao termina com diff, validacao e registro do risco residual.
 
 ## Inferencias Analiticas no Aprendizado
 
@@ -78,6 +89,19 @@ com payload divergente bloqueia. Um reducer deterministico reconstrói snapshot,
 componentes, denominadores, freshness e score. Limites de score determinam
 somente elegibilidade para promocao, reorganizacao ou revisao de purge; nao
 autorizam nenhuma dessas operacoes.
+
+Consulta e manutencao catalog-backed resolvem o consumer root exclusivamente do
+`pwd` canonico; o command deve iniciar na raiz do consumidor. Nao aceitam root
+explicito, metadata de adapter, Git, ambiente, source paths, docs ou descoberta
+de `.loki` como override. O pacote
+nao fornece catalogo base nem overlay: `registry.xml`, indices `index.xml`,
+records `rev-N.xml` e events `.xml` vivos existem somente em
+`<consumer-root>/.loki/analytic-inference/v2/`. Estado
+ausente ou vazio retorna `insufficient`, `mutation_applied: false` e zero writes.
+
+O layout v1/JSON e legado read-only. Ele nao participa do lookup ativo nem
+recebe mutacao; serve apenas como fonte inventariada de uma migracao copy-only
+separada, com technical review e approval exata vinculada ao root e aos digests.
 
 Promocao e reorganizacao exigem targets exatos, before/after, lineage,
 validators, `technical-review`, approval, writer e auditor aplicaveis. Purge e
@@ -127,7 +151,8 @@ parcial silencioso.
 | `catalogador` | Promove aprendizado `project-specific` para `/docs` do consumidor e atualiza `docs/index.xml`. |
 | `bibliotecario` | Localiza contexto duradouro existente antes de criar duplicidade. |
 | `runtime-qa` | Fornece evidencia de validacao humana ou checklist quando o aprendizado depende de comportamento perceptivel. |
-| `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nao substitui writers de consumidor/runtime. |
+| `technical-implementer` | Writer exclusivo de `consumer-operational-state` sob `.loki/analytic-inference/v2/`, sempre com consumer root canonico, targets exatos, validators, gates e ownership serial; fora desse envelope retorna proposta. |
+| `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nunca escreve `.loki` nem substitui writers de consumidor/runtime. |
 | `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui `technical-review` nem `approval`. |
 | `execution-knowledge-cataloger` | Produz entry transitoria sanitizada e nao promovida; nao participa da decisao normativa. |
 

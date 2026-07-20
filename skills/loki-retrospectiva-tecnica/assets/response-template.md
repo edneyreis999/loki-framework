@@ -39,6 +39,10 @@ analytic_inference_candidates:
     capture_id: "<observed stable capture ID>"
     source:
       retrospective_locator: "<exact persisted retrospective locator>"
+      consumer_root:
+        canonical: "<observed canonical consumer root | unavailable>"
+        resolution_source: "<canonical-pwd | unavailable>"
+        state_root: "<derived fixed state root | unavailable>"
     lineage:
       run_id: "<observed | unavailable>"
       phase: "<observed | unavailable>"
@@ -98,6 +102,7 @@ analytic_inference_candidates_empty_reason: "<no material observation | missing 
 
 - Validacao dos candidatos: <check + resultado | none>
 - Lineage indisponivel: <campo + motivo | none>
+- Consumer/state root provenance: <canonical roots + resolution source | unavailable + reason>
 - Gates para avaliacao downstream: <gate/status/source | none>
 - Catalogo escrito/promovido/pontuado/reorganizado/purgado: false
 - Route permitido: loki-continuous-improvement para avaliacao; nenhuma promocao automatica

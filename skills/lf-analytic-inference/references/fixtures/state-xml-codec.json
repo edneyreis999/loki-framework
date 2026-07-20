@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "id": "registry-empty",
+      "kind": "registry",
+      "value": {
+        "schema_version": 2,
+        "state_layout": "analytic-inference-consumer-v2",
+        "entries": []
+      }
+    },
+    {
+      "id": "catalog-unicode",
+      "kind": "catalog",
+      "value": {
+        "schema_version": 1,
+        "catalog_id": "python-inferences",
+        "technology": "python",
+        "aliases": ["py"],
+        "active_limit": 3,
+        "entries": [
+          {
+            "inference_id": "xml-round-trip",
+            "revision": 1,
+            "status": "active",
+            "summary": "XML & Unicode: ação",
+            "technologies": ["python"],
+            "surfaces": ["codec"],
+            "objectives": ["round-trip"],
+            "signals": ["<escaped>"],
+            "locator": "catalogs/python/records/xml-round-trip/rev-1.xml"
+          }
+        ]
+      }
+    },
+    {
+      "id": "record-control-and-nested",
+      "kind": "record",
+      "value": {
+        "schema_version": 1,
+        "inference_id": "xml-round-trip",
+        "revision": 1,
+        "status": "active",
+        "statement": "control:\u0001 must use base64",
+        "applicability": {
+          "technologies": ["python"],
+          "versions": [],
+          "surfaces": ["codec"],
+          "objectives": ["round-trip"],
+          "signals": ["xml"],
+          "exclusions": []
+        },
+        "investigation": {
+          "demand_relation": "format cutover",
+          "confirm_or_reject_evidence": ["fixture"],
+          "potential_impact": "deterministic state",
+          "cost": "low",
+          "stop_condition": "round-trip passes",
+          "suggested_capabilities": []
+        },
+        "provenance": {
+          "source_refs": ["plan-026"],
+          "accepted_evidence_refs": ["fixture"],
+          "freshness": "current"
+        },
+        "lineage": {
+          "supersedes": [],
+          "merged_from": [],
+          "redirect_to": null,
+          "tombstone": null
+        },
+        "snapshot": {
+          "algorithm_version": "analytic-inference-policy-v1",
+          "components": {
+            "selected_count": 0,
+            "investigated_count": 1,
+            "validated_count": 1,
+            "rejected_count": 0,
+            "material_findings_count": 0,
+            "tasks_helped_count": 0,
+            "false_positive_count": 0,
+            "repeated_evidence_count": 0,
+            "stale_count": 0
+          },
+          "score": 8,
+          "as_of_event": "event-1",
+          "freshness": "current",
+          "denominators": {
+            "nested": {"array": [true, false, null, 1, 1.25, "x"]},
+            "unique_events": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "event-decimal-outcome",
+      "kind": "event",
+      "value": {
+        "schema_version": 1,
+        "event_id": "event-1",
+        "sequence": 1,
+        "source": {
+          "analysis_ref": "analysis",
+          "run_id": "run",
+          "handoff_id": "handoff",
+          "evidence_refs": ["fixture"]
+        },
+        "inference_id": "xml-round-trip",
+        "inference_revision": 1,
+        "stage": "investigated",
+        "outcome": {"decimal": 1.25, "integer": 1, "ok": true, "value": null},
+        "reason": "typed outcome",
+        "agent_capability": "technical-implementer",
+        "cost": {"context": 1.5, "tools": "unknown"}
+      }
+    }
+  ],
+  "hostile_cases": [
+    "missing_declaration",
+    "wrong_declaration",
+    "bom",
+    "invalid_utf8",
+    "doctype",
+    "entity",
+    "named_entity",
+    "comment",
+    "processing_instruction",
+    "attribute",
+    "noncanonical",
+    "numeric_entity",
+    "wrong_namespace",
+    "unknown_element",
+    "reordered_element",
+    "missing_element",
+    "duplicate_element",
+    "malformed_xml",
+    "malformed_base64",
+    "base64_not_required",
+    "duplicate_object_key",
+    "unsorted_object_key",
+    "nan_number",
+    "infinite_number",
+    "negative_cost",
+    "wrong_kind",
+    "unpaired_surrogate",
+    "bool_int_distinct",
+    "precise_decimal"
+  ]
+}

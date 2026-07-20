@@ -9,6 +9,31 @@ for a human and another LLM, with no hard length limit. Read
 template. Preserve the exact report state; never omit a required category to
 imply that work occurred.
 
+Project the same response state for the caller's adapter:
+
+- `Both`: use the recoverable Markdown template above, with no hard length
+  limit.
+- `LLM`: return valid, stable XML with no prose outside `command_response` and
+  exactly the required top-level fields `summary`, `status`, `artifacts`,
+  `evidence`, `handoff`, `risks`, and `next_steps`.
+- `Human`: return clear, actionable Markdown of at most 7,000 characters,
+  prioritizing result, decision, evidence, risk, and next action.
+
+```xml
+<command_response>
+  <summary></summary>
+  <status></status>
+  <artifacts></artifacts>
+  <evidence></evidence>
+  <handoff></handoff>
+  <risks></risks>
+  <next_steps></next_steps>
+</command_response>
+```
+
+Adapter projection changes only serialization, never status, evidence,
+validators, gates, risks, resume-critical state, or claim boundaries.
+
 The response has two delivery modes:
 
 - `report-artifact`: an exact approved Markdown destination was written once,
@@ -62,6 +87,8 @@ The response and deep report must make these items recoverable:
 - structured inference events and generated `unreviewed` candidates;
 - evidence status per dimension, sanitization/integrity and missing reasons;
 - validators, gates, approvals and human-validation status;
+- canonical consumer root and resolution source, derived state root, catalog
+  state, registry/catalog/record locators loaded, and `mutation_applied: false`;
 - limitations, blockers, residual risks, allowed downstream destinations,
   resume state and `minimum_next_path`.
 
@@ -80,6 +107,8 @@ locators, usage or cost.
 Inference events reflect only the stage actually observed. Generated
 candidates remain `unreviewed`; eligibility, score or report inclusion does not
 authorize promotion, merge, reorganization, purge or any catalog mutation.
+Always state whether zero-mutation proof passed; `absent` and `empty` are
+observed states, not permission to bootstrap.
 State explicitly that catalog mutation was not performed.
 
 Represent consumer/runtime human validation with gate

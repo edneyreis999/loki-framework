@@ -182,6 +182,10 @@ analytic_inference_candidate:
   capture_id: "<observed stable capture ID>"
   source:
     retrospective_locator: "<exact persisted retrospective locator>"
+    consumer_root:
+      canonical: "<observed canonical consumer root | unavailable>"
+      resolution_source: "<canonical-pwd | unavailable>"
+      state_root: "<derived fixed state root | unavailable>"
   lineage:
     run_id: "<observed | unavailable>"
     phase: "<observed | unavailable>"
@@ -241,6 +245,14 @@ reproduzir o mesmo ID; colisao com payload divergente bloqueia. Nao invente
 tecnologia, versao, custo, validator ou evidence; use `unavailable`, `unknown`
 ou lista vazia com motivo conforme o campo permitir.
 
+Propague o consumer root canonico, sua fonte de resolucao, o state root e a
+lineage exatamente como observados pela execucao de origem. A retrospectiva
+nao resolve root por cwd/Git/ambiente, nao faz lookup adicional e nunca cria,
+atualiza ou reorganiza registry, indices, records, events ou outro catalog state.
+Quando a origem observar estado ativo, o layout esperado e XML v2 sob
+`.loki/analytic-inference/v2`; v1/JSON e somente evidencia legada read-only de
+uma eventual migracao copy-only e nunca um destino de escrita da retrospectiva.
+
 Preserve separacao entre fatos, inferencias e hipoteses. Uma inferencia parcial
 ou hipotese continua assim rotulada; a retrospectiva e seu proprio score nao
 provam validade. `inference-bad` evidencia que uma inferencia foi incorreta ou
@@ -277,6 +289,8 @@ de writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
   validacao, distinction e downstream completos; ausencia material produz
   lista vazia com motivo.
 - `inference-bad` e `inference-missing` nao autorizam mutacao do catalogo.
+- Consumer root, root source, state root e lineage round-trip sem perda; todo
+  catalog-owned write permanece proibido.
 - Gate, validator ou handoff pendente interrompe conclusao.
 
 ## Human Gates

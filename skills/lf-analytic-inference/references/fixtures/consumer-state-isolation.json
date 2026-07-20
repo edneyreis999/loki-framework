@@ -1,0 +1,273 @@
+{
+  "schema_version": "1",
+  "fixture_id": "consumer-state-isolation-and-selective-lookup-v2",
+  "fixture_kind": "temporary-consumer-root-materializations",
+  "production_seed": false,
+  "state_root": ".loki/analytic-inference/v2",
+  "live_serialization": "canonical-xml-v2",
+  "fixture_content_semantics": "decoded logical value encoded as XML before materialization",
+  "policy": "../policy-v1.json",
+  "consumer_cases": [
+    {
+      "consumer_id": "consumer-a",
+      "consumer_root": "<mktemp>/consumer-a",
+      "files": [
+        {
+          "path": ".loki/analytic-inference/v2/registry.xml",
+          "content": {
+            "schema_version": 2,
+            "state_layout": "analytic-inference-consumer-v2",
+            "entries": [
+              {"technology": "python", "aliases": ["py"], "catalog_id": "python-inferences", "locator": "catalogs/python/index.xml"}
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/index.xml",
+          "content": {
+            "schema_version": 1,
+            "catalog_id": "python-inferences",
+            "technology": "python",
+            "aliases": ["py"],
+            "active_limit": 3,
+            "entries": [
+              {
+                "inference_id": "same-inference",
+                "revision": 1,
+                "status": "active",
+                "summary": "Consumer A payload.",
+                "technologies": ["python"],
+                "surfaces": ["validator"],
+                "objectives": ["root-isolation"],
+                "signals": ["consumer-a"],
+                "locator": "catalogs/python/records/same-inference/rev-1.xml"
+              }
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/records/same-inference/rev-1.xml",
+          "content": {
+            "schema_version": 1,
+            "inference_id": "same-inference",
+            "revision": 1,
+            "status": "active",
+            "statement": "Payload owned only by consumer A.",
+            "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["root-isolation"], "signals": ["consumer-a"], "exclusions": []},
+            "investigation": {"demand_relation": "Prove isolation for A.", "confirm_or_reject_evidence": ["fixture://consumer-a/evidence"], "potential_impact": "Cross-root contamination.", "cost": "low", "stop_condition": "A payload differs.", "suggested_capabilities": ["runtime-qa"]},
+            "provenance": {"source_refs": ["fixture://consumer-a/source"], "accepted_evidence_refs": ["fixture://consumer-a/evidence"], "freshness": "current"},
+            "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+            "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 1, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 3, "as_of_event": "event-a", "freshness": "current", "denominators": {"unique_events": 1}}
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/events/same-inference/event-a.xml",
+          "content": {
+            "schema_version": 1,
+            "event_id": "event-a",
+            "sequence": 1,
+            "source": {"analysis_ref": "fixture://consumer-a/analysis", "run_id": "run-a", "handoff_id": "handoff-a", "evidence_refs": ["fixture://consumer-a/evidence"]},
+            "inference_id": "same-inference",
+            "inference_revision": 1,
+            "stage": "validated",
+            "outcome": "consumer-a-valid",
+            "reason": "Evidence belongs to consumer A.",
+            "agent_capability": "runtime-qa",
+            "cost": {"context": 1, "tools": 1}
+          }
+        }
+      ],
+      "validator": {
+        "execution": {"cwd": "<mktemp>/consumer-a"},
+        "expected": {"exit_code": 0, "status": "valid", "registry_state": "loaded", "catalog_state": "loaded", "record_count": 1, "catalog_ids": ["python-inferences"], "catalog_occupancy": {"python": 1}, "loaded_locators": ["catalogs/python/index.xml", "catalogs/python/records/same-inference/rev-1.xml", "events/same-inference/event-a.xml"], "mutation_applied": false, "diagnostics": []}
+      },
+      "reducer": {
+        "event_paths": [".loki/analytic-inference/v2/events/same-inference/event-a.xml"],
+        "expected": {"exit_code": 0, "status": "valid", "inference_id": "same-inference", "applied_event_ids": ["event-a"], "replayed_event_ids": [], "score": 3, "components": {"false_positive_count": 0, "investigated_count": 0, "material_findings_count": 0, "rejected_count": 0, "repeated_evidence_count": 0, "selected_count": 0, "stale_count": 0, "tasks_helped_count": 0, "validated_count": 1}, "eligibility": {"promotion": false, "purge_review": false, "reorganization": false}, "mutation_applied": false}
+      }
+    },
+    {
+      "consumer_id": "consumer-b",
+      "consumer_root": "<mktemp>/consumer-b",
+      "files": [
+        {
+          "path": ".loki/analytic-inference/v2/registry.xml",
+          "content": {
+            "schema_version": 2,
+            "state_layout": "analytic-inference-consumer-v2",
+            "entries": [
+              {"technology": "python", "aliases": ["py"], "catalog_id": "python-inferences", "locator": "catalogs/python/index.xml"}
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/index.xml",
+          "content": {
+            "schema_version": 1,
+            "catalog_id": "python-inferences",
+            "technology": "python",
+            "aliases": ["py"],
+            "active_limit": 3,
+            "entries": [
+              {
+                "inference_id": "same-inference",
+                "revision": 1,
+                "status": "active",
+                "summary": "Consumer B payload.",
+                "technologies": ["python"],
+                "surfaces": ["validator"],
+                "objectives": ["root-isolation"],
+                "signals": ["consumer-b"],
+                "locator": "catalogs/python/records/same-inference/rev-1.xml"
+              }
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/records/same-inference/rev-1.xml",
+          "content": {
+            "schema_version": 1,
+            "inference_id": "same-inference",
+            "revision": 1,
+            "status": "active",
+            "statement": "Payload owned only by consumer B.",
+            "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["root-isolation"], "signals": ["consumer-b"], "exclusions": []},
+            "investigation": {"demand_relation": "Prove isolation for B.", "confirm_or_reject_evidence": ["fixture://consumer-b/evidence"], "potential_impact": "Cross-root contamination.", "cost": "low", "stop_condition": "B payload differs.", "suggested_capabilities": ["runtime-qa"]},
+            "provenance": {"source_refs": ["fixture://consumer-b/source"], "accepted_evidence_refs": ["fixture://consumer-b/evidence"], "freshness": "current"},
+            "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+            "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 1, "repeated_evidence_count": 0, "stale_count": 0}, "score": -6, "as_of_event": "event-b", "freshness": "current", "denominators": {"unique_events": 1}}
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/events/same-inference/event-b.xml",
+          "content": {
+            "schema_version": 1,
+            "event_id": "event-b",
+            "sequence": 1,
+            "source": {"analysis_ref": "fixture://consumer-b/analysis", "run_id": "run-b", "handoff_id": "handoff-b", "evidence_refs": ["fixture://consumer-b/evidence"]},
+            "inference_id": "same-inference",
+            "inference_revision": 1,
+            "stage": "false-positive",
+            "outcome": "consumer-b-false-positive",
+            "reason": "Evidence belongs to consumer B.",
+            "agent_capability": "runtime-qa",
+            "cost": {"context": 2, "tools": 1}
+          }
+        }
+      ],
+      "validator": {
+        "execution": {"cwd": "<mktemp>/consumer-b"},
+        "expected": {"exit_code": 0, "status": "valid", "registry_state": "loaded", "catalog_state": "loaded", "record_count": 1, "catalog_ids": ["python-inferences"], "catalog_occupancy": {"python": 1}, "loaded_locators": ["catalogs/python/index.xml", "catalogs/python/records/same-inference/rev-1.xml", "events/same-inference/event-b.xml"], "mutation_applied": false, "diagnostics": []}
+      },
+      "reducer": {
+        "event_paths": [".loki/analytic-inference/v2/events/same-inference/event-b.xml"],
+        "expected": {"exit_code": 0, "status": "valid", "inference_id": "same-inference", "applied_event_ids": ["event-b"], "replayed_event_ids": [], "score": -6, "components": {"false_positive_count": 1, "investigated_count": 0, "material_findings_count": 0, "rejected_count": 0, "repeated_evidence_count": 0, "selected_count": 0, "stale_count": 0, "tasks_helped_count": 0, "validated_count": 0}, "eligibility": {"promotion": false, "purge_review": true, "reorganization": true}, "mutation_applied": false}
+      }
+    },
+    {
+      "consumer_id": "consumer-multi",
+      "consumer_root": "<mktemp>/consumer-multi",
+      "files": [
+        {
+          "path": ".loki/analytic-inference/v2/registry.xml",
+          "content": {
+            "schema_version": 2,
+            "state_layout": "analytic-inference-consumer-v2",
+            "entries": [
+              {"technology": "javascript", "aliases": ["js"], "catalog_id": "javascript-inferences", "locator": "catalogs/javascript/index.xml"},
+              {"technology": "python", "aliases": ["py"], "catalog_id": "python-inferences", "locator": "catalogs/python/index.xml"}
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/javascript/index.xml",
+          "content": {
+            "schema_version": 1,
+            "catalog_id": "javascript-inferences",
+            "technology": "javascript",
+            "aliases": ["js"],
+            "active_limit": 3,
+            "entries": [
+              {"inference_id": "javascript-inference", "revision": 1, "status": "active", "summary": "JavaScript inference.", "technologies": ["javascript"], "surfaces": ["runtime"], "objectives": ["selective-lookup"], "signals": ["js"], "locator": "catalogs/javascript/records/javascript-inference/rev-1.xml"}
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/javascript/records/javascript-inference/rev-1.xml",
+          "content": {
+            "schema_version": 1,
+            "inference_id": "javascript-inference",
+            "revision": 1,
+            "status": "active",
+            "statement": "JavaScript record is selected only by javascript or js.",
+            "applicability": {"technologies": ["javascript"], "versions": [], "surfaces": ["runtime"], "objectives": ["selective-lookup"], "signals": ["js"], "exclusions": []},
+            "investigation": {"demand_relation": "Prove JavaScript routing.", "confirm_or_reject_evidence": ["fixture://multi/js"], "potential_impact": "Wrong catalog selection.", "cost": "low", "stop_condition": "Python locator is loaded.", "suggested_capabilities": ["runtime-qa"]},
+            "provenance": {"source_refs": ["fixture://multi/js-source"], "accepted_evidence_refs": ["fixture://multi/js"], "freshness": "current"},
+            "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+            "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 1, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 0, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 1, "as_of_event": "event-js", "freshness": "current", "denominators": {"unique_events": 1}}
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/events/javascript-inference/event-js.xml",
+          "content": {"schema_version": 1, "event_id": "event-js", "sequence": 1, "source": {"analysis_ref": "fixture://multi/analysis", "run_id": "run-multi-js", "handoff_id": "handoff-multi-js", "evidence_refs": ["fixture://multi/js"]}, "inference_id": "javascript-inference", "inference_revision": 1, "stage": "investigated", "outcome": "javascript-investigated", "reason": "JavaScript evidence inspected.", "agent_capability": "runtime-qa", "cost": {"context": 1, "tools": 1}}
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/index.xml",
+          "content": {
+            "schema_version": 1,
+            "catalog_id": "python-inferences",
+            "technology": "python",
+            "aliases": ["py"],
+            "active_limit": 3,
+            "entries": [
+              {"inference_id": "python-inference", "revision": 1, "status": "protected", "summary": "Python inference.", "technologies": ["python"], "surfaces": ["validator"], "objectives": ["selective-lookup"], "signals": ["py"], "locator": "catalogs/python/records/python-inference/rev-1.xml"}
+            ]
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/catalogs/python/records/python-inference/rev-1.xml",
+          "content": {
+            "schema_version": 1,
+            "inference_id": "python-inference",
+            "revision": 1,
+            "status": "protected",
+            "statement": "Python record is selected only by python or py.",
+            "applicability": {"technologies": ["python"], "versions": [], "surfaces": ["validator"], "objectives": ["selective-lookup"], "signals": ["py"], "exclusions": []},
+            "investigation": {"demand_relation": "Prove Python routing.", "confirm_or_reject_evidence": ["fixture://multi/py"], "potential_impact": "Wrong catalog selection.", "cost": "low", "stop_condition": "JavaScript locator is loaded.", "suggested_capabilities": ["runtime-qa"]},
+            "provenance": {"source_refs": ["fixture://multi/py-source"], "accepted_evidence_refs": ["fixture://multi/py"], "freshness": "current"},
+            "lineage": {"supersedes": [], "merged_from": [], "redirect_to": null, "tombstone": null},
+            "snapshot": {"algorithm_version": "analytic-inference-policy-v1", "components": {"selected_count": 0, "investigated_count": 0, "validated_count": 0, "rejected_count": 0, "material_findings_count": 0, "tasks_helped_count": 1, "false_positive_count": 0, "repeated_evidence_count": 0, "stale_count": 0}, "score": 8, "as_of_event": "event-py", "freshness": "current", "denominators": {"unique_events": 1}}
+          }
+        },
+        {
+          "path": ".loki/analytic-inference/v2/events/python-inference/event-py.xml",
+          "content": {"schema_version": 1, "event_id": "event-py", "sequence": 1, "source": {"analysis_ref": "fixture://multi/analysis", "run_id": "run-multi-py", "handoff_id": "handoff-multi-py", "evidence_refs": ["fixture://multi/py"]}, "inference_id": "python-inference", "inference_revision": 1, "stage": "task-helped", "outcome": "python-helped", "reason": "Python inference helped a task.", "agent_capability": "runtime-qa", "cost": {"context": 1, "tools": 1}}
+        }
+      ],
+      "validator_cases": [
+        {
+          "id": "lookup-all-technologies",
+          "execution": {"cwd": "<mktemp>/consumer-multi"},
+          "arguments": {"technology": []},
+          "expected": {"exit_code": 0, "status": "valid", "registry_state": "loaded", "catalog_state": "loaded", "record_count": 2, "catalog_ids": ["javascript-inferences", "python-inferences"], "catalog_occupancy": {"javascript": 1, "python": 1}, "loaded_locators": ["catalogs/javascript/index.xml", "catalogs/javascript/records/javascript-inference/rev-1.xml", "events/javascript-inference/event-js.xml", "catalogs/python/index.xml", "catalogs/python/records/python-inference/rev-1.xml", "events/python-inference/event-py.xml"], "mutation_applied": false, "diagnostics": []}
+        },
+        {
+          "id": "lookup-python-by-alias",
+          "execution": {"cwd": "<mktemp>/consumer-multi"},
+          "arguments": {"technology": ["py"]},
+          "expected": {"exit_code": 0, "status": "valid", "registry_state": "loaded", "catalog_state": "loaded", "record_count": 1, "catalog_ids": ["python-inferences"], "catalog_occupancy": {"python": 1}, "loaded_locators": ["catalogs/python/index.xml", "catalogs/python/records/python-inference/rev-1.xml", "events/python-inference/event-py.xml"], "mutation_applied": false, "diagnostics": []}
+        },
+        {
+          "id": "lookup-javascript-by-alias",
+          "execution": {"cwd": "<mktemp>/consumer-multi"},
+          "arguments": {"technology": ["js"]},
+          "expected": {"exit_code": 0, "status": "valid", "registry_state": "loaded", "catalog_state": "loaded", "record_count": 1, "catalog_ids": ["javascript-inferences"], "catalog_occupancy": {"javascript": 1}, "loaded_locators": ["catalogs/javascript/index.xml", "catalogs/javascript/records/javascript-inference/rev-1.xml", "events/javascript-inference/event-js.xml"], "mutation_applied": false, "diagnostics": []}
+        }
+      ]
+    }
+  ],
+  "cross_root_cases": [
+    {"id": "same-id-different-data", "roots": ["consumer-a", "consumer-b"], "inference_id": "same-inference", "expected": {"consumer-a-statement": "Payload owned only by consumer A.", "consumer-b-statement": "Payload owned only by consumer B.", "consumer-a-score": 3, "consumer-b-score": -6, "cross_root_reads": 0, "cross_root_writes": 0}},
+    {"id": "approval-root-drift", "execution": {"cwd": "<mktemp>/consumer-b"}, "approval_consumer_root": "<mktemp>/consumer-a", "expected": {"exit_code": 2, "status": "blocked", "diagnostic_contains": ["APPROVAL_BINDING_MISMATCH:consumer_root"], "mutation_applied": false}}
+  ]
+}

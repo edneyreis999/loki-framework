@@ -104,11 +104,34 @@ rota especializada para a mesma etapa: ela nao chama nem aninha
 validacao de runtime.
 
 As duas projecoes suportadas, Codex e Claude Code, compartilham
-`lf-analytic-inference` com escopo de instalacao `both`. Na v1, o catalogo base
-comeca vazio e fixtures nao sao seed data. Um overlay duradouro especifico por
-projeto consumidor esta fora da v1; contexto do consumidor permanece nas
-fontes transitorias, na documentacao propria ou em backlog ate existir contrato
-aprovado.
+`lf-analytic-inference` com escopo de instalacao `both`. O pacote distribui
+somente capacidade imutavel: contratos, schemas, scripts, fixtures e a policy
+default. Ele nao contem catalogo de producao, seed nem overlay.
+
+O estado vivo pertence exclusivamente ao projeto consumidor, sob o root
+canonico `<consumer-root>/.loki/analytic-inference/v2/`. O layout ativo usa
+`registry.xml`, indices `index.xml`, records `rev-N.xml` e events `.xml`. Operacoes
+catalog-backed resolvem internamente o consumer root a partir do `pwd` canônico
+no inicio do command, que deve ser executado na raiz do projeto consumidor.
+Nao existe parametro publico de root nem fallback por adapter, Git, ambiente,
+source paths, docs ou descoberta de `.loki`. Registry ausente ou valido sem entries
+retorna `insufficient`, `mutation_applied: false` e zero writes. A primeira
+mutacao aprovada pode fazer bootstrap nesse layout; instalacao e lookup
+read-only nunca fazem bootstrap.
+
+Uma arvore `.loki/analytic-inference/v1/` existente e legado JSON read-only:
+nao e fallback para lookup nem recebe mutacao. Ela so pode ser fonte de uma
+migracao copy-only separada, depois de inventario, technical review e approval
+exata; instalacao, upgrade, uninstall, cleanup e dry-run nao a migram.
+
+Estado nesse layout usa `destination_scope: consumer-operational-state` e tem
+`technical-implementer` como writer exclusivo sob `task_scoped_writer`, com
+root canonico, targets exatos e writes serializados. Promocao e reorganizacao
+exigem technical review e approval root-bound antes da mutacao; purge exige
+dry-run completo e uma approval JIT separada, posterior, single-use e ligada a
+root, IDs, paths, hashes e digests exatos. `framework-artifact-writer` escreve
+somente contratos, schemas, scripts, policy e docs do pacote; `catalogador`
+escreve somente docs duradouros do consumidor. Nenhum dos dois escreve `.loki`.
 
 ## Caminho Integrado v2
 
@@ -204,6 +227,11 @@ O script instala:
 - `.agents/agents/<agent>.md` apontando para `agents/<agent>.md`;
 - `.agents/templates` apontando para `templates`;
 - `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
+
+Esses links instalam capacidade, nao estado operacional. Dry-run, apply,
+upgrade, uninstall e cleanup nao criam, registram, migram nem removem `.loki`.
+Se o destino ja tiver `.loki`, trate toda a arvore como estado do consumidor e
+preserve-a byte a byte durante o workflow de instalacao.
 
 Instalacao em destino consumidor real exige approval especifico para o caminho
 e para o modo de execucao. `--replace` e excepcional e exige approval separado.

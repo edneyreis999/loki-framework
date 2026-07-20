@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -105,8 +106,9 @@ def validate_policy(policy: Any) -> tuple[dict[str, Any] | None, list[str]]:
         "score_is_eligibility_only": True,
         "automatic_mutation": False,
         "purge_requires_independent_just_in_time_approval": True,
-        "consumer_overlay_v1": False,
-        "initial_catalog": "empty",
+        "consumer_state_required": True,
+        "package_catalog": False,
+        "initial_consumer_catalog": "absent-or-empty",
     }
     if not isinstance(semantics, dict) or set(semantics) != set(expected_semantics):
         errors.append("POLICY_SEMANTICS_KEYS")
@@ -118,7 +120,7 @@ def validate_policy(policy: Any) -> tuple[dict[str, Any] | None, list[str]]:
 
 
 def validate_cost(value: Any) -> bool:
-    return (isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0) or value in {"unknown", "unsupported"}
+    return (isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0) or value in {"unknown", "unsupported"}
 
 
 def validate_event(event: Any, position: int) -> list[str]:

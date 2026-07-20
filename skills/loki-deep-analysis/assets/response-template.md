@@ -59,6 +59,16 @@ If empty: <no sufficiently supported technology + consequence>.
 
 ## Selective catalog retrieval
 
+- Canonical consumer root: <path>
+- Root resolution source: canonical-pwd
+- Consumer root source: canonical-pwd
+- Derived state root: <consumer-root>/.loki/analytic-inference/v2
+- Live serialization/layout: XML v2 (`registry.xml`, `index.xml`, `rev-N.xml`, event `.xml`)
+- Catalog state: <absent | empty | loaded | blocked>
+- Registry locator: <relative/root-bound locator | absent>
+- Catalog mutation applied: false
+- Zero-mutation proof: <validator/evidence that no catalog-owned target changed>
+
 ### Indices read
 
 | Technology | Index locator | Entries inspected | Validation | Reason loaded |

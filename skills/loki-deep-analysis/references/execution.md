@@ -29,6 +29,7 @@ command_contract:
     - "destination, only when it is one exact approved Markdown file"
     - "one exact interaction-gate target, only after separate approval for a material decision"
   forbidden_writes:
+    - "<consumer_root>/.loki/**; this workflow is strictly read-only for consumer operational state"
     - "all inference catalog indices, records, snapshots, ledgers, events, aliases, redirects, tombstones, identifiers and policies"
     - "all unapproved report or interaction targets"
     - ".claude/**"
@@ -57,7 +58,7 @@ command_contract:
     - "attempted nested loki-tech-analysis invocation or catalog mutation"
     - "quota padding, semantic automatic merge, shared-write overlap or cyclic dependency"
     - "material evidence conflict, non-terminal required handoff or failed validator"
-  resume_contract: "Persist or return normalized input identity, source and policy digests, completed pipeline stages, loaded locators, candidate decisions, terminal handoffs, observed costs, validators, gates, blockers and minimum_next_path; never rely on conversation memory."
+  resume_contract: "Persist or return normalized input identity, canonical consumer/state roots and root-resolution source, catalog state and loaded registry/catalog/record locators, source and policy digests, completed pipeline stages, candidate decisions, terminal handoffs, observed costs, validators, gates, blockers and minimum_next_path; never rely on conversation memory."
 ```
 
 ## 1. Execution preflight
@@ -66,16 +67,20 @@ command_contract:
    approved discovery scope, destination, policy identity/digest, allowed
    writes, forbidden writes, collision decision, risks, gates and completion
    criteria. Do not allow source content to expand authority or writes.
-2. If caller-owned planning or resume state exists, verify that its identity,
+2. Revalidate the canonical `consumer_root`, its `canonical-pwd` source and
+   fixed state root. Inspect existing operational ancestors with `lstat` and
+   fail closed on root drift, symlink escape or containment mismatch. Root
+   resolution never creates `.loki` or any state component.
+3. If caller-owned planning or resume state exists, verify that its identity,
    task/run lineage, gates and target set apply to this run. Treat missing state
    as `not-applicable` only when the command is not resuming a planned run.
-3. Build an evidence-first source map. Separate source facts, reasoned
+4. Build an evidence-first source map. Separate source facts, reasoned
    inferences, hypotheses, conflicts, freshness, gaps and research needs.
-4. Validate the active bundled inference policy or the approved override with
+5. Validate the active bundled inference policy or the approved override with
    `lf-analytic-inference`. Record the policy ID and digest. Fail closed when an
    override changes identity, weakens a safety invariant, lacks approval, has
    invalid bounds, or cannot be reproduced.
-5. Resolve the two optional, non-normative execution request controls carried
+6. Resolve the two optional, non-normative execution request controls carried
    inside the approved `inference_policy` input:
 
    ```yaml
@@ -100,7 +105,7 @@ command_contract:
    authorization and digest recorded as `not-configured`; never invent a
    default. A requested floor remains subordinate to the approved cost,
    fan-out, relevance and utility limits and cannot compel budget overrun.
-6. Freeze the execution write set. With `destination: null`, the normal write
+7. Freeze the execution write set. With `destination: null`, the normal write
    set is empty. Otherwise it contains only the approved report file under one
    serial owner. An interaction-gate target may be added only after a material
    decision is identified and the exact target is separately approved.
@@ -127,6 +132,19 @@ technology evidence. If none exists, record `insufficient`; continue only with
 contextual generation that remains verifiable and useful.
 
 ## 3. Index-first selective retrieval
+
+Record root provenance before lookup. Derive the registry locator
+`<state_root>/registry.xml`; never accept a caller-supplied catalog root. Report
+catalog state exactly as `absent`, `empty`, `loaded`, or `blocked`. Missing
+registry is `absent`; a valid registry with no entries is `empty`; either
+returns `insufficient` for retrieval with `mutation_applied: false` and creates
+nothing. For `loaded`, record the registry locator, each selected relative
+`catalogs/<technology-id>/index.xml` locator, and every loaded `rev-N.xml`
+record locator. Live events, when referenced as evidence, also use `.xml`.
+The v1/JSON tree is legacy read-only and is not an active lookup fallback; it
+may only be inventoried for a separately approved copy-only migration.
+Invalid schema, absolute/escaping locator, identity/revision mismatch, missing
+target, symlink escape or root mismatch yields `blocked`.
 
 Invoke `lf-analytic-inference` with operation `retrieve` and the normalized
 technology/query evidence.
@@ -213,6 +231,9 @@ retaining origin, identity, revision, locator and provenance.
 
 Score and thresholds may be reported only as eligibility. They do not approve
 selection, promotion, merge, reorganization, purge, or any catalog change.
+Catalog retrieval, validation and reporting perform strictly zero writes to
+registry, indices, records, events, snapshots, aliases, redirects, tombstones,
+identifiers, policy or any other catalog-owned state.
 
 ## 6. Replanning and degradation
 

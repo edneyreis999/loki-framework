@@ -115,6 +115,18 @@ entre `scope` e `target_surface`. Rejeite fontes ainda em execução, dificuldad
 não resolvidas, destinos transitórios tratados como normativos e qualquer path
 fora do escopo, explicando como corrigir.
 
+Mantenha `package_root` e o `consumer_root` interno distintos: o primeiro limita contratos,
+schemas, scripts, policy e docs do pacote; o segundo é resolvido do `pwd` canônico e ancora exclusivamente
+`destination_scope: consumer-operational-state` no layout fixo
+`<consumer_root>/.loki/analytic-inference/v2`. O estado vivo usa
+`registry.xml`, indices `index.xml`, records `rev-N.xml` e events `.xml`. Exija que o command seja iniciado
+na raiz do consumidor; não aceite parâmetro de root, metadata de adapter, Git,
+ambiente, fontes ou descoberta de `.loki` como override.
+
+O layout v1/JSON e legado read-only. Ele so pode ser inventariado como fonte de
+uma migracao copy-only separada, com technical review e approval exata; nunca e
+destino ativo, fallback de lookup ou alvo de mutacao deste command.
+
 Identifique e solicite cada informação obrigatória ausente. Não invente fonte,
 evidência, escopo, destino, classificação, causa, approval ou gate; não avance
 enquanto a lacuna impedir avaliação segura.
@@ -132,7 +144,7 @@ retrospectiva elegível, análise de causa raiz nem gates.
 Normalize objetivo, parâmetros, fontes, evidências transitórias, erro observado
 quando aplicável, atritos de execução, escopo, restrições, destino candidato,
 allowed/forbidden writes, approvals, gates, lacunas e, quando aplicável, os
-locators e tipos das fontes especializadas. Durante Input não faça
+locators e tipos das fontes especializadas, roots canônicas e suas fontes. Durante Input não faça
 digests, pesquisa, classificação, proposta, promoção, escrita nem declaração de
 sucesso.
 

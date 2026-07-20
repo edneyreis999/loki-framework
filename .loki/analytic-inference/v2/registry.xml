@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<registry xmlns="urn:loki:analytic-inference:state:v2"><schemaVersion>2</schemaVersion><stateLayout>analytic-inference-consumer-v2</stateLayout><entries><entry><technology>loki-framework</technology><aliases></aliases><catalogId>loki-framework</catalogId><locator>catalogs/loki-framework/index.xml</locator></entry></entries></registry>

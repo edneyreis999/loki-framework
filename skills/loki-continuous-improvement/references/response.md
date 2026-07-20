@@ -40,13 +40,19 @@ payload/source digests, resultado `accepted`, `replayed-no-op` ou
 validator, snapshot reconstruído, componentes, denominadores, último evento,
 freshness, score, elegibilidades e disposição `record-only`, `block` ou
 `propose-promotion`. Conflito de ID/payload é `blocked` e não escolhe vencedor.
+Inclua `package_root` e o `consumer_root` interno como campos distintos, a fonte
+`canonical-pwd`, state root e registry/catalog locators. Para state proposal,
+declare `destination_scope: consumer-operational-state`, writer
+`technical-implementer`, targets root-bound e package writes proibidos.
 Quando manutenção estiver em avaliação, diferencie
 `reorganization_eligible` (informativo), `reorganization_proposed` (proposta
 gated) e `reorganization_applied` (resultado validado), liste operações
 `generalize|merge|deduplicate|rewrite|reorder` e reporte separadamente
 `catalog_mutation_applied`. Similaridade semântica não altera nenhum estado.
-Para purge, separe eligibility, proposal/dry-run e execution; execution exige
-approval JIT exato e vigente para a operação.
+Para purge, separe eligibility e proposal/dry-run; execution permanece
+`not-run`, mutation false e reservada a um workflow separado de purge físico.
+Registre a approval JIT exata
+que seria exigida, sem consumi-la ou alegar exclusão.
 
 ## Terminal Response
 
@@ -62,8 +68,8 @@ Writer/auditor/gates e estado de mutação. Preserve status `unreviewed` até
 promoção posterior realmente aprovada e validada. Reorganização pode aparecer
 como proposta gated e somente como aplicada após targets/before-after/lineage
 exatos, Writer, auditor, `technical-review`, approval e validators. Purge pode
-aparecer como proposal/dry-run sem mutação; só reporte execution com approval
-JIT exato, vigente e vinculado ao manifesto. Nunca trate elegibilidade ou
+aparecer somente como proposal/dry-run sem mutação; nunca reporte purge físico
+nesta task. Nunca trate elegibilidade ou
 similaridade como autoridade e sempre reporte `catalog_mutation_applied`.
 
 Não declare conclusão com validator falho, gate/approval pendente, handoff

@@ -10,6 +10,20 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from manage_consumer_state import (
+    StateError,
+    _validate_lifecycle_event,
+    assert_no_symlink_components,
+    contained_path,
+    load_json,
+    require_event_derived_snapshot,
+    require_segment,
+    resolve_consumer_root,
+    state_root_for,
+    validate_registry,
+)
+from state_xml import StateXmlError, load_state
+
 
 INDEX_KEYS = {"schema_version", "catalog_id", "technology", "aliases", "active_limit", "entries"}
 ENTRY_KEYS = {"inference_id", "revision", "status", "summary", "technologies", "surfaces", "objectives", "signals", "locator"}
@@ -27,9 +41,12 @@ def canonical(value: Any) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
 
 
-def load_json(path: Path) -> Any:
-    with path.open(encoding="utf-8") as stream:
-        return json.load(stream)
+def load_live(path: Path, kind: str) -> dict[str, Any]:
+    try:
+        return load_state(path, kind)
+    except (OSError, StateXmlError) as exc:
+        diagnostic = exc.diagnostic if isinstance(exc, StateXmlError) else str(exc)
+        raise StateError(f"STATE_XML_READ:{kind}:{diagnostic}") from exc
 
 
 def is_int(value: Any) -> bool:
@@ -116,8 +133,9 @@ def validate_policy(policy: Any, errors: list[str]) -> dict[str, Any] | None:
         "score_is_eligibility_only": True,
         "automatic_mutation": False,
         "purge_requires_independent_just_in_time_approval": True,
-        "consumer_overlay_v1": False,
-        "initial_catalog": "empty",
+        "consumer_state_required": True,
+        "package_catalog": False,
+        "initial_consumer_catalog": "absent-or-empty",
     }
     if not exact_keys(semantics, set(expected_semantics), "policy.semantics", errors):
         return None
@@ -135,6 +153,11 @@ def validate_index(index: Any, errors: list[str]) -> list[dict[str, Any]]:
     for key in ("catalog_id", "technology"):
         if not isinstance(index.get(key), str) or not index[key]:
             errors.append(f"index:{key}:NON_EMPTY_STRING")
+        else:
+            try:
+                require_segment(index[key], f"index:{key}:PATH_SEGMENT")
+            except StateError as exc:
+                errors.append(exc.diagnostic)
     string_array(index.get("aliases"), "index.aliases", errors)
     if not is_int(index.get("active_limit")) or index["active_limit"] < 0:
         errors.append("index:active_limit:NON_NEGATIVE_INTEGER")
@@ -152,10 +175,15 @@ def validate_index(index: Any, errors: list[str]) -> list[dict[str, Any]]:
         inference_id = entry.get("inference_id")
         if not isinstance(inference_id, str) or not inference_id:
             errors.append(f"{where}:inference_id:NON_EMPTY_STRING")
-        elif inference_id in ids:
-            errors.append(f"{where}:DUPLICATE_ID:{inference_id}")
         else:
-            ids.add(inference_id)
+            try:
+                require_segment(inference_id, f"{where}:inference_id:PATH_SEGMENT")
+            except StateError as exc:
+                errors.append(exc.diagnostic)
+            if inference_id in ids:
+                errors.append(f"{where}:DUPLICATE_ID:{inference_id}")
+            else:
+                ids.add(inference_id)
         if last_id is not None and isinstance(inference_id, str) and inference_id < last_id:
             errors.append(f"{where}:ORDER")
         if isinstance(inference_id, str):
@@ -241,20 +269,11 @@ def validate_record(record: Any, where: str, errors: list[str]) -> None:
 def resolve_locator(root: Path, locator: Any, where: str, errors: list[str]) -> Path | None:
     if not isinstance(locator, str) or not locator:
         return None
-    candidate = Path(locator)
-    if candidate.is_absolute():
-        errors.append(f"{where}:LOCATOR_ABSOLUTE")
-        return None
-    resolved = (root / candidate).resolve()
     try:
-        resolved.relative_to(root.resolve())
-    except ValueError:
-        errors.append(f"{where}:LOCATOR_ESCAPE")
+        return contained_path(root, locator, f"{where}:LOCATOR_CONTAINMENT", must_exist=True)
+    except StateError as exc:
+        errors.append(exc.diagnostic)
         return None
-    if not resolved.is_file():
-        errors.append(f"{where}:LOCATOR_MISSING")
-        return None
-    return resolved
 
 
 def validate_lineage(records: dict[str, dict[str, Any]], errors: list[str]) -> None:
@@ -306,66 +325,168 @@ def validate_lineage(records: dict[str, dict[str, Any]], errors: list[str]) -> N
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("catalog", type=Path, help="catalog index JSON path")
+    parser.add_argument("--technology", action="append", default=[], help="validate only a registry technology or alias")
     parser.add_argument("--policy", type=Path, default=Path(__file__).resolve().parents[1] / "references" / "policy-v1.json")
     args = parser.parse_args()
     errors: list[str] = []
     try:
-        index = load_json(args.catalog)
+        consumer_root, resolution_source = resolve_consumer_root()
+        state_root = state_root_for(consumer_root)
         policy = load_json(args.policy)
-    except (OSError, json.JSONDecodeError) as exc:
-        print(json.dumps({"status": "blocked", "diagnostics": [f"INPUT:{exc}"]}, sort_keys=True, separators=(",", ":")))
-        return 1
+        registry_path = state_root / "registry.xml"
+        assert_no_symlink_components(consumer_root, state_root)
+        if not registry_path.exists() and not registry_path.is_symlink():
+            output = {
+                "consumer_root": str(consumer_root),
+                "consumer_root_resolution_source": resolution_source,
+                "diagnostics": [],
+                "loaded_locators": [],
+                "mutation_applied": False,
+                "record_count": 0,
+                "registry_state": "absent",
+                "state_root": str(state_root),
+                "status": "insufficient",
+            }
+            print(json.dumps(output, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+            return 0
+        assert_no_symlink_components(consumer_root, registry_path)
+        registry = load_live(registry_path, "registry")
+        registry_entries = validate_registry(registry)
+    except (OSError, json.JSONDecodeError, StateError) as exc:
+        diagnostic = exc.diagnostic if isinstance(exc, StateError) else f"INPUT:{exc}"
+        print(json.dumps({"status": "blocked", "diagnostics": [diagnostic], "mutation_applied": False}, sort_keys=True, separators=(",", ":")))
+        return 2
     values = validate_policy(policy, errors)
-    entries = validate_index(index, errors)
+    requested = set(args.technology)
+    for item in sorted(requested):
+        try:
+            require_segment(item, f"TECHNOLOGY_FILTER:{item}")
+        except StateError as exc:
+            errors.append(exc.diagnostic)
+    selected_registry_entries = []
+    for entry in registry_entries:
+        names = {entry["technology"], *entry["aliases"]}
+        if not requested or requested & names:
+            selected_registry_entries.append(entry)
+    unresolved = requested - {name for entry in registry_entries for name in [entry["technology"], *entry["aliases"]]}
+    errors.extend(f"REGISTRY_TECHNOLOGY_UNRESOLVED:{item}" for item in sorted(unresolved))
     status_counts = {status: 0 for status in sorted(STATUS)}
-    for entry in entries:
-        if isinstance(entry, dict) and entry.get("status") in status_counts:
-            status_counts[entry["status"]] += 1
-    active_occupancy = status_counts["active"] + status_counts["protected"]
-    active_limit = index.get("active_limit") if isinstance(index, dict) else None
-    if values is not None and isinstance(index, dict) and is_int(index.get("active_limit")) and index["active_limit"] != values["catalog_limit"]:
-        errors.append("index:active_limit:POLICY_MISMATCH")
-    exceeds_index_limit = is_int(active_limit) and active_occupancy > active_limit
-    exceeds_policy_limit = values is not None and active_occupancy > values["catalog_limit"]
-    if exceeds_index_limit or exceeds_policy_limit:
-        errors.append("catalog:ACTIVE_OCCUPANCY_EXCEEDS_LIMIT")
     records: dict[str, dict[str, Any]] = {}
     loaded: list[str] = []
-    root = args.catalog.resolve().parent
-    for position, entry in enumerate(entries):
-        path = resolve_locator(root, entry.get("locator"), f"index.entries[{position}]", errors)
-        if path is None:
+    catalog_ids: list[str] = []
+    active_occupancy = 0
+    active_limits: dict[str, Any] = {}
+    catalog_occupancy: dict[str, int] = {}
+    expected_record_count = 0
+    for registry_position, registry_entry in enumerate(selected_registry_entries):
+        index_path = resolve_locator(state_root, registry_entry["locator"], f"registry.entries[{registry_position}]", errors)
+        if index_path is None:
             continue
         try:
-            record = load_json(path)
-        except (OSError, json.JSONDecodeError) as exc:
-            errors.append(f"index.entries[{position}]:RECORD_READ:{exc}")
+            index = load_live(index_path, "catalog")
+        except (OSError, StateError) as exc:
+            errors.append(f"registry.entries[{registry_position}]:INDEX_READ:{exc}")
             continue
-        validate_record(record, f"record:{entry.get('inference_id')}", errors)
-        inference_id = record.get("inference_id") if isinstance(record, dict) else None
-        if isinstance(inference_id, str):
-            if inference_id in records:
-                errors.append(f"record:DUPLICATE_ID:{inference_id}")
-            records[inference_id] = record
-        for key in ("inference_id", "revision", "status"):
-            if isinstance(record, dict) and entry.get(key) != record.get(key):
-                errors.append(f"index.entries[{position}]:PARITY:{key}")
-        loaded.append(entry.get("locator", ""))
-    if len(records) != len(entries):
+        entries = validate_index(index, errors)
+        if isinstance(index, dict):
+            for key in ("technology", "catalog_id", "aliases"):
+                expected = registry_entry["technology" if key == "technology" else key]
+                if index.get(key) != expected:
+                    errors.append(f"registry.entries[{registry_position}]:INDEX_PARITY:{key}")
+            active_limit = index.get("active_limit")
+            active_limits[registry_entry["technology"]] = active_limit
+            catalog_ids.append(index.get("catalog_id"))
+            if values is not None and is_int(active_limit) and active_limit != values["catalog_limit"]:
+                errors.append("index:active_limit:POLICY_MISMATCH")
+        expected_record_count += len(entries)
+        loaded.append(registry_entry["locator"])
+        this_catalog_occupancy = 0
+        for entry_position, entry in enumerate(entries):
+            if isinstance(entry, dict) and entry.get("status") in status_counts:
+                status_counts[entry["status"]] += 1
+                if entry["status"] in {"active", "protected"}:
+                    this_catalog_occupancy += 1
+            expected_locator = f"catalogs/{registry_entry['technology']}/records/{entry.get('inference_id')}/rev-{entry.get('revision')}.xml"
+            if entry.get("locator") != expected_locator:
+                errors.append(f"index.entries[{entry_position}]:LOCATOR_LAYOUT")
+            path = resolve_locator(state_root, entry.get("locator"), f"index.entries[{entry_position}]", errors)
+            if path is None:
+                continue
+            try:
+                record = load_live(path, "record")
+            except (OSError, StateError) as exc:
+                errors.append(f"index.entries[{entry_position}]:RECORD_READ:{exc}")
+                continue
+            validate_record(record, f"record:{entry.get('inference_id')}", errors)
+            inference_id = record.get("inference_id") if isinstance(record, dict) else None
+            if isinstance(inference_id, str):
+                if inference_id in records:
+                    errors.append(f"record:DUPLICATE_ID:{inference_id}")
+                records[inference_id] = record
+            for key in ("inference_id", "revision", "status"):
+                if isinstance(record, dict) and entry.get(key) != record.get(key):
+                    errors.append(f"index.entries[{entry_position}]:PARITY:{key}")
+            loaded.append(entry.get("locator", ""))
+            inference_id = entry.get("inference_id")
+            events_dir = state_root / "events" / str(inference_id)
+            try:
+                assert_no_symlink_components(consumer_root, events_dir)
+                if not events_dir.is_dir() or events_dir.is_symlink():
+                    raise StateError(f"EVENTS_DIRECTORY_REQUIRED:{inference_id}")
+                current_events: list[dict[str, Any]] = []
+                for event_path in sorted(events_dir.iterdir()):
+                    if event_path.is_symlink() or not event_path.is_file() or event_path.suffix != ".xml":
+                        raise StateError(f"EVENT_TARGET_INVALID:{event_path.name}")
+                    event = load_live(event_path, "event")
+                    if event_path.name != f"{event.get('event_id')}.xml":
+                        raise StateError(f"EVENT_LOCATOR_ID_MISMATCH:{event_path.name}")
+                    event_entry = {**entry, "revision": event.get("inference_revision")}
+                    _validate_lifecycle_event(event, event_entry)
+                    if event.get("inference_revision") == entry.get("revision"):
+                        current_events.append(event)
+                    loaded.append(str(event_path.relative_to(state_root)))
+                if values is not None and isinstance(record, dict):
+                    require_event_derived_snapshot(
+                        record,
+                        current_events,
+                        entry,
+                        values,
+                        f"SNAPSHOT_EVENT_DERIVATION_MISMATCH:{inference_id}",
+                    )
+            except (OSError, StateError) as exc:
+                errors.append(exc.diagnostic if isinstance(exc, StateError) else f"EVENT_READ:{exc}")
+        catalog_occupancy[registry_entry["technology"]] = this_catalog_occupancy
+    active_occupancy = status_counts["active"] + status_counts["protected"]
+    exceeds_index_limit = any(
+        is_int(active_limits.get(technology)) and occupancy > active_limits[technology]
+        for technology, occupancy in catalog_occupancy.items()
+    )
+    exceeds_policy_limit = any(
+        values is not None and occupancy > values["catalog_limit"]
+        for occupancy in catalog_occupancy.values()
+    )
+    if exceeds_index_limit or exceeds_policy_limit:
+        errors.append("catalog:ACTIVE_OCCUPANCY_EXCEEDS_LIMIT")
+    if len(records) != expected_record_count:
         errors.append("catalog:INDEX_RECORD_PARITY")
     validate_lineage(records, errors)
     output = {
-        "active_limit": active_limit,
+        "active_limits": active_limits,
         "active_occupancy": active_occupancy,
-        "catalog_id": index.get("catalog_id") if isinstance(index, dict) else None,
+        "catalog_ids": catalog_ids,
+        "catalog_occupancy": catalog_occupancy,
+        "catalog_state": "empty" if expected_record_count == 0 else "loaded",
+        "consumer_root": str(consumer_root),
+        "consumer_root_resolution_source": resolution_source,
         "diagnostics": sorted(set(errors)),
         "loaded_locators": loaded,
         "mutation_applied": False,
         "policy_digest": policy.get("approved_candidate_digest_sha256") if isinstance(policy, dict) else None,
         "policy_id": policy.get("policy_id") if isinstance(policy, dict) else None,
         "record_count": len(records),
-        "status": "blocked" if errors else "valid",
+        "registry_state": "empty" if not registry_entries else "loaded",
+        "state_root": str(state_root),
+        "status": "blocked" if errors else ("insufficient" if not registry_entries or not selected_registry_entries or expected_record_count == 0 else "valid"),
         "status_counts": status_counts,
     }
     print(json.dumps(output, ensure_ascii=False, sort_keys=True, separators=(",", ":")))

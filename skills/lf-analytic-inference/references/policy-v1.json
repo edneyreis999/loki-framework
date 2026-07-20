@@ -35,7 +35,8 @@
     "score_is_eligibility_only": true,
     "automatic_mutation": false,
     "purge_requires_independent_just_in_time_approval": true,
-    "consumer_overlay_v1": false,
-    "initial_catalog": "empty"
+    "consumer_state_required": true,
+    "package_catalog": false,
+    "initial_consumer_catalog": "absent-or-empty"
   }
 }

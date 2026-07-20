@@ -99,13 +99,23 @@ unapproved, negative, identity-changing, or invariant-weakening values. Never
 infer approval from the presence of the object. Absence selects the active
 policy bundled with `lf-analytic-inference`.
 
+Resolve the internal `consumer_root` exactly once from canonical `pwd`. Require
+the command to start in the consumer project root and record the canonical path
+with source `canonical-pwd`. Do not accept a root parameter or infer/override it
+from adapter metadata, Git, environment, source/report paths, documentation or
+`.loki` presence. Derive, never accept independently, the fixed state root
+`<consumer_root>/.loki/analytic-inference/v2`. Este e o unico layout ativo e
+usa `registry.xml`, indices `index.xml`, records `rev-N.xml` e events `.xml`.
+O layout v1/JSON e legado read-only e so pode ser fonte de uma migracao
+copy-only separadamente inventariada e aprovada; nunca e fallback de lookup.
+
 Identify every missing or invalid required input and request it before
 continuing. Do not invent sources, technologies, destination, policy,
 specialist capability, approval, validator, gate, cost, or evidence. Normalize
 the objective, parameters, canonical sources, discovery limits, destination,
 policy identity/digest, allowed and forbidden writes, risks, validators, gates,
-known gaps, completion criteria, and exact interaction target if independently
-approved.
+known gaps, completion criteria, canonical consumer/state roots and root source,
+and exact interaction target if independently approved.
 
 During Input do not inspect the catalog, conduct the analysis, invoke
 `loki-tech-analysis`, delegate investigations, write a report or interaction

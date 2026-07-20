@@ -27,6 +27,19 @@ SUSPICIOUS_BOTH_TERMS = (
     "prefer these sources",
     "if this skill",
 )
+TRANSIENT_PLAN_REFERENCE_PATTERNS = (
+    (
+        re.compile(r"\btask-[0-9]+(?:\.[0-9]+)+\b", re.IGNORECASE),
+        "numbered task ID",
+    ),
+    (
+        re.compile(
+            r"\bplanos/(?!000-init-loki(?=/|$|[\s`'\"\)\],;:]|\.(?=\s|$)))[0-9]{3}-[a-z0-9._-]+",
+            re.IGNORECASE,
+        ),
+        "numbered transient plan path",
+    ),
+)
 LOKI_COMMAND_PROJECTION_EXCEPTIONS: set[str] = set()
 REQUIRED_AGENTIC_METADATA_FIELDS = {
     "capability_tags",
@@ -43,6 +56,12 @@ FINAL_BUNDLE_RESOURCES = (
     "references/response.md",
     "assets/response-template.md",
 )
+INSTALLABLE_PACKAGE_ROOTS = ("skills", "agents", "codex", "templates")
+ANALYTIC_INFERENCE_RELATIVE_ROOT = Path("skills/lf-analytic-inference")
+ANALYTIC_INFERENCE_FIXTURES = Path("references/fixtures")
+PRODUCTION_STATE_COMPONENTS = {"catalog", "catalogs", "records", "events"}
+PRODUCTION_STATE_FILENAMES = {"registry.xml", "index.xml"}
+PRODUCTION_RECORD_FILENAME = re.compile(r"^rev-[1-9][0-9]*\.xml$")
 
 
 def load_scopes(package_root: Path) -> dict:
@@ -440,6 +459,14 @@ def validate_neutrality(package_root: Path, data: dict) -> None:
                         failures.append(
                             f"{path}: both artifact references internal-only {internal_name}"
                         )
+                if kind == "skills" and name.startswith("loki-"):
+                    for pattern, label in TRANSIENT_PLAN_REFERENCE_PATTERNS:
+                        match = pattern.search(text)
+                        if match is not None:
+                            failures.append(
+                                f"{path}: both Loki bundle contains normative transient "
+                                f"{label} '{match.group(0)}'"
+                            )
 
     if failures:
         raise ValueError("neutrality failures:\n- " + "\n- ".join(failures))
@@ -630,6 +657,62 @@ def validate_manifest_entries(package_root: Path) -> None:
         missing.append(f"manifest entry for {SCOPE_FILE}")
     if missing:
         raise ValueError("missing manifest/source entries: " + ", ".join(missing))
+
+
+def validate_no_production_consumer_state(package_root: Path) -> None:
+    """Reject live consumer state from package surfaces installed by Loki.
+
+    Analytic-inference fixtures are immutable test inputs declared by their
+    `references/fixtures` placement. Contracts, schemas, scripts, and the
+    default policy remain package capability; a live catalog or `.loki` tree
+    does not.
+    """
+    failures: list[str] = []
+
+    for root_name in INSTALLABLE_PACKAGE_ROOTS:
+        root = package_root / root_name
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            relative = path.relative_to(package_root)
+            if ".loki" in relative.parts:
+                failures.append(f"{relative}: packaged .loki consumer state is forbidden")
+
+    inference_root = package_root / ANALYTIC_INFERENCE_RELATIVE_ROOT
+    if inference_root.exists():
+        fixtures_root = inference_root / ANALYTIC_INFERENCE_FIXTURES
+        for path in inference_root.rglob("*"):
+            is_declared_fixture = path == fixtures_root or fixtures_root in path.parents
+            if not path.is_file() and not path.is_symlink():
+                continue
+            relative_to_inference = path.relative_to(inference_root)
+            relative_to_package = path.relative_to(package_root)
+            if path.suffix == ".json" and path.is_file():
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(payload, dict) and payload.get("production_seed") is True:
+                    failures.append(
+                        f"{relative_to_package}: production_seed=true is forbidden in the package"
+                    )
+            if is_declared_fixture:
+                continue
+            if path.name == "index.json" or path.name in PRODUCTION_STATE_FILENAMES or (
+                path.suffix == ".xml" and PRODUCTION_RECORD_FILENAME.fullmatch(path.name)
+            ) or any(
+                component in PRODUCTION_STATE_COMPONENTS
+                for component in relative_to_inference.parts
+            ):
+                failures.append(
+                    f"{relative_to_package}: packaged analytic-inference catalog state is forbidden"
+                )
+            if path.name.lower().startswith(("seed.", "seed-", "seed_")):
+                failures.append(
+                    f"{relative_to_package}: packaged analytic-inference live seed is forbidden"
+                )
+
+    if failures:
+        raise ValueError(
+            "production consumer state failures:\n- " + "\n- ".join(sorted(set(failures)))
+        )
 
 
 def parse_manifest_scalar(value: str) -> str:
@@ -1122,6 +1205,14 @@ def validate_final_neutrality(package_root: Path, data: dict) -> None:
                     failures.append(
                         f"{path}: both artifact references internal-only {internal_name}"
                     )
+            if name.startswith("loki-"):
+                for pattern, label in TRANSIENT_PLAN_REFERENCE_PATTERNS:
+                    match = pattern.search(text)
+                    if match is not None:
+                        failures.append(
+                            f"{path}: both Loki bundle contains normative transient "
+                            f"{label} '{match.group(0)}'"
+                        )
     if failures:
         raise ValueError("neutrality failures:\n- " + "\n- ".join(failures))
 
@@ -1174,6 +1265,7 @@ def main(argv: list[str] | None = None) -> int:
         }
         assert_exact_keys("skill", set(skill_scopes), skill_names)
         validate_frontmatter_duplicate_keys(package_root)
+        validate_no_production_consumer_state(package_root)
 
         if schema_version == 2:
             if (package_root / "commands").exists():

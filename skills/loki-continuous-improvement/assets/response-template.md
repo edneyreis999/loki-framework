@@ -16,6 +16,14 @@
 
 <use none quando a ramificação especializada não estiver ativa>
 
+- Package root: <canonical package root | not-applicable>
+- Consumer root/source: <canonical consumer root + canonical-pwd>
+- Consumer root source: canonical-pwd
+- State root: <consumer-root>/.loki/analytic-inference/v2
+- Live serialization/layout: XML v2 (`registry.xml`, `index.xml`, `rev-N.xml`, event `.xml`)
+- Registry/catalog locators: <root-bound locators | absent/empty>
+- Destination scope: <consumer-operational-state | other classified scope>
+
 | Source type/locator | Intake identity | Source/payload digest | Status | Capture/lineage/provenance | Counted |
 | --- | --- | --- | --- | --- | --- |
 | <deep-analysis/retrospective + locator> | <event:event_id ou candidate:candidate_id> | <digests> | <accepted/replayed-no-op/conflict-blocked> | <refs> | <yes/no + reason> |
@@ -45,10 +53,13 @@
 - Targets exatos: <index e record>
 - Before/after: <diff esperado>
 - Dry validation: <index-record parity, reducer/snapshot e resultados>
-- Writer exclusivo: <framework-artifact-writer + envelope>
-- Auditor independente read-only: <framework-artifact-quality-auditor + status>
+- Writer exclusivo de state: <technical-implementer + task_scoped_writer envelope>
+- Package writer receives `.loki`: false
+- State writer receives package contracts/docs: false
+- State validation reviewer: <runtime-qa read-only + status | none>
 - Gates antes de durable write: <technical-review + approval + fontes>
-- Catalog mutation applied: false
+- Catalog mutation applied: <false for proposal/dry-run; true only after exact gates, index-last write and post-validation>
+- Approved lifecycle result: <not-run | index-last applied + post-validation | blocked + exact residue>
 
 ## Reorganização de inferência
 
@@ -58,10 +69,11 @@
 - Operation ID e targets exatos: <IDs/revisions/paths | none>
 - Before/after e lineage: <estado preservado | none>
 - Protected/validated knowledge preservation: <validated result | pending | blocked | none>
-- Writer/auditor: <framework-artifact-writer + framework-artifact-quality-auditor read-only | none>
+- Writer: <technical-implementer state writer | none>
 - Technical-review + approval: <status e fontes | none>
 - Deterministic validators: <schema/identity/lineage/parity/snapshot + results | none>
 - Reorganization applied: <true somente após todos os controles; senão false>
+- Commit point/result: <not-run | technology index published last | blocked + before/after-commit residue>
 - Catalog mutation applied: <igual ao efeito observado desta operação; false para eligibility/proposal>
 - Semantic similarity used as identity/authority: false
 
@@ -71,10 +83,10 @@
 - Purge proposed: <true/false>
 - Dry-run: <not-run | valid + operation ID/manifest/digest | blocked + reason>
 - Exact JIT approval: <missing | blocked | valid + source/issued_at/expiry/freshness | consumed>
-- Execution: <not-run | blocked | failed + residuals | applied + post-validation>
+- Execution: <not-run; physical purge reserved to a separate physical-purge workflow>
 - External reports/retrospectives/evidence/approval targeted: false
 - Semantic similarity used as authority: false
-- Catalog mutation applied: <true somente para execução completa autorizada e validada; senão false>
+- Catalog mutation applied: false
 
 ## Causa raiz e execution friction
 

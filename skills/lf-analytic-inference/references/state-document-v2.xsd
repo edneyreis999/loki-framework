@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:loki:analytic-inference:state:v2"
+           xmlns="urn:loki:analytic-inference:state:v2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           version="2.0">
+
+  <xs:simpleType name="PathSegmentIdType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z0-9][a-z0-9._-]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonEmptyStringType">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CatalogLocatorType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="catalogs/[a-z0-9][a-z0-9._-]*/index\.xml"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RecordLocatorType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="catalogs/[a-z0-9][a-z0-9._-]*/records/[a-z0-9][a-z0-9._-]*/rev-[1-9][0-9]*\.xml"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="RecordStatusType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="active"/>
+      <xs:enumeration value="protected"/>
+      <xs:enumeration value="redirect"/>
+      <xs:enumeration value="tombstone"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FreshnessType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="current"/>
+      <xs:enumeration value="stale"/>
+      <xs:enumeration value="unknown"/>
+      <xs:enumeration value="unsupported"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="InvestigationCostType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="low"/>
+      <xs:enumeration value="medium"/>
+      <xs:enumeration value="high"/>
+      <xs:enumeration value="unknown"/>
+      <xs:enumeration value="unsupported"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NonNegativeDecimalType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EventStageType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="selected"/>
+      <xs:enumeration value="investigated"/>
+      <xs:enumeration value="validated"/>
+      <xs:enumeration value="rejected"/>
+      <xs:enumeration value="material-finding"/>
+      <xs:enumeration value="task-helped"/>
+      <xs:enumeration value="false-positive"/>
+      <xs:enumeration value="repeated-evidence"/>
+      <xs:enumeration value="stale"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="StringListType">
+    <xs:sequence>
+      <xs:element name="item" type="StringValueType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EmptyType">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="StringValueType">
+    <xs:choice>
+      <xs:element name="text" type="xs:string"/>
+      <xs:element name="base64Utf8" type="xs:base64Binary"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="IdListType">
+    <xs:sequence>
+      <xs:element name="item" type="PathSegmentIdType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="NullableIdType">
+    <xs:choice>
+      <xs:element name="none" type="EmptyType"/>
+      <xs:element name="value" type="PathSegmentIdType"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="JsonValueType">
+    <xs:choice>
+      <xs:element name="string" type="StringValueType"/>
+      <xs:element name="integer" type="xs:integer"/>
+      <xs:element name="number" type="xs:decimal"/>
+      <xs:element name="boolean" type="xs:boolean"/>
+      <xs:element name="null" type="EmptyType"/>
+      <xs:element name="object" type="JsonObjectType"/>
+      <xs:element name="array" type="JsonArrayType"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="JsonObjectType">
+    <xs:sequence>
+      <xs:element name="entry" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="key" type="StringValueType"/>
+            <xs:element name="value" type="JsonValueType"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="JsonArrayType">
+    <xs:sequence>
+      <xs:element name="value" type="JsonValueType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="NullableJsonObjectType">
+    <xs:choice>
+      <xs:element name="none" type="EmptyType"/>
+      <xs:element name="value" type="JsonObjectType"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="RegistryEntryType">
+    <xs:sequence>
+      <xs:element name="technology" type="PathSegmentIdType"/>
+      <xs:element name="aliases" type="IdListType"/>
+      <xs:element name="catalogId" type="PathSegmentIdType"/>
+      <xs:element name="locator" type="CatalogLocatorType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RegistryType">
+    <xs:sequence>
+      <xs:element name="schemaVersion" type="xs:positiveInteger" fixed="2"/>
+      <xs:element name="stateLayout" type="xs:string" fixed="analytic-inference-consumer-v2"/>
+      <xs:element name="entries">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="entry" type="RegistryEntryType" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CatalogEntryType">
+    <xs:sequence>
+      <xs:element name="inferenceId" type="PathSegmentIdType"/>
+      <xs:element name="revision" type="xs:positiveInteger"/>
+      <xs:element name="status" type="RecordStatusType"/>
+      <xs:element name="summary" type="StringValueType"/>
+      <xs:element name="technologies" type="IdListType"/>
+      <xs:element name="surfaces" type="StringListType"/>
+      <xs:element name="objectives" type="StringListType"/>
+      <xs:element name="signals" type="StringListType"/>
+      <xs:element name="locator" type="RecordLocatorType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="CatalogType">
+    <xs:sequence>
+      <xs:element name="schemaVersion" type="xs:positiveInteger" fixed="1"/>
+      <xs:element name="catalogId" type="PathSegmentIdType"/>
+      <xs:element name="technology" type="PathSegmentIdType"/>
+      <xs:element name="aliases" type="IdListType"/>
+      <xs:element name="activeLimit" type="xs:nonNegativeInteger"/>
+      <xs:element name="entries">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="entry" type="CatalogEntryType" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ApplicabilityType">
+    <xs:sequence>
+      <xs:element name="technologies" type="IdListType"/>
+      <xs:element name="versions" type="StringListType"/>
+      <xs:element name="surfaces" type="StringListType"/>
+      <xs:element name="objectives" type="StringListType"/>
+      <xs:element name="signals" type="StringListType"/>
+      <xs:element name="exclusions" type="StringListType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InvestigationType">
+    <xs:sequence>
+      <xs:element name="demandRelation" type="StringValueType"/>
+      <xs:element name="confirmOrRejectEvidence" type="StringListType"/>
+      <xs:element name="potentialImpact" type="StringValueType"/>
+      <xs:element name="cost" type="InvestigationCostType"/>
+      <xs:element name="stopCondition" type="StringValueType"/>
+      <xs:element name="suggestedCapabilities" type="StringListType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ProvenanceType">
+    <xs:sequence>
+      <xs:element name="sourceRefs" type="StringListType"/>
+      <xs:element name="acceptedEvidenceRefs" type="StringListType"/>
+      <xs:element name="freshness" type="FreshnessType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LineageType">
+    <xs:sequence>
+      <xs:element name="supersedes" type="IdListType"/>
+      <xs:element name="mergedFrom" type="IdListType"/>
+      <xs:element name="redirectTo" type="NullableIdType"/>
+      <xs:element name="tombstone" type="NullableJsonObjectType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ComponentsType">
+    <xs:sequence>
+      <xs:element name="selectedCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="investigatedCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="validatedCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="rejectedCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="materialFindingsCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="tasksHelpedCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="falsePositiveCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="repeatedEvidenceCount" type="xs:nonNegativeInteger"/>
+      <xs:element name="staleCount" type="xs:nonNegativeInteger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SnapshotType">
+    <xs:sequence>
+      <xs:element name="algorithmVersion" type="StringValueType"/>
+      <xs:element name="components" type="ComponentsType"/>
+      <xs:element name="score" type="xs:integer"/>
+      <xs:element name="asOfEvent" type="NullableIdType"/>
+      <xs:element name="freshness" type="FreshnessType"/>
+      <xs:element name="denominators" type="JsonObjectType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RecordType">
+    <xs:sequence>
+      <xs:element name="schemaVersion" type="xs:positiveInteger" fixed="1"/>
+      <xs:element name="inferenceId" type="PathSegmentIdType"/>
+      <xs:element name="revision" type="xs:positiveInteger"/>
+      <xs:element name="status" type="RecordStatusType"/>
+      <xs:element name="statement" type="StringValueType"/>
+      <xs:element name="applicability" type="ApplicabilityType"/>
+      <xs:element name="investigation" type="InvestigationType"/>
+      <xs:element name="provenance" type="ProvenanceType"/>
+      <xs:element name="lineage" type="LineageType"/>
+      <xs:element name="snapshot" type="SnapshotType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EventSourceType">
+    <xs:sequence>
+      <xs:element name="analysisRef" type="StringValueType"/>
+      <xs:element name="runId" type="StringValueType"/>
+      <xs:element name="handoffId" type="StringValueType"/>
+      <xs:element name="evidenceRefs" type="StringListType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ObservedCostType">
+    <xs:choice>
+      <xs:element name="value" type="NonNegativeDecimalType"/>
+      <xs:element name="unknown" type="EmptyType"/>
+      <xs:element name="unsupported" type="EmptyType"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="EventCostType">
+    <xs:sequence>
+      <xs:element name="context" type="ObservedCostType"/>
+      <xs:element name="tools" type="ObservedCostType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EventType">
+    <xs:sequence>
+      <xs:element name="schemaVersion" type="xs:positiveInteger" fixed="1"/>
+      <xs:element name="eventId" type="PathSegmentIdType"/>
+      <xs:element name="sequence" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="source" type="EventSourceType"/>
+      <xs:element name="inferenceId" type="PathSegmentIdType"/>
+      <xs:element name="inferenceRevision" type="xs:positiveInteger"/>
+      <xs:element name="stage" type="EventStageType"/>
+      <xs:element name="outcome" type="JsonValueType"/>
+      <xs:element name="reason" type="StringValueType"/>
+      <xs:element name="agentCapability" type="StringValueType"/>
+      <xs:element name="cost" type="EventCostType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="registry" type="RegistryType"/>
+  <xs:element name="catalog" type="CatalogType"/>
+  <xs:element name="record" type="RecordType"/>
+  <xs:element name="event" type="EventType"/>
+</xs:schema>

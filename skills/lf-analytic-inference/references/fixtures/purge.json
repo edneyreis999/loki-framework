@@ -1,11 +1,15 @@
 {
-  "schema_version": 1,
-  "fixture_id": "analytic-inference-purge-contract-v1",
-  "fixture_kind": "synthetic-contract-scenarios",
+  "schema_version": "1",
+  "fixture_id": "analytic-inference-purge-contract-v2",
+  "fixture_kind": "synthetic-control-plane-scenarios",
   "synthetic": true,
+  "production_seed": false,
   "real_purge_authorized": false,
   "mutation_performed": false,
-  "catalog_root": "synthetic-catalog",
+  "consumer_root": "<mktemp>/consumer-purge",
+  "state_root": ".loki/analytic-inference/v2",
+  "live_serialization": "canonical-xml-v2",
+  "control_plane_serialization": "canonical-json",
   "policy": {
     "policy_id": "analytic-inference-policy-v1",
     "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
@@ -14,15 +18,14 @@
     "removals_per_cycle": 1
   },
   "canonicalization": {
-    "encoding": "utf-8",
-    "json_keys": "sorted",
-    "json_separators": [",", ":"],
-    "dry_run_digest_input": "target_manifest excluding dry_run_digest_sha256"
+    "live_state": "canonical XML bytes",
+    "control_plane": "canonical JSON with sorted keys and compact separators",
+    "dry_run_digest_input": "complete dry_run_manifest"
   },
   "dry_run": {
     "operation_id": "purge-op-synthetic-001",
-    "sequence": 1,
-    "generated_at": "2030-01-01T00:00:00Z",
+    "technology": "python",
+    "catalog_id": "python-inferences",
     "inference_ids": ["inference-synthetic-purge-001"],
     "inference_revisions": {"inference-synthetic-purge-001": 1},
     "eligibility": {
@@ -31,96 +34,83 @@
       "purge_review_eligible": true,
       "sufficient_for_purge": false
     },
-    "target_manifest": {
+    "dry_run_manifest": {
+      "schema_version": 1,
       "operation_id": "purge-op-synthetic-001",
-      "sequence": 1,
-      "generated_at": "2030-01-01T00:00:00Z",
-      "catalog_root": "synthetic-catalog",
+      "operation": "purge",
+      "consumer_root": "<mktemp>/consumer-purge",
+      "consumer_root_resolution_source": "canonical-pwd",
+      "state_root": "<mktemp>/consumer-purge/.loki/analytic-inference/v2",
+      "technology": "python",
+      "catalog_id": "python-inferences",
       "inference_ids": ["inference-synthetic-purge-001"],
+      "inference_revisions": {"inference-synthetic-purge-001": 1},
       "policy_id": "analytic-inference-policy-v1",
       "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
-      "removals_per_cycle": 1,
-      "target_count": 8,
       "targets": [
         {
-          "artifact_kind": "record",
-          "canonical_catalog_path": "records/inference-synthetic-purge-001.json",
-          "selector": "$",
-          "before_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
-        },
-        {
           "artifact_kind": "index-entry",
-          "canonical_catalog_path": "index.json",
-          "selector": "$.entries[inference_id=inference-synthetic-purge-001]",
+          "locator": "catalogs/python/index.xml",
+          "selector": "catalog.entries[inference_id=inference-synthetic-purge-001]",
           "before_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
         },
         {
-          "artifact_kind": "snapshot",
-          "canonical_catalog_path": "records/inference-synthetic-purge-001.json",
-          "selector": "$.snapshot",
+          "artifact_kind": "known-empty-directory",
+          "locator": "catalogs/python/records/inference-synthetic-purge-001",
+          "selector": "empty-after-approved-file-deletes",
           "before_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
         },
         {
-          "artifact_kind": "events",
-          "canonical_catalog_path": "events/inference-synthetic-purge-001.json",
-          "selector": "$",
-          "before_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+          "artifact_kind": "record",
+          "locator": "catalogs/python/records/inference-synthetic-purge-001/rev-1.xml",
+          "selector": "document",
+          "before_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
         },
         {
-          "artifact_kind": "aliases",
-          "canonical_catalog_path": "index.json",
-          "selector": "$.aliases[inference-synthetic-purge-001]",
+          "artifact_kind": "snapshot",
+          "locator": "catalogs/python/records/inference-synthetic-purge-001/rev-1.xml",
+          "selector": "record.snapshot",
+          "before_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        {
+          "artifact_kind": "known-empty-directory",
+          "locator": "events/inference-synthetic-purge-001",
+          "selector": "empty-after-approved-file-deletes",
           "before_sha256": "5555555555555555555555555555555555555555555555555555555555555555"
         },
         {
-          "artifact_kind": "redirects",
-          "canonical_catalog_path": "redirects/inference-synthetic-purge-001.json",
-          "selector": "$",
-          "before_sha256": "6666666666666666666666666666666666666666666666666666666666666666"
-        },
-        {
-          "artifact_kind": "tombstones",
-          "canonical_catalog_path": "tombstones/inference-synthetic-purge-001.json",
-          "selector": "$",
-          "before_sha256": "7777777777777777777777777777777777777777777777777777777777777777"
-        },
-        {
-          "artifact_kind": "catalog-controlled-identifiers",
-          "canonical_catalog_path": "identifiers/inference-synthetic-purge-001.json",
-          "selector": "$",
-          "before_sha256": "8888888888888888888888888888888888888888888888888888888888888888"
+          "artifact_kind": "event",
+          "locator": "events/inference-synthetic-purge-001/event-synthetic-purge-001.xml",
+          "selector": "document",
+          "before_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
         }
-      ],
-      "exclusions": [
-        {
-          "artifact_kind": "external-report",
-          "path": "external/reports/deep-analysis-synthetic.md",
-          "before_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        },
-        {
-          "artifact_kind": "external-retrospective",
-          "path": "external/retrospectives/synthetic.md",
-          "before_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-        },
-        {
-          "artifact_kind": "external-evidence",
-          "path": "external/evidence/synthetic.json",
-          "before_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        },
-        {
-          "artifact_kind": "approval-record",
-          "path": "external/approvals/purge-op-synthetic-001.json",
-          "before_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-        }
-      ],
-      "dry_run_digest_sha256": "2c4287166623b89c7ba2f6345d49016c4514f4fbaa9e6fce926c282cb9f1ffff"
+      ]
     },
     "expected": {
       "status": "valid-dry-run",
       "mutation_applied": false,
-      "approval_effect": "none"
+      "physical_purge_available": false,
+      "approval_effect": "none",
+      "diagnostic": "PHYSICAL_PURGE_UNAVAILABLE_DRY_RUN_ONLY"
     }
   },
+  "external_sources": [
+    {
+      "artifact_kind": "external-report",
+      "path": "external/reports/deep-analysis-synthetic.md",
+      "before_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "artifact_kind": "external-retrospective",
+      "path": "external/retrospectives/synthetic.md",
+      "before_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "artifact_kind": "external-evidence",
+      "path": "external/evidence/synthetic.json",
+      "before_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ],
   "scenarios": [
     {
       "scenario_id": "dry-run-no-mutation",
@@ -128,8 +118,8 @@
       "expected": {
         "status": "valid-dry-run",
         "mutation_applied": false,
-        "catalog_traces_remaining": 8,
-        "external_refs_preserved": true
+        "catalog_traces_enumerated": 6,
+        "external_sources_preserved": true
       }
     },
     {
@@ -146,7 +136,7 @@
       "variants": [
         {"kind": "operation-id", "observed": "purge-op-synthetic-other", "expected_diagnostic": "OPERATION_ID_MISMATCH"},
         {"kind": "inference-id", "observed": ["inference-synthetic-other"], "expected_diagnostic": "INFERENCE_ID_MISMATCH"},
-        {"kind": "canonical-path", "observed": ["records/inference-synthetic-other.json"], "expected_diagnostic": "TARGET_PATH_MISMATCH"},
+        {"kind": "locator", "observed": ["catalogs/python/records/inference-synthetic-other/rev-1.xml"], "expected_diagnostic": "TARGET_PATH_MISMATCH"},
         {"kind": "target-set-digest", "observed": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "expected_diagnostic": "DRY_RUN_DIGEST_MISMATCH"},
         {"kind": "policy-digest", "observed": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "expected_diagnostic": "POLICY_DIGEST_MISMATCH"}
       ],
@@ -167,27 +157,21 @@
         "synthetic": true,
         "authorization_effect": "none",
         "operation_id": "purge-op-synthetic-001",
+        "consumer_root": "<mktemp>/consumer-purge",
+        "state_root": "<mktemp>/consumer-purge/.loki/analytic-inference/v2",
         "inference_ids": ["inference-synthetic-purge-001"],
-        "canonical_paths": [
-          "events/inference-synthetic-purge-001.json",
-          "identifiers/inference-synthetic-purge-001.json",
-          "index.json",
-          "records/inference-synthetic-purge-001.json",
-          "redirects/inference-synthetic-purge-001.json",
-          "tombstones/inference-synthetic-purge-001.json"
+        "canonical_locators": [
+          "catalogs/python/index.xml",
+          "catalogs/python/records/inference-synthetic-purge-001",
+          "catalogs/python/records/inference-synthetic-purge-001/rev-1.xml",
+          "events/inference-synthetic-purge-001",
+          "events/inference-synthetic-purge-001/event-synthetic-purge-001.xml"
         ],
-        "target_set_digest_sha256": "2c4287166623b89c7ba2f6345d49016c4514f4fbaa9e6fce926c282cb9f1ffff",
-        "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
-        "approver_id": "synthetic-approver",
-        "source_locator": "external/approvals/purge-op-synthetic-001.json",
         "status": "approved",
-        "issued_at": "2030-01-01T00:00:01Z",
         "freshness": "fresh",
-        "expires_at": "2030-01-01T00:05:00Z",
         "consumed": false
       },
       "simulated_pre_delete": {
-        "checked_at": "2030-01-01T00:00:02Z",
         "containment": "valid",
         "symlink_escape": false,
         "identity": "valid",
@@ -202,7 +186,7 @@
         "real_mutation_applied": false,
         "approved_catalog_traces_remaining": 0,
         "catalog_parity": "valid",
-        "external_refs_preserved": true,
+        "external_sources_preserved": true,
         "external_hashes_unchanged": true,
         "unapproved_writes": 0,
         "approval_consumed": true
@@ -214,27 +198,13 @@
         "synthetic": true,
         "authorization_effect": "none",
         "operation_id": "purge-op-synthetic-001",
+        "consumer_root": "<mktemp>/consumer-purge",
+        "state_root": "<mktemp>/consumer-purge/.loki/analytic-inference/v2",
         "inference_ids": ["inference-synthetic-purge-001"],
-        "canonical_paths": [
-          "events/inference-synthetic-purge-001.json",
-          "identifiers/inference-synthetic-purge-001.json",
-          "index.json",
-          "records/inference-synthetic-purge-001.json",
-          "redirects/inference-synthetic-purge-001.json",
-          "tombstones/inference-synthetic-purge-001.json"
-        ],
-        "target_set_digest_sha256": "2c4287166623b89c7ba2f6345d49016c4514f4fbaa9e6fce926c282cb9f1ffff",
-        "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
-        "approver_id": "synthetic-approver",
-        "source_locator": "external/approvals/purge-op-synthetic-001.json",
         "status": "approved",
-        "issued_at": "2030-01-01T00:00:01Z",
         "freshness": "stale",
-        "expires_at": "2030-01-01T00:00:02Z",
         "consumed": false
       },
-      "evaluation": {"evaluated_at": "2030-01-01T00:00:03Z"},
-      "simulated_pre_delete": {"checked_at": "2030-01-01T00:00:03Z"},
       "expected": {
         "status": "blocked",
         "diagnostic": "JIT_APPROVAL_STALE",
@@ -244,8 +214,8 @@
     },
     {
       "scenario_id": "partial-delete-residual-fails",
-      "simulated_removed_artifact_kinds": ["record", "index-entry"],
-      "simulated_residual_artifact_kinds": ["snapshot", "events", "aliases", "redirects", "tombstones", "catalog-controlled-identifiers"],
+      "simulated_removed_artifact_kinds": ["record", "snapshot", "index-entry"],
+      "simulated_residual_artifact_kinds": ["event", "known-empty-directory"],
       "expected": {
         "status": "failed-blocked",
         "diagnostic": "PURGE_RESIDUAL_TRACES",
@@ -260,26 +230,13 @@
         "synthetic": true,
         "authorization_effect": "none",
         "operation_id": "purge-op-synthetic-001",
+        "consumer_root": "<mktemp>/consumer-purge",
+        "state_root": "<mktemp>/consumer-purge/.loki/analytic-inference/v2",
         "inference_ids": ["inference-synthetic-purge-001"],
-        "canonical_paths": [
-          "events/inference-synthetic-purge-001.json",
-          "identifiers/inference-synthetic-purge-001.json",
-          "index.json",
-          "records/inference-synthetic-purge-001.json",
-          "redirects/inference-synthetic-purge-001.json",
-          "tombstones/inference-synthetic-purge-001.json"
-        ],
-        "target_set_digest_sha256": "2c4287166623b89c7ba2f6345d49016c4514f4fbaa9e6fce926c282cb9f1ffff",
-        "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
-        "approver_id": "synthetic-approver",
-        "source_locator": "external/approvals/purge-op-synthetic-001.json",
         "status": "approved",
-        "issued_at": "2030-01-01T00:00:01Z",
         "freshness": "fresh",
-        "expires_at": "2030-01-01T00:05:00Z",
         "consumed": true
       },
-      "simulated_pre_delete": {"checked_at": "2030-01-01T00:00:02Z"},
       "expected": {
         "status": "blocked",
         "diagnostic": "JIT_APPROVAL_REUSED",

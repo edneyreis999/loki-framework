@@ -39,7 +39,8 @@ contraditoria ou stop condition ativa.
 
 Para cada candidato de inferencia, exponha `candidate_id`, `observation_type`,
 status exatamente `unreviewed`, `capture_id`, locator da retrospectiva,
-run/phase/task e lineage opcional, statement/pergunta, expected/actual ou
+consumer root canonico/root source/state root, run/phase/task e lineage,
+statement/pergunta, expected/actual ou
 oportunidade ausente, applicability, provenance/evidence/freshness, separacao
 fato/inferencia/hipotese, validacao, investigacao, distinction/dedup hints,
 reuse/avoid guidance e downstream. Registre os validators, gates e lacunas.

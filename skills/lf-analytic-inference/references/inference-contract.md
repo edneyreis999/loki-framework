@@ -1,82 +1,167 @@
-# Analytic Inference Contract v1
+# Analytic Inference State Contract v2
 
 Read this contract when validating, interpreting, deriving, or proposing a
-change to analytic-inference state. JSON is the normative representation.
-Unknown keys fail closed unless a later schema version explicitly permits them.
+change to analytic-inference state. Canonical XML v2 is the only normative
+representation for live registry, catalog, record, and event documents. The
+control plane remains JSON: policy, request, proposal, approval, target or
+migration manifest, digest envelope, and CLI output are not XML state.
+Unknown XML elements, attributes, namespaces, mixed content, or ambiguous types
+fail closed.
 
-## Catalog index
+## Consumer root and state layout
+
+`consumer_root` is an internal, auditable boundary for every catalog-backed
+operation. Resolve it exactly once from canonical `pwd` at command start. Every
+command must be launched from the consumer project root. There is no public
+root parameter or adapter-metadata fallback, and Git, environment variables,
+source or analysis paths, documentation and `.loki` discovery cannot override
+the working-directory boundary. Reports, resume state, write envelopes and
+approvals record the canonical root with resolution source `canonical-pwd`.
+
+The only live production state layout is:
+
+```text
+<consumer-root>/.loki/analytic-inference/v2/
+  registry.xml
+  catalogs/
+    <technology-id>/
+      index.xml
+      records/
+        <inference-id>/
+          rev-<revision>.xml
+  events/
+    <inference-id>/
+      <event-id>.xml
+```
+
+The consumer owns all live state. The package contains only immutable,
+reusable capability: contracts, schemas, scripts, fixtures, and the default
+policy. It contains no production catalog, seed, or overlay. The package
+policy therefore declares `consumer_state_required: true`,
+`package_catalog: false`, and
+`initial_consumer_catalog: "absent-or-empty"`.
+
+The state grammar is
+[state-document-v2.xsd](state-document-v2.xsd), namespace
+`urn:loki:analytic-inference:state:v2`. It defines exactly four document roots:
+`registry`, `catalog`, `record`, and `event`. Element order is the XSD sequence;
+arrays use their declared container and repeated `item` or `entry` elements;
+nullable values use the declared `<none/> | <value>...</value>` choice. Event
+`outcome`, tombstone metadata, and snapshot denominators use the recursive
+`JsonValueType` grammar so JSON-compatible values retain string, integer,
+decimal, boolean, null, object, and array types without embedding JSON text.
+Every logical string uses `StringValueType`: `<text>` when every Unicode scalar
+is legal XML 1.0 content, otherwise `<base64Utf8>` containing canonical base64
+of strict UTF-8 bytes. Unpaired surrogates are invalid input. This preserves
+JSON strings containing XML-forbidden controls without changing their logical
+value. The choice is deterministic; a value eligible for `<text>` must never be
+encoded as base64. Object entries contain `key` then `value` children and are
+ordered by Unicode code-point order of their unique decoded key.
+An integer never serializes as `number`; decimal values use non-exponent
+`xs:decimal` form; booleans are exactly `true` or `false`. When a JSON control
+value uses exponent notation, parse it as a finite `decimal.Decimal`, reject
+NaN and infinities, and emit the equivalent non-exponent decimal with no
+leading plus, no redundant integer zeroes, and no trailing fractional zeroes
+(`0` is the only zero form). This preserves numeric value while giving XML one
+canonical lexical representation.
+
+## Canonical XML and parser security
+
+The codec uses Python stdlib `xml.etree.ElementTree` only. Before parsing UTF-8
+bytes, reject a BOM, invalid UTF-8, `<!DOCTYPE`, `<!ENTITY`, comments, and any
+processing instruction other than the one required XML declaration. Entity
+declarations and named entity references other than the five predefined XML
+escapes are forbidden. No network, external resolver, XInclude, DTD, or custom
+parser target is allowed.
+
+After parsing, require the exact v2 namespace, one declared document root, no
+foreign namespace, no mixed content or non-whitespace tail, and only XSD-known
+elements. State v2 declares no attributes, so any attribute blocks. XSD
+validation is followed by semantic checks for
+unique and sorted IDs/aliases/entries/object keys, identity/locator parity,
+lineage, and cross-document references; XSD success alone is insufficient.
+
+Canonical bytes are:
+
+1. the exact ASCII declaration
+   `<?xml version="1.0" encoding="UTF-8"?>` followed by LF;
+2. the UTF-8 result of `xml.etree.ElementTree.canonicalize` using C14N 2.0,
+   `with_comments=False`, `strip_text=False`, `rewrite_prefixes=False`;
+3. one final LF and no BOM.
+
+Register the v2 namespace as the default namespace before serialization.
+Decode `StringValueType` before applying required-nonempty, uniqueness, ID, or
+ordering rules; string whitespace is logical data and is never trimmed. Writers construct typed elements,
+serialize once, parse and validate the serialized bytes, canonicalize again,
+and require byte equality before hashing or publication. Readers canonicalize
+valid input and require byte equality; merely equivalent non-canonical XML is
+blocked rather than silently rewritten during read-only operations.
+
+## Registry and containment
+
+The root `registry.xml` conforms to `RegistryType` in
+[state-document-v2.xsd](state-document-v2.xsd). Its `schemaVersion` is `2` and
+its `stateLayout` is `analytic-inference-consumer-v2`; these identify the
+storage layout, not a change to catalog, record, event, or policy semantics.
+Entries are ordered by `technology`; technologies, aliases, `catalogId` values,
+and locators are unique across the registry. Each locator is exactly the relative,
+technology-bound `catalogs/<technology-id>/index.xml`. A missing registry is
+state `absent`; a valid registry with no entries is state `empty`; one or more
+valid entries is `loaded`. Read-only lookup of absent or empty state returns
+`insufficient`, `mutation_applied: false`, and creates nothing.
+
+Technology IDs, inference IDs, event IDs, and other identifiers used as path
+segments must match `[a-z0-9][a-z0-9._-]*`; invalid input blocks without silent
+normalization. Registry, index, record, and event locators are relative,
+normalized, identity-consistent, and root-bound to the canonical state root.
+Absolute locators, `..`, missing targets, layout mismatch, root mismatch,
+symlink escape, or root drift fail closed.
+
+The consumer root must already exist as a directory. Before any mutable or
+destructive operation, inspect existing `.loki`, feature-root, catalog-parent,
+and target components with `lstat`; an operational symlink ancestor or target
+blocks. Immediately before each write or delete, revalidate root identity,
+ancestors, targets, hashes, and containment by proving the resolved target is
+relative to the state root. An approval, locator, or manifest bound to one
+consumer root is invalid for every other root.
+
+## Catalog index document
 
 An index is loaded before records and contains:
 
-- `schema_version`: integer `1`;
-- `catalog_id`: stable non-empty string;
+- `schemaVersion`: integer `1`, preserving the logical catalog schema across
+  the XML layout cutover;
+- `catalogId`: stable path-segment ID;
 - `technology`: normalized technology or domain ID;
 - `aliases`: unique normalized strings;
-- `active_limit`: non-negative integer, normally the approved policy value;
-- `entries`: unique summaries ordered by `inference_id`.
+- `activeLimit`: non-negative integer, normally the approved policy value;
+- `entries`: unique summaries ordered by `inferenceId`.
 
-Each entry contains `inference_id`, positive `revision`, `status`, short
+Each entry contains `inferenceId`, positive `revision`, `status`, short
 `summary`, arrays `technologies`, `surfaces`, `objectives`, `signals`, and a
 relative `locator`. Allowed index statuses are `active`, `protected`,
-`redirect`, and `tombstone`. A locator must remain under the approved catalog
+`redirect`, and `tombstone`. A locator must remain under the canonical state
 root, resolve to one record, and agree with its identity and revision.
 
-The v1 package catalog starts with no entries. An empty index is valid. Test
-fixtures and reports never seed it implicitly.
+An empty consumer catalog index is valid. Test fixtures and reports never seed
+consumer state implicitly.
 
-## Inference record
+## Inference record document
 
-A record contains:
-
-```json
-{
-  "schema_version": 1,
-  "inference_id": "<stable-id>",
-  "revision": 1,
-  "status": "active",
-  "statement": "<testable statement or question>",
-  "applicability": {
-    "technologies": [],
-    "versions": [],
-    "surfaces": [],
-    "objectives": [],
-    "signals": [],
-    "exclusions": []
-  },
-  "investigation": {
-    "demand_relation": "<observable relation>",
-    "confirm_or_reject_evidence": [],
-    "potential_impact": "<impact>",
-    "cost": "low",
-    "stop_condition": "<observable condition>",
-    "suggested_capabilities": []
-  },
-  "provenance": {
-    "source_refs": [],
-    "accepted_evidence_refs": [],
-    "freshness": "current"
-  },
-  "lineage": {
-    "supersedes": [],
-    "merged_from": [],
-    "redirect_to": null,
-    "tombstone": null
-  },
-  "snapshot": {
-    "algorithm_version": "analytic-inference-score-v1",
-    "components": {},
-    "score": 0,
-    "as_of_event": null,
-    "freshness": "current",
-    "denominators": {}
-  }
-}
-```
+A record is the `record` root and `RecordType` sequence in the XSD. The mapping
+is lossless and fixed. `schemaVersion` remains integer `1`, preserving the
+logical record schema across the XML layout cutover. The sequence is
+`schemaVersion`, `inferenceId`, `revision`, `status`,
+`statement`, `applicability`, `investigation`, `provenance`, `lineage`, and
+`snapshot`. Camel-case XML names map one-to-one to the existing logical field
+names; no field may be omitted or represented as an attribute.
 
 Required statistics derived in `snapshot.components` are
-`selected_count`, `investigated_count`, `validated_count`, `rejected_count`,
-`material_findings_count`, `tasks_helped_count`, `false_positive_count`,
-`repeated_evidence_count`, and `stale_count`. Preserve rejection reasons,
+`selectedCount`, `investigatedCount`, `validatedCount`, `rejectedCount`,
+`materialFindingsCount`, `tasksHelpedCount`, `falsePositiveCount`,
+`repeatedEvidenceCount`, and `staleCount`. They map exactly to the unchanged
+logical snake-case counters used by the JSON policy/reducer. Preserve rejection
+reasons,
 agent capabilities used, observed context/tool cost, most recent evidence,
 technologies, versions, and surfaces in the event-derived view. Cost may be
 `observed`, `unknown`, or `unsupported`; never infer zero.
@@ -86,21 +171,23 @@ creates a new ID and lists the old ID in `supersedes`. An N-to-1 merge lists
 every parent in `merged_from`; redirects point to the surviving ID. All lineage
 graphs must be acyclic and resolvable while the records exist.
 
-## Immutable inference event
+## Immutable inference event document
 
 Every event contains:
 
-- `schema_version`: integer `1`;
-- stable `event_id`, used as the idempotency key;
-- `source.analysis_ref`, `source.run_id`, `source.handoff_id`, and
-  `source.evidence_refs`;
-- `inference_id` and positive `inference_revision`;
+- `schemaVersion`: integer `1`, preserving the logical event schema across the
+  XML layout cutover;
+- stable `eventId`, used as the idempotency key;
+- `source.analysisRef`, `source.runId`, `source.handoffId`, and
+  `source.evidenceRefs`;
+- `inferenceId` and positive `inferenceRevision`;
 - `stage`: `selected`, `investigated`, `validated`, `rejected`,
   `material-finding`, `task-helped`, `false-positive`, `repeated-evidence`, or
   `stale`;
-- typed `outcome`, observable `reason`, and `agent_capability`;
+- typed `outcome`, observable `reason`, and `agentCapability`;
 - `cost.context` and `cost.tools`, each observed value, `unknown`, or
-  `unsupported`.
+`unsupported`. Observed values are finite non-negative decimals; NaN and
+infinities block.
 
 An identical `event_id` and canonical payload replays as a no-op. The same ID
 with a different payload is a conflict and blocks reconciliation. Stage
@@ -151,15 +238,90 @@ Preserve origin and lifecycle states `catalogued`, `generated`, `rejected`,
 inferences enter downstream continuous improvement as `unreviewed` candidates.
 Only that workflow may reconcile events and propose durable catalog writes.
 
+Read-only operations and installation lifecycle operations perform zero state
+writes. The first approved promotion or reorganization may bootstrap the state
+root, empty registry, and required technology catalog. Bootstrap prepares
+temporary files inside the same consumer `.loki`, validates the complete
+proposed state, atomically publishes files, and publishes the registry last.
+An identical retry is a no-op; a divergent collision blocks.
+
+Exactly one `technical-implementer` consumer-state writer may operate on the
+state root at a time, in `task_scoped_writer` mode with canonical root, exact
+targets, validators, and gates in its envelope. New revisions and events use
+create-if-absent and never overwrite a divergent identity. Promotion and
+reorganization publish new immutable revisions and events before publishing
+the technology index last as commit point. Failure before the commit point
+preserves the previously visible catalog and reports staging residue; failure
+after it blocks for audit and never claims rollback.
+
+Package-contract writes use `framework-artifact-writer`, which never writes
+`.loki`. The consumer-state writer never changes package contracts in the same
+envelope. Installation, upgrade, uninstall, cleanup, and dry-run never create,
+remove, or migrate `.loki`. Non-empty legacy state outside this layout blocks
+automatic migration and requires a separately planned inventory, digest,
+approval, and cutover. Whether `.loki` is ignored or versioned remains a
+consumer decision.
+
 Promotion, reorganization, rewrite, deduplication, and merge require evidence,
 lineage, deterministic validation, `technical-review`, and applicable human
 approval. Score only establishes eligibility.
 
-A physical purge is terminal and irreversible. It may remove only the exact
-catalog-owned record, index entry, snapshot, events, aliases, redirects,
-tombstones, and identifiers bound to an independently approved dry-run digest.
-It must fail closed on any ID, canonical-path, target-set, or digest mismatch.
-External reports, retrospectives, and evidence sources remain intact.
+A physical purge is terminal and irreversible. Its deterministic, zero-write
+dry-run records canonical consumer and state roots, technology/catalog IDs,
+inference IDs and revisions, every catalog-owned target and selector, prior
+hashes, policy ID/digest, and a manifest digest. Only a subsequent, single-use
+JIT approval bound exactly to those values authorizes deletion. Before the
+first delete, revalidate containment, root and ancestors, hashes, eligibility,
+target completeness, and approval.
+
+Purge publishes the technology index without purged references before deleting
+the now-unreferenced record, snapshot, events, aliases, redirects, tombstones,
+and identifiers enumerated by the approved manifest. Each delete names one
+exact target. Never delete `.loki`, the feature root, or a broad recursive
+subtree; remove only known empty directories that are part of the target set.
+Partial failure reports `failed` or `blocked` and all residue, and never claims
+rollback or zero traces. Post-validation proves the approved catalog-owned
+traces absent, the remaining catalog valid, and external reports,
+retrospectives, evidence, and sources byte-identical.
+
+## Legacy v1 and copy-only cutover
+
+`<consumer-root>/.loki/analytic-inference/v1/**` is legacy JSON state and is
+read-only. Its `index.json`, technology indices, records, and events may be read
+only to validate or inventory a proposed migration. No promotion,
+reorganization, replay write, purge, overwrite, rename, or delete targets v1.
+The JSON schemas `registry-schema.json`, `catalog-schema.json`, and
+`event-schema.json` are legacy readers only; they never authorize new live JSON
+state.
+
+A v1-to-v2 migration is a copy, never a move or in-place conversion:
+
+1. resolve canonical `consumer_root` from `pwd`, lstat both version roots, and
+   block symlink ancestors, root drift, or any pre-existing divergent v2 target;
+2. inventory every v1 registry, index, record, and event path; validate v1;
+   record byte length and SHA-256 for every source plus one sorted inventory
+   digest in a JSON migration manifest;
+3. deterministically map each validated logical object to its exact v2 XML
+   locator, canonical bytes, SHA-256, and target-set digest without writing;
+4. obtain a new exact approval after that dry-run, bound to canonical consumer,
+   v1 and v2 roots, every source/target path and hash, inventory and target-set
+   digests, policy ID/digest, and operation ID;
+5. revalidate all roots, paths, source hashes, absence/collision state, manifest,
+   and unused approval immediately before copying;
+6. write only create-if-absent temporary files inside the v2 state root,
+   validate round-trip logical equality and canonical bytes, publish records
+   and events, publish technology indices last for each catalog, and publish
+   `registry.xml` last as the cutover commit point;
+7. post-validate the complete v2 graph, byte-compare every v1 source against
+   the inventory, consume the approval once, and record the migration result.
+
+Any failure preserves all v1 bytes, reports v2 staging residue, and never
+claims rollback or cutover. Existing identical v2 canonical targets make retry
+a no-op; any divergent collision blocks. Approvals, manifests, or digests made
+for v1 JSON maintenance before this decision are superseded and cannot
+authorize migration or v2 mutation. Migration approval does not replace
+technical review, human validation, or final cutover approval, and no task in
+this cutover removes v1.
 
 ## Validation outcomes
 

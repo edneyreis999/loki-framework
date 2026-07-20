@@ -108,23 +108,39 @@ execucao.
    paralela; escrita fica serializada por owner e arquivo. O owner pode ser o
    orquestrador ou um agente `scoped-writer` quando a task aprovada declarar
    `target_files`, validators e gates.
-15. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
+15. Tasks que tocam estado de inferencias do consumidor declaram
+    `destination_scope: consumer-operational-state`, resolvem internamente o
+    consumer root do `pwd` canonico e derivam somente
+    `<consumer-root>/.loki/analytic-inference/v2/`. O owner exclusivo e
+    `technical-implementer` em `task_scoped_writer`, com targets exatos e writes
+    serializados por arquivo. Registry ausente ou vazio em leitura retorna
+    `insufficient` e zero writes; instalacao e lookup nunca fazem bootstrap. O
+    estado ativo usa `registry.xml`, indices `index.xml`, records `rev-N.xml` e
+    events `.xml`. O v1/JSON e legado read-only, sem fallback de lookup, e pode
+    apenas alimentar migracao copy-only separadamente inventariada e aprovada.
+    O pacote distribui somente contratos, schemas, scripts, fixtures e policy:
+    nunca catalogo de producao, seed ou overlay.
+16. Promocao e reorganizacao em `.loki` exigem validators, technical review e
+    approval root-bound antes da mutacao. Purge exige dry-run completo e uma
+    approval JIT independente, posterior, single-use e vinculada a root, IDs,
+    paths, hashes e digests exatos. Nenhum score autoriza write ou delete.
+17. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
     `catalogador`, caller `loki-run-plan`, mode `task_scoped_writer`.
     Indisponibilidade bloqueia; nenhum fallback escreve esses targets.
-16. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
+18. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
-17. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
+19. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
     `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
     task, arquivos afetados, validations, human loops, blockers e proximo
     passo.
-18. No mesmo checkpoint, persista primeiro completion/evidence mínimo. Quando
+20. No mesmo checkpoint, persista primeiro completion/evidence mínimo. Quando
     o evento for material, despache `execution-knowledge-cataloger` em paralelo
     para uma entry exclusiva; continue sem esperar e reconcilie depois um dos
     estados `captured`, `partial`, `failed`, `unsupported` ou
     `skipped-nonmaterial`. No final, cancele/interrompa captura não terminal sem
     bloquear a execução validada.
-19. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+21. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki-retrospectiva-tecnica` e siga o
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
@@ -173,7 +189,7 @@ execucao.
 | --- | --- |
 | `execution-context-reader` | Extrai contexto relevante em modo read-only antes da escrita, incluindo pre-analise local minima quando faltam referencias executaveis. |
 | `source-researcher` | Mapeia fatos, lacunas e conflitos em pesquisa multi-fonte antes de decisao, plano ou execucao, especialmente quando a lacuna pre-escrita e ampla demais para `execution-context-reader`. |
-| `technical-implementer` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir `target_files`; caso contrario, retorna proposta. |
+| `technical-implementer` | Writer exclusivo de `consumer-operational-state` sob `.loki/analytic-inference/v2/` quando a task declara consumer root canonico, targets exatos, validators e gates; fora desse envelope retorna proposta. |
 | `runtime-qa` | Produz checklist de validacao e evidencia esperada para comportamento perceptivel ou runtime. |
 | `bibliotecario` | Localiza, de forma estreita, a menor documentacao duradoura suficiente. |
 | `catalogador` | Unico writer de `/docs` do consumidor, inclusive em tasks escopadas de `loki-run-plan`. |
@@ -195,6 +211,11 @@ execucao.
   aplicavel, owner de escrita, validator e gate humano.
 - Nao acione agente `scoped-writer` sem `target_files`, `allowed_writes`,
   owner exclusivo, validators e gates suficientes.
+- Nao trate `.loki` como docs do consumidor nem como artefato do pacote.
+  `framework-artifact-writer` e `catalogador` nunca escrevem esse state root.
+- Pare antes de promocao ou reorganizacao em `.loki` sem technical review e
+  approval root-bound. Para purge, pare sem dry-run e approval JIT propria,
+  posterior e ainda nao consumida.
 - Pare se o preflight pessoal nao registrar fontes, freshness, conflitos,
   lacunas e suficiencia do contexto. Nao autocorrija docs nesse preflight.
 - Se uma task exigir docs do consumidor, atribua ao `catalogador`; sua
