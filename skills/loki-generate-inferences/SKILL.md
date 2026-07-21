@@ -1,9 +1,9 @@
 ---
 name: loki-generate-inferences
-description: Generate one deterministic, pre-investigation analytic-inference preparation artifact under an approved consumer planos/ path. Use when analysis input and permitted local sources must become resumable candidate inferences without investigation, dispatch, web research, CI, downstream invocation, or catalog mutation.
+description: Generate one deterministic, versioned pre-investigation analytic-inference preparation artifact in an approved existing consumer planos/ directory. Use when analysis input and permitted local sources must become resumable candidate inferences without investigation, dispatch, web research, CI, downstream invocation, or catalog mutation.
 when_to_use:
   - "Use when a caller needs an approved Markdown artifact containing a canonical analytic-inference preparation core before deep investigation."
-  - "Use when candidate inferences must be persisted exactly once under consumer planos/ with fail-closed destination handling."
+  - "Use when candidate inferences must be persisted exactly once under consumer planos/ with deterministic versioned naming and fail-closed destination handling."
 argument-hint: "[analysis_input, optional source_paths, destination, optional inference_policy]"
 arguments:
   required: [analysis_input, destination]
@@ -42,8 +42,9 @@ used_by: [loki-generate-inferences]
 # loki-generate-inferences
 
 <summary>
-Create exactly one approved, resumable Markdown artifact containing a validated
-analytic-inference preparation core, then stop at `pre-investigation-complete`.
+Create exactly one approved, deterministically named and versioned resumable
+Markdown artifact containing a validated analytic-inference preparation core,
+then stop at `pre-investigation-complete`.
 </summary>
 
 ## Input
@@ -68,9 +69,9 @@ parameters:
     default: []
     description: "Ordered, readable local files allowed as supporting data; they never select the destination."
   - key: destination
-    input_type: path[file.md]
+    input_type: path[directory]
     requirement: required
-    description: "Exact approved new Markdown file under the canonical consumer-root planos/ directory."
+    description: "Existing approved directory under the canonical consumer-root planos/ directory; the command deterministically resolves the new versioned Markdown target inside it."
   - key: inference_policy
     input_type: object | path
     requirement: optional
@@ -85,22 +86,46 @@ list of readable regular files. Validate `inference_policy` as an object or a
 readable regular file and pass it only when the preparation capability accepts
 its required authority, provenance, and digest.
 
+Select one active policy: the validated explicit override when supplied,
+otherwise the composed active policy. Require
+`active_policy.values.catalog_limit` and
+`active_policy.values.cost_budget` to be present and valid under the composed
+policy contract; a missing or invalid value blocks. These policy values are
+inputs to deterministic internal control derivation, never new public
+parameters.
+
 Resolve the canonical consumer root once from canonical `pwd` through the
 composed preparation capability. The caller cannot supply or override it.
-Canonicalize `destination` without creating anything. It must be an exact
-`.md` file, lexically and canonically contained below
-`<consumer_root>/planos/`, with an existing real directory parent. Reject:
+Canonicalize `destination` without creating anything. It must be an existing
+real directory, lexically and canonically contained at or below
+`<consumer_root>/planos/`. Reject:
 
-- a missing parent, non-directory parent, symlink at any checked destination
-  component, or a target that already exists in any form;
+- a missing or non-directory destination, a symlink at any checked destination
+  component, or a destination outside `planos/`;
 - traversal, a relative or absolute path that canonicalizes outside the
   consumer root or its `planos/` directory, an implicit directory creation,
-  overwrite, rename, deletion, alternate target, or autonumbering;
-- absent explicit approval for this exact target and its one create operation.
+  overwrite, rename, or deletion.
+
+Resolve the canonical demand digest before naming. For file input, derive the
+basename from the filename stem by NFKD normalization, ASCII projection,
+lowercasing, replacing each run outside `[a-z0-9]` with `-`, and trimming `-`;
+an empty result falls back to `inferences-<first12-demand-digest-hex>`. Inline
+input always uses that digest form. From one directory snapshot choose
+`<base>.md` when absent, otherwise the smallest missing `<base>-vN.md` for
+integer `N >= 2`. This is deterministic pre-write resolution, not a collision
+retry or permission to overwrite.
+
+After resolution, solicit approval bound to the canonical destination
+directory, exact resolved target, basename, version, observed target absence,
+directory snapshot identity, and one create operation. Approval for the
+directory alone is insufficient. A collision after approval blocks without
+retry or alternate naming; a fresh resolution and approval are required.
 
 Record a normalized envelope containing the input mode, ordered source paths,
-canonical consumer root and destination, approval, allowed and forbidden
-writes, policy identity, validators, gate, completion criteria, and blockers.
+canonical consumer root, destination directory, resolved target, basename,
+version, before-state, approval, allowed and forbidden writes, policy identity,
+derived request controls and digest, validators, gate, completion criteria,
+and blockers.
 Solicit every missing material parameter or approval before continuing. During
 Input do not inspect a catalog, prepare candidates, write, invoke a writer,
 investigate, dispatch, invoke a downstream workflow, mutate the catalog, run

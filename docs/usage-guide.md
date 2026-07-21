@@ -105,10 +105,21 @@ validacao de runtime.
 
 `loki-generate-inferences` e um fork opcional anterior a investigacao. Ele
 recebe `analysis_input`, `source_paths` locais permitidos e um `destination`
-aprovado; o destino deve ser exatamente um novo arquivo `.md` abaixo de
-`<consumer-root>/planos/`, com parent existente, sem symlink, traversal ou
-colisao. Seu unico output e esse Markdown, com um core canonico de preparacao
-de inferencias, criado uma unica vez e terminal em
+aprovado; o destino deve ser um diretorio existente abaixo de
+`<consumer-root>/planos/`, sem symlink ou traversal. O command deriva
+internamente exatamente `discovery_limit=policy.catalog_limit`,
+`relevant_result_floor=null`, `cost_budget=policy.cost_budget` e
+`safe_preference=fail-closed`. Isso nao preenche quota/floor, rejeita duplicata
+exata, preserva near duplicate separada e adia custo desconhecido quando a
+admissao no budget nao pode ser provada. Depois resolve o digest da demanda e
+escolhe antes da approval um target versionado: slug NFKD/ASCII do
+stem para arquivo ou `inferences-<digest12>` para inline, seguido pelo menor
+`-vN` ausente quando o basename ja existir. A approval fica vinculada ao
+diretorio canonico, target exato, basename/versao, before-state/snapshot e um
+create exclusivo. Colisao posterior invalida a approval e bloqueia sem retry;
+uma nova resolucao e nova approval sao obrigatorias. Seu unico output e
+esse Markdown, com um core canonico de preparacao de inferencias, criado uma
+unica vez e terminal em
 `pre-investigation-complete`. O command nao investiga, nao cria fan-out,
 handoff ou agent run, nao pesquisa a web, nao roda CI, nao invoca workflow
 downstream e nao altera o catalogo. Depois da resposta, a pessoa escolhe

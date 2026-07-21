@@ -45,9 +45,18 @@ O caminho manual continua sendo explicito: uma rota de analise
 
 Quando for util separar a preparacao deterministica da investigacao,
 `loki-generate-inferences` e um fork opcional antes de `loki-deep-analysis`.
-Ele recebe uma entrada de analise, fontes locais permitidas e um destino `.md`
-novo, exato e aprovado abaixo de `<consumer-root>/planos/`, com parent existente
-e sem symlink, traversal ou colisao. Cria somente esse unico output e termina
+Ele recebe uma entrada de analise, fontes locais permitidas e um diretorio
+existente e aprovado abaixo de `<consumer-root>/planos/`, sem symlink ou
+traversal. Deriva exatamente `discovery_limit=policy.catalog_limit`,
+`relevant_result_floor=null`, `cost_budget=policy.cost_budget` e
+`safe_preference=fail-closed`: nao preenche quota/floor, rejeita duplicata
+exata, preserva near duplicate separada e adia custo desconhecido quando o
+budget nao pode ser provado. Antes da approval, resolve target versionado por
+slug/digest e menor `-vN` ausente. A approval vincula diretorio canonico,
+target exato, basename/versao, before-state/snapshot e um create exclusivo.
+Colisao posterior invalida a approval e bloqueia sem retry; exige nova resolucao
+e nova approval.
+Cria somente esse unico output e termina
 em `pre-investigation-complete`; nao executa investigacao, fan-out, handoff,
 agent run, web research, CI, catalog mutation ou workflow downstream. A rota
 seguinte e sempre escolhida manualmente em novo pedido; este fork nao a invoca.

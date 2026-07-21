@@ -63,10 +63,20 @@ execucao. O usuario escolhe o proximo workflow em um novo pedido.
 
 `loki-generate-inferences` e outra preparacao opt-in, para quando uma entrada
 de analise e fontes locais permitidas precisarem virar um unico core canonico
-de inferencias antes da investigacao. Ele requer `analysis_input` e o
-`destination` exato, novo e aprovado, como arquivo `.md` sob
-`<consumer-root>/planos/`, com parent existente e sem symlink ou colisao. O
-command cria somente esse arquivo uma vez e termina em
+de inferencias antes da investigacao. Ele requer `analysis_input` e um
+`destination` que seja diretorio existente sob `<consumer-root>/planos/`, sem
+symlink ou traversal. Depois do digest da demanda, resolve um target versionado
+deterministico: slug NFKD/ASCII do stem para input em arquivo, ou
+`inferences-<digest12>` para inline; se `<base>.md` existir, escolhe antes da
+approval o menor `<base>-vN.md` ausente. Internamente, deriva exatamente
+`discovery_limit=policy.catalog_limit`, `relevant_result_floor=null`,
+`cost_budget=policy.cost_budget` e `safe_preference=fail-closed`.
+`fail-closed` nao preenche quota/floor, rejeita duplicata exata, preserva near
+duplicate separada e adia custo desconhecido quando a admissao no budget nao
+pode ser provada. A approval vincula diretorio canonico, target exato,
+basename/versao, before-state/snapshot e um create exclusivo. Colisao posterior
+invalida a approval e bloqueia sem retry; exige nova resolucao e nova approval.
+O command cria somente esse arquivo uma vez e termina em
 `pre-investigation-complete`: nao faz fan-out, handoff, agente, pesquisa web,
 CI, mutacao de catalogo ou chamada downstream. Uma pessoa pode escolher, em
 novo pedido, uma rota posterior permitida — por exemplo

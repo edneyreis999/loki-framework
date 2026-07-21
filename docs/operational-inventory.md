@@ -41,7 +41,7 @@ não existe projection ou command físico separado.
 | `loki-abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
 | `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki-demand-text-improver` | `mvp` | Enriquecer uma demanda inicial em um unico Markdown antes de analise ou planejamento, sem gate de estado de sessao, com destination existente e gravavel, naming deterministico e nenhum workflow posterior automatico. |
-| `loki-generate-inferences` | `mvp` | Gerar, de forma opt-in, um unico Markdown canonico de pre-investigacao no destino exato e aprovado sob `planos/` do consumidor; nao investiga, nao faz fan-out, handoff, agent run, web research, CI, workflow downstream ou mutacao de catalogo. |
+| `loki-generate-inferences` | `mvp` | Gerar, de forma opt-in, um unico Markdown canonico de pre-investigacao em diretorio existente e aprovado sob `planos/` do consumidor, com request controls derivados da policy, slug/digest e versao deterministica resolvida antes da approval, create exclusivo e bloqueio sem retry em colisao concorrente; nao investiga, nao faz fan-out, handoff, agent run, web research, CI, workflow downstream ou mutacao de catalogo. |
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
@@ -62,6 +62,20 @@ não existe projection ou command físico separado.
 | `zord:run-plan` | `reference-only` | Base estrutural para executor Loki com gates do runtime do consumidor. |
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
+
+### Contrato resumido de `loki-generate-inferences`
+
+O command deriva exatamente quatro controles internos:
+`discovery_limit=policy.catalog_limit`, `relevant_result_floor=null`,
+`cost_budget=policy.cost_budget` e `safe_preference=fail-closed`. O modo
+fail-closed nao preenche quota/floor, rejeita duplicatas exatas, preserva near
+duplicates separadas e adia candidatas de custo desconhecido quando a admissao
+no budget nao pode ser provada.
+
+Depois de resolver digest, basename e versao por um snapshot do diretorio, a
+approval vincula diretorio canonico, target exato, basename/versao,
+before-state/snapshot e um create exclusivo. Colisao posterior invalida a
+approval, bloqueia sem retry e exige nova resolucao e nova approval.
 
 O pacote possui 20 command bundles `loki-*` ativos. O router publico
 `lf-command-workflows` expoe 18 deles; os dois bundles `internal-only`,
