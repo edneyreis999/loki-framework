@@ -93,26 +93,12 @@ request_controls:
   minimum_candidate_floor: <validated positive integer from active policy>
 ```
 
-Missing or invalid controls block before invocation. The preparation
-control has these atomic semantics:
-
-- preserve every distinct material candidate without a total ceiling;
-- continue after reaching the floor until semantic saturation;
-- complete below the floor only at honest semantic saturation, without padding;
-- on context interruption, return `partial` with a resume cursor and unexplored
-  surfaces;
-- continue catalog retrieval across deterministic pages until exhaustion or a
-  resumable context interruption;
-- reject exact duplicates;
-- preserve near duplicates as separate candidates and relations;
-- never use cost or impact to select, reject, or defer a candidate.
-
-Candidates are selected only when relevant, investigable,
-supported by observable provenance, valid and compatible, and not exact
-duplicates. `deferred` is reserved for unresolved essential evidence,
-compatibility, or context. Neither persistent catalog capacity nor retrieval
-page size can exclude an otherwise eligible candidate. These rules do not
-introduce a timer or control later round capacity or concurrency.
+Missing or invalid controls block before invocation. Pass this mapping without
+adding command-level candidate heuristics. `lf-analytic-inference-preparation`
+and its routed references exclusively own candidate discovery, inquiry shape,
+lookup actions, dispositions, deduplication, retrieval, saturation, and content
+validation. This command must not restate, supplement, or override how an
+inference candidate is generated.
 
 ## Deterministic destination resolution
 

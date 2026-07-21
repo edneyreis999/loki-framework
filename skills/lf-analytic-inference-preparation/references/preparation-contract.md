@@ -11,6 +11,7 @@ intended_llm_task: "generation"
 source_priority:
   - "approved caller envelope for exact input and permitted read scope"
   - "this preparation contract"
+  - "skills/lf-analytic-inference-preparation/references/candidate-discovery.md"
   - "skills/lf-analytic-inference/references/inference-contract.md"
   - "skills/lf-analytic-inference/references/retrieval-and-ranking.md"
   - "skills/lf-analytic-inference/references/policy-v1.json"
@@ -69,6 +70,37 @@ Resolve `consumer_root` exactly once from canonical `pwd` by composing
 `lf-analytic-inference`. Return `root_provenance: canonical-pwd`. A caller may
 not supply, replace, or cause a second derivation of the root.
 
+## Pre-core blocked failure envelope
+
+When a required demand, source, control, policy, authority, or canonical root
+fails before every field of `inference_preparation` can be truthfully formed,
+return this exact non-persistable capability response instead of inventing a
+blocked preparation core:
+
+<output_format>
+preparation_failure:
+  status: blocked
+  stage: input | source | request-controls | policy | root | authority
+  blockers: ["sorted unique non-empty observed blocker"]
+  minimum_next_path: "one permitted action"
+  execution_boundary:
+    dispatch_authorized: false
+    investigation_handoffs_dispatched: 0
+    agent_runs_created: 0
+    handoffs_created: 0
+    web_research_performed: false
+    downstream_workflows_invoked: []
+    catalog_mutation_applied: false
+</output_format>
+
+Every key is required. This failure envelope is not an
+`inference_preparation`, has no preparation identity or digest, is never
+persisted by `loki-generate-inferences`, and cannot be interpreted as a partial
+candidate core. Use the canonical preparation schema below only after all its
+identity-domain fields are available. A later catalog-validation failure may
+still produce the fully formed `inference_preparation.status: blocked` defined
+below.
+
 ## Index-first catalog retrieval
 
 <facts>
@@ -90,6 +122,28 @@ Load matching indices before records. `absent`, `empty`, and `no-match` are
 honest observations that permit contextual candidates only when demand evidence
 is sufficient. Invalid root, schema, locator, identity, revision, status,
 provenance, traversal, symlink, or containment is `blocked` and fails closed.
+
+## Inquiry-first candidate semantics
+
+Read [candidate-discovery.md](candidate-discovery.md) before creating or
+classifying candidates. Each candidate represents an unresolved question whose
+answer may change a later decision. It is not a proposed solution, task, plan,
+or implementation instruction.
+
+For every candidate:
+
+- `summary` names the unknown concisely;
+- `investigable_statement` is one direct question ending in `?`;
+- `support_evidence_refs` names demand or approved-source facts that caused the question;
+- `confirm_or_reject_evidence` contains declarative future lookup actions using the vocabulary in `candidate-discovery.md`;
+- `stop_condition` says what observable finding answers the question or proves that permitted evidence cannot answer it;
+- a selected `disposition_reason` includes ` | decision-impact: ` followed by why the answer can change a later decision.
+
+Do not emit generated candidates that merely restate the demand, prescribe
+implementation, invent project state, or lack a material decision consequence.
+A catalogued record that violates inquiry-first shape is invalid before
+candidate interpretation and follows the catalog blocking rules. Section names
+in the demand are optional and never control coverage.
 
 ## Exact output schema
 
@@ -200,11 +254,11 @@ candidate:
   origin: catalogued | generated
   lifecycle_status: unreviewed
   summary: "non-empty"
-  investigable_statement: "non-empty"
+  investigable_statement: "one direct question ending in ?"
   technologies: []
   surfaces: []
   support_evidence_refs: []
-  confirm_or_reject_evidence: []
+  confirm_or_reject_evidence: ["lookup action using one allowed stable prefix"]
   stop_condition: "non-empty"
   catalog_locator: "relative locator or null"
   catalog_revision: "positive integer or null"
@@ -216,7 +270,10 @@ candidate:
 
 Every populated candidate `technologies`, `surfaces`,
 `support_evidence_refs`, `confirm_or_reject_evidence`, and
-`suggested_capabilities` array contains only non-empty strings.
+`suggested_capabilities` array contains only non-empty strings. Every
+`investigable_statement` ends in `?`. Every non-empty
+`confirm_or_reject_evidence` item begins with one allowed stable prefix from
+`candidate-discovery.md` and has a non-empty target after the prefix.
 
 `selected_for_investigation` is a sorted list of candidate IDs whose
 `disposition` is `selected`. `planned_investigations` is a sorted list of
@@ -310,8 +367,9 @@ followed optionally by ` | ` and observable detail:
 An exact duplicate is always rejected with
 `rejected:exact-duplicate`. A near duplicate remains a distinct candidate and
 may not use the exact-duplicate reason. A selected candidate has non-empty
-`support_evidence_refs` and `confirm_or_reject_evidence`. There is no selected
-candidate ceiling.
+`support_evidence_refs` and `confirm_or_reject_evidence`, and its
+`disposition_reason` contains non-empty `decision-impact` detail. There is no
+selected candidate ceiling.
 
 ## Version compatibility
 
@@ -332,8 +390,8 @@ permitted subsequent action; it does not invoke one.
 <instructions>
 - Validate exact output keys, allowed enums, required-empty arrays, canonical
   ordering, ID uniqueness, digest reproduction, request-controls equality and
-  digest, full selected-candidate preservation without a ceiling, and
-  candidate/disposition semantics.
+  digest, full selected-candidate preservation without a ceiling, inquiry-first
+  candidate shape, lookup-action prefixes, decision impact, and disposition semantics.
 - Validate root provenance once, catalog index/record parity through
   `lf-analytic-inference`, and index-first filtering against `PIR-INDEX-01`
   through `PIR-INDEX-04`.

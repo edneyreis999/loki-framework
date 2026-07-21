@@ -51,6 +51,7 @@ hooks: {}
 paths:
   package_skill: "skills/lf-analytic-inference-preparation/SKILL.md"
   preparation_contract: "references/preparation-contract.md"
+  candidate_discovery: "references/candidate-discovery.md"
   analytic_inference_skill: "../lf-analytic-inference/SKILL.md"
 shell: bash
 type: skill
@@ -70,6 +71,9 @@ an orchestration workflow.
 <instructions>
 - Read [preparation-contract.md](references/preparation-contract.md) completely
   before preparing any catalog-backed result.
+- Read [candidate-discovery.md](references/candidate-discovery.md) completely
+  before generating or classifying contextual candidates. It owns candidate
+  discovery semantics; this skill does not duplicate them.
 - Compose [lf-analytic-inference](../lf-analytic-inference/SKILL.md) for root
   resolution, XML validation, policy interpretation, and selective retrieval.
   Do not copy, replace, reinterpret, or relax its XML contract.
@@ -102,13 +106,14 @@ technology, evidence, source contents, policy overrides, or missing controls.
 2. Normalize and hash the allowed input fields exactly as the preparation
    contract requires. Read only permitted local sources and create the source
    map.
-3. Discover evidenced technologies and surfaces. Use catalog indices first.
+3. Discover evidenced technologies and surfaces. Read the complete normalized
+   demand as ordered content without requiring named sections. Use catalog indices first.
    Prefilter only with fields that the index schema proves exist; load records
    before evaluating version, exclusion, or evidence compatibility.
 4. Validate loaded catalog records through `lf-analytic-inference`; preserve
-   catalogued origin and observable exclusions. Generate contextual candidates
-   only for evidenced gaps, then perform exact duplicate detection and
-   non-merging near-duplicate reporting.
+   catalogued origin and observable exclusions. Apply `candidate-discovery.md`
+   to generate inquiry-first contextual candidates only for evidenced gaps,
+   then perform exact duplicate detection and non-merging near-duplicate reporting.
 5. Assign a deterministic disposition and observable reason to every candidate.
    Use only relevance, investigability, observable provenance support,
    validity/compatibility, and exact deduplication; candidate
@@ -132,7 +137,9 @@ technology, evidence, source contents, policy overrides, or missing controls.
   limitation recorded in a non-empty blocker or catalog diagnostic. An honest
   catalog observation alone is not such a limitation.
 - `blocked`: no usable core because integrity, authority, root, schema,
-  locator, policy, or required provenance fails closed.
+  locator, policy, or required provenance fails closed. A failure before the
+  complete core can be formed returns the exact `preparation_failure` envelope
+  from the preparation contract and never invents missing identity fields.
 
 The exact output keys, identities, catalog states, dispositions, execution
 boundary, and validators are normative in

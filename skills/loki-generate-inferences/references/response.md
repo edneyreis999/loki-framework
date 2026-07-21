@@ -80,10 +80,10 @@ model reports its identity and outcome without becoming a second core.
 
 The primary consumer is `Both`. Materialize recoverable Markdown with the
 routed [response template](../assets/response-template.md). A human-only
-projection uses the same headings and semantics in actionable Markdown of at
-most 7,000 characters. Size pressure may shorten prose and array rendering but
-must not omit a non-empty blocker, failed validator, gate, zero-boundary field,
-or `minimum_next_path`.
+projection is valid only when every semantic field fits in actionable Markdown
+of at most 7,000 characters. It may shorten prose but never truncate, summarize,
+or omit array items or object fields. When lossless projection would exceed the
+limit, use the primary `Both` projection without a length cap.
 
 ## LLM-only XML projection
 
@@ -96,7 +96,26 @@ model. Element names map one-to-one to model fields; collections use repeated
   <status></status>
   <summary></summary>
   <facts><item></item></facts>
-  <candidate_inferences><item></item></candidate_inferences>
+  <candidate_inferences>
+    <item>
+      <candidate_id></candidate_id>
+      <origin></origin>
+      <lifecycle_status></lifecycle_status>
+      <summary></summary>
+      <investigable_statement></investigable_statement>
+      <technologies><item></item></technologies>
+      <surfaces><item></item></surfaces>
+      <support_evidence_refs><item></item></support_evidence_refs>
+      <confirm_or_reject_evidence><item></item></confirm_or_reject_evidence>
+      <stop_condition></stop_condition>
+      <catalog_locator></catalog_locator>
+      <catalog_revision></catalog_revision>
+      <duplicate_relation></duplicate_relation>
+      <disposition></disposition>
+      <disposition_reason></disposition_reason>
+      <suggested_capabilities><item></item></suggested_capabilities>
+    </item>
+  </candidate_inferences>
   <sources>
     <analysis_input></analysis_input>
     <ordered_local_sources><item></item></ordered_local_sources>
@@ -154,6 +173,11 @@ model. Element names map one-to-one to model fields; collections use repeated
   <minimum_next_path></minimum_next_path>
 </loki_generate_inferences_response>
 ```
+
+Repeat the nested `candidate_inferences/item` structure exactly once per
+candidate and preserve candidate order. Serialize `null` candidate scalars as
+the exact text `null`; empty arrays remain as present empty parent elements.
+No candidate field may be omitted or collapsed into free text.
 
 ## Terminal-state derivation
 

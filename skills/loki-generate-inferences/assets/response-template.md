@@ -43,12 +43,13 @@ This template materializes the canonical semantic response model owned by
 
 The following fenced block is the sole machine-readable source for the
 preparation core. It contains exactly one canonical `inference_preparation`
-object; prose and response metadata do not extend or override it. For a blocked
-pre-write result, render `{}` and state in `blockers` that no preparation core
-was produced.
+object; prose and response metadata do not extend or override it. This artifact
+template is used only after a preparation core is eligible to be written. A
+blocked pre-write result creates no artifact and is reported only through the
+terminal response contract.
 
 ```json
-{{canonical JSON object with top-level key "inference_preparation" | {}}}
+{{canonical JSON object with top-level key "inference_preparation"}}
 ```
 
 ## Validators and gates

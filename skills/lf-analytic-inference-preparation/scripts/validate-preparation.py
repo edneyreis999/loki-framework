@@ -20,6 +20,9 @@ PREP_KEYS = {
     "selected_for_investigation", "planned_investigations", "dispatch_admitted",
     "generation_state", "validators", "blockers", "minimum_next_path", "execution_boundary",
 }
+FAILURE_WRAPPER_KEYS = {"preparation_failure"}
+FAILURE_KEYS = {"status", "stage", "blockers", "minimum_next_path", "execution_boundary"}
+FAILURE_STAGES = {"input", "source", "request-controls", "policy", "root", "authority"}
 CANDIDATE_KEYS = {
     "candidate_id", "origin", "lifecycle_status", "summary", "investigable_statement",
     "technologies", "surfaces", "support_evidence_refs", "confirm_or_reject_evidence",
@@ -52,6 +55,10 @@ BOUNDARY = {
     "catalog_mutation_applied": False,
 }
 FORBIDDEN_ID = re.compile(r"^(?:ar|agent|ho|handoff|ev|evidence)-", re.I)
+LOOKUP_ACTION_PREFIXES = (
+    "search-docs: ", "inspect-source: ", "inspect-data: ",
+    "inspect-runtime: ", "compare-precedent: ", "ask-human: ",
+)
 
 
 class ValidationError(Exception):
@@ -156,6 +163,12 @@ def validate_candidate(candidate: Any, input_fingerprint: str, index: int) -> st
         string_list(candidate[key], f"{label}.{key}", nonempty_items=True)
     if candidate["technologies"] != sorted(candidate["technologies"]):
         fail("E008", f"{label}.technologies must be lexicographically sorted")
+    if not candidate["investigable_statement"].rstrip().endswith("?"):
+        fail("E041", f"{label}.investigable_statement must be one direct question ending in ?")
+    for action_index, action in enumerate(candidate["confirm_or_reject_evidence"]):
+        if not any(action.startswith(prefix) and len(action) > len(prefix)
+                   for prefix in LOOKUP_ACTION_PREFIXES):
+            fail("E042", f"{label}.confirm_or_reject_evidence[{action_index}] must use an allowed lookup-action prefix and non-empty target")
     if candidate["duplicate_relation"] not in {"none", "exact-duplicate", "near-duplicate"}:
         fail("E010", f"{label}.duplicate_relation is invalid")
     if candidate["disposition"] not in {"selected", "rejected", "deferred"}:
@@ -174,6 +187,9 @@ def validate_candidate(candidate: Any, input_fingerprint: str, index: int) -> st
             fail("E029", f"{label} selected candidate requires observable provenance support")
         if not candidate["confirm_or_reject_evidence"]:
             fail("E029", f"{label} selected candidate requires confirm-or-reject evidence")
+        marker = " | decision-impact: "
+        if marker not in candidate["disposition_reason"] or not candidate["disposition_reason"].split(marker, 1)[1]:
+            fail("E043", f"{label} selected candidate requires non-empty decision-impact detail")
     locator, revision = candidate["catalog_locator"], candidate["catalog_revision"]
     if origin == "catalogued":
         string(locator, f"{label}.catalog_locator", nonempty=True)
@@ -393,6 +409,30 @@ def validate_preparation(obj: Any) -> None:
     if obj["preparation_digest"] != digest(digest_domain): fail("E023", "preparation_digest does not reproduce")
 
 
+def validate_preparation_failure(obj: Any) -> None:
+    wrapper = mapping(obj, "preparation_failure_response", FAILURE_WRAPPER_KEYS)
+    failure = mapping(wrapper["preparation_failure"], "preparation_failure", FAILURE_KEYS)
+    if failure["status"] != "blocked":
+        fail("E044", "preparation_failure.status must be blocked")
+    if failure["stage"] not in FAILURE_STAGES:
+        fail("E044", "preparation_failure.stage is invalid")
+    blockers = string_list(failure["blockers"], "preparation_failure.blockers",
+                           sorted_unique=True, nonempty_items=True)
+    if not blockers:
+        fail("E044", "preparation_failure.blockers must be non-empty")
+    string(failure["minimum_next_path"], "preparation_failure.minimum_next_path", nonempty=True)
+    boundary = mapping(failure["execution_boundary"],
+                       "preparation_failure.execution_boundary", set(BOUNDARY))
+    for key in ("dispatch_authorized", "web_research_performed", "catalog_mutation_applied"):
+        if type(boundary[key]) is not bool or boundary[key] is not False:
+            fail("E021", "preparation_failure.execution_boundary must be literal zero/false/empty boundary")
+    for key in ("investigation_handoffs_dispatched", "agent_runs_created", "handoffs_created"):
+        if type(boundary[key]) is not int or boundary[key] != 0:
+            fail("E021", "preparation_failure.execution_boundary must be literal zero/false/empty boundary")
+    if type(boundary["downstream_workflows_invoked"]) is not list or boundary["downstream_workflows_invoked"]:
+        fail("E021", "preparation_failure.execution_boundary must be literal zero/false/empty boundary")
+
+
 def fixture() -> dict[str, Any]:
     controls = {"candidate_ceiling": None, "catalog_retrieval_page_size": 20, "minimum_candidate_floor": 8}
     value: dict[str, Any] = {"schema_version": 3, "artifact_type": "analytic-inference-preparation", "preparation_id": "", "input_fingerprint": "", "preparation_digest": "", "status": "pre-investigation-complete", "input": {"demand_digest": "sha256:" + "1" * 64, "ordered_source_digests": ["sha256:" + "2" * 64], "request_controls": controls, "request_controls_digest": digest(controls)}, "root": {"consumer_root": "/fixture", "root_provenance": "canonical-pwd"}, "source_map": {"sources": [{"locator": "source.md", "digest": "sha256:" + "2" * 64, "facts": []}]}, "policy": {"policy_id": "fixture-policy", "policy_digest": "sha256:" + "4" * 64, "values": {"candidate_ceiling": None, "catalog_retrieval_page_size": 20, "minimum_candidate_floor": 8}}, "catalog_observation": {"state": "no-match", "catalog_snapshot_digest": None, "indices_read": [], "record_locators_loaded": [], "diagnostics": [], "retrieval_pages_read": 0, "retrieval_exhausted": True, "retrieval_resume_cursor": None}, "technologies": [], "candidates": [], "duplicate_analysis": {"exact_duplicates": [], "near_duplicates": []}, "selected_for_investigation": [], "planned_investigations": [], "dispatch_admitted": False, "generation_state": {"completion_reason": "semantic-saturation", "semantic_saturation": True, "resume_cursor": None, "unexplored_surfaces": [], "explored_surfaces": ["fixture-surface"], "final_pass_new_distinct_candidates": 0, "saturation_evidence_refs": ["source.md#final-pass"]}, "validators": ["fixture"], "blockers": [], "minimum_next_path": "return-to-caller", "execution_boundary": copy.deepcopy(BOUNDARY)}
@@ -443,15 +483,15 @@ def load_fixture(name: str) -> dict[str, Any]:
 def generated_candidate(summary: str, disposition: str = "selected") -> dict[str, Any]:
     return {
         "candidate_id": "", "origin": "generated", "lifecycle_status": "unreviewed",
-        "summary": summary, "investigable_statement": f"Investigate {summary}",
+        "summary": summary, "investigable_statement": f"What existing context resolves {summary}?",
         "technologies": ["fixture"], "surfaces": ["fixture-surface"],
         "support_evidence_refs": ["source.md#fixture"],
-        "confirm_or_reject_evidence": ["fixture-check"],
+        "confirm_or_reject_evidence": ["search-docs: fixture-check"],
         "stop_condition": "fixture stop",
         "catalog_locator": None, "catalog_revision": None, "duplicate_relation": "none",
         "disposition": disposition,
         "disposition_reason": {
-            "selected": "selected:essential-criteria-satisfied",
+            "selected": "selected:essential-criteria-satisfied | decision-impact: fixture answer changes a later decision",
             "rejected": "rejected:irrelevant",
             "deferred": "deferred:context",
         }[disposition],
@@ -613,6 +653,22 @@ def assert_structural_parity() -> None:
 
 def self_test() -> None:
     good = fixture(); validate_preparation(good)
+    failure = {"preparation_failure": {
+        "status": "blocked", "stage": "input",
+        "blockers": ["normalized demand is missing"],
+        "minimum_next_path": "supply-normalized-demand",
+        "execution_boundary": copy.deepcopy(BOUNDARY),
+    }}
+    validate_preparation_failure(failure)
+    invalid_failure = copy.deepcopy(failure)
+    invalid_failure["preparation_failure"]["blockers"] = []
+    try:
+        validate_preparation_failure(invalid_failure)
+    except ValidationError as exc:
+        if exc.code != "E044":
+            raise AssertionError(f"preparation-failure-empty-blocker: expected E044, got {exc.code}")
+    else:
+        raise AssertionError("preparation-failure-empty-blocker: accepted invalid envelope")
     partial = fixture()
     partial["status"] = "partial"
     partial["blockers"] = ["observable non-blocking fixture limitation"]
@@ -635,6 +691,24 @@ def self_test() -> None:
     def selected_without_support(value: dict[str, Any]) -> None:
         candidate = generated_candidate("unsupported")
         candidate["support_evidence_refs"] = []
+        value["candidates"] = [candidate]
+        refresh_identities(value)
+
+    def implementation_task_statement(value: dict[str, Any]) -> None:
+        candidate = generated_candidate("implementation task")
+        candidate["investigable_statement"] = "Implement the requested solution"
+        value["candidates"] = [candidate]
+        refresh_identities(value)
+
+    def invalid_lookup_action(value: dict[str, Any]) -> None:
+        candidate = generated_candidate("invalid lookup")
+        candidate["confirm_or_reject_evidence"] = ["look somewhere"]
+        value["candidates"] = [candidate]
+        refresh_identities(value)
+
+    def selected_without_decision_impact(value: dict[str, Any]) -> None:
+        candidate = generated_candidate("missing decision impact")
+        candidate["disposition_reason"] = "selected:essential-criteria-satisfied"
         value["candidates"] = [candidate]
         refresh_identities(value)
 
@@ -715,10 +789,10 @@ def self_test() -> None:
              "reason": "rejected:exact-duplicate | fixture exact pair"},
             {"label": "near-a", "disposition": "selected",
              "duplicate_relation": "near-duplicate", "duplicate_of": "canonical",
-             "reason": "selected:essential-criteria-satisfied | fixture near pair a"},
+             "reason": "selected:essential-criteria-satisfied | decision-impact: fixture near pair a remains decision-relevant"},
             {"label": "near-b", "disposition": "selected",
              "duplicate_relation": "near-duplicate", "duplicate_of": "canonical",
-             "reason": "selected:essential-criteria-satisfied | fixture near pair b"},
+             "reason": "selected:essential-criteria-satisfied | decision-impact: fixture near pair b remains decision-relevant"},
         ])
 
     def duplicate_extra_key(value: dict[str, Any]) -> None:
@@ -766,10 +840,10 @@ def self_test() -> None:
         install_duplicate_specs(value, [
             {"label": "near-a", "disposition": "selected",
              "duplicate_relation": "near-duplicate", "duplicate_of": "near-b",
-             "reason": "selected:essential-criteria-satisfied | reciprocal fixture a"},
+             "reason": "selected:essential-criteria-satisfied | decision-impact: reciprocal fixture a remains decision-relevant"},
             {"label": "near-b", "disposition": "selected",
              "duplicate_relation": "near-duplicate", "duplicate_of": "near-a",
-             "reason": "selected:essential-criteria-satisfied | reciprocal fixture b"},
+             "reason": "selected:essential-criteria-satisfied | decision-impact: reciprocal fixture b remains decision-relevant"},
         ])
 
     def duplicate_chain(value: dict[str, Any]) -> None:
@@ -791,7 +865,7 @@ def self_test() -> None:
              "reason": "rejected:exact-duplicate | cross-array fixture"},
             {"label": "near", "disposition": "selected",
              "duplicate_relation": "near-duplicate", "duplicate_of": "canonical",
-             "reason": "selected:essential-criteria-satisfied | cross-array fixture"},
+             "reason": "selected:essential-criteria-satisfied | decision-impact: cross-array fixture remains decision-relevant"},
         ])
 
     duplicate_good = fixture(); install_duplicate_fixture(duplicate_good)
@@ -843,6 +917,9 @@ def self_test() -> None:
         ("empty-top-level-technology", empty_top_level_technology, "E004"),
         ("selected-exact-duplicate", selected_exact_duplicate, "E028"),
         ("selected-without-support", selected_without_support, "E029"),
+        ("implementation-task-statement", implementation_task_statement, "E041"),
+        ("invalid-lookup-action", invalid_lookup_action, "E042"),
+        ("selected-without-decision-impact", selected_without_decision_impact, "E043"),
         ("planned-investigation-extra-key", planned_investigation_extra_key, "E003"),
         ("planned-investigation-missing-key", planned_investigation_missing_key, "E003"),
         ("planned-investigation-non-string", planned_investigation_non_string, "E004"),
@@ -888,7 +965,11 @@ def main() -> int:
         try: value = json.loads(raw)
         except json.JSONDecodeError as exc: fail("E025", f"invalid JSON: {exc.msg}")
         if raw != canonical_json(value): fail("E026", "input must itself be canonical JSON")
-        validate_preparation(value); print("valid"); return 0
+        if isinstance(value, dict) and set(value) == FAILURE_WRAPPER_KEYS:
+            validate_preparation_failure(value)
+        else:
+            validate_preparation(value)
+        print("valid"); return 0
     except ValidationError as exc:
         print(f"{exc.code}: {exc.message}", file=sys.stderr); return 2
     except (OSError, AssertionError) as exc:
