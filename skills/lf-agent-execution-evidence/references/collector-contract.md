@@ -11,9 +11,13 @@ usage it cannot verify.
 
 The collector may write only the exact evidence manifest and its exact optional
 sanitized snapshot in the approved run-evidence destination. It may not write
-domain artifacts, plans, agent contracts, retrospective prose, learning-policy
-artifacts, raw exports, or an arbitrary runtime directory. One serialized owner
-is responsible for each `agent_run_id` evidence destination.
+domain artifacts, plans, agent contracts, learning-policy artifacts, raw
+exports, or an arbitrary runtime directory. One serialized owner is responsible
+for each `agent_run_id` evidence destination. Its closed `evidence_policy` is
+positive: `evidence-first`, `preserve-gap`, `collector-only`, and
+`explicit-only`. Consequently, a missing dimension remains explicit evidence
+state, the collector is the only session-evidence writer, and a retrospective
+can occur only through a separately authorized explicit dispatch.
 
 ## Lifecycle
 
@@ -29,6 +33,10 @@ is responsible for each `agent_run_id` evidence destination.
    overall evidence state without silently promoting degraded data.
 6. Write snapshot and manifest atomically, verify checksums after publication,
    and report a closed failure state if any operation fails.
+
+The collector rejects input, manifest children, and attributes outside the
+closed evidence shape. It also rejects historical policy shapes rather than
+silently translating them.
 
 ## Sanitized snapshot rules
 

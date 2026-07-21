@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate current and legacy Loki agentic XML run state."""
+"""Validate canonical Loki agentic XML run state."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ KNOWLEDGE_CAPTURE_STATES = {
     "unsupported",
     "skipped-nonmaterial",
 }
-EVIDENCE_SCHEMAS = {"2", "3", "4", "5"}
+EVIDENCE_SCHEMAS = {"5"}
 TERMINAL_RUN_STATUSES = {"completed", "blocked", "failed", "pending-human-validation"}
 CURRENT_RUN_STATUSES = TERMINAL_RUN_STATUSES | {"draft", "running"}
 REVIEW_FREQUENCIES = ("write_agent_handoff", "task", "fase", "plano")
@@ -137,8 +137,6 @@ def validate_wtr_leafs(root: ET.Element, label: str, failures: list[str]) -> Non
     """Reject attributes/children on scalar WTR elements."""
     allowed = {"checkpoint_ref": {"checkpoint_id"}, "reason": {"required_for"}}
     scalar_tags = {"path", "sha256", "handoff_id", "completion_ref", "evidence_ref", "name", "contract_version", "selection_configuration_digest", "requested_frequency", "provenance", "execution_scope", "tasks_md", "status", "policy_ref", "policy_digest", "effective_frequency", "terminal_scope", "selected_agent_name", "selection_reason", "execution_id", "boundary_type", "boundary_ref", "coverage_digest", "review_handoff_id", "review_agent_run_id", "review_agent_raw_status", "execution_status_effect", "risk_ref", "backlog_ref", "checkpoint_id", "finding_id", "summary", "agent_run_id", "required_for", "code", "next_action", "reason"}
-    if root.get("legacy_reader_optional") not in {None, "true"}:
-        failures.append(f"{label}: legacy_reader_optional must be true when present")
     for node in root.iter():
         if node is not root and len(node) > 0:
             allowed_container_attrs = {"checkpoint": {"checkpoint_id"}, "finding": {"finding_id"}, "checkpoint_ref": {"checkpoint_id"}, "reason": {"required_for"}, "coverage_manifest": {"schema_version"}, "state_error": {"code"}}
@@ -174,7 +172,7 @@ def validate_wtr_containers(root: ET.Element, label: str, failures: list[str]) -
 
 
 def validate_manifest_wtr_shape(review: ET.Element, label: str, failures: list[str]) -> None:
-    validate_node_shape(review, label, {"schema_version", "legacy_reader_optional"}, {
+    validate_node_shape(review, label, {"schema_version"}, {
         "request": (1, 1), "plan_executor_handoff": (1, 1), "reconciled_policy": (1, 1),
         "checkpoints": (1, 1), "risks": (1, 1), "state_errors": (1, 1), "next_action": (1, 1)
     }, failures)
@@ -203,7 +201,7 @@ def validate_manifest_wtr_shape(review: ET.Element, label: str, failures: list[s
 
 def validate_projection_wtr_shape(review: ET.Element, label: str, failures: list[str], digest: bool = False) -> None:
     if digest:
-        validate_node_shape(review, label, {"schema_version", "legacy_reader_optional"}, {"policy_ref": (1, 1), "policy_digest": (1, 1), "requested_frequency": (1, 1), "effective_frequency": (1, 1), "checkpoints": (1, 1), "findings": (1, 1), "execution_status_effect": (1, 1), "state_errors": (1, 1)}, failures)
+        validate_node_shape(review, label, {"schema_version"}, {"policy_ref": (1, 1), "policy_digest": (1, 1), "requested_frequency": (1, 1), "effective_frequency": (1, 1), "checkpoints": (1, 1), "findings": (1, 1), "execution_status_effect": (1, 1), "state_errors": (1, 1)}, failures)
         container = review.find("checkpoints")
         validate_node_shape(container, f"{label}/checkpoints", set(), {"checkpoint": (1, None)}, failures)
         validate_node_shape(review.find("findings"), f"{label}/findings", set(), {"finding": (0, None)}, failures)
@@ -220,7 +218,7 @@ def validate_projection_wtr_shape(review: ET.Element, label: str, failures: list
         validate_wtr_leafs(review, label, failures)
         validate_wtr_containers(review, label, failures)
     else:
-        validate_node_shape(review, label, {"schema_version", "legacy_reader_optional"}, {"policy_ref": (1, 1), "policy_digest": (1, 1), "execution_id": (1, 1), "checkpoint_ref": (1, 1), "coverage_digest": (1, 1), "covered_write_handoff_ids": (1, 1), "review_lineage": (1, 1), "outcome": (1, 1), "findings": (1, 1), "risk_refs": (1, 1), "backlog_refs": (1, 1)}, failures)
+        validate_node_shape(review, label, {"schema_version"}, {"policy_ref": (1, 1), "policy_digest": (1, 1), "execution_id": (1, 1), "checkpoint_ref": (1, 1), "coverage_digest": (1, 1), "covered_write_handoff_ids": (1, 1), "review_lineage": (1, 1), "outcome": (1, 1), "findings": (1, 1), "risk_refs": (1, 1), "backlog_refs": (1, 1)}, failures)
         validate_node_shape(review.find("checkpoint_ref"), f"{label}/checkpoint_ref", {"checkpoint_id"}, {}, failures)
         validate_node_shape(review.find("findings"), f"{label}/findings", set(), {"finding": (0, None)}, failures)
         for finding in review.findall("findings/finding"):
@@ -808,11 +806,10 @@ def validate_manifest_handoffs(root: ET.Element, failures: list[str]) -> dict[st
             )
         else:
             seen_handoffs.add(handoff_id)
-        if root.get("schema_version") in {"2", "3", "4"}:
-            evidence_id = child_text(handoff, "evidence_id")
-            evidence_path = child_text(handoff, "evidence_manifest_path")
-            if not evidence_id or not evidence_path:
-                failures.append("agentic-run-manifest.xml: v2 handoff missing evidence lineage")
+        evidence_id = child_text(handoff, "evidence_id")
+        evidence_path = child_text(handoff, "evidence_manifest_path")
+        if not evidence_id or not evidence_path:
+            failures.append("agentic-run-manifest.xml: canonical handoff missing evidence lineage")
         parent = child_text(handoff, "depends_on_handoff_id")
         if parent and handoff_id:
             parents[handoff_id] = parent
@@ -991,7 +988,8 @@ def validate_digest(
     schema_version = root.get("schema_version", "")
     digest_run_id = child_text(root, "digest/run_id")
     digest_status = child_text(root, "digest/status").lower()
-    if schema_version not in {"3", "4"}:
+    if schema_version != "4":
+        failures.append(f"{path}: requires digest schema 4, got {schema_version or '<missing>'}")
         return digest_run_id, schema_version, digest_status, {}, {}
     if digest_status not in CURRENT_RUN_STATUSES:
         failures.append(f"{path}: invalid schema-{schema_version} digest status {digest_status!r}")
@@ -1259,6 +1257,19 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         failures.append(f"{manifest_path}: required run manifest is missing")
     else:
         manifest_schema = manifest.get("schema_version", "")
+        if manifest_schema != "4":
+            failures.append(
+                f"{manifest_path}: requires manifest schema 4, got {manifest_schema or '<missing>'}"
+            )
+        for path, root in roots.items():
+            if root.tag == "agent_run_report" and root.get("schema_version") != "5":
+                failures.append(
+                    f"{path}: requires report schema 5, got {root.get('schema_version') or '<missing>'}"
+                )
+            if root.tag == "agentic_run_digest" and root.get("schema_version") != "4":
+                failures.append(
+                    f"{path}: requires digest schema 4, got {root.get('schema_version') or '<missing>'}"
+                )
         if manifest.find("freshness_signature") is None:
             failures.append(f"{manifest_path}: missing freshness_signature")
         validate_selected_agents(manifest, str(manifest_path), failures)
@@ -1266,7 +1277,7 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         review_meta, review_checkpoints = validate_manifest_review(
             manifest, str(manifest_path), failures
         )
-        if manifest_schema in {"3", "4"}:
+        if manifest_schema == "4":
             current_schema = True
             run_id = child_text(manifest, "run/run_id")
             run_status = child_text(manifest, "run/status").lower()
@@ -1316,10 +1327,6 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         validate_decision_gates(root, str(path), failures)
         if root.tag == "agentic_analysis_manifest":
             validate_selected_agents(root, str(path), failures)
-        if manifest_schema == "4" and root.tag == "agent_run_report" and root.get("schema_version") != "5":
-            failures.append(f"{path}: manifest schema 4 requires report schema 5 when present")
-        if manifest_schema == "4" and root.tag == "agentic_run_digest" and root.get("schema_version") != "4":
-            failures.append(f"{path}: manifest schema 4 requires digest schema 4 when present")
 
     if run_status == "blocked":
         consultive_handoff_ids = {
@@ -1500,7 +1507,7 @@ def run_self_test() -> None:
   <run><run_id>run-self-test</run_id><status>running</status></run>
   <freshness_signature/>
   <execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy>
-  <write_test_review schema_version="1" legacy_reader_optional="true">
+  <write_test_review schema_version="1">
     <request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request>
     <plan_executor_handoff><handoff_id>handoff-plan</handoff_id><execution_scope>plano</execution_scope><tasks_md>tasks.md</tasks_md><status>completed</status></plan_executor_handoff>
     <reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>quality-auditor</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy>
@@ -1515,7 +1522,12 @@ def run_self_test() -> None:
             (run_dir / "agentic-run-manifest.xml").write_text(source, encoding="utf-8")
             return validate_run_dir(run_dir)
 
-    assert validate_fixture(legacy) == []
+    legacy_failures = validate_fixture(legacy)
+    assert any("requires manifest schema 4" in failure for failure in legacy_failures)
+    unknown_manifest_failures = validate_fixture(
+        legacy.replace('schema_version="1"', 'schema_version="99"')
+    )
+    assert any("requires manifest schema 4" in failure for failure in unknown_manifest_failures)
     current_failures = validate_fixture(current)
     assert current_failures == [], current_failures
     checkpoint_record = {
@@ -1537,7 +1549,7 @@ def run_self_test() -> None:
         }
     }
     report_review = ET.fromstring(f"""
-<agent_run_report schema_version="5"><write_test_review schema_version="1" legacy_reader_optional="true">
+<agent_run_report schema_version="5"><write_test_review schema_version="1">
   <policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><execution_id>{execution_id}</execution_id><checkpoint_ref checkpoint_id="{checkpoint_id}">tasks.md#checkpoint</checkpoint_ref><coverage_digest>{coverage_digest}</coverage_digest>
   <covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><review_lineage><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><evidence_ref>evidence/review.xml</evidence_ref></review_lineage>
   <outcome><status>completed-with-findings</status><review_agent_raw_status>blocked</review_agent_raw_status><execution_status_effect>none</execution_status_effect><reason/></outcome>
@@ -1730,6 +1742,19 @@ def run_self_test() -> None:
         )
         report_schema_failures = validate_run_dir(run_dir)
         assert any("requires report schema 5" in failure for failure in report_schema_failures)
+        (run_dir / "unknown-report.xml").write_text(
+            '<?xml version="1.0"?><agent_run_report schema_version="99"/>', encoding="utf-8"
+        )
+        unknown_report_failures = validate_run_dir(run_dir)
+        assert any("requires report schema 5" in failure for failure in unknown_report_failures)
+    with tempfile.TemporaryDirectory() as directory:
+        run_dir = Path(directory)
+        (run_dir / "agentic-run-manifest.xml").write_text(current, encoding="utf-8")
+        (run_dir / "unknown-digest.xml").write_text(
+            '<?xml version="1.0"?><agentic_run_digest schema_version="99"/>', encoding="utf-8"
+        )
+        unknown_digest_failures = validate_run_dir(run_dir)
+        assert any("requires digest schema 4" in failure for failure in unknown_digest_failures)
     consultive_blocker = current.replace("<status>running</status>", "<status>blocked</status>").replace(
         "<freshness_signature/>",
         f"<freshness_signature/><handoffs><handoff><handoff_id>{review_handoff_id}</handoff_id><agent_run_id>review-run-1</agent_run_id><evidence_id>review-evidence</evidence_id><evidence_manifest_path>evidence/review.xml</evidence_manifest_path><status>blocked</status><blockers><blocker>consultive review blocked</blocker></blockers></handoff></handoffs>",
@@ -1866,15 +1891,15 @@ def run_self_test() -> None:
     for name, source in negative_cases.items():
         failures = validate_fixture(source)
         assert failures, f"negative fixture accepted: {name}"
-    print("self-test: passed (legacy, schema-4 positive, policy/coverage/lineage/consultive negatives)")
+    print("self-test: passed (canonical schemas positive; legacy/unknown schemas and contract violations negative)")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate current and legacy Loki agentic XML run state."
+        description="Validate canonical Loki agentic XML run state."
     )
     parser.add_argument("run_dir", nargs="?", help="Directory containing agentic-run-manifest.xml")
-    parser.add_argument("--self-test", action="store_true", help="Run deterministic compatibility fixtures")
+    parser.add_argument("--self-test", action="store_true", help="Run deterministic canonical-contract fixtures")
     args = parser.parse_args()
 
     if args.self_test:

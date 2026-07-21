@@ -20,6 +20,13 @@ ID_TYPES = {
     "handoff_id": "handoff-id", "agent_name": "agent-name",
 }
 
+ROOT_CHILDREN = ("identity", "runtime", "locator", "snapshot", "evidence_completeness", "usage", "security", "integrity", "completion_record", "evidence_policy")
+COMPLETION_LISTS = {
+    "changed_files": "file", "read_files": "file", "validations": "validation",
+    "material_attempts": "attempt", "known_errors": "error", "decisions": "decision",
+    "residual_risks": "risk",
+}
+
 
 def value(node: ET.Element | None) -> str:
     return (node.text or "").strip() if node is not None else ""
@@ -37,8 +44,69 @@ def canonical_checksum(root: ET.Element) -> str:
     return hashlib.sha256(serialized).hexdigest()
 
 
-def validate(root: ET.Element) -> list[str]:
+def child_names(node: ET.Element | None) -> list[str]:
+    return [child.tag for child in node] if node is not None else []
+
+
+def closed_shape_errors(root: ET.Element) -> list[str]:
+    """Reject unknown manifest children and attributes before semantic checks."""
     errors: list[str] = []
+    def exact(node: ET.Element | None, names: tuple[str, ...], path: str) -> None:
+        if child_names(node) != list(names):
+            errors.append(f"{path} has unknown, missing, or reordered children")
+    def attrs(node: ET.Element | None, allowed: set[str], path: str) -> None:
+        if node is not None and set(node.attrib) - allowed:
+            errors.append(f"{path} has unknown attributes")
+
+    attrs(root, {"schema_version"}, "root")
+    exact(root, ROOT_CHILDREN, "root")
+    identity = root.find("identity")
+    exact(identity, tuple(ID_TYPES), "identity")
+    for name in ID_TYPES: attrs(identity.find(name) if identity is not None else None, {"type"}, f"identity/{name}")
+    runtime = root.find("runtime")
+    exact(runtime, ("adapter", "adapter_version", "root_session_id", "parent_thread_id", "thread_id", "runtime_agent_id", "terminal_status", "parent_reference"), "runtime")
+    for name in ("root_session_id", "parent_thread_id", "thread_id", "runtime_agent_id"):
+        attrs(runtime.find(name) if runtime is not None else None, {"type"}, f"runtime/{name}")
+    exact(runtime.find("parent_reference") if runtime is not None else None, ("type", "value"), "runtime/parent_reference")
+    for path, names in (("locator", ("kind", "value", "portability", "unavailable_reason")),
+                        ("snapshot", ("storage_mode", "payload_path", "captured_at", "payload_checksum", "checksum_absence_reason")),
+                        ("usage", ("status", "metric_kind", "source", "source_scope", "measured_at", "input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens", "unavailable_reason")),
+                        ("security", ("snapshot_classification", "structural_redaction_result", "secret_pii_hardening", "retention_metadata", "purge_policy")),
+                        ("integrity", ("canonical_content_checksum", "result", "verification_notes")),
+                        ("evidence_policy", ("mode", "gap_handling", "capture_owner", "retrospective_dispatch"))):
+        exact(root.find(path), names, path)
+    attrs(root.find("snapshot/payload_checksum"), {"algorithm"}, "snapshot/payload_checksum")
+    attrs(root.find("integrity/canonical_content_checksum"), {"algorithm"}, "integrity/canonical_content_checksum")
+    completeness = root.find("evidence_completeness")
+    if completeness is not None:
+        if child_names(completeness) != ["dimension"] * 5 + ["overall_status"]:
+            errors.append("evidence_completeness has unknown, missing, or reordered children")
+        for dimension in completeness.findall("dimension"):
+            attrs(dimension, {"name"}, "evidence_completeness/dimension")
+            expected = ("status", "missing_reason", "provenance") if dimension.get("name") == "reasoning_summary" else ("status", "missing_reason")
+            exact(dimension, expected, "evidence_completeness/dimension")
+    completion = root.find("completion_record")
+    completion_names = ("agent_run_id", "handoff_id", "terminal_status", "summary", *COMPLETION_LISTS, "next_destination")
+    exact(completion, completion_names, "completion_record")
+    for name in ("agent_run_id", "handoff_id"):
+        attrs(completion.find(name) if completion is not None else None, {"type"}, f"completion_record/{name}")
+    if completion is not None:
+        for container, child in COMPLETION_LISTS.items():
+            node = completion.find(container)
+            if node is not None and (any(item.tag != child for item in node) or any(item.attrib for item in node)):
+                errors.append(f"completion_record/{container} has unknown children or attributes")
+    for node in root.iter():
+        allowed = {"schema_version"} if node is root else set()
+        if node.tag in {"run_id", "agent_run_id", "handoff_id", "agent_name", "root_session_id", "parent_thread_id", "thread_id", "runtime_agent_id"}: allowed = {"type"}
+        if node.tag in {"payload_checksum", "canonical_content_checksum"}: allowed = {"algorithm"}
+        if node.tag == "dimension": allowed = {"name"}
+        if set(node.attrib) - allowed:
+            errors.append(f"{node.tag} has unknown attributes")
+    return errors
+
+
+def validate(root: ET.Element) -> list[str]:
+    errors = closed_shape_errors(root)
     def require(path: str) -> ET.Element | None:
         node = root.find(path)
         if node is None or not value(node):
@@ -62,6 +130,7 @@ def validate(root: ET.Element) -> list[str]:
     if any(item and item in identity_values.values() for item in runtime_ids):
         errors.append("runtime locators must not reuse identity values")
     for name, expected_type in (("root_session_id", "runtime-root-session-id"),
+                                ("parent_thread_id", "runtime-parent-thread-id"),
                                 ("thread_id", "runtime-thread-id"),
                                 ("runtime_agent_id", "runtime-agent-id")):
         node = require(f"runtime/{name}")
@@ -105,6 +174,12 @@ def validate(root: ET.Element) -> list[str]:
                 errors.append("private/full chain-of-thought is forbidden")
     if overall == "complete" and (any(status != "complete" for status in statuses) or locator_kind == "unavailable"):
         errors.append("complete requires every dimension complete and a usable locator")
+
+    policy = root.find("evidence_policy")
+    if policy is None or {name: value(policy.find(name)) for name in ("mode", "gap_handling", "capture_owner", "retrospective_dispatch")} != {
+        "mode": "evidence-first", "gap_handling": "preserve-gap", "capture_owner": "collector-only", "retrospective_dispatch": "explicit-only",
+    }:
+        errors.append("evidence policy must be the closed evidence-first policy")
 
     mode = value(root.find("snapshot/storage_mode"))
     payload = value(root.find("snapshot/payload_path"))

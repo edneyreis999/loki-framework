@@ -56,12 +56,10 @@ invocar uma skill tecnica para concluir o proprio handoff.
 6. Revise a saida do dry-run. Todos os links planejados devem estar dentro de
    `.agents/**` ou `.codex/**` do destino, apontando para fontes dentro de
    `PACKAGE_ROOT`.
-7. Se o dry-run mostrar conflito, symlink legado, manifest de outro perfil ou
-   artefato fora do perfil solicitado, pare. Corrija manualmente o destino
-   aprovado, normalmente usando o manifest anterior como guia de rollback, e
+7. Se o dry-run mostrar conflito, layout fora do schema 2, manifest de outro
+   perfil ou artefato fora do perfil solicitado, pare. O instalador nao altera
+   nem remove caminhos existentes. Corrija manualmente o destino aprovado e
    rode novo dry-run antes de aplicar.
-   Links de command de instalações anteriores só podem ser removidos depois que
-   o dry-run os classificar como symlink exato para este pacote.
 8. Aplique somente depois de approval explicito para o caminho do destino e o
    modo de execucao:
 
@@ -70,10 +68,8 @@ invocar uma skill tecnica para concluir o proprio handoff.
    ```
 
 9. Use `--replace` somente com approval separado, escopado ao destino e ao
-   modo. Sem `--replace`, conflitos devem bloquear a instalacao.
-   Para aplicar o cleanup legado já revisado, use adicionalmente
-   `--cleanup-legacy-commands`; a flag é inválida sem `--yes` e nunca remove
-   arquivo real, link divergente ou caminho sob parent symlink.
+   modo. Sem `--replace`, conflitos devem bloquear a instalacao. `--replace`
+   nao autoriza alterar layouts fora do schema 2.
 10. Depois da aplicacao, valide a instalacao.
 
 Validacao pos-instalacao:
@@ -143,8 +139,8 @@ seu handoff.
 - Pare se o dry-run apontar artefatos fora de `.agents/**` ou `.codex/**` do
   destino.
 - Pare se existir manifest de outro perfil, artefato Loki fora do perfil
-  solicitado ou symlink legado que possa causar escrita atraves de diretorio
-  linkado.
+  solicitado ou qualquer layout fora do schema 2 que possa causar escrita
+  atraves de diretorio linkado.
 - Pare se a correcao exigir alterar runtime, engine, framework, assets, dados
   persistidos ou arquivos de negocio do consumidor.
 - Pare se a unica forma de continuar for usar `--replace` sem approval

@@ -33,7 +33,6 @@
     <checksum_absence_reason>{{payload_checksum_absence_reason_or_null}}</checksum_absence_reason>
   </snapshot>
   <evidence_completeness>
-    <overall_status>{{overall_evidence_status}}</overall_status>
     <dimension name="transcript">
       <status>{{transcript_status}}</status>
       <missing_reason>{{transcript_missing_reason_or_null}}</missing_reason>
@@ -55,6 +54,7 @@
       <status>{{token_usage_status}}</status>
       <missing_reason>{{token_usage_missing_reason_or_null}}</missing_reason>
     </dimension>
+    <overall_status>{{overall_evidence_status}}</overall_status>
   </evidence_completeness>
   <usage>
     <status>{{usage_status}}</status>
@@ -95,11 +95,10 @@
     <residual_risks><risk>{{residual_risk}}</risk></residual_risks>
     <next_destination>{{next_destination}}</next_destination>
   </completion_record>
-  <retrospective_policy>
+  <evidence_policy>
     <mode>evidence-first</mode>
-    <automatic_agent_retrospective>false</automatic_agent_retrospective>
-    <dual_capture>false</dual_capture>
-    <legacy_retrospective_fallback>false</legacy_retrospective_fallback>
-    <evidence_gap_handling>preserve-gap</evidence_gap_handling>
-  </retrospective_policy>
+    <gap_handling>preserve-gap</gap_handling>
+    <capture_owner>collector-only</capture_owner>
+    <retrospective_dispatch>explicit-only</retrospective_dispatch>
+  </evidence_policy>
 </agent_session_evidence>

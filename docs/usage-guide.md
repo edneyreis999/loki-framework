@@ -131,10 +131,13 @@ retorna `insufficient`, `mutation_applied: false` e zero writes. A primeira
 mutacao aprovada pode fazer bootstrap nesse layout; instalacao e lookup
 read-only nunca fazem bootstrap.
 
-Uma arvore `.loki/analytic-inference/v1/` existente e legado JSON read-only:
-nao e fallback para lookup nem recebe mutacao. Ela so pode ser fonte de uma
-migracao copy-only separada, depois de inventario, technical review e approval
-exata; instalacao, upgrade, uninstall, cleanup e dry-run nao a migram.
+O catalogo ativo e exclusivamente XML v2. JSON nao e fallback para lookup,
+nao recebe mutacao e nao e uma fonte de catalogo suportada; instalacao e
+dry-run nao criam nem alteram estado de catalogo.
+Uma arvore `.loki/analytic-inference/v1/` e rejeitada antes de leitura ou
+escrita; nao existe conversao automatica desse layout. JSON continua suportado
+no control plane (por exemplo, policy, requests, approvals e saida de CLI), que
+nao e estado de catalogo.
 
 Estado nesse layout usa `destination_scope: consumer-operational-state` e tem
 `technical-implementer` como writer exclusivo sob `task_scoped_writer`, com
@@ -241,8 +244,8 @@ O script instala:
 - `.agents/templates` apontando para `templates`;
 - `.codex/agents/<agent>.toml` apontando para `codex/agents/<agent>.toml`.
 
-Esses links instalam capacidade, nao estado operacional. Dry-run, apply,
-upgrade, uninstall e cleanup nao criam, registram, migram nem removem `.loki`.
+Esses links instalam capacidade, nao estado operacional. Dry-run e apply nao
+criam, registram nem removem `.loki`.
 Se o destino ja tiver `.loki`, trate toda a arvore como estado do consumidor e
 preserve-a byte a byte durante o workflow de instalacao.
 
@@ -257,16 +260,10 @@ solicitado, pare e faca rollback manual dos links registrados no manifest
 anterior antes de rodar novo dry-run. Nao trate `consumer`, `package-source` e
 `all` como camadas incrementais.
 
-Se um destino antigo ainda tiver `.agents/agents` como symlink para o diretorio
-inteiro `agents/`, o instalador bloqueia os links por agente para evitar escrita
-acidental atraves do symlink. Remova esse symlink legado somente no destino
-aprovado e rode o dry-run novamente antes de aplicar.
-
-Se o destino contiver links de command de uma instalação anterior, o dry-run os
-lista como cleanup legado. A remoção só ocorre com
-`--yes --cleanup-legacy-commands`, somente para symlink lexicalmente exato para
-o antigo arquivo deste pacote. Arquivo real, link divergente e caminho sob parent
-symlink bloqueiam e exigem intervenção manual.
+O instalador aceita somente o layout schema 2. `.agents/agents` como symlink de
+diretorio, `.agents/commands` e manifests que registrem links de command ou
+historico de remocao causam rejeicao sem writes. Ajuste o destino manualmente e
+repita o dry-run antes de aplicar.
 
 Depois da instalacao, valide a estrutura instalada:
 

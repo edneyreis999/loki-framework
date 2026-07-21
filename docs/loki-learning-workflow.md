@@ -110,9 +110,11 @@ records `rev-N.xml` e events `.xml` vivos existem somente em
 `<consumer-root>/.loki/analytic-inference/v2/`. Estado
 ausente ou vazio retorna `insufficient`, `mutation_applied: false` e zero writes.
 
-O layout v1/JSON e legado read-only. Ele nao participa do lookup ativo nem
-recebe mutacao; serve apenas como fonte inventariada de uma migracao copy-only
-separada, com technical review e approval exata vinculada ao root e aos digests.
+O catalogo ativo e exclusivamente XML v2. JSON nao participa do lookup ativo,
+nao recebe mutacao e nao e uma fonte de catalogo suportada.
+O layout v1 e rejeitado antes de processamento; nao ha conversao automatica.
+JSON de policy, request, approval e output continua sendo control plane, nao
+catalogo persistido.
 
 Promocao e reorganizacao exigem targets exatos, before/after, lineage,
 validators, `technical-review`, approval, writer e auditor aplicaveis. Purge e

@@ -83,9 +83,11 @@ estado que ela opera. O unico layout de producao ativo e XML v2 em
 ausente significa estado `absent`; registry valido sem entries significa
 `empty`. Ambos os casos de leitura retornam `insufficient` sem criar arquivos.
 
-O layout v1/JSON e legado read-only e copy-only migration source. Ele nao e
-fallback do estado ativo, nao recebe mutacao e exige inventario, technical
-review e approval exata antes de qualquer migracao separada.
+O catalogo ativo e exclusivamente XML v2. JSON nao e fallback do estado ativo,
+nao recebe mutacao e nao e uma fonte de catalogo suportada.
+O layout `.loki/analytic-inference/v1/` e rejeitado antes de qualquer leitura ou
+write. JSON de policy, request, approval e output de CLI permanece parte do
+control plane, nao do catalogo persistido.
 
 Esse state root e classe `consumer-operational-state`, nao documentacao do
 consumidor e nao artefato do pacote. O consumer root e resolvido internamente
@@ -121,7 +123,7 @@ bundles.
 | `lf-agent-execution-evidence` | `mvp` | Definir, coletar e revisar evidencia provider-neutral de execucao, com identidade tipada, snapshot sanitizado, lacunas explicitas e proveniencia de uso sem registrar raciocinio privado. |
 | `lf-template-library` | `mvp` | Expor templates do pacote como referencias instalaveis por skill. |
 | `excalidraw-diagram-generator` | `mvp` | Gerar diagramas Excalidraw para enriquecer documentacao rica de workflows, processos, arquitetura e relacoes. |
-| `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
+| `lf-index-navigator` | `mvp` | Navegar a documentacao do consumidor por `docs/index.xml`; se o catalogo estiver ausente, retornar `consumer_docs_index_missing` e encaminhar ao `catalogador`, sem ler `index.md`. |
 | `lf-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `lf-analytic-inference` | `mvp` | Compartilhar entre Codex e Claude Code contratos, schemas, scripts, fixtures e policy para consulta seletiva e manutencao deterministica. O pacote nao contem catalogo, seed nem overlay; o estado vivo XML pertence ao consumer root canonico em `.loki/analytic-inference/v2/`. |
 | `lf-analytic-inference-preparation` | `mvp` | Preparar deterministica e read-onlymente um core de inferencias antes de investigacao, compondo `lf-analytic-inference` sem dispatch, handoff, web research, CI, workflow downstream, mutacao de catalogo ou replay byte a byte. |
@@ -175,10 +177,10 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, cleanup legado seguro e manifest de instalacao. |
-| `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json`, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex, tags de tipo de projeto e ausencia de seed/catalogo XML vivo empacotado. |
-| `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e fixtures temporarias de schema v2 e limpeza legada, sem tocar destinos consumidores. |
-| `scripts/validate-agentic-run-state.py` | `mvp` | Validar schemas atuais e legados do estado agentic XML, incluindo evidence/knowledge lineage, gates, writers, conflitos e completion reports. |
+| `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, manifest de instalacao e rejeicao sem writes de layouts fora do schema 2. |
+| `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json` schema 2, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex, tags de tipo de projeto, ausencia de seed/catalogo XML vivo empacotado e ausencia da projecao retirada. |
+| `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e a matriz temporaria de rejeicao de layouts fora do schema 2, sem tocar destinos consumidores. |
+| `scripts/validate-agentic-run-state.py` | `mvp` | Validar o contrato agentic XML atual (manifest 4, report 5, digest 4 e WTR 1) e rejeitar schemas removidos antes de aceitar estado, incluindo evidence/knowledge lineage, gates, writers, conflitos e completion reports. |
 | `scripts/validate-execution-knowledge.py` | `mvp` | Validar entry schema v1, lineage, materialidade, estados, targets exclusivos, sanitização e ausência de promoção. |
 
 ## Install Scope Source

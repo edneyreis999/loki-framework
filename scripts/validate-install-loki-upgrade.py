@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the schema-v2 Loki installer and the complete v1 cleanup matrix."""
+"""Exercise the schema-v2 Loki installer and its legacy-layout rejection matrix."""
 
 from __future__ import annotations
 
@@ -25,11 +25,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 47, "agent": 22, "codex-agent": 22, "templates": 1},
-    "package-source": {"skill": 38, "agent": 11, "codex-agent": 11, "templates": 1},
-    "all": {"skill": 52, "agent": 24, "codex-agent": 24, "templates": 1},
+    "consumer": {"skill": 52, "agent": 23, "codex-agent": 23, "templates": 1},
+    "package-source": {"skill": 43, "agent": 12, "codex-agent": 12, "templates": 1},
+    "all": {"skill": 57, "agent": 25, "codex-agent": 25, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 92, "package-source": 61, "all": 101}
+FINAL_TOTALS = {"consumer": 99, "package-source": 68, "all": 108}
 
 
 @dataclass(frozen=True)
@@ -69,8 +69,6 @@ def planned_type_counts(stdout: str) -> Counter[str]:
         if line == "links:":
             in_links = True
             continue
-        if line == "legacy_command_cleanup:":
-            in_links = False
         if in_links and (match := PLAN_LINE.match(line)):
             counts[match.group(1)] += 1
     return counts
@@ -281,8 +279,8 @@ class ProfileAndSchemaTests(unittest.TestCase):
             manifest = json.loads(
                 (destination / MANIFEST_RELATIVE_PATH).read_text(encoding="utf-8")
             )
-            self.assertEqual(92, len(manifest["links"]))
-            self.assertEqual([], manifest["removed_legacy_links"])
+            self.assertEqual(FINAL_TOTALS["consumer"], len(manifest["links"]))
+            self.assertNotIn("removed_legacy_links", manifest)
             self.assertNotIn("command", {entry["type"] for entry in manifest["links"]})
             self.assertFalse((destination / ".agents" / "commands").exists())
 
@@ -341,7 +339,11 @@ class ProfileAndSchemaTests(unittest.TestCase):
         agentic = PACKAGE_ROOT / "skills" / "loki-agentic-development" / "SKILL.md"
         self_healing = PACKAGE_ROOT / "skills" / "loki-self-healing" / "SKILL.md"
         self.assertEqual(
-            ["lf-agentic-orchestration"], module.parse_required_skills(agentic)
+            [
+                "lf-agentic-orchestration",
+                "lf-execution-knowledge-capture",
+            ],
+            module.parse_required_skills(agentic),
         )
         self.assertEqual(
             [
@@ -417,136 +419,98 @@ required_commands: []
             self.assertIn("required command loki-missing is not installed", result.stderr)
 
 
-class LegacyCleanupTests(unittest.TestCase):
-    def test_dry_run_diagnoses_legacy_without_authorizing_cleanup(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-diagnose-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "absolute")
-            result = run_installer(fixture.destination_root, "consumer", "--dry-run")
-            self.assertEqual(0, result.returncode, result.stderr or result.stdout)
-            self.assertIn("status=requires-cleanup-flag type=legacy-command", result.stdout)
-            self.assertTrue(fixture.legacy_destination.is_symlink())
+class LegacyLayoutRejectionTests(unittest.TestCase):
+    def test_cleanup_flag_is_not_a_cli_option(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-no-cleanup-flag-") as raw_temp:
+            result = run_installer(
+                Path(raw_temp) / "consumer",
+                "consumer",
+                "--dry-run",
+                "--cleanup-legacy-commands",
+            )
+            self.assertEqual(2, result.returncode)
+            self.assertIn("unrecognized arguments: --cleanup-legacy-commands", result.stderr)
 
-    def test_exact_absolute_relative_and_broken_links_are_removable(self) -> None:
-        for case in ("absolute", "relative", "broken"):
+    def test_command_tree_is_rejected_without_writes(self) -> None:
+        for case in ("absolute", "relative", "broken", "real-file", "non-empty-directory"):
             with self.subTest(case=case), tempfile.TemporaryDirectory(
-                prefix=f"loki-exact-{case}-"
+                prefix=f"loki-reject-command-tree-{case}-"
             ) as raw_temp:
                 fixture = build_legacy_fixture(Path(raw_temp), case)
-                result = run_installer(
-                    fixture.destination_root,
-                    "consumer",
-                    "--dry-run",
-                    "--cleanup-legacy-commands",
+                before_manifest = fixture.manifest_path.read_bytes()
+                before_destination = (
+                    os.readlink(fixture.legacy_destination)
+                    if fixture.legacy_destination.is_symlink()
+                    else None
                 )
-                self.assertEqual(0, result.returncode, result.stderr or result.stdout)
-                self.assertIn("status=would-remove type=legacy-command", result.stdout)
-                self.assertTrue(fixture.legacy_destination.is_symlink())
-
-    def test_apply_removes_exact_link_and_records_provenance(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-cleanup-apply-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "relative")
-            result = run_installer(
-                fixture.destination_root,
-                "consumer",
-                "--yes",
-                "--cleanup-legacy-commands",
-            )
-            self.assertEqual(0, result.returncode, result.stderr or result.stdout)
-            self.assertFalse(fixture.legacy_destination.is_symlink())
-            manifest = json.loads(fixture.manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(92, len(manifest["links"]))
-            self.assertEqual(1, len(manifest["removed_legacy_links"]))
-            removed = manifest["removed_legacy_links"][0]
-            self.assertEqual(str(fixture.recorded_origin), removed["origin"])
-            self.assertEqual(str(fixture.legacy_destination), removed["destination"])
-
-    def test_cleanup_apply_requires_yes(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-cleanup-yes-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "flags")
-            before = fixture.manifest_path.read_bytes()
-            result = run_installer(
-                fixture.destination_root,
-                "consumer",
-                "--cleanup-legacy-commands",
-            )
-            self.assertNotEqual(0, result.returncode)
-            self.assertIn("refusing to write without --yes", result.stderr)
-            self.assertEqual(before, fixture.manifest_path.read_bytes())
-
-    def test_replace_does_not_authorize_cleanup(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-cleanup-replace-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "flags")
-            before = fixture.manifest_path.read_bytes()
-            result = run_installer(
-                fixture.destination_root, "consumer", "--yes", "--replace"
-            )
-            self.assertEqual(2, result.returncode, result.stderr or result.stdout)
-            self.assertIn("--replace does not authorize cleanup", result.stderr)
-            self.assertTrue(fixture.legacy_destination.is_symlink())
-            self.assertEqual(before, fixture.manifest_path.read_bytes())
-
-    def test_cleanup_is_idempotent(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-cleanup-idempotent-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "idempotent")
-            first = run_installer(
-                fixture.destination_root,
-                "consumer",
-                "--yes",
-                "--cleanup-legacy-commands",
-            )
-            self.assertEqual(0, first.returncode, first.stderr or first.stdout)
-            second = run_installer(
-                fixture.destination_root,
-                "consumer",
-                "--yes",
-                "--cleanup-legacy-commands",
-            )
-            self.assertEqual(0, second.returncode, second.stderr or second.stdout)
-            self.assertFalse(fixture.legacy_destination.exists())
-            manifest = json.loads(fixture.manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(1, len(manifest["removed_legacy_links"]))
-
-    def test_unsafe_legacy_shapes_block_and_preserve_manifest(self) -> None:
-        cases = (
-            "divergent",
-            "orphan",
-            "real-file",
-            "empty-directory",
-            "non-empty-directory",
-            "parent-symlink",
-            "traversal",
-            "origin-outside",
-            "no-manifest",
-        )
-        for case in cases:
-            with self.subTest(case=case), tempfile.TemporaryDirectory(
-                prefix=f"loki-block-{case}-"
-            ) as raw_temp:
-                fixture = build_legacy_fixture(Path(raw_temp), case)
-                before = fixture.manifest_path.read_bytes() if fixture.manifest_path.exists() else None
                 result = run_installer(
-                    fixture.destination_root,
-                    "consumer",
-                    "--dry-run",
-                    "--cleanup-legacy-commands",
+                    fixture.destination_root, "consumer", "--yes", "--replace"
                 )
-                self.assertEqual(2, result.returncode, result.stderr or result.stdout)
-                self.assertIn("status=blocked type=legacy-command", result.stdout)
-                if before is not None:
-                    self.assertEqual(before, fixture.manifest_path.read_bytes())
+                self.assertEqual(1, result.returncode, result.stderr or result.stdout)
+                self.assertIn("legacy command tree detected", result.stderr)
+                self.assertEqual(before_manifest, fixture.manifest_path.read_bytes())
+                if before_destination is not None:
+                    self.assertEqual(before_destination, os.readlink(fixture.legacy_destination))
+                self.assertFalse((fixture.destination_root / ".agents" / "skills").exists())
 
-    def test_cleanup_failure_preserves_previous_manifest_on_apply(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="loki-cleanup-atomic-") as raw_temp:
-            fixture = build_legacy_fixture(Path(raw_temp), "real-file")
-            before = fixture.manifest_path.read_bytes()
-            result = run_installer(
-                fixture.destination_root,
-                "consumer",
-                "--yes",
-                "--cleanup-legacy-commands",
-            )
+    def test_legacy_skill_file_symlink_is_rejected_even_with_replace(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-reject-skill-file-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            source = PACKAGE_ROOT / "skills" / "loki-deep-analysis" / "SKILL.md"
+            legacy = destination / ".agents" / "skills" / "loki-deep-analysis" / "SKILL.md"
+            legacy.parent.mkdir(parents=True)
+            os.symlink(source, legacy)
+            before = os.readlink(legacy)
+            result = run_installer(destination, "consumer", "--yes", "--replace")
             self.assertEqual(2, result.returncode, result.stderr or result.stdout)
-            self.assertEqual(before, fixture.manifest_path.read_bytes())
+            self.assertIn("legacy skill-file symlink exists", result.stdout)
+            self.assertEqual(before, os.readlink(legacy))
+            self.assertFalse((destination / MANIFEST_RELATIVE_PATH).exists())
+
+    def test_parent_symlink_is_rejected_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-reject-parent-symlink-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            outside = Path(raw_temp) / "outside"
+            outside.mkdir()
+            destination.mkdir()
+            os.symlink(outside, destination / ".agents")
+            result = run_installer(destination, "consumer", "--yes", "--replace")
+            self.assertEqual(2, result.returncode, result.stderr or result.stdout)
+            self.assertIn("parent path is a symlink", result.stdout)
+            self.assertTrue((destination / ".agents").is_symlink())
+            self.assertEqual([], list(outside.iterdir()))
+
+    def test_legacy_manifest_is_rejected_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-reject-manifest-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            manifest_path = destination / MANIFEST_RELATIVE_PATH
+            manifest = {
+                "install_profile": "consumer",
+                "links": [{"type": "command", "destination": "/consumer/.agents/commands/loki/x.md"}],
+                "removed_legacy_links": [],
+            }
+            write_text(manifest_path, json.dumps(manifest, indent=2) + "\n")
+            before = manifest_path.read_bytes()
+            result = run_installer(destination, "consumer", "--yes", "--replace")
+            self.assertEqual(1, result.returncode, result.stderr or result.stdout)
+            self.assertIn("legacy installation manifest contains command links", result.stderr)
+            self.assertEqual(before, manifest_path.read_bytes())
+
+    def test_legacy_manifest_cleanup_history_is_rejected_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-reject-manifest-history-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            manifest_path = destination / MANIFEST_RELATIVE_PATH
+            manifest = {
+                "install_profile": "consumer",
+                "links": [],
+                "removed_legacy_links": [],
+            }
+            write_text(manifest_path, json.dumps(manifest, indent=2) + "\n")
+            before = manifest_path.read_bytes()
+            result = run_installer(destination, "consumer", "--yes", "--replace")
+            self.assertEqual(1, result.returncode, result.stderr or result.stdout)
+            self.assertIn("legacy installation manifest contains cleanup history", result.stderr)
+            self.assertEqual(before, manifest_path.read_bytes())
 
     def test_atomic_manifest_replace_failure_preserves_previous_bytes(self) -> None:
         module = load_installer_module()
@@ -562,7 +526,6 @@ class LegacyCleanupTests(unittest.TestCase):
                         PACKAGE_ROOT,
                         False,
                         "consumer",
-                        [],
                         [],
                     )
             self.assertEqual(previous, manifest_path.read_bytes())

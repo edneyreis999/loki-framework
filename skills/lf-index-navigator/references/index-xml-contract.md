@@ -1,8 +1,8 @@
 # index-xml-contract
 
-`docs/index.xml` e o catalogo preferencial de documentacao duradoura do projeto
-consumidor. Ele substitui o uso de `index.md` como superficie principal de
-navegacao para contexto local.
+`docs/index.xml` e o catalogo obrigatorio de documentacao duradoura do projeto
+consumidor. A navegacao de contexto local nao possui rota alternativa baseada
+em `index.md`.
 
 ## Required Structure
 
@@ -52,12 +52,15 @@ sem exigir memoria de IDs transitorios de plano, CI, task, build, delegacao ou
 run local. IDs estaveis de dominio, documento, path, anchor ou fonte versionada
 podem aparecer quando tambem houver descricao textual suficiente.
 
-## Fallback Policy
+## Missing Catalog Policy
 
-- Preferir `docs/index.xml` sempre que existir.
-- Usar `index.md` apenas em diretorios legados sem catalogo XML.
-- Se ambos existirem e divergirem, `docs/index.xml` vence para navegacao do
-  projeto consumidor.
+- `docs/index.xml` ausente e a falha explicita `consumer_docs_index_missing`.
+- Ao receber essa falha, pare a navegacao; nao tente ler `index.md` nem varrer
+  a arvore `/docs` para inferir um catalogo.
+- O proximo caminho minimo e encaminhar ao `catalogador` a criacao ou a
+  publicacao de `docs/index.xml`, depois retomar a navegacao a partir dele.
+- `index.md` na raiz do pacote Loki permanece o indice interno do framework e
+  nao participa da navegacao de documentacao do consumidor.
 
 ## Catalog Quality Rules
 

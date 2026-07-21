@@ -197,10 +197,9 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
   `install-scopes.json` na mesma mudanca.
 - Command bundles Codex sao instalados como diretorios em
   `.agents/skills/loki-*`, filtrados pelo perfil ativo.
-- Links legados de command só podem ser removidos com
-  `--yes --cleanup-legacy-commands`, quando forem symlinks exatos para a antiga
-  fonte do mesmo pacote e nenhum parent for symlink. Arquivos reais e links
-  divergentes sempre bloqueiam.
+- O instalador aceita somente schema 2. `.agents/commands`, manifest com links
+  de command ou historico de remocao e symlink de diretorio em
+  `.agents/agents` devem bloquear sem alterar, remover ou escrever no destino.
 - Agentes Markdown e projecoes Codex sao instalados por arquivo em
   `.agents/agents/*.md` e `.codex/agents/*.toml` para respeitar o perfil ativo.
 - Destinos legados com `.agents/agents` como symlink de diretorio devem
@@ -224,11 +223,30 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
   `AGENTS.md` ou `CLAUDE.md` do consumidor, trate esses arquivos como destino de
   aplicacao aprovado, nunca como dependencia normativa do pacote.
 - `index.md` do pacote e navegacao interna do framework. `docs/index.xml` do
-  consumidor e navegacao da documentacao local do projeto. Nao confundir as
-  duas superficies.
+  consumidor e a navegacao obrigatoria da documentacao local do projeto. A
+  ausencia do catalogo deve falhar sem tentar `index.md` para navegar o
+  consumidor. Nao confundir as duas superficies.
 - A exclusividade de `catalogador` vale para docs duradouros do consumidor.
   Docs dentro do package root continuam sob autoridade escopada de
   `framework-artifact-writer`; essa autoridade nao se estende ao consumidor.
+
+### Contratos removidos e compatibilidade preservada
+
+- A politica para um contrato removido e `rejection-only`: rejeite-o antes de
+  interpretar ou escrever, sem adicionar reader, conversor, remocao ou
+  fallback implicito.
+- O estado agentic vigente e manifest schema 4, report schema 5 e digest schema
+  4; WTR schema 1 permanece vigente. Evidencia de sessao e execution knowledge
+  schema 1 tambem permanecem vigentes nas suas familias.
+- O unico catalogo analitico persistido e XML v2. O layout v1 deve falhar antes
+  de processamento; JSON de policy, request, approval e CLI e control plane e
+  nao um reader de catalogo.
+- O instalador aceita somente `install-scopes.json` schema 2 e deve rejeitar
+  layouts anteriores sem writes. `docs/index.xml` ausente no consumidor tambem
+  falha sem consultar `index.md`.
+- A projecao retirada nao deve ganhar fonte, instalacao, manifest ou fallback.
+  Preserve compatibilidade de dominio e fallbacks operacionais ainda vigentes
+  somente quando o contrato canonico da familia os declarar.
 
 ## Placement Matrix para Promocao de Contexto
 

@@ -29,7 +29,7 @@
       <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
     </capture>
   </execution_knowledge_captures>
-  <write_test_review schema_version="1" legacy_reader_optional="true">
+  <write_test_review schema_version="1">
     <policy_ref>{{review_policy_ref}}</policy_ref>
     <policy_digest>{{review_policy_digest}}</policy_digest>
     <requested_frequency>{{review_requested_frequency}}</requested_frequency>

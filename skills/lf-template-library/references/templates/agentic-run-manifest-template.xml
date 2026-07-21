@@ -54,7 +54,7 @@
       <status>planned</status>
     </handoff>
   </handoffs>
-  <evidence_policy><mode>evidence-first</mode><legacy_retrospective_fallback>false</legacy_retrospective_fallback></evidence_policy>
+  <evidence_policy><mode>evidence-first</mode><gap_handling>preserve-gap</gap_handling><capture_owner>collector-only</capture_owner><retrospective_dispatch>explicit-only</retrospective_dispatch></evidence_policy>
   <execution_knowledge_policy>
     <mode>persist-first-nonblocking-enrichment</mode>
     <promotion_owner>loki-continuous-improvement</promotion_owner>
@@ -72,7 +72,7 @@
       <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
     </capture>
   </execution_knowledge_captures>
-  <write_test_review schema_version="1" legacy_reader_optional="true">
+  <write_test_review schema_version="1">
     <request>
       <requested_frequency>{{review_requested_frequency}}</requested_frequency>
       <provenance>{{review_frequency_provenance}}</provenance>

@@ -22,6 +22,17 @@ PROFILE_SCOPES = {
     "package-source": frozenset({"both", "internal-only"}),
     "all": frozenset(VALID_SCOPES),
 }
+INSTALL_SCOPE_ROOT_KEYS = frozenset(
+    {"schema_version", "profiles", "artifact_identity_policy", "artifacts"}
+)
+INSTALL_SCOPE_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents", "docs"})
+INSTALL_SCOPE_REQUIRED_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents"})
+INSTALL_SCOPE_PROFILE_KEYS = frozenset(PROFILE_SCOPES)
+
+
+def scope_error(code: str, message: str) -> "InstallError":
+    """Create a stable install-scopes contract error."""
+    return InstallError(f"INSTALL_SCOPES:{code}: {message}")
 
 
 class InstallError(Exception):
@@ -71,25 +82,6 @@ class PlannedLink:
         return entry
 
 
-@dataclass(frozen=True)
-class PlannedLegacyRemoval:
-    destination: Path
-    origin: Path | None
-    existing_state: str
-    status: str
-    blocked: bool = False
-    reason: str = ""
-
-    def manifest_entry(self) -> dict[str, str]:
-        entry = {
-            "destination": str(self.destination),
-            "status": "removed",
-        }
-        if self.origin is not None:
-            entry["origin"] = str(self.origin)
-        return entry
-
-
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -125,14 +117,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--replace",
         action="store_true",
         help="Replace conflicting exact destination paths. Use only after approval.",
-    )
-    parser.add_argument(
-        "--cleanup-legacy-commands",
-        action="store_true",
-        help=(
-            "Remove only exact legacy command symlinks claimed by the previous "
-            "Loki installation manifest. Apply also requires --yes."
-        ),
     )
     return parser.parse_args(argv)
 
@@ -193,48 +177,78 @@ def read_install_scopes(package_root: Path) -> InstallScopeConfig:
     except json.JSONDecodeError as exc:
         raise InstallError(f"invalid JSON in {path}: {exc}") from exc
 
-    schema_version = raw_config.get("schema_version")
-    if schema_version not in {1, 2}:
-        raise InstallError(f"{path} must declare schema_version 1 or 2")
+    if not isinstance(raw_config, dict):
+        raise scope_error("ROOT_TYPE", "root must be an object")
+    unknown_root_keys = sorted(set(raw_config) - INSTALL_SCOPE_ROOT_KEYS)
+    missing_root_keys = sorted(INSTALL_SCOPE_ROOT_KEYS - set(raw_config))
+    if unknown_root_keys or missing_root_keys:
+        details = []
+        if missing_root_keys:
+            details.append("missing " + ", ".join(missing_root_keys))
+        if unknown_root_keys:
+            details.append("unknown " + ", ".join(unknown_root_keys))
+        raise scope_error("ROOT_KEYS", "; ".join(details))
 
-    profiles = raw_config.get("profiles", {})
+    schema_version = raw_config["schema_version"]
+    if schema_version != 2:
+        raise scope_error("SCHEMA_VERSION", "schema_version must be 2")
+
+    profiles = raw_config["profiles"]
+    if not isinstance(profiles, dict):
+        raise scope_error("PROFILES_TYPE", "profiles must be an object")
+    unknown_profile_keys = sorted(set(profiles) - INSTALL_SCOPE_PROFILE_KEYS)
+    missing_profile_keys = sorted(INSTALL_SCOPE_PROFILE_KEYS - set(profiles))
+    if unknown_profile_keys or missing_profile_keys:
+        details = []
+        if missing_profile_keys:
+            details.append("missing " + ", ".join(missing_profile_keys))
+        if unknown_profile_keys:
+            details.append("unknown " + ", ".join(unknown_profile_keys))
+        raise scope_error("PROFILE_KEYS", "; ".join(details))
     for profile, expected_scopes in PROFILE_SCOPES.items():
-        configured = frozenset(profiles.get(profile, []))
+        configured_scopes = profiles[profile]
+        if not isinstance(configured_scopes, list) or not all(
+            isinstance(scope, str) for scope in configured_scopes
+        ):
+            raise scope_error("PROFILE_SCOPES", f"profile {profile} must be a list of scopes")
+        configured = frozenset(configured_scopes)
         if configured != expected_scopes:
-            raise InstallError(
-                f"profile {profile} must map to {sorted(expected_scopes)}"
+            raise scope_error(
+                "PROFILE_SCOPES",
+                f"profile {profile} must map to {sorted(expected_scopes)}",
             )
 
-    artifacts = raw_config.get("artifacts", {})
-    skills = artifacts.get("skills")
-    commands = artifacts.get("commands")
-    agents = artifacts.get("agents")
-    codex_agents = artifacts.get("codex_agents")
-    if (
-        not isinstance(skills, dict)
-        or not isinstance(agents, dict)
-        or not isinstance(codex_agents, dict)
-    ):
-        raise InstallError(
-            f"{path} must define artifacts.skills, artifacts.agents and "
-            "artifacts.codex_agents"
-        )
-    if schema_version == 1 and not isinstance(commands, dict):
-        raise InstallError(f"{path} schema 1 must define artifacts.commands")
-    if schema_version == 2 and commands is not None:
-        raise InstallError(f"{path} schema 2 must not define artifacts.commands")
+    artifacts = raw_config["artifacts"]
+    if not isinstance(artifacts, dict):
+        raise scope_error("ARTIFACTS_TYPE", "artifacts must be an object")
+    unknown_artifact_keys = sorted(set(artifacts) - INSTALL_SCOPE_ARTIFACT_KEYS)
+    missing_artifact_keys = sorted(INSTALL_SCOPE_REQUIRED_ARTIFACT_KEYS - set(artifacts))
+    if unknown_artifact_keys or missing_artifact_keys:
+        details = []
+        if missing_artifact_keys:
+            details.append("missing " + ", ".join(missing_artifact_keys))
+        if unknown_artifact_keys:
+            details.append("unknown " + ", ".join(unknown_artifact_keys))
+        raise scope_error("ARTIFACT_KEYS", "; ".join(details))
+    invalid_artifacts = sorted(
+        key for key, value in artifacts.items() if not isinstance(value, dict)
+    )
+    if invalid_artifacts:
+        raise scope_error("ARTIFACT_VALUES", "artifact maps must be objects: " + ", ".join(invalid_artifacts))
+    skills = artifacts["skills"]
+    agents = artifacts["agents"]
+    codex_agents = artifacts["codex_agents"]
 
     unknown_scopes = sorted(
         (
             set(skills.values())
-            | (set(commands.values()) if isinstance(commands, dict) else set())
             | set(agents.values())
             | set(codex_agents.values())
         )
         - VALID_SCOPES
     )
     if unknown_scopes:
-        raise InstallError("unknown install scope(s): " + ", ".join(unknown_scopes))
+        raise scope_error("UNKNOWN_SCOPE", ", ".join(unknown_scopes))
 
     return InstallScopeConfig(
         skills=dict(skills),
@@ -438,8 +452,8 @@ def parent_symlink_conflict_reason(destination: Path, destination_root: Path) ->
             return ""
         if parent.is_symlink():
             return (
-                f"parent path is a symlink: {parent}; remove or replace the "
-                "legacy directory symlink before installing per-file links"
+                f"parent path is a symlink: {parent}; remove it manually before "
+                "installing per-file links"
             )
     return ""
 
@@ -466,8 +480,8 @@ def legacy_skill_file_symlink_reason(destination: Path, source: Path) -> str:
         return ""
 
     return (
-        "legacy skill file symlink exists; use --replace to migrate to "
-        "a skill directory symlink"
+        "legacy skill-file symlink exists; remove it manually before installing "
+        "the skill directory symlink"
     )
 
 
@@ -498,7 +512,7 @@ def classify_destination(
 
 
 def status_for_state(state: str, replace: bool, dry_run: bool) -> tuple[str, bool]:
-    if state == "parent-symlink-conflict":
+    if state in {"parent-symlink-conflict", "skill-file-symlink-conflict"}:
         return ("blocked", True)
     if state == "missing":
         return ("would-create" if dry_run else "created", False)
@@ -614,244 +628,42 @@ def existing_manifest_profile(destination_root: Path) -> str:
         return ""
     if not isinstance(profile, str):
         raise InstallError(
-            f"invalid install_profile in installation manifest: {manifest_path}"
+            "invalid install_profile in installation manifest: "
+            f"{destination_root / MANIFEST_RELATIVE_PATH}"
         )
     return profile
 
 
-def lexical_absolute(path: Path, relative_to: Path | None = None) -> Path:
-    if not path.is_absolute():
-        if relative_to is None:
-            raise InstallError(f"expected absolute path, got: {path}")
-        path = relative_to / path
-    return Path(os.path.abspath(os.path.normpath(str(path))))
+def assert_no_legacy_install_layout(destination_root: Path) -> None:
+    """Reject v1 layouts before planning any mutation.
 
+    The schema-v2 installer never infers ownership of a legacy layout and never
+    removes it. Consumers must remove or migrate those paths explicitly.
+    """
 
-def is_lexically_within(path: Path, parent: Path) -> bool:
-    try:
-        path.relative_to(parent)
-    except ValueError:
-        return False
-    return True
-
-
-def legacy_command_root(destination_root: Path) -> Path:
-    return lexical_absolute(destination_root / ".agents" / "commands" / "loki")
-
-
-def legacy_parent_symlink(destination_root: Path) -> Path | None:
-    root = legacy_command_root(destination_root)
-    for candidate in (destination_root / ".agents", root.parent, root):
-        if candidate.is_symlink():
-            return candidate
-    return None
-
-
-def _blocked_legacy(
-    destination: Path,
-    reason: str,
-    origin: Path | None = None,
-    existing_state: str = "unsafe",
-) -> PlannedLegacyRemoval:
-    return PlannedLegacyRemoval(
-        destination=destination,
-        origin=origin,
-        existing_state=existing_state,
-        status="blocked",
-        blocked=True,
-        reason=reason,
-    )
-
-
-def plan_legacy_cleanup(
-    destination_root: Path,
-    cleanup_requested: bool,
-    dry_run: bool,
-) -> list[PlannedLegacyRemoval]:
-    """Plan lexical-only deletion of v1 command links without following them."""
-
-    root = legacy_command_root(destination_root)
-    parent_symlink = legacy_parent_symlink(destination_root)
-    if parent_symlink is not None:
-        return [
-            _blocked_legacy(
-                root,
-                f"legacy command parent is a symlink: {parent_symlink}",
-                existing_state="parent-symlink",
-            )
-        ]
+    command_tree = destination_root / ".agents" / "commands"
+    if command_tree.exists() or command_tree.is_symlink():
+        raise InstallError(
+            "legacy command tree detected at "
+            f"{command_tree}; refusing to migrate or remove consumer paths"
+        )
 
     manifest = read_previous_manifest(destination_root)
-    entries: list[dict] = []
-    if manifest is not None:
-        raw_links = manifest.get("links", [])
-        if not isinstance(raw_links, list):
-            return [
-                _blocked_legacy(
-                    root,
-                    "previous installation manifest links must be a list",
-                    existing_state="invalid-manifest",
-                )
-            ]
-        entries = [
-            entry
-            for entry in raw_links
-            if isinstance(entry, dict) and entry.get("type") == "command"
-        ]
-
-    discovered: set[Path] = set()
-    if root.exists():
-        if not root.is_dir():
-            return [
-                _blocked_legacy(
-                    root,
-                    "legacy command root is a real file",
-                    existing_state="real-file",
-                )
-            ]
-        try:
-            discovered = {lexical_absolute(path) for path in root.iterdir()}
-        except OSError as exc:
-            return [
-                _blocked_legacy(
-                    root,
-                    f"cannot inspect legacy command root: {exc}",
-                    existing_state="unreadable",
-                )
-            ]
-
-    planned: list[PlannedLegacyRemoval] = []
-    claimed: set[Path] = set()
-    previous_package_root_raw = manifest.get("package_root") if manifest else None
-    previous_package_root = None
-    if entries:
-        if not isinstance(previous_package_root_raw, str) or not previous_package_root_raw:
-            planned.append(
-                _blocked_legacy(
-                    root,
-                    "previous manifest with command links is missing package_root",
-                    existing_state="invalid-manifest",
-                )
-            )
-        else:
-            previous_package_root = lexical_absolute(Path(previous_package_root_raw))
-
-    for entry in entries:
-        raw_destination = entry.get("destination")
-        raw_origin = entry.get("origin")
-        if not isinstance(raw_destination, str) or not isinstance(raw_origin, str):
-            planned.append(
-                _blocked_legacy(
-                    root,
-                    "legacy command manifest entry must contain string destination and origin",
-                    existing_state="invalid-entry",
-                )
-            )
-            continue
-
-        destination_raw_path = Path(raw_destination)
-        destination = lexical_absolute(destination_raw_path)
-        origin = lexical_absolute(Path(raw_origin))
-        if not destination_raw_path.is_absolute() or str(destination_raw_path) != str(destination):
-            planned.append(
-                _blocked_legacy(
-                    destination,
-                    "legacy destination is not an absolute normalized path",
-                    origin,
-                    "path-traversal",
-                )
-            )
-            continue
-        if destination.parent != root:
-            planned.append(
-                _blocked_legacy(
-                    destination,
-                    f"legacy destination is outside exact command root {root}",
-                    origin,
-                    "unknown-path",
-                )
-            )
-            continue
-        if destination in claimed:
-            planned.append(
-                _blocked_legacy(
-                    destination,
-                    "duplicate legacy destination in previous manifest",
-                    origin,
-                    "duplicate-entry",
-                )
-            )
-            continue
-        claimed.add(destination)
-
-        if previous_package_root is None or not is_lexically_within(
-            origin, previous_package_root / "commands"
-        ):
-            planned.append(
-                _blocked_legacy(
-                    destination,
-                    "legacy origin is outside the previous package commands directory",
-                    origin,
-                    "origin-outside-package",
-                )
-            )
-            continue
-        if not destination.is_symlink():
-            if destination.exists():
-                state = "real-directory" if destination.is_dir() else "real-file"
-                planned.append(
-                    _blocked_legacy(
-                        destination,
-                        f"legacy destination is a {state}; automatic cleanup only removes symlinks",
-                        origin,
-                        state,
-                    )
-                )
-            continue
-
-        raw_target = Path(os.readlink(destination))
-        actual_target = lexical_absolute(raw_target, destination.parent)
-        if actual_target != origin:
-            planned.append(
-                _blocked_legacy(
-                    destination,
-                    f"legacy symlink target {actual_target} differs from recorded origin {origin}",
-                    origin,
-                    "divergent-symlink",
-                )
-            )
-            continue
-
-        status = "would-remove" if cleanup_requested and dry_run else "remove"
-        if not cleanup_requested:
-            status = "requires-cleanup-flag"
-        planned.append(
-            PlannedLegacyRemoval(
-                destination=destination,
-                origin=origin,
-                existing_state="exact-symlink",
-                status=status,
-                reason=(
-                    "pass --cleanup-legacy-commands to authorize exact legacy cleanup"
-                    if not cleanup_requested
-                    else "lexical target matches the previous manifest"
-                ),
-            )
+    if manifest is None:
+        return
+    links = manifest.get("links", [])
+    if not isinstance(links, list):
+        raise InstallError("installation manifest links must be a list")
+    if any(isinstance(entry, dict) and entry.get("type") == "command" for entry in links):
+        raise InstallError(
+            "legacy installation manifest contains command links; refusing to "
+            "migrate or remove consumer paths"
         )
-
-    for unknown in sorted(discovered - claimed):
-        kind = "symlink" if unknown.is_symlink() else (
-            "directory" if unknown.is_dir() else "file"
+    if "removed_legacy_links" in manifest:
+        raise InstallError(
+            "legacy installation manifest contains cleanup history; refusing to "
+            "migrate or remove consumer paths"
         )
-        planned.append(
-            _blocked_legacy(
-                unknown,
-                f"unclaimed legacy {kind}; no exact command entry exists in previous manifest",
-                existing_state=f"unclaimed-{kind}",
-            )
-        )
-
-    return planned
 
 
 def assert_profile_matches_existing_manifest(
@@ -877,15 +689,12 @@ def print_plan(
     dry_run: bool,
     replace: bool,
     profile: str,
-    cleanup_requested: bool,
-    legacy_cleanup: list[PlannedLegacyRemoval],
 ) -> None:
     mode = "dry-run" if dry_run else "apply"
     print(f"mode: {mode}")
     print(f"profile: {profile}")
     print("install_scope: " + ",".join(sorted(PROFILE_SCOPES[profile])))
     print(f"replace: {str(replace).lower()}")
-    print(f"cleanup_legacy_commands: {str(cleanup_requested).lower()}")
     print(f"package_root: {package_root}")
     print(f"dest_root: {destination_root}")
     print("links:")
@@ -897,37 +706,11 @@ def print_plan(
         )
         if link.reason:
             print(f"  reason={link.reason}")
-    print("legacy_command_cleanup:")
-    if not legacy_cleanup:
-        print("  none")
-    for removal in legacy_cleanup:
-        origin = str(removal.origin) if removal.origin is not None else "unknown"
-        print(
-            f"- status={removal.status} type=legacy-command "
-            f"origin={origin} destination={removal.destination}"
-        )
-        if removal.reason:
-            print(f"  reason={removal.reason}")
 
 
 def remove_exact_conflict(path: Path, existing_state: str) -> None:
     if path.is_symlink():
         path.unlink()
-        return
-
-    if existing_state == "skill-file-symlink-conflict":
-        skill_file = path / "SKILL.md"
-        if not skill_file.is_symlink():
-            raise InstallError(
-                f"cannot migrate legacy skill install without SKILL.md symlink: {path}"
-            )
-        skill_file.unlink()
-        try:
-            path.rmdir()
-        except OSError as exc:
-            raise InstallError(
-                f"cannot migrate legacy skill install with extra entries: {path}"
-            ) from exc
         return
 
     if path.is_dir():
@@ -976,78 +759,15 @@ def apply_plan(planned_links: list[PlannedLink]) -> list[PlannedLink]:
     return applied
 
 
-def apply_legacy_cleanup(
-    destination_root: Path,
-    planned_removals: list[PlannedLegacyRemoval],
-) -> list[PlannedLegacyRemoval]:
-    removed: list[PlannedLegacyRemoval] = []
-    for removal in planned_removals:
-        if removal.blocked:
-            raise InstallError(
-                f"blocked legacy destination {removal.destination}: {removal.reason}"
-            )
-        if removal.status not in {"remove", "would-remove"}:
-            continue
-        if not removal.destination.is_symlink():
-            raise InstallError(
-                f"legacy destination changed before apply: {removal.destination}"
-            )
-        actual_target = lexical_absolute(
-            Path(os.readlink(removal.destination)), removal.destination.parent
-        )
-        if removal.origin is None or actual_target != removal.origin:
-            raise InstallError(
-                f"legacy symlink target changed before apply: {removal.destination}"
-            )
-        removal.destination.unlink()
-        removed.append(removal)
-
-    root = legacy_command_root(destination_root)
-    for directory in (root, root.parent):
-        if directory.is_symlink() or not directory.exists():
-            continue
-        try:
-            directory.rmdir()
-        except OSError:
-            pass
-    return removed
-
-
 def write_manifest(
     destination_root: Path,
     package_root: Path,
     replace: bool,
     profile: str,
     planned_links: list[PlannedLink],
-    removed_legacy_links: list[PlannedLegacyRemoval],
 ) -> Path:
     manifest_path = destination_root / MANIFEST_RELATIVE_PATH
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    previous_manifest = read_previous_manifest(destination_root)
-    previous_removed = (
-        previous_manifest.get("removed_legacy_links", [])
-        if previous_manifest is not None
-        else []
-    )
-    if not isinstance(previous_removed, list):
-        raise InstallError(
-            f"invalid removed_legacy_links in previous manifest: {manifest_path}"
-        )
-    removal_history: list[dict[str, str]] = []
-    seen_removals: set[tuple[str, str]] = set()
-    for entry in [
-        *(item for item in previous_removed if isinstance(item, dict)),
-        *(removal.manifest_entry() for removal in removed_legacy_links),
-    ]:
-        destination = entry.get("destination")
-        origin = entry.get("origin", "")
-        if not isinstance(destination, str) or not isinstance(origin, str):
-            continue
-        marker = (destination, origin)
-        if marker in seen_removals:
-            continue
-        seen_removals.add(marker)
-        removal_history.append(dict(entry))
     manifest = {
         "package_root": str(package_root),
         "dest_root": str(destination_root),
@@ -1059,7 +779,6 @@ def write_manifest(
         "install_profile": profile,
         "install_scope": sorted(PROFILE_SCOPES[profile]),
         "links": [link.manifest_entry() for link in planned_links],
-        "removed_legacy_links": removal_history,
     }
     payload = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     temporary_path: Path | None = None
@@ -1102,6 +821,7 @@ def run(argv: list[str]) -> int:
         package_root = resolve_package_root()
         destination_root = resolve_destination_root(args.dest)
         scope_config = read_install_scopes(package_root)
+        assert_no_legacy_install_layout(destination_root)
         assert_profile_matches_existing_manifest(destination_root, args.profile)
         all_specs = build_link_specs(
             package_root,
@@ -1123,11 +843,6 @@ def run(argv: list[str]) -> int:
                 profile=args.profile,
             )
         )
-        legacy_cleanup = plan_legacy_cleanup(
-            destination_root,
-            cleanup_requested=args.cleanup_legacy_commands,
-            dry_run=args.dry_run,
-        )
     except InstallError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -1139,16 +854,13 @@ def run(argv: list[str]) -> int:
         dry_run=args.dry_run,
         replace=args.replace,
         profile=args.profile,
-        cleanup_requested=args.cleanup_legacy_commands,
-        legacy_cleanup=legacy_cleanup,
     )
     sys.stdout.flush()
 
     blocked_links = [link for link in planned_links if link.blocked]
-    blocked_legacy = [removal for removal in legacy_cleanup if removal.blocked]
-    if blocked_links or (args.cleanup_legacy_commands and blocked_legacy):
+    if blocked_links:
         print(
-            f"error: {len(blocked_links) + len(blocked_legacy)} blocked destination(s); resolve the "
+            f"error: {len(blocked_links)} blocked destination(s); resolve the "
             "reported blocker(s). Use --replace only for exact path conflicts "
             "after approval",
             file=sys.stderr,
@@ -1157,15 +869,6 @@ def run(argv: list[str]) -> int:
 
     if args.dry_run:
         return 0
-
-    legacy_present = bool(legacy_cleanup)
-    if legacy_present and not args.cleanup_legacy_commands:
-        print(
-            "error: legacy command paths detected; apply requires --yes "
-            "--cleanup-legacy-commands; --replace does not authorize cleanup",
-            file=sys.stderr,
-        )
-        return CONFLICT_EXIT_CODE
 
     try:
         # Rebuild both plans immediately before mutation so a changed symlink or
@@ -1183,23 +886,9 @@ def run(argv: list[str]) -> int:
                 profile=args.profile,
             )
         )
-        revalidated_legacy = plan_legacy_cleanup(
-            destination_root,
-            cleanup_requested=args.cleanup_legacy_commands,
-            dry_run=False,
-        )
         if any(link.blocked for link in revalidated_links):
             raise InstallError("a destination changed or remained blocked before apply")
-        if any(removal.blocked for removal in revalidated_legacy):
-            raise InstallError("a legacy destination changed or remained blocked before apply")
-        if revalidated_legacy and not args.cleanup_legacy_commands:
-            raise InstallError(
-                "legacy command paths require --cleanup-legacy-commands"
-            )
-
-        removed_legacy = apply_legacy_cleanup(
-            destination_root, revalidated_legacy
-        )
+        assert_no_legacy_install_layout(destination_root)
         applied_links = apply_plan(revalidated_links)
         manifest_path = write_manifest(
             destination_root,
@@ -1207,7 +896,6 @@ def run(argv: list[str]) -> int:
             replace=args.replace,
             profile=args.profile,
             planned_links=applied_links,
-            removed_legacy_links=removed_legacy,
         )
     except InstallError as exc:
         print(f"error: {exc}", file=sys.stderr)

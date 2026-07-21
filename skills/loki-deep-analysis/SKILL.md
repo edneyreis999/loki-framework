@@ -107,8 +107,8 @@ Git, environment, source/report paths, documentation or `.loki` presence. The
 mandatory preparation invocation resolves the internal `consumer_root` exactly
 once from canonical `pwd`, records `canonical-pwd` provenance, and derives the
 fixed state root `<consumer_root>/.loki/analytic-inference/v2`. That XML v2
-layout is the only active layout; v1/JSON is legacy read-only and never a
-lookup fallback.
+layout is the only active layout, using `registry.xml`, `index.xml`,
+`rev-N.xml` and XML events. No JSON layout participates in lookup or writing.
 
 Identify every missing or invalid required input and request it before
 continuing. Do not invent sources, technologies, destination, policy,
