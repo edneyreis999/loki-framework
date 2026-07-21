@@ -25,11 +25,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 52, "agent": 23, "codex-agent": 23, "templates": 1},
-    "package-source": {"skill": 43, "agent": 12, "codex-agent": 12, "templates": 1},
-    "all": {"skill": 57, "agent": 25, "codex-agent": 25, "templates": 1},
+    "consumer": {"skill": 54, "agent": 23, "codex-agent": 23, "templates": 1},
+    "package-source": {"skill": 45, "agent": 12, "codex-agent": 12, "templates": 1},
+    "all": {"skill": 59, "agent": 25, "codex-agent": 25, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 99, "package-source": 68, "all": 108}
+FINAL_TOTALS = {"consumer": 101, "package-source": 70, "all": 110}
 
 
 @dataclass(frozen=True)
