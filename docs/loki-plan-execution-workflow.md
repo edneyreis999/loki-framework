@@ -43,6 +43,15 @@ O caminho manual continua sendo explicito: uma rota de analise
 `loki-human-decision-preflight`, `loki-generate-action-plan`,
 `loki-enrich-tasks` quando aplicavel e `loki-run-plan` por fase ou task.
 
+Quando for util separar a preparacao deterministica da investigacao,
+`loki-generate-inferences` e um fork opcional antes de `loki-deep-analysis`.
+Ele recebe uma entrada de analise, fontes locais permitidas e um destino `.md`
+novo, exato e aprovado abaixo de `<consumer-root>/planos/`, com parent existente
+e sem symlink, traversal ou colisao. Cria somente esse unico output e termina
+em `pre-investigation-complete`; nao executa investigacao, fan-out, handoff,
+agent run, web research, CI, catalog mutation ou workflow downstream. A rota
+seguinte e sempre escolhida manualmente em novo pedido; este fork nao a invoca.
+
 O caminho integrado v2 usa `loki-agentic-development` quando o usuario quer
 sair de uma demanda simples para analise agentica, gates materiais antes do
 plano, plano gerado e execucao autonoma. Esse fluxo usa
@@ -65,7 +74,12 @@ execucao.
 4. Se a entrada vier de observacao humana, bug percebido ou validacao manual,
    use `loki-feedback` antes de propor solucao. Ele investiga uma pergunta por
    vez e registra diagnostico sem escrever automaticamente.
-5. Use `loki-tech-analysis` quando a decisao exigir evidencias, hipoteses,
+5. Antes de uma investigacao profunda, use opcionalmente
+   `loki-generate-inferences` para persistir um unico core de preparacao
+   deterministico sob `planos/`. Ele termina antes da investigacao, sem
+   dispatch, CI, pesquisa web, mutacao de catalogo ou proxima chamada
+   automatica; uma pessoa escolhe manualmente a proxima rota permitida.
+6. Use `loki-tech-analysis` quando a decisao exigir evidencias, hipoteses,
    riscos, superficies afetadas, pesquisa condicionada, validators ou gates.
    Quando as fontes forem ruidosas, desconhecidas ou multi-fonte, acione
    `source-researcher` em modo read-only antes da matriz de decisao.
@@ -75,40 +89,40 @@ execucao.
    antes do decision preflight. Ele nao aninha `loki-tech-analysis`; seu report,
    eventos e candidatos nao alteram o catalogo nem constituem validacao de
    runtime.
-6. Use `loki-human-decision-preflight` quando a analise ou brief tiver
+7. Use `loki-human-decision-preflight` quando a analise ou brief tiver
    perguntas humanas pendentes antes do plano. Ele separa `must_ask_now`,
    `can_delegate_to_plan`, `can_validate_later` e
    `do_not_ask_llm_can_determine`.
-7. Use `loki-generate-action-plan` para transformar a analise aprovada e as
+8. Use `loki-generate-action-plan` para transformar a analise aprovada e as
    decisoes humanas registradas em
    `tasks.md`, `task-N.M.md`, dependencias, human loops, validators e estado de
    retomada.
-8. Antes da execucao, use `loki-enrich-tasks` quando retrospectivas, builds,
+9. Antes da execucao, use `loki-enrich-tasks` quando retrospectivas, builds,
    interactions ou aprendizados locais puderem reduzir ambiguidade da fase
    atual. Pesquisa externa continua condicionada: a frase exata deve ser
    mostrada ao usuario antes da busca.
-9. Use `loki-run-plan` para executar uma fase ou task aprovada. Ele carrega
+10. Use `loki-run-plan` para executar uma fase ou task aprovada. Ele carrega
    `lf-run-plan-execution` e `lf-domain-context-preflight`, monta um
    `Execution Brief`, resolve contexto e
    bloqueia escrita quando faltar decisao, validator, approval ou gate humano.
-10. Cada agente executa preflight pessoal: consulta a menor documentacao,
+11. Cada agente executa preflight pessoal: consulta a menor documentacao,
    registra freshness, conflitos, lacunas e fontes atuais, que prevalecem sobre
    docs stale. `bibliotecario` apenas localiza a menor leitura suficiente; o
    preflight nunca autocorrige docs.
-11. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
+12. `execution-context-reader` pode ler `DIR_ANALISE`, tasks, docs e fontes
    locais em modo read-only para extrair apenas o que afeta a fase alvo. Quando
    nao houver `DIR_ANALISE` e as referencias da task forem insuficientes, ele
    faz uma pre-analise local minima antes da primeira escrita.
-12. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
+13. Se a lacuna sem `DIR_ANALISE` for ampla, ruidosa ou multi-fonte demais para
    a fase de execucao, pause antes de escrever e use `source-researcher` para
    produzir evidencia que revise ou complemente o `Execution Brief`.
-13. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
+14. Skills tecnicas entram somente quando a task, o contexto, o usuario ou uma
    retrospectiva aprovada exigir aquela tecnologia.
-14. A implementacao acontece task por task, em ordem segura. Leitura pode ser
+15. A implementacao acontece task por task, em ordem segura. Leitura pode ser
    paralela; escrita fica serializada por owner e arquivo. O owner pode ser o
    orquestrador ou um agente `scoped-writer` quando a task aprovada declarar
    `target_files`, validators e gates.
-15. Tasks que tocam estado de inferencias do consumidor declaram
+16. Tasks que tocam estado de inferencias do consumidor declaram
     `destination_scope: consumer-operational-state`, resolvem internamente o
     consumer root do `pwd` canonico e derivam somente
     `<consumer-root>/.loki/analytic-inference/v2/`. O owner exclusivo e
@@ -120,27 +134,27 @@ execucao.
     apenas alimentar migracao copy-only separadamente inventariada e aprovada.
     O pacote distribui somente contratos, schemas, scripts, fixtures e policy:
     nunca catalogo de producao, seed ou overlay.
-16. Promocao e reorganizacao em `.loki` exigem validators, technical review e
+17. Promocao e reorganizacao em `.loki` exigem validators, technical review e
     approval root-bound antes da mutacao. Purge exige dry-run completo e uma
     approval JIT independente, posterior, single-use e vinculada a root, IDs,
     paths, hashes e digests exatos. Nenhum score autoriza write ou delete.
-17. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
+18. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
     `catalogador`, caller `loki-run-plan`, mode `task_scoped_writer`.
     Indisponibilidade bloqueia; nenhum fallback escreve esses targets.
-18. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
+19. Quando a task tocar runtime, integracao ativa, estado persistido, asset,
     artefato gerado ou comportamento perceptivel, `runtime-qa` produz checklist
     e evidencia esperada, mas nao substitui validacao humana.
-19. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
+20. Ao concluir, atualize `tasks.md`, `task-N.M.md`, `builds/faseN/`,
     `interaction/faseN/` e `LokiRunState` ou resumo equivalente com fase,
     task, arquivos afetados, validations, human loops, blockers e proximo
     passo.
-20. No mesmo checkpoint, persista primeiro completion/evidence mínimo. Quando
+21. No mesmo checkpoint, persista primeiro completion/evidence mínimo. Quando
     o evento for material, despache `execution-knowledge-cataloger` em paralelo
     para uma entry exclusiva; continue sem esperar e reconcilie depois um dos
     estados `captured`, `partial`, `failed`, `unsupported` ou
     `skipped-nonmaterial`. No final, cancele/interrompa captura não terminal sem
     bloquear a execução validada.
-21. Quando a fase terminar, pausar claramente ou uma dificuldade real for
+22. Quando a fase terminar, pausar claramente ou uma dificuldade real for
     resolvida, passe para `loki-retrospectiva-tecnica` e siga o
     [Workflow de Aprendizado do Loki](loki-learning-workflow.md), incluindo
     validators, gates, comandos/scripts, outputs inesperados, inferencias,
@@ -157,6 +171,7 @@ execucao.
 | --- | --- |
 | `loki-feedback` | Normaliza feedback humano, investiga causas e evita escrever com premissas fracas. |
 | `loki-demand-text-improver` | Enriquece uma demanda antes da analise ou do plano e termina em um Markdown, sem iniciar workflow downstream. |
+| `loki-generate-inferences` | Prepara opt-in um unico core deterministico sob `planos/` antes da investigacao; termina sem dispatch, CI, web research, mutacao de catalogo ou chamada downstream. |
 | `loki-tech-analysis` | Converte demanda em analise baseada em evidencias, riscos, alternativas, validators e gates. |
 | `loki-deep-analysis` | Oferece uma rota opt-in assistida por catalogo antes de decision preflight e action planning, sem aninhar a analise padrao, mutar catalogo ou validar runtime. |
 | `loki-human-decision-preflight` | Classifica decisoes humanas pendentes antes do plano e evita perguntar o que a LLM deve resolver por fonte local. |
@@ -173,6 +188,7 @@ execucao.
 | `loki-feedback` | Define o protocolo de uma pergunta por vez, hipoteses com evidencia e proposta so depois de contexto suficiente. |
 | `lf-tech-analysis-authoring` | Padroniza analise tecnica, mapa de fontes, matriz de decisao, pesquisa condicionada e handoff para plano. |
 | `lf-analytic-inference` | Compartilha consulta seletiva, eventos, snapshots, score e elegibilidade sem permitir mutacao automatica do catalogo. |
+| `lf-analytic-inference-preparation` | Produz o core deterministico e read-only de pre-investigacao, sem dispatch, CI, pesquisa web, mutacao de catalogo ou replay byte a byte. |
 | `loki-human-decision-preflight` | Classifica perguntas humanas antes do plano e registra quando o proximo passo ja pode seguir para action planning. |
 | `loki-agentic-development` | Wrapper Codex para carregar o contrato integrado v2. |
 | `lf-agentic-orchestration` | Regras reutilizaveis de preflight de agentes, fan-out, estado XML, gates, reports, liveness, invalidacao, digest e backlog. |

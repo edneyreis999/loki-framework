@@ -78,6 +78,11 @@ The response and deep report must make these items recoverable:
 - catalog indices read and exact record locators selectively loaded;
 - catalogued, generated, exact-deduplicated, near-duplicate, rejected,
   selected, investigated and validated inferences, each preserving origin;
+- one immutable preparation-core reference with its exact locator,
+  `preparation_id`, `preparation_digest`, input fingerprint, status,
+  validator outcomes and zero-state execution boundary;
+- canonical preparation candidate projections in their original order, with no
+  report-scoped identity or provenance added to the core;
 - specialist matches, capability gaps, handoff identities and terminal states;
 - material findings, negative findings, conflicts, hypotheses and evidence;
 - observed context/tool costs or honest `unknown`/`unsupported`, cumulative
@@ -110,6 +115,16 @@ authorize promotion, merge, reorganization, purge or any catalog mutation.
 Always state whether zero-mutation proof passed; `absent` and `empty` are
 observed states, not permission to bootstrap.
 State explicitly that catalog mutation was not performed.
+
+The response projects, rather than reconstructs, one validated immutable
+preparation core. It names the exact core locator, `preparation_id`,
+`preparation_digest`, input fingerprint, core status, validator outcomes, and
+execution boundary. It preserves the core candidate order, fields,
+classification, and content-addressed IDs. It never places `run_id`, timestamp,
+destination, caller identity, report identity, or `generated_in_report` inside
+the canonical core. Inference events, handoff evidence, agent-run identities,
+observed costs, delivery metadata, and investigation outcomes are explicitly
+post-boundary evidence and may only refer to a candidate by its existing ID.
 
 Represent consumer/runtime human validation with gate
 `<human_validation_gate>`, `required`, state `deferred`, `passed`, `failed` or

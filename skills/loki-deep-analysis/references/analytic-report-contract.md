@@ -35,6 +35,51 @@ Never convert `unknown`, `unavailable`, `unsupported`, timeout, conflict, empty
 catalog, no match, or non-terminal handoff into success. Preserve the minimum
 next input or action needed to resume without conversation memory.
 
+## Immutable preparation core and post-boundary evidence
+
+Before any investigation, record exactly one immutable preparation-core
+reference. The core is the complete `inference_preparation` object defined by
+`lf-analytic-inference-preparation`; this report is a projection and evidence
+consumer, never a second preparation result.
+
+```yaml
+preparation_core:
+  locator: "<approved immutable preparation artifact locator>"
+  preparation_id: "prep-<64-lowercase-hex>"
+  preparation_digest: "sha256:<64-lowercase-hex>"
+  input_fingerprint: "sha256:<64-lowercase-hex>"
+  status: "pre-investigation-complete | partial | blocked"
+  validator_outcomes: []
+  execution_boundary:
+    dispatch_authorized: false
+    investigation_handoffs_dispatched: 0
+    agent_runs_created: 0
+    handoffs_created: 0
+    web_research_performed: false
+    downstream_workflows_invoked: []
+    catalog_mutation_applied: false
+```
+
+`locator`, `preparation_id`, `preparation_digest`, `input_fingerprint`,
+`status`, `validator_outcomes`, and `execution_boundary` are projections of
+the validated core. `validator_outcomes` preserves the core validator records
+without reinterpretation. Verify the digest against the exact referenced core
+before using any candidate. A missing, mismatched, or failed material core
+validator blocks completion and records a resumable minimum next path.
+
+Project `candidates`, `selected_for_investigation`, and
+`planned_investigations` from that same core in canonical order. Do not sort,
+filter, relabel, reclassify, reidentify, merge, or add fields to the projected
+core candidates. In particular, command name, report identity, run ID,
+timestamp, destination, caller identity, and `generated_in_report` are never
+members of the canonical core or of a candidate identity/digest domain.
+
+Everything observed after the core boundary belongs in separately labelled
+post-boundary evidence. This includes inference events, handoff evidence,
+agent-run identities, execution evidence, observed context/tool costs, report
+delivery metadata, and investigation outcomes. Such evidence may refer to a
+core candidate by `candidate_id`, but it never changes the core retrospectively.
+
 ## Required sections
 
 The report contains:
@@ -46,8 +91,8 @@ The report contains:
 4. catalog indices read and selectively loaded inference locators;
 5. catalogued inferences reused, with identity, revision, relevance reason,
    freshness and provenance;
-6. contextual inferences generated in this run, kept distinct from reused
-   records;
+6. immutable preparation-core candidate projections, kept distinct from reused
+   records and from post-boundary evidence;
 7. exact duplicates, near-duplicates, rejected candidates, and reasons;
 8. candidate classification by relevance, risk, investigation cost,
    independence, evidence availability, and material-finding potential;
@@ -57,8 +102,7 @@ The report contains:
     unresolved gaps with fact/inference/hypothesis separation;
 11. observed context/tool cost or explicit `unknown`/`unsupported`, policy
     budget, degradation and stop decisions;
-12. inference events and generated candidates for later continuous-improvement
-    intake;
+12. post-boundary inference events for later continuous-improvement intake;
 13. validators, gates, approvals, limitations, risks, resume state, and allowed
     next destinations.
 
@@ -86,48 +130,19 @@ The locator must be validated by `lf-analytic-inference`. Catalogued
 inferences are heuristic starting points and do not restrict contextual
 candidate generation.
 
-## Generated candidate
+## Preparation candidate projection
 
-Every new inference remains an `unreviewed` candidate and contains:
+The report's only candidate projection is the immutable core's ordered
+`candidates`, `selected_for_investigation`, and `planned_investigations`. Each
+candidate retains the preparation-contract schema, including its content-
+addressed `candidate_id`, `origin`, `lifecycle_status`, disposition and
+observable `disposition_reason`. Do not create a report-scoped candidate
+schema or a second candidate list.
 
-```yaml
-generated_candidate:
-  schema_version: 1
-  candidate_id: "<stable run-scoped ID>"
-  origin: generated
-  status: unreviewed
-  statement: "<testable statement or question>"
-  demand_relation: "<observable relation>"
-  applicability:
-    technologies: []
-    versions: []
-    surfaces: []
-    objectives: []
-    signals: []
-    exclusions: []
-  provenance:
-    source_refs: []
-    generated_in_report: "<report identity or destination>"
-    evidence_refs: []
-    freshness: "current | stale | unknown"
-  investigation:
-    confirm_or_reject_evidence: []
-    potential_impact: "<observable impact>"
-    cost: "low | medium | high | unknown | unsupported"
-    stop_condition: "<observable terminal condition>"
-    suggested_capabilities: []
-  distinction:
-    exact_duplicate_of: null
-    near_duplicates: []
-    distinction_reason: "<observable difference or no-match reason>"
-  downstream:
-    eligible_for_ci_evaluation: true
-    durable_mutation_authorized: false
-```
-
-A configured minimum is a relevance floor, not permission to invent or
-delegate weak candidates. If fewer useful candidates exist, report
-`insufficient` or `partial` and the stopping evidence.
+A configured minimum remains a relevance floor, not permission to invent,
+reorder, or delegate weak candidates. If fewer useful candidates exist, the
+core status and the post-boundary report status must honestly be `insufficient`
+or `partial` with stopping evidence.
 
 ## Inference event
 
@@ -196,8 +211,9 @@ Before `completed`, verify:
 
 - every source and loaded locator is readable, scoped and traceable;
 - origins remain distinct and IDs are unique;
-- generated candidates contain provenance, confirm/reject evidence, impact,
-  cost, stop condition and distinction;
+- the preparation-core candidate projection reproduces every required
+  candidate field, provenance, confirm/reject evidence, impact, cost, stop
+  condition and distinction without changing identity or order;
 - exact deduplication is deterministic and near-duplicates remain proposals;
 - every selected investigation is useful, independent or correctly serialized,
   policy-budgeted, and terminal;

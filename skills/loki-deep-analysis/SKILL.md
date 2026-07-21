@@ -41,6 +41,7 @@ type: command
 serialization: skill-bundle
 domain: analysis
 required_skills:
+  - lf-analytic-inference-preparation
   - lf-analytic-inference
   - lf-tech-analysis-authoring
   - lf-agentic-orchestration
@@ -88,10 +89,12 @@ record an empty list as a discovery constraint rather than evidence of absence.
 
 When `destination` is present, require an exact `.md` file path, an existing
 writable parent, explicit write approval, canonical containment in the caller's
-allowed scope, and a collision decision before Execution. Do not create a
-directory or overwrite an existing file during Input. When it is null,
-normalize `allowed_writes: []` unless a later human decision creates one exact
-interaction-gate target with its own approval.
+allowed scope, and a collision decision before Execution. Canonical containment
+is a public Input precondition: validate it against the one `consumer_root`
+returned by the mandatory preparation invocation, never through a second root
+resolution. Do not create a directory or overwrite an existing file during
+Input. When it is null, normalize `allowed_writes: []` unless a later human
+decision creates one exact interaction-gate target with its own approval.
 
 Validate `inference_policy` as a mapping or a readable JSON file. An override
 must declare schema, provenance, authorization and digest; reject invalid,
@@ -99,23 +102,22 @@ unapproved, negative, identity-changing, or invariant-weakening values. Never
 infer approval from the presence of the object. Absence selects the active
 policy bundled with `lf-analytic-inference`.
 
-Resolve the internal `consumer_root` exactly once from canonical `pwd`. Require
-the command to start in the consumer project root and record the canonical path
-with source `canonical-pwd`. Do not accept a root parameter or infer/override it
-from adapter metadata, Git, environment, source/report paths, documentation or
-`.loki` presence. Derive, never accept independently, the fixed state root
-`<consumer_root>/.loki/analytic-inference/v2`. Este e o unico layout ativo e
-usa `registry.xml`, indices `index.xml`, records `rev-N.xml` e events `.xml`.
-O layout v1/JSON e legado read-only e so pode ser fonte de uma migracao
-copy-only separadamente inventariada e aprovada; nunca e fallback de lookup.
+Do not accept a root parameter or infer/override a root from adapter metadata,
+Git, environment, source/report paths, documentation or `.loki` presence. The
+mandatory preparation invocation resolves the internal `consumer_root` exactly
+once from canonical `pwd`, records `canonical-pwd` provenance, and derives the
+fixed state root `<consumer_root>/.loki/analytic-inference/v2`. That XML v2
+layout is the only active layout; v1/JSON is legacy read-only and never a
+lookup fallback.
 
 Identify every missing or invalid required input and request it before
 continuing. Do not invent sources, technologies, destination, policy,
 specialist capability, approval, validator, gate, cost, or evidence. Normalize
 the objective, parameters, canonical sources, discovery limits, destination,
 policy identity/digest, allowed and forbidden writes, risks, validators, gates,
-known gaps, completion criteria, canonical consumer/state roots and root source,
-and exact interaction target if independently approved.
+known gaps, completion criteria, and exact interaction target if independently
+approved. The preparation result adds the canonical consumer/state roots and
+root source; callers must reuse it rather than resolve them again.
 
 During Input do not inspect the catalog, conduct the analysis, invoke
 `loki-tech-analysis`, delegate investigations, write a report or interaction

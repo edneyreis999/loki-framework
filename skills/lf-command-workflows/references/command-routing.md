@@ -13,6 +13,7 @@
 | `loki-enrich-tasks` | `skills/loki-enrich-tasks/SKILL.md` |
 | `loki-feedback` | `skills/loki-feedback/SKILL.md` |
 | `loki-generate-action-plan` | `skills/loki-generate-action-plan/SKILL.md` |
+| `loki-generate-inferences` | `skills/loki-generate-inferences/SKILL.md` |
 | `loki-human-decision-preflight` | `skills/loki-human-decision-preflight/SKILL.md` |
 | `loki-agentic-development` | `skills/loki-agentic-development/SKILL.md` |
 | `loki-deep-analysis` | `skills/loki-deep-analysis/SKILL.md` |

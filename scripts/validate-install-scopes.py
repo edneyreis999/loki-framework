@@ -50,15 +50,43 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_LOKI_COMMAND_COUNT = 17
+FINAL_LOKI_COMMAND_COUNT = 18
+REQUIRED_PUBLIC_LOKI_COMMANDS = frozenset(
+    {
+        "loki-abrir-pr",
+        "loki-agentic-development",
+        "loki-catalogar-docs",
+        "loki-commit",
+        "loki-continuous-improvement",
+        "loki-criar-branch",
+        "loki-deep-analysis",
+        "loki-deep-research",
+        "loki-demand-text-improver",
+        "loki-enrich-tasks",
+        "loki-feedback",
+        "loki-generate-action-plan",
+        "loki-generate-inferences",
+        "loki-human-decision-preflight",
+        "loki-init",
+        "loki-retrospectiva-tecnica",
+        "loki-run-plan",
+        "loki-tech-analysis",
+    }
+)
 FINAL_BUNDLE_RESOURCES = (
     "references/execution.md",
     "references/response.md",
     "assets/response-template.md",
 )
 INSTALLABLE_PACKAGE_ROOTS = ("skills", "agents", "codex", "templates")
-ANALYTIC_INFERENCE_RELATIVE_ROOT = Path("skills/lf-analytic-inference")
-ANALYTIC_INFERENCE_FIXTURES = Path("references/fixtures")
+ANALYTIC_INFERENCE_FIXTURE_ROOTS = (
+    Path("skills/lf-analytic-inference/references/fixtures"),
+    Path("skills/lf-analytic-inference-preparation/references/fixtures"),
+)
+ANALYTIC_INFERENCE_RELATIVE_ROOTS = tuple(
+    fixture_root.parents[1]
+    for fixture_root in ANALYTIC_INFERENCE_FIXTURE_ROOTS
+)
 PRODUCTION_STATE_COMPONENTS = {"catalog", "catalogs", "records", "events"}
 PRODUCTION_STATE_FILENAMES = {"registry.xml", "index.xml"}
 PRODUCTION_RECORD_FILENAME = re.compile(r"^rev-[1-9][0-9]*\.xml$")
@@ -678,22 +706,64 @@ def validate_no_production_consumer_state(package_root: Path) -> None:
             if ".loki" in relative.parts:
                 failures.append(f"{relative}: packaged .loki consumer state is forbidden")
 
-    inference_root = package_root / ANALYTIC_INFERENCE_RELATIVE_ROOT
-    if inference_root.exists():
-        fixtures_root = inference_root / ANALYTIC_INFERENCE_FIXTURES
+    declared_fixture_roots = {
+        package_root / relative for relative in ANALYTIC_INFERENCE_FIXTURE_ROOTS
+    }
+    for inference_relative_root in ANALYTIC_INFERENCE_RELATIVE_ROOTS:
+        inference_root = package_root / inference_relative_root
+        if not inference_root.exists():
+            continue
         for path in inference_root.rglob("*"):
-            is_declared_fixture = path == fixtures_root or fixtures_root in path.parents
+            fixture_root = next(
+                (
+                    fixtures_root
+                    for fixtures_root in declared_fixture_roots
+                    if path == fixtures_root or fixtures_root in path.parents
+                ),
+                None,
+            )
+            is_declared_fixture = fixture_root is not None
             if not path.is_file() and not path.is_symlink():
+                if is_declared_fixture and path != fixture_root:
+                    relative_to_package = path.relative_to(package_root)
+                    failures.append(
+                        f"{relative_to_package}: analytic-inference fixtures must not contain nested paths"
+                    )
                 continue
             relative_to_inference = path.relative_to(inference_root)
             relative_to_package = path.relative_to(package_root)
-            if path.suffix == ".json" and path.is_file():
+            if is_declared_fixture:
+                # Fixtures are package-contract inputs, never a disguised live
+                # catalog.  The contract permits real JSON files directly
+                # inside a declared references/fixtures root, and nothing else.
+                if path.parent != fixture_root:
+                    failures.append(
+                        f"{relative_to_package}: analytic-inference fixtures must not contain nested paths"
+                    )
+                    continue
+                if path.is_symlink() or path.suffix != ".json":
+                    failures.append(
+                        f"{relative_to_package}: analytic-inference fixture must be a real JSON file"
+                    )
+                    continue
                 payload = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(payload, dict) and payload.get("production_seed") is True:
+                if not isinstance(payload, dict):
+                    failures.append(
+                        f"{relative_to_package}: analytic-inference fixture must be a JSON object"
+                    )
+                if payload.get("production_seed") is True:
                     failures.append(
                         f"{relative_to_package}: production_seed=true is forbidden in the package"
                     )
-            if is_declared_fixture:
+                if (
+                    path.name == "index.json"
+                    or path.name in PRODUCTION_STATE_FILENAMES
+                    or PRODUCTION_RECORD_FILENAME.fullmatch(path.name)
+                    or path.name.lower().startswith(("seed.", "seed-", "seed_"))
+                ):
+                    failures.append(
+                        f"{relative_to_package}: analytic-inference fixture resembles live catalog state"
+                    )
                 continue
             if path.name == "index.json" or path.name in PRODUCTION_STATE_FILENAMES or (
                 path.suffix == ".xml" and PRODUCTION_RECORD_FILENAME.fullmatch(path.name)
@@ -1031,6 +1101,30 @@ def frontmatter_text(path: Path) -> str:
     return parts[1]
 
 
+def validate_public_loki_command_inventory(
+    public_loki_names: set[str] | list[str],
+    location: str,
+) -> None:
+    actual = set(public_loki_names)
+    if len(actual) != FINAL_LOKI_COMMAND_COUNT:
+        raise ValueError(
+            f"{location} must declare {FINAL_LOKI_COMMAND_COUNT} public Loki command bundles; "
+            f"found {len(actual)}"
+        )
+    missing = sorted(REQUIRED_PUBLIC_LOKI_COMMANDS - actual)
+    extra = sorted(actual - REQUIRED_PUBLIC_LOKI_COMMANDS)
+    if missing or extra:
+        details: list[str] = []
+        if missing:
+            details.append("missing: " + ", ".join(missing))
+        if extra:
+            details.append("unexpected: " + ", ".join(extra))
+        raise ValueError(
+            f"{location} public Loki command identity mismatch; "
+            + "; ".join(details)
+        )
+
+
 def validate_final_loki_bundles(
     package_root: Path,
     data: dict,
@@ -1041,10 +1135,10 @@ def validate_final_loki_bundles(
     public_loki_names = sorted(
         name for name in loki_names if skill_scopes[name] != "internal-only"
     )
-    if require_full_inventory and len(public_loki_names) != FINAL_LOKI_COMMAND_COUNT:
-        raise ValueError(
-            f"schema 2 must declare {FINAL_LOKI_COMMAND_COUNT} public Loki command bundles; "
-            f"found {len(public_loki_names)}"
+    if require_full_inventory:
+        validate_public_loki_command_inventory(
+            public_loki_names,
+            "schema 2",
         )
 
     failures: list[str] = []
@@ -1233,10 +1327,13 @@ def validate_final_manifest(package_root: Path, data: dict) -> None:
         for name, metadata in loki_entries.items()
         if skill_scopes.get(name) != "internal-only"
     }
-    if len(public_loki_entries) != FINAL_LOKI_COMMAND_COUNT:
-        failures.append(
-            f"manifest must contain {FINAL_LOKI_COMMAND_COUNT} public Loki skill entries"
+    try:
+        validate_public_loki_command_inventory(
+            set(public_loki_entries),
+            "manifest",
         )
+    except ValueError as exc:
+        failures.append(str(exc))
     for name, metadata in sorted(loki_entries.items()):
         if metadata.get("operational_role") != "command":
             failures.append(f"manifest skills.{name}.operational_role must be command")

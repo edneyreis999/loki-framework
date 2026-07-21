@@ -42,7 +42,7 @@ paths:
 shell: bash
 type: skill
 status: draft
-used_by: [loki-deep-analysis, loki-continuous-improvement, loki-retrospectiva-tecnica]
+used_by: [loki-deep-analysis, loki-continuous-improvement, loki-retrospectiva-tecnica, lf-analytic-inference-preparation]
 ---
 
 # lf-analytic-inference

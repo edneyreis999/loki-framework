@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "fixture_kind": "analytic-inference-preparation-case-matrix",
+  "byte_replay_is_out_of_scope": true,
+  "execution_boundary": {
+    "dispatch_authorized": false,
+    "investigation_handoffs_dispatched": 0,
+    "agent_runs_created": 0,
+    "handoffs_created": 0,
+    "web_research_performed": false,
+    "downstream_workflows_invoked": [],
+    "catalog_mutation_applied": false
+  },
+  "cases": [
+    {
+      "id": "loaded-relevant-below-floor",
+      "scenario": {
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 3, "candidates": [{"label": "relevant-catalogued", "origin": "catalogued", "disposition": "selected", "cost": "unknown"}]},
+        "expected": {"status": "pre-investigation-complete", "selected_count": 1, "relevant_result_floor": 3, "zero_padding": true, "dispositions": {"relevant-catalogued": "selected"}, "unknown_cost_values": ["unknown"]}
+      }
+    },
+    {
+      "id": "registry-absent",
+      "scenario": {"input": {"catalog_state": "absent", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+    },
+    {
+      "id": "catalog-empty",
+      "scenario": {"input": {"catalog_state": "empty", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+    },
+    {
+      "id": "technology-no-match",
+      "scenario": {"input": {"catalog_state": "no-match", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+    },
+    {
+      "id": "catalog-blocked",
+      "scenario": {"input": {"catalog_state": "blocked", "catalog_snapshot": false, "relevant_result_floor": 0, "candidates": []}, "expected": {"status": "blocked", "selected_count": 0, "relevant_result_floor": 0, "zero_padding": false, "dispositions": {}}}
+    },
+    {
+      "id": "candidate-outcomes-and-duplicates",
+      "scenario": {
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 2, "candidates": [
+          {"label": "exact-duplicate", "disposition": "rejected", "duplicate_relation": "exact-duplicate", "reason": "exact duplicate is represented without merge"},
+          {"label": "near-duplicate", "disposition": "deferred", "duplicate_relation": "near-duplicate", "reason": "near duplicate remains separate pending evidence"},
+          {"label": "irrelevant", "disposition": "rejected", "reason": "irrelevant to normalized demand"},
+          {"label": "unverifiable", "disposition": "deferred", "reason": "insufficient observable evidence"},
+          {"label": "over-budget", "disposition": "rejected", "reason": "observed cost exceeds budget", "cost": "cost:7"}
+        ]},
+        "expected": {"status": "partial", "selected_count": 0, "relevant_result_floor": 2, "zero_padding": true, "dispositions": {"exact-duplicate": "rejected", "near-duplicate": "deferred", "irrelevant": "rejected", "unverifiable": "deferred", "over-budget": "rejected"}, "duplicate_relations": {"exact-duplicate": "exact-duplicate", "near-duplicate": "near-duplicate", "irrelevant": "none", "unverifiable": "none", "over-budget": "none"}}
+      }
+    },
+    {
+      "id": "adversarial-order",
+      "scenario": {
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 1, "candidates": [{"label": "zeta", "disposition": "selected"}, {"label": "alpha", "disposition": "selected"}]},
+        "expected": {"status": "pre-investigation-complete", "selected_count": 2, "relevant_result_floor": 1, "zero_padding": false, "dispositions": {"zeta": "selected", "alpha": "selected"}, "canonical_order": true}
+      }
+    }
+  ]
+}

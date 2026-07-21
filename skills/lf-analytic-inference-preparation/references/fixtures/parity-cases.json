@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "fixture_kind": "analytic-inference-preparation-structural-parity",
+  "byte_replay_is_out_of_scope": true,
+  "common_normalized_input": {
+    "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "sources": [{"locator": "source.md", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "facts": []}],
+    "request_controls_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "policy_id": "fixture-policy",
+    "policy_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "catalog_state": "no-match"
+  },
+  "caller_projections": {
+    "loki-deep-analysis": {"command": "loki-deep-analysis", "run_id": "excluded-from-core", "destination": "excluded-from-core"},
+    "loki-generate-inferences": {"command": "loki-generate-inferences", "run_id": "excluded-from-core", "destination": "excluded-from-core"}
+  },
+  "expected": {
+    "equal_fields": ["input_fingerprint", "preparation_id", "preparation_digest", "candidates", "selected_for_investigation", "execution_boundary"],
+    "zero_dispatch_web_downstream": true,
+    "same_structural_core_and_ids": true
+  }
+}

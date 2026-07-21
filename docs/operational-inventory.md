@@ -41,6 +41,7 @@ não existe projection ou command físico separado.
 | `loki-abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
 | `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki-demand-text-improver` | `mvp` | Enriquecer uma demanda inicial em um unico Markdown antes de analise ou planejamento, sem gate de estado de sessao, com destination existente e gravavel, naming deterministico e nenhum workflow posterior automatico. |
+| `loki-generate-inferences` | `mvp` | Gerar, de forma opt-in, um unico Markdown canonico de pre-investigacao no destino exato e aprovado sob `planos/` do consumidor; nao investiga, nao faz fan-out, handoff, agent run, web research, CI, workflow downstream ou mutacao de catalogo. |
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
@@ -62,8 +63,8 @@ não existe projection ou command físico separado.
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
-O pacote possui 19 command bundles `loki-*` ativos. O router publico
-`lf-command-workflows` expoe 17 deles; os dois bundles `internal-only`,
+O pacote possui 20 command bundles `loki-*` ativos. O router publico
+`lf-command-workflows` expoe 18 deles; os dois bundles `internal-only`,
 `loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados
 exclusivamente por `lf-internal-command-workflows`.
 
@@ -107,7 +108,7 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki publicos disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 18 commands Loki publicos disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
 | `lf-run-plan-execution` | `mvp` | Procedimento de execucao com Execution Brief, dependencias, preflight pessoal de dominio, owners escopados, escrita serializada, validators e estado retomavel. |
@@ -123,6 +124,7 @@ bundles.
 | `lf-index-navigator` | `mvp` | Navegar `docs/index.xml` do projeto consumidor com fallback controlado para `index.md` legado. |
 | `lf-tech-analysis-authoring` | `mvp` | Criar e revisar analises tecnicas Loki baseadas em evidencias, com mapa de fontes, pesquisa condicionada, matriz de decisao, validators e handoff para plano. |
 | `lf-analytic-inference` | `mvp` | Compartilhar entre Codex e Claude Code contratos, schemas, scripts, fixtures e policy para consulta seletiva e manutencao deterministica. O pacote nao contem catalogo, seed nem overlay; o estado vivo XML pertence ao consumer root canonico em `.loki/analytic-inference/v2/`. |
+| `lf-analytic-inference-preparation` | `mvp` | Preparar deterministica e read-onlymente um core de inferencias antes de investigacao, compondo `lf-analytic-inference` sem dispatch, handoff, web research, CI, workflow downstream, mutacao de catalogo ou replay byte a byte. |
 | `lf-action-plan-authoring` | `mvp` | Criar e revisar planos Loki executaveis por outro agente, com fases, tasks, dependencias, referencias, validators e validacao observavel. |
 | `lf-command-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar command bundles com Input, Execution, Response, owners, gates, validators e retomada. |
 | `lf-agent-creator` | `mvp` | Fonte compartilhada do contrato de agents por capacidades e modos, com envelope de escrita, validação e handoff claro. |

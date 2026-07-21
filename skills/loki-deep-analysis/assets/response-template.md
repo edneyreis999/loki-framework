@@ -57,6 +57,55 @@ If empty: <no sufficiently supported technology + consequence>.
 - Requested generated floor: <integer + source + authorization + digest | not-configured>
 - Invariants: <eligibility-only, no automatic mutation, other enforced limits>
 
+## Immutable preparation core
+
+```yaml
+preparation_core:
+  locator: "<approved immutable preparation artifact locator>"
+  preparation_id: "prep-<64-lowercase-hex>"
+  preparation_digest: "sha256:<64-lowercase-hex>"
+  input_fingerprint: "sha256:<64-lowercase-hex>"
+  status: "<pre-investigation-complete | partial | blocked>"
+  validator_outcomes: []
+  execution_boundary:
+    dispatch_authorized: false
+    investigation_handoffs_dispatched: 0
+    agent_runs_created: 0
+    handoffs_created: 0
+    web_research_performed: false
+    downstream_workflows_invoked: []
+    catalog_mutation_applied: false
+```
+
+- Core digest verification: <passed | failed + reason>
+- Core validator interpretation: <all material outcomes + effect>
+- Canonical candidate projection: <the core's ordered candidates,
+  selected_for_investigation and planned_investigations, reproduced without
+  sorting, filtering, relabelling, reclassification, reidentification or added
+  fields>
+- Boundary rule: run IDs, timestamps, destination, caller/report identity and
+  `generated_in_report` are absent from the core and its candidate identity /
+  digest domains.
+
+```yaml
+preparation_candidate_projection:
+  candidates: []
+  selected_for_investigation: []
+  planned_investigations: []
+```
+
+This payload is copied from the referenced immutable preparation core in its
+canonical order. Do not add report/run/destination/timestamp provenance or
+recompute a candidate ID, classification, ordering, or digest. If empty, retain
+the empty core arrays and state the core's reason. Report inclusion is not
+promotion.
+
+## Post-boundary evidence
+
+All items below this heading are observed after preparation. They may reference
+a preparation candidate only by its existing `candidate_id`; they do not modify
+the immutable core.
+
 ## Selective catalog retrieval
 
 - Canonical consumer root: <path>
@@ -94,11 +143,11 @@ loaded.
 | --- | --- | --- | --- | --- | --- |
 | <ID/revision> | <locator> | <reason> | <state> | <refs> | <selected/rejected/not-investigated> |
 
-### Generated inferences
+### Immutable preparation candidate projection
 
-| Candidate ID | Demand relation | Provenance | Confirm/reject evidence | Impact | Cost | Stop condition | State |
+| Candidate ID | Origin | Summary | Confirm/reject evidence | Impact | Cost | Stop condition | Disposition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <ID> | <relation> | <refs> | <evidence> | <impact> | <value/unknown/unsupported> | <condition> | <generated/selected/rejected> |
+| <existing content-addressed ID> | <catalogued/generated> | <core summary> | <core refs> | <core impact> | <core cost> | <core condition> | <core disposition> |
 
 ### Deduplicated and near-duplicate candidates
 
@@ -182,46 +231,6 @@ inference_events:
 If empty: `inference_events: []` plus <reason>. Events are immutable,
 idempotent and stage-independent; they authorize no catalog write.
 
-## Unreviewed generated candidates
-
-```yaml
-generated_candidates:
-  - schema_version: 1
-    candidate_id: "<stable run-scoped ID>"
-    origin: generated
-    status: unreviewed
-    statement: "<testable statement or question>"
-    demand_relation: "<observable relation>"
-    applicability:
-      technologies: []
-      versions: []
-      surfaces: []
-      objectives: []
-      signals: []
-      exclusions: []
-    provenance:
-      source_refs: []
-      generated_in_report: "<report identity or destination>"
-      evidence_refs: []
-      freshness: "<current | stale | unknown>"
-    investigation:
-      confirm_or_reject_evidence: []
-      potential_impact: "<impact>"
-      cost: "<low | medium | high | unknown | unsupported>"
-      stop_condition: "<observable condition>"
-      suggested_capabilities: []
-    distinction:
-      exact_duplicate_of: null
-      near_duplicates: []
-      distinction_reason: "<observable difference or no-match reason>"
-    downstream:
-      eligible_for_ci_evaluation: true
-      durable_mutation_authorized: false
-```
-
-If empty: `generated_candidates: []` plus <reason>. Report inclusion is not
-promotion.
-
 ## Execution evidence
 
 | Agent-run/evidence ID | Overall | Transcript | Tool I/O | Errors | Reasoning summary | Token usage | Locator/integrity | Missing reasons |
@@ -295,6 +304,21 @@ deep_analysis_resume_state:
   source_refs: []
   policy_id: "<ID>"
   policy_digest: "<digest>"
+  preparation_core:
+    locator: "<approved immutable preparation artifact locator>"
+    preparation_id: "prep-<64-lowercase-hex>"
+    preparation_digest: "sha256:<64-lowercase-hex>"
+    input_fingerprint: "sha256:<64-lowercase-hex>"
+    status: "<pre-investigation-complete | partial | blocked>"
+    validator_outcomes: []
+    execution_boundary:
+      dispatch_authorized: false
+      investigation_handoffs_dispatched: 0
+      agent_runs_created: 0
+      handoffs_created: 0
+      web_research_performed: false
+      downstream_workflows_invoked: []
+      catalog_mutation_applied: false
   request_controls:
     schema_version: 1
     requested_catalogued_floor: "<integer | null>"

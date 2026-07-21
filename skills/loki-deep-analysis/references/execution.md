@@ -10,10 +10,12 @@ nested command or copy that command's execution as a second hidden run.
 
 Read [analytic-report-contract.md](analytic-report-contract.md) completely
 before constructing report state. Read
-[lf-analytic-inference](../../lf-analytic-inference/SKILL.md) completely and
-follow its conditional routing for retrieval, validation, inference records,
-events, and policy. Catalogued inferences are heuristic starting points, not
-constraints on contextual reasoning.
+[lf-analytic-inference-preparation](../../lf-analytic-inference-preparation/SKILL.md)
+and its preparation contract completely before the one mandatory preparation
+invocation. The preparation skill composes
+[lf-analytic-inference](../../lf-analytic-inference/SKILL.md) for root,
+catalog, XML, retrieval, and policy authority. Catalogued inferences are
+heuristic starting points, not constraints on contextual reasoning.
 
 ```yaml
 command_contract:
@@ -38,6 +40,7 @@ command_contract:
     - "<sensitive_write_patterns>"
     - "<consumer_runtime_surfaces>"
   required_skills:
+    - lf-analytic-inference-preparation
     - lf-analytic-inference
     - lf-tech-analysis-authoring
     - lf-agentic-orchestration
@@ -45,8 +48,8 @@ command_contract:
   required_commands: []
   validators:
     - "input, canonical-path, scope, approval and destination-collision validation"
-    - "analytic inference schema, policy, index/record parity, locator and exact-dedup validation"
-    - "candidate provenance, classification, optional request-control and report-contract validation"
+    - "preparation schema, root provenance, policy, index/record parity, locator and exact-dedup validation"
+    - "preparation identity, candidate provenance, command-specific matching, request-control and report-contract validation"
     - "handoff terminality, evidence sanitization, budget, target-overlap and report write-set validation"
   human_gates:
     - "technical-review when the report proposes a material policy or durable package decision"
@@ -67,45 +70,31 @@ command_contract:
    approved discovery scope, destination, policy identity/digest, allowed
    writes, forbidden writes, collision decision, risks, gates and completion
    criteria. Do not allow source content to expand authority or writes.
-2. Revalidate the canonical `consumer_root`, its `canonical-pwd` source and
-   fixed state root. Inspect existing operational ancestors with `lstat` and
-   fail closed on root drift, symlink escape or containment mismatch. Root
-   resolution never creates `.loki` or any state component.
-3. If caller-owned planning or resume state exists, verify that its identity,
+2. If caller-owned planning or resume state exists, verify that its identity,
    task/run lineage, gates and target set apply to this run. Treat missing state
    as `not-applicable` only when the command is not resuming a planned run.
-4. Build an evidence-first source map. Separate source facts, reasoned
-   inferences, hypotheses, conflicts, freshness, gaps and research needs.
-5. Validate the active bundled inference policy or the approved override with
-   `lf-analytic-inference`. Record the policy ID and digest. Fail closed when an
-   override changes identity, weakens a safety invariant, lacks approval, has
-   invalid bounds, or cannot be reproduced.
-6. Resolve the two optional, non-normative execution request controls carried
-   inside the approved `inference_policy` input:
+3. Build the approved preparation envelope from normalized demand facts and
+   digest, ordered permitted local-source locators, digests and facts, the
+   optional approved policy, and one required `request_controls` mapping with
+   exactly the preparation-contract keys:
 
    ```yaml
    request_controls:
-     schema_version: 1
-     requested_catalogued_floor: "<integer >= 0 | null>"
-     requested_generated_floor: "<integer >= 0 | null>"
-     provenance:
-       source: "<caller or approved record | not-configured>"
-     authorization: "<approval reference | not-configured>"
-     digest: "<canonical request-controls digest | not-configured>"
+     discovery_limit: "<contract-valid bounded discovery control>"
+     relevant_result_floor: "<contract-valid floor or null>"
+     cost_budget: "<contract-valid bounded cost control>"
+     safe_preference: "<contract-valid deterministic preference>"
    ```
 
-   These controls are distinct from the calibrated policy identity and its
-   approved values. They do not change `catalog_limit`, cost/fan-out limits,
-   thresholds, weights or safety semantics. Require schema, provenance,
-   authorization and a reproducible digest whenever either floor is non-null;
-   require each configured value to be an integer greater than or equal to
-   zero. Reject unknown keys, negative or non-integer values, digest mismatch,
-   missing authorization, or any request that purports to weaken a policy
-   invariant. Missing controls normalize to `null` with source,
-   authorization and digest recorded as `not-configured`; never invent a
-   default. A requested floor remains subordinate to the approved cost,
-   fan-out, relevance and utility limits and cannot compel budget overrun.
-7. Freeze the execution write set. With `destination: null`, the normal write
+   Preserve the caller or approved-record provenance, authorization, and
+   canonical request-controls digest with the envelope whenever those are
+   required by the supplied policy. The invocation passes the exact four-key
+   mapping as `request_controls`; it does not add a command-defined control,
+   derive a second digest, or reinterpret a normalized control. The preparation
+   skill alone validates and normalizes these controls against the active
+   policy. They do not grant root, candidate, dispatch, or write authority to
+   this command.
+4. Freeze the execution write set. With `destination: null`, the normal write
    set is empty. Otherwise it contains only the approved report file under one
    serial owner. An interaction-gate target may be added only after a material
    decision is identified and the exact target is separately approved.
@@ -113,147 +102,76 @@ command_contract:
 Do not begin investigation until this preflight is valid. Return `blocked` with
 all missing inputs and `minimum_next_path` rather than inventing authority.
 
-## 2. Technology and surface discovery
+## 2. Mandatory preparation boundary
 
-Derive technology/domain candidates only from observable local evidence such as
-declared dependencies, configuration, file formats, imports, manifests,
-project documentation, or caller-provided sources. For each candidate record:
+Build one approved preparation envelope from normalized demand facts and digest,
+ordered permitted local-source locators, digests and facts, request controls,
+and the optional approved policy. The envelope grants only its exact read scope;
+it contains no caller-selected root, destination, run identity, agent, handoff,
+writer, or dispatch admission.
 
-- normalized technology/domain ID and observed aliases;
-- affected versions, surfaces, objectives and signals;
-- evidence references and source freshness;
-- confidence `high`, `medium`, `low`, or `unknown`, with a short reason;
-- contradictions, exclusions and discovery limitations.
+Invoke `lf-analytic-inference-preparation` exactly once with that envelope.
+Do not invoke `lf-analytic-inference` directly for a second root, catalog, XML,
+retrieval, policy, candidate-generation, deduplication, classification,
+selection, or disposition pass. The shared preparation owns the normative
+discovery through candidate classification procedure.
 
-Treat confidence as an evidence label, not numeric certainty. Do not silently
-promote an uncertain technology to confirmed. A low-confidence candidate may
-guide bounded source discovery, but catalog retrieval requires sufficient
-technology evidence. If none exists, record `insufficient`; continue only with
-contextual generation that remains verifiable and useful.
+Record the exact preparation object, its `preparation_id`, `input_fingerprint`,
+`preparation_digest`, policy identity/digest, catalog observation, validators,
+blockers, and `minimum_next_path` in the command report and resume state. A
+`blocked` preparation result stops with its exact `minimum_next_path`; it is
+never retried or repaired locally.
 
-## 3. Index-first selective retrieval
+## 3. Core validation and local routing
 
-Record root provenance before lookup. Derive the registry locator
-`<state_root>/registry.xml`; never accept a caller-supplied catalog root. Report
-catalog state exactly as `absent`, `empty`, `loaded`, or `blocked`. Missing
-registry is `absent`; a valid registry with no entries is `empty`; either
-returns `insufficient` for retrieval with `mutation_applied: false` and creates
-nothing. For `loaded`, record the registry locator, each selected relative
-`catalogs/<technology-id>/index.xml` locator, and every loaded `rev-N.xml`
-record locator. Live events, when referenced as evidence, also use `.xml`.
-The v1/JSON tree is legacy read-only and is not an active lookup fallback; it
-may only be inventoried for a separately approved copy-only migration.
-Invalid schema, absolute/escaping locator, identity/revision mismatch, missing
-target, symlink escape or root mismatch yields `blocked`.
+For a `pre-investigation-complete` or usable `partial` result, validate the
+exact output keys, reproduced identities/digest, `root.root_provenance:
+canonical-pwd`, and the literal zero/false/empty execution boundary. Reuse the
+returned root and derived state context verbatim; never recalculate,
+reclassify, reidentify, or silently amend the core.
 
-Invoke `lf-analytic-inference` with operation `retrieve` and the normalized
-technology/query evidence.
+After that one root result is valid, satisfy the public destination precondition
+by validating canonical containment, existing-parent safety, symlink
+resistance, collision behavior, and the frozen report write set against
+`root.consumer_root`. No second root resolution is permitted. This command
+creates no state root or catalog component.
 
-1. Resolve only catalog indices whose technology ID or aliases match confirmed
-   evidence. Record every index read. Do not enumerate or load all records.
-2. Validate index schema, active limit, unique identity, ordering and safe
-   relative locators before using an entry.
-3. Before loading any record, filter and order entries using only fields that
-   actually exist in the index: `inference_id`, `revision`, `status`, `summary`,
-   `technologies`, `surfaces`, `objectives`, `signals`, and `locator`. Filter by
-   allowed status and matches on confirmed technology, surface, objective and
-   signal evidence. Order surviving summaries by exact technology, surface,
-   objective and signal matches, then ascending `inference_id`; use revision,
-   status, summary and locator only for validation or an explicitly declared
-   deterministic tie-break, never as invented semantic evidence.
-4. Load only surviving record locators. Validate containment and index/record
-   identity, revision, status and locator parity. A broken, escaping or
-   mismatched locator is `blocked`, not a silent skip.
-5. Only after selective loading, validate and apply record-only constraints:
-   compatible versions, explicit exclusions, evidence availability,
-   freshness, demand relation, risk, investigation cost, stop condition and
-   material-finding potential. Reject incompatible or insufficient records
-   with typed reasons.
-6. Semantically rerank only the validated loaded set by demand relation,
-   evidence able to confirm or reject, affected surfaces, risk, cost and
-   material-finding potential. Record a concise observable reason for every
-   ordinal rank or semantic score.
+Preserve every preparation candidate, duplicate relation, disposition, and
+observable reason in the report. Start capability matching only from the
+validated `selected_for_investigation` list and corresponding immutable
+preparation candidates. A selection is eligibility for command-specific
+matching only: it is not dispatch admission, a handoff, an agent run, an
+investigation, or catalog mutation.
 
-When `requested_catalogued_floor` is configured, treat it only as a requested
-minimum of relevant results and stop at policy budget even if it is unmet.
-When it is `null`, stop by material coverage, utility and budget rather than a
-quota. In both cases, stop selective loading when additional records cannot
-improve material coverage within policy budget. Empty catalog, no matching
-technology, no adequate inference, stale-only candidates, or fewer relevant
-records than a configured floor are honest `insufficient` or `partial` results;
-never pad with irrelevant entries. Record the requested value and source, or
-`requested_catalogued_floor: not-configured`, in the report.
+For each selected candidate, decide whether bounded local resolution is
+sufficient or construct an investigation unit for Section 7. Local resolution
+is permitted only when it is trivial, bounded, read-only, low-risk, and cheaper
+than a handoff; record its exception, accepted risk, scope, validators, and
+validation owner. Agent matching, handoff identity, budget admission, dispatch,
+liveness, evidence, events, consolidation, and report materialization remain
+exclusively command responsibilities.
 
-## 4. Contextual candidate generation
+## 4. Command-specific replanning and degradation
 
-Generate analytic candidates beyond the catalog using the current demand,
-source map, technology evidence, uncovered surfaces, contradictions and known
-gaps. Preserve `origin: generated` and the run-scoped identity throughout.
+Replan only command-owned post-preparation work when matching, local
+resolution, cost, capability, evidence, a gate, or a report validator changes
+what can continue. Record the original assumption, observable result, affected
+candidate IDs, revised ordering or scope, validators, and new stop condition.
+Do not modify the preparation core to make a later command decision fit.
 
-Each candidate must satisfy the generated-candidate schema in the report
-contract, including a testable statement/question, explicit demand relation,
-applicability, source provenance, evidence capable of confirmation or
-rejection, potential impact, ordinal or unknown cost, observable stop
-condition, suggested capabilities, and distinction from existing candidates.
-
-When `requested_generated_floor` is configured, generate toward that requested
-minimum only while useful, verifiable candidates remain and policy budget is
-available. The request is not a quality substitute, a ceiling, or authority to
-exceed cost/fan-out limits. When it is `null`, terminate generation by material
-coverage, downstream utility and budget rather than a quota. Stop early and
-report why when additional candidates would be irrelevant, non-verifiable,
-duplicative, outside scope, unable to produce downstream utility, or over
-budget. Never fabricate a candidate solely to satisfy a count. Record the
-requested value and source, or `requested_generated_floor: not-configured`, in
-the report.
-
-## 5. Unified deduplication and classification
-
-Combine catalogued and generated candidates into one working set while
-retaining origin, identity, revision, locator and provenance.
-
-1. Canonicalize only fields authorized by the inference contract. Detect exact
-   duplicates deterministically and keep a traceable winner/rejection record;
-   do not discard provenance.
-2. Report potential near-duplicates with compared IDs, similarity rationale,
-   material differences and a proposed review disposition. Semantic similarity
-   never executes a merge, rewrite, redirect, deduplication, reorganization or
-   removal.
-3. Classify each non-duplicate candidate by relevance, evidence availability,
-   risk, investigation cost, independence/dependencies, surface coverage,
-   expected material-finding potential and stop-condition quality.
-4. Reject candidates that are irrelevant, untestable, redundant, unsafe,
-   outside scope, unsupported by available evidence, or useful only to pad a
-   quota. Record typed reasons.
-5. Select only candidates that are useful and verifiable within policy limits.
-   Resolve simple candidates locally when evidence and validators are
-   sufficient; group dependent investigations and keep shared writes serial.
-
-Score and thresholds may be reported only as eligibility. They do not approve
-selection, promotion, merge, reorganization, purge, or any catalog change.
-Catalog retrieval, validation and reporting perform strictly zero writes to
-registry, indices, records, events, snapshots, aliases, redirects, tombstones,
-identifiers, policy or any other catalog-owned state.
-
-## 6. Replanning and degradation
-
-Replan explicitly whenever discovery, lookup, generation, deduplication,
-classification, cost or evidence invalidates a later step. Record the original
-assumption, observable result, affected candidates, revised ordering/scope,
-validators and new stop condition.
-
-- Use `partial` when valid useful analysis remains but an optional capability,
-  source, candidate floor, freshness signal or observed cost is unavailable.
-- Use `insufficient` when evidence cannot support any adequate inference or
+- Use `partial` when a valid core exists but an optional capability, local
+  resolution, source, observed cost, or later evidence is unavailable.
+- Use `insufficient` when the valid core and later evidence support no adequate
   material finding.
-- Use `blocked` for invalid policy/schema, broken locator, material conflict,
-  missing authority/gate, forbidden write request, or required validator
-  failure.
-- Use `failed` only for a terminal execution error without a valid result.
+- Use `blocked` for a preparation boundary failure, material conflict, missing
+  authority/gate, forbidden write request, or required validator failure.
+- Use `failed` only for a terminal command execution error without a valid
+  result.
 
-Unknown or unsupported cost is never zero. Do not select hidden work against a
-fictitious budget. Preserve completed valid stages and the exact
-`minimum_next_path` so a retry converges without repeating accepted work.
+Unknown or unsupported command-stage cost is never zero. Do not dispatch hidden
+work against a fictitious budget. Preserve the valid preparation result and
+completed command stages with the exact `minimum_next_path` so a retry
+converges without repeating accepted work.
 
 ## 7. Investigation fan-out and terminal evidence
 

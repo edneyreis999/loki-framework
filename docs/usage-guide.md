@@ -103,6 +103,18 @@ rota especializada para a mesma etapa: ela nao chama nem aninha
 `unreviewed` sao evidencia rastreavel; nao alteram o catalogo e nao comprovam
 validacao de runtime.
 
+`loki-generate-inferences` e um fork opcional anterior a investigacao. Ele
+recebe `analysis_input`, `source_paths` locais permitidos e um `destination`
+aprovado; o destino deve ser exatamente um novo arquivo `.md` abaixo de
+`<consumer-root>/planos/`, com parent existente, sem symlink, traversal ou
+colisao. Seu unico output e esse Markdown, com um core canonico de preparacao
+de inferencias, criado uma unica vez e terminal em
+`pre-investigation-complete`. O command nao investiga, nao cria fan-out,
+handoff ou agent run, nao pesquisa a web, nao roda CI, nao invoca workflow
+downstream e nao altera o catalogo. Depois da resposta, a pessoa escolhe
+manualmente uma rota posterior permitida, como `loki-deep-analysis`; o command
+nao a agenda nem a invoca.
+
 As duas projecoes suportadas, Codex e Claude Code, compartilham
 `lf-analytic-inference` com escopo de instalacao `both`. O pacote distribui
 somente capacidade imutavel: contratos, schemas, scripts, fixtures e a policy
@@ -142,7 +154,8 @@ action plan, execucao autonoma, completion reports, digest e backlog.
 Use o caminho manual quando precisar controlar cada etapa separadamente:
 `loki-deep-research` quando depender de pesquisa web citada,
 uma rota de analise (`loki-tech-analysis` por padrao ou `loki-deep-analysis`
-opt-in), `loki-human-decision-preflight`,
+opt-in; opcionalmente precedida por `loki-generate-inferences` quando houver
+preparacao deterministica de candidatos), `loki-human-decision-preflight`,
 `loki-generate-action-plan`, `loki-enrich-tasks` quando aplicavel e
 `loki-run-plan` por fase ou task.
 

@@ -590,6 +590,16 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
+  - name: "loki-generate-inferences"
+    file: "skills/loki-generate-inferences/SKILL.md"
+    status: draft
+    operational_role: command
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
   - name: "loki-enrich-tasks"
     file: "skills/loki-enrich-tasks/SKILL.md"
     status: draft
@@ -711,6 +721,9 @@ skills:
     status: draft
   - name: "lf-analytic-inference"
     file: "skills/lf-analytic-inference/SKILL.md"
+    status: draft
+  - name: "lf-analytic-inference-preparation"
+    file: "skills/lf-analytic-inference-preparation/SKILL.md"
     status: draft
   - name: "lf-tech-analysis-authoring"
     file: "skills/lf-tech-analysis-authoring/SKILL.md"

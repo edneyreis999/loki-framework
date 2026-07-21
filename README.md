@@ -32,6 +32,9 @@ Fluxos principais:
   backlog.
 - `loki-deep-research`: pesquisa profunda na internet com fontes citadas,
   verificacao cruzada, contradicoes e handoff para analise ou plano.
+- `loki-generate-inferences`: prepara, de forma opt-in, um unico artefato
+  deterministico de pre-investigacao sob `planos/` do consumidor; nao inicia
+  investigacao, dispatch, CI ou outro workflow.
 - `loki-run-plan`: executor manual por fase ou task planejada.
 - `loki-continuous-improvement`: promocao posterior e controlada de
   aprendizados validados.
@@ -55,6 +58,17 @@ inline, o nome e `improved-demand.md`. Uma colisao bloqueia sem sobrescrever ou
 autonumerar. O command termina nesse Markdown enriquecido: nao inicia
 `loki-tech-analysis`, decisao humana, plano, `loki-agentic-development` ou
 execucao. O usuario escolhe o proximo workflow em um novo pedido.
+
+`loki-generate-inferences` e outra preparacao opt-in, para quando uma entrada
+de analise e fontes locais permitidas precisarem virar um unico core canonico
+de inferencias antes da investigacao. Ele requer `analysis_input` e o
+`destination` exato, novo e aprovado, como arquivo `.md` sob
+`<consumer-root>/planos/`, com parent existente e sem symlink ou colisao. O
+command cria somente esse arquivo uma vez e termina em
+`pre-investigation-complete`: nao faz fan-out, handoff, agente, pesquisa web,
+CI, mutacao de catalogo ou chamada downstream. Uma pessoa pode escolher, em
+novo pedido, uma rota posterior permitida — por exemplo
+`loki-deep-analysis` — usando o artefato validado.
 
 Identidade operacional:
 
