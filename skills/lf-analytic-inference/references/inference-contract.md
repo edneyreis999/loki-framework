@@ -1,5 +1,12 @@
 # Analytic Inference State Contract v2
 
+The active policy keeps `persistent_catalog_limit` exclusively for durable
+active catalog occupancy. It cannot limit contextual generation, preparation
+selection, or total retrieval. Retrieval uses
+`catalog_retrieval_page_size` only to paginate deterministic index-first reads;
+generation uses a non-terminal `minimum_candidate_floor` with no ceiling and
+ends only at semantic saturation or a resumable context interruption.
+
 Read this contract when validating, interpreting, deriving, or proposing a
 change to analytic-inference state. Canonical XML v2 is the only normative
 representation for live registry, catalog, record, and event documents. The

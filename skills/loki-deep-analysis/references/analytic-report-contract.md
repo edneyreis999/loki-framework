@@ -1,4 +1,4 @@
-# Deep Analysis Report Contract v2
+# Deep Analysis Report Contract v3
 
 Use this contract when constructing or validating the single immutable output
 of `loki-deep-analysis`. The report is Markdown for human and LLM consumers,
@@ -23,7 +23,7 @@ policy ID and digest, creation time when observed, destination or
 - `completed`: all selected investigations and required validators are
   terminal and no material gate remains unresolved;
 - `partial`: useful validated findings exist, but a declared capability,
-  source, cost, handoff, or optional investigation is unavailable;
+  source, handoff, or optional investigation is unavailable;
 - `insufficient`: the available evidence cannot support an adequate material
   finding;
 - `blocked`: required input, permission, policy, validator, gate, or material
@@ -44,13 +44,25 @@ consumer, never a second preparation result.
 
 ```yaml
 preparation_core:
-  schema_version: 2
+  schema_version: 3
   locator: "<approved immutable preparation artifact locator>"
   preparation_id: "prep-<64-lowercase-hex>"
   preparation_digest: "sha256:<64-lowercase-hex>"
   input_fingerprint: "sha256:<64-lowercase-hex>"
   status: "pre-investigation-complete | partial | blocked"
   validators: ["sorted unique non-empty name of a preparation check that passed"]
+  catalog_retrieval_state:
+    retrieval_pages_read: "non-negative integer"
+    retrieval_exhausted: true | false
+    retrieval_resume_cursor: "non-empty cursor | null"
+  generation_state:
+    completion_reason: semantic-saturation | context-interruption
+    semantic_saturation: true | false
+    resume_cursor: "non-empty cursor | null"
+    unexplored_surfaces: []
+    explored_surfaces: []
+    final_pass_new_distinct_candidates: "0 | null"
+    saturation_evidence_refs: []
   execution_boundary:
     dispatch_authorized: false
     investigation_handoffs_dispatched: 0
@@ -70,7 +82,7 @@ validator. Verify the digest against the exact referenced core before using
 any candidate. A missing, mismatched, or failed material core validator blocks
 completion and records a resumable minimum next path.
 
-Only preparation schema v2 is accepted. Schema-v1 artifacts remain immutable
+Only preparation schema v3 is accepted. Schema-v1 and schema-v2 artifacts remain immutable
 historical evidence and are rejected before candidate interpretation. Require
 regeneration to a new separately approved versioned artifact; do not rewrite,
 migrate, convert, or use a fallback reader.
@@ -104,13 +116,14 @@ The report contains:
 7. exact duplicates, near-duplicates, rejected candidates, and reasons;
 8. preparation candidate classification by relevance, investigability,
    observable provenance support, validity/compatibility, exact deduplication,
-   and discovery limit;
-9. selected investigations, handoff identities, capabilities, owners, sources,
-   limits, stop conditions, validators, terminal states and sanitized evidence;
+   generation completion and retrieval pagination;
+9. adaptive round ledger, local resolutions, delegated investigations,
+   subwaves, terminal barriers, full reclassifications, reinvestigation
+   rationales, fresh typed identities and sanitized evidence;
 10. material findings, negative findings, hypotheses, contradictions, and
     unresolved gaps with fact/inference/hypothesis separation;
-11. observed context/tool cost or explicit `unknown`/`unsupported`, policy
-    budget, degradation and stop decisions;
+11. observed context/tool cost or explicit `unknown`/`unsupported` as telemetry,
+    plus liveness and round stop decisions;
 12. post-boundary inference events for later continuous-improvement intake;
 13. validators, gates, approvals, limitations, risks, resume state, and allowed
     next destinations.
@@ -155,10 +168,60 @@ available only from the canonical payload and never means that the field is
 absent. The table may not be used for machine interpretation and never
 replaces or extends the normative YAML/JSON projection.
 
-The preparation `discovery_limit` is an upper bound, not permission to invent,
-reorder, or delegate weak candidates. Cost and impact are absent from the
-schema-v2 candidate projection and never change its disposition. Handoff cost,
-risk, independence, and budget admission are post-boundary command evidence.
+The preparation floor is not a stop condition, retrieval page size is not a
+total limit, and candidate ceiling is null. These controls never permit
+padding, truncation, reordering, or weak candidates. Cost and impact are absent
+from the schema-v3 candidate projection and never change its disposition.
+Handoff cost remains post-boundary telemetry and never controls admission.
+
+## Adaptive investigation round ledger
+
+The post-boundary ledger uses the exact schema validated by
+`../scripts/validate-investigation-rounds.py`. Its canonical policy values are
+three maximum rounds, six maximum delegated investigations per round, two
+concurrent handoffs, and `cost_mode: telemetry-only`. Every round is sequential
+and terminal before its reclassification; the reclassification covers the
+entire preparation candidate universe. Local resolutions are a separate array
+and do not consume delegated capacity. Local and delegated candidates are
+disjoint within each round. After round one, both sets are subsets of the
+immediately preceding `useful_next_round`; neither may introduce a candidate
+outside that reclassification.
+Ledger schema version, fixed policy controls, round numbers and subwaves use
+exact JSON integers rather than equal-valued booleans, floats or strings.
+Downstream flags use exact JSON booleans; cost retains its distinct finite
+integer-or-float telemetry contract.
+
+Invoke `../scripts/validate-investigation-rounds.py <round-ledger.json>
+--preparation <preparation-v3.json>` with the ledger and immutable preparation
+as distinct inputs. The validator first applies the canonical preparation-v3
+validator; the ledger's internal snapshot is never preparation authority.
+The ledger binds to the validated immutable core through exact
+`preparation_id`, `preparation_digest`, and candidate-ID equality. Its
+`candidate_universe` and `preparation_binding.candidate_ids` both equal the
+core candidate IDs; neither is caller-declared authority. Round-one delegated
+investigations and local resolutions come from `initial_useful_investigations`.
+That ordered list is a subset of the core's exact
+`selected_for_investigation`, and `initial_classification.decisions` records
+one observable command-stage matching disposition for every selected
+candidate. Rejected and deferred candidates remain in the universe for full
+reclassification but are inadmissible for round-one action. Every
+reclassification decision still covers that complete universe, while every
+`useful_next_round` is restricted to the preparation-selected actionable set.
+A new observation may change the reported understanding of a rejected or
+deferred candidate, but cannot promote it to operational work without a new
+versioned preparation artifact that selects it. Each later round comes from
+the immediately preceding `useful_next_round` set. A materialized round has at
+least one delegated investigation or local resolution; otherwise terminate
+before creating it.
+
+A repeated delegated investigation is valid only in a later round with a
+non-empty material rationale, a different question, and fresh `handoff_id`,
+`agent_run_id`, and evidence identity. Local resolution repetition remains
+forbidden. Owner reuse is allowed. The ledger terminates early when no
+useful next-round investigation remains or terminates obligatorily after round
+three. Zero rounds is valid only with an empty initial useful set and explicit
+`no-useful-investigation`. Its downstream handoff always records
+`auto_invoked: false`.
 
 ## Inference event
 
@@ -228,16 +291,30 @@ Before `completed`, verify:
 - every source and loaded locator is readable, scoped and traceable;
 - origins remain distinct and IDs are unique;
 - the preparation-core candidate projection reproduces every required
-  schema-v2 candidate field, provenance, confirm/reject evidence, stop
+  schema-v3 candidate field, provenance, confirm/reject evidence, stop
   condition and distinction without changing identity or order;
 - exact deduplication is deterministic and near-duplicates remain proposals;
-- selected preparation candidates satisfy the essential disposition criteria,
-  and their count does not exceed `discovery_limit`;
-- every selected investigation is useful, independent or correctly serialized,
-  policy-budgeted, and terminal;
+- selected preparation candidates satisfy the essential disposition criteria
+  without a candidate ceiling;
+- the adaptive ledger has at most three rounds and six delegated
+  investigations per round, with subwaves of at most two;
+- every round reaches its terminal barrier before all candidates are
+  reclassified; local resolutions consume no delegated slot and the same
+  candidate is never resolved locally more than once;
+- reinvestigation occurs only in a later round with a materially new question,
+  observable rationale, and fresh handoff, run, and evidence IDs;
+- a delegated-to-local transition follows the prior useful decision; a
+  local-to-delegated transition also carries the delegated record's observable
+  reinvestigation rationale;
+- every delegated investigation is useful, independent or correctly
+  serialized, and terminal;
 - every event satisfies schema, idempotency and stage-independence rules;
-- post-boundary unknown cost remains unknown and no limit is padded with
-  irrelevant work;
+- post-boundary cost is either a finite real number greater than or equal to
+  zero, `unknown`, or `unsupported`; booleans, NaN and infinities are invalid,
+  unknown cost remains unknown, and no valid cost changes admission or stopping;
+- early stop is explicit; round three always ends analysis; downstream routing
+  is returned without automatic invocation and contains at least one sorted
+  unique permitted destination;
 - evidence is sanitized and contains no private reasoning;
 - report writes match the exact approved destination;
 - no catalog or unapproved interaction target changed.

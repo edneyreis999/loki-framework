@@ -2,7 +2,7 @@
 name: lf-analytic-inference-preparation
 description: Prepare a deterministic, pre-investigation analytic-inference core from normalized demand and permitted local sources. Use when a command or analysis needs one canonical root resolution, index-first catalog lookup, contextual candidates, dispositions, and a terminal boundary before any investigation.
 doc_id: "lf-analytic-inference-preparation"
-version: "0.2.0"
+version: "0.3.0"
 status: "draft"
 last_updated: "2026-07-21"
 scope: "Pure reusable preparation before investigation, dispatch, persistence, or catalog mutation"
@@ -83,9 +83,10 @@ an orchestration workflow.
   canonical demand digest.
 - Required `permitted_local_sources`: ordered source locators, digests, and
   extracted facts within caller-approved read scope.
-- Required `request_controls`: an exact one-key mapping containing only the
-  deterministic `discovery_limit` derived from the active policy's
-  `catalog_limit`.
+- Required `request_controls`: an exact mapping containing
+  `minimum_candidate_floor`, `candidate_ceiling: null`, and
+  `catalog_retrieval_page_size` from the active policy. The floor is a search
+  obligation, not a stop condition; page size is not a total retrieval limit.
 - Optional `inference_policy`: an explicit policy object or the composed
   default policy.
 
@@ -110,13 +111,15 @@ technology, evidence, source contents, policy overrides, or missing controls.
    non-merging near-duplicate reporting.
 5. Assign a deterministic disposition and observable reason to every candidate.
    Use only relevance, investigability, observable provenance support,
-   validity/compatibility, exact deduplication, and `discovery_limit`; candidate
+   validity/compatibility, and exact deduplication; candidate
    cost and impact are not preparation fields or disposition inputs.
    Keep `selected_for_investigation`, `planned_investigations`, and
    `dispatch_admitted` distinct. This capability never admits dispatch.
 6. Build the exact-key preparation object, calculate its IDs and digest, run
    its validators, and terminate at `pre-investigation-complete`, `partial`,
-   or `blocked`.
+   or `blocked`. Generation completes only on evidenced semantic saturation:
+   explored surfaces plus a final pass yielding zero new distinct candidates. A context
+   interruption returns `partial` with a resume cursor and unexplored surfaces.
 
 ## Outputs and terminal states
 
@@ -144,7 +147,7 @@ boundary, and validators are normative in
 - Do not accept a caller-selected root; do not create or modify `.loki` state.
 - Structural deterministic parity is verified through fixtures. Literal replay
   equality across independent new LLM generations is not promised.
-- Accept only preparation schema v2. Existing schema-v1 artifacts remain
+- Accept only preparation schema v3. Existing schema-v1 and schema-v2 artifacts remain
   immutable and must be regenerated as a new approved versioned artifact; do
   not rewrite, migrate, interpret for new selection, or use a fallback reader.
 - Packaged-skill changes require `technical-review`; this skill does not grant

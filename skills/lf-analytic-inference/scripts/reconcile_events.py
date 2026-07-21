@@ -83,12 +83,14 @@ def validate_policy(policy: Any) -> tuple[dict[str, Any] | None, list[str]]:
     if digest != policy.get("approved_candidate_digest_sha256"):
         errors.append("POLICY_DIGEST_MISMATCH")
     values = candidate.get("values")
-    required_values = {"catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks", "promotion_min", "purge_review_max", "removals_per_cycle", "reorganization_max", "score_weights"}
+    required_values = {"candidate_ceiling", "catalog_retrieval_page_size", "concurrent_handoff_limit", "handoff_timeout_ticks", "max_delegated_investigations_per_round", "max_investigation_rounds", "minimum_candidate_floor", "persistent_catalog_limit", "promotion_min", "purge_review_max", "removals_per_cycle", "reorganization_max", "score_weights"}
     if not isinstance(values, dict) or set(values) != required_values:
         return None, errors + ["POLICY_VALUE_KEYS"]
-    for key in ("catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks", "removals_per_cycle"):
-        if not is_int(values.get(key)) or values[key] < 0:
+    for key in ("catalog_retrieval_page_size", "concurrent_handoff_limit", "handoff_timeout_ticks", "max_delegated_investigations_per_round", "max_investigation_rounds", "minimum_candidate_floor", "persistent_catalog_limit", "removals_per_cycle"):
+        if not is_int(values.get(key)) or values[key] <= 0:
             errors.append(f"POLICY_BOUND:{key}")
+    if values.get("candidate_ceiling") is not None:
+        errors.append("POLICY_CANDIDATE_CEILING")
     for key in ("promotion_min", "purge_review_max", "reorganization_max"):
         if not is_int(values.get(key)):
             errors.append(f"POLICY_INTEGER:{key}")
@@ -104,6 +106,11 @@ def validate_policy(policy: Any) -> tuple[dict[str, Any] | None, list[str]]:
         "approved_candidate_status_is_identity_bound": True,
         "thresholds_are_inclusive": True,
         "score_is_eligibility_only": True,
+        "candidate_floor_is_non_terminal": True,
+        "cost_is_telemetry_only": True,
+        "retrieval_page_size_is_not_total_limit": True,
+        "persistent_catalog_limit_is_storage_only": True,
+        "semantic_saturation_ends_generation": True,
         "automatic_mutation": False,
         "purge_requires_independent_just_in_time_approval": True,
         "consumer_state_required": True,

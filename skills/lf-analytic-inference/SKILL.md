@@ -62,7 +62,8 @@ promotion.
   process working directory. Transient validation or derivation over
   caller-supplied objects does not require consumer state.
 - `retrieve` requires observed `technology_evidence` and a query describing
-  objectives, surfaces, signals, versions, evidence, and a discovery limit.
+  objectives, surfaces, signals, versions, evidence, and an optional retrieval
+  cursor. The policy page size controls one page, never total retrieval.
 - `validate` requires one or more registry, index, record, event, snapshot, or
   policy objects. It is catalog-backed only when it reads consumer state or
   follows registry or catalog locators.
@@ -137,6 +138,9 @@ fabricated success.
 ## Limits
 
 - Do not load the whole catalog when index filtering can narrow candidates.
+- Continue eligible index-first retrieval page by page until exhaustion or an
+  explicit resumable context interruption. Never use persistent catalog
+  capacity or page size as a total retrieval limit.
 - Do not treat catalogued inferences as rules or limits on contextual reasoning.
 - Do not automatically promote, merge, reorganize, rewrite, or purge.
 - Similarity may request human review; it never authorizes merge or removal.

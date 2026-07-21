@@ -65,15 +65,17 @@ não existe projection ou command físico separado.
 
 ### Contrato resumido de `loki-generate-inferences`
 
-O command deriva exatamente um controle interno:
-`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
-somente candidatos relevantes, investigaveis, sustentados por proveniencia
-observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
-rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
-exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
-compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
-`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
-essa disposicao pre-investigacao.
+O command deriva piso minimo 8, teto inexistente e pagina de recuperacao 20.
+Piso nao e stop, pagina nao e limite total e o limite persistente 3 e somente
+armazenamento/manutencao. Gera todo candidato material distinto ate saturacao
+semantica; interrupcao de contexto retorna parcial retomavel. Saturacao abaixo
+do piso nao autoriza padding. Custo e impacto nao influenciam disposicao.
+
+O `loki-deep-analysis` executa no maximo 3 rodadas de ate 6 investigacoes
+delegadas, com concorrencia 2, barreira terminal e reclassificacao total entre
+rodadas. Reinvestigacao posterior exige nova pergunta, justificativa e IDs.
+Resolucao local nao consome capacidade e custo e apenas telemetria. Nao existe
+quarta rodada nem auto-invocacao downstream.
 
 Depois de resolver digest, basename e versao por um snapshot do diretorio, a
 approval vincula diretorio canonico, target exato, basename/versao,

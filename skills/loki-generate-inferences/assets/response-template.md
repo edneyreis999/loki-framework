@@ -37,6 +37,9 @@ This template materializes the canonical semantic response model owned by
 - Input fingerprint: `{{sha256 digest | none}}`
 - Preparation digest: `{{sha256 digest | none}}`
 - Preparation status: `{{pre-investigation-complete | partial | blocked | not-run}}`
+- Generation completion: `{{semantic-saturation | context-interruption | not-run}}`
+- Generation resume cursor: `{{non-empty cursor | none}}`
+- Unexplored surfaces: {{surfaces or []}}
 
 The following fenced block is the sole machine-readable source for the
 preparation core. It contains exactly one canonical `inference_preparation`

@@ -1,6 +1,6 @@
 ---
 doc_id: "analytic-inference-preparation-contract"
-version: "2.0.0"
+version: "3.0.0"
 status: "draft"
 last_updated: "2026-07-21"
 scope: "Exact deterministic pre-investigation preparation object and its pure execution boundary"
@@ -52,7 +52,7 @@ permitted_local_sources:
   required_keys: [sources]
   source_item_keys: [locator, digest, facts]
 request_controls:
-  required_keys: [discovery_limit]
+  required_keys: [candidate_ceiling, catalog_retrieval_page_size, minimum_candidate_floor]
 inference_policy:
   required: false
   required_when_supplied: [policy_id, policy_digest, values]
@@ -95,7 +95,7 @@ provenance, traversal, symlink, or containment is `blocked` and fails closed.
 
 <output_format>
 inference_preparation:
-  schema_version: 2
+  schema_version: 3
   artifact_type: analytic-inference-preparation
   preparation_id: "prep-<64-lowercase-hex>"
   input_fingerprint: "sha256:<64-lowercase-hex>"
@@ -105,7 +105,9 @@ inference_preparation:
     demand_digest: "sha256:<64-lowercase-hex>"
     ordered_source_digests: ["sha256:<64-lowercase-hex>"]
     request_controls:
-      discovery_limit: "positive integer copied from policy.values.catalog_limit"
+      candidate_ceiling: null
+      catalog_retrieval_page_size: "positive integer copied from policy"
+      minimum_candidate_floor: "positive integer copied from policy"
     request_controls_digest: "sha256:<64-lowercase-hex>"
   root:
     consumer_root: "canonical root resolved from pwd"
@@ -125,6 +127,9 @@ inference_preparation:
     indices_read: []
     record_locators_loaded: []
     diagnostics: ["sorted unique non-empty observable diagnostic"]
+    retrieval_pages_read: "non-negative integer"
+    retrieval_exhausted: true | false
+    retrieval_resume_cursor: "non-empty cursor | null"
   technologies: []
   candidates: []
   duplicate_analysis:
@@ -138,6 +143,14 @@ inference_preparation:
   planned_investigations:
     - candidate_id: "(cat|gen)-<64-lowercase-hex>"
   dispatch_admitted: false
+  generation_state:
+    completion_reason: semantic-saturation | context-interruption
+    semantic_saturation: true | false
+    resume_cursor: "non-empty deterministic cursor | null"
+    unexplored_surfaces: []
+    explored_surfaces: []
+    final_pass_new_distinct_candidates: "0 | null"
+    saturation_evidence_refs: [] # sorted unique non-empty strings; non-empty for semantic saturation
   validators: ["sorted unique non-empty name of a check that passed"]
   blockers: ["sorted unique non-empty observable limitation or blocker"]
   minimum_next_path: "non-empty next permitted action"
@@ -151,6 +164,14 @@ inference_preparation:
     catalog_mutation_applied: false
 </output_format>
 
+Every schema version, page size, floor, retrieval-page count, final-pass count
+and execution-boundary count uses the exact JSON integer type; booleans,
+floating-point equivalents and numeric strings are invalid. Boolean fields use
+the exact JSON boolean type. These type rules do not alter the stated values.
+Every populated list of digests, technologies, surfaces, evidence references,
+capabilities, catalog indices, record locators, diagnostics, validators,
+blockers or candidate IDs contains non-empty strings. The array itself may
+remain empty wherever the schema's cardinality and state rules permit.
 All shown keys are required, including arrays when empty. `status` is
 `pre-investigation-complete` only when validators pass and
 `catalog_observation.state` is not `blocked`. Honest `absent`, `empty`, and
@@ -193,6 +214,10 @@ candidate:
   suggested_capabilities: []
 ```
 
+Every populated candidate `technologies`, `surfaces`,
+`support_evidence_refs`, `confirm_or_reject_evidence`, and
+`suggested_capabilities` array contains only non-empty strings.
+
 `selected_for_investigation` is a sorted list of candidate IDs whose
 `disposition` is `selected`. `planned_investigations` is a sorted list of
 future, declarative investigation intents. Every item is an exact one-key
@@ -201,11 +226,23 @@ selected candidate ID; no missing or additional key is valid. It contains no
 agent identity. `dispatch_admitted` is always `false`; selection and planning
 never authorize dispatch.
 
-`request_controls` has exactly one key. Its `discovery_limit` equals the
-validated active `policy.values.catalog_limit`, and
-`request_controls_digest` is the digest of that exact one-key mapping. Cost
-budget, impact, safe preference, relevant-result floors, fan-out admission and
-post-investigation accounting are not preparation controls.
+`request_controls` has exactly three keys. The floor and page size equal their
+validated active policy values; `candidate_ceiling` is always `null`.
+`request_controls_digest` covers that exact mapping. Reaching the floor does
+not end generation and the page size never limits total retrieval. Cost,
+impact, round capacity, concurrency and post-investigation accounting are not
+preparation controls.
+
+`generation_state.completion_reason: semantic-saturation` requires
+`semantic_saturation: true`, a null resume cursor, no unexplored surfaces, at
+least one explored surface, and an observable final-pass evidence reference
+showing zero new distinct material candidates.
+It may honestly complete below the floor; padding is forbidden.
+`context-interruption` requires `partial`, `semantic_saturation: false`, a
+non-empty cursor and at least one unexplored surface. An unexhausted catalog
+page sequence likewise requires `partial` and a non-empty retrieval cursor;
+the next invocation continues from that cursor rather than treating the page
+boundary as total exhaustion.
 
 ## Deterministic identity and digest domains
 
@@ -253,11 +290,11 @@ Duplicate analysis has no separate semantic digest field or digest domain.
 ## Dispositions and stops
 
 Use `selected` only for candidates that are relevant, investigable, supported
-by observable provenance, valid and compatible, not exact duplicates, and
-within `discovery_limit`. Use `rejected` only for irrelevant, invalid,
+by observable provenance, valid and compatible, and not exact duplicates.
+Preserve every such material candidate; neither persistent catalog capacity,
+retrieval page size nor the minimum floor may truncate it. Use `rejected` only for irrelevant, invalid,
 incompatible, unverifiable, or exact-duplicate candidates. Use `deferred` only
-for unresolved essential evidence, compatibility, or context, or for an
-otherwise eligible candidate excluded by `discovery_limit`. Cost and impact
+for unresolved essential evidence, compatibility, or context. Cost and impact
 never select, reject, defer, rank, or identify a preparation candidate. Never
 pad a limit, treat a score as mutation authority, or promote a candidate.
 
@@ -268,22 +305,22 @@ followed optionally by ` | ` and observable detail:
 - `rejected:irrelevant`, `rejected:invalid`, `rejected:incompatible`,
   `rejected:unverifiable`, or `rejected:exact-duplicate` for `rejected`;
 - `deferred:essential-evidence`, `deferred:compatibility`,
-  `deferred:context`, or `deferred:discovery-limit` for `deferred`.
+  or `deferred:context` for `deferred`.
 
 An exact duplicate is always rejected with
 `rejected:exact-duplicate`. A near duplicate remains a distinct candidate and
 may not use the exact-duplicate reason. A selected candidate has non-empty
-`support_evidence_refs` and `confirm_or_reject_evidence`. The selected count
-never exceeds `discovery_limit`.
+`support_evidence_refs` and `confirm_or_reject_evidence`. There is no selected
+candidate ceiling.
 
 ## Version compatibility
 
-Schema v2 is the only preparation schema accepted for new selection. Existing
-schema-v1 artifacts are immutable historical evidence. Readers and consumers
-must reject v1 before candidate interpretation and require regeneration to a
+Schema v3 is the only preparation schema accepted for new selection. Existing
+schema-v1 and schema-v2 artifacts are immutable historical evidence. Readers and consumers
+must reject v1/v2 before candidate interpretation and require regeneration to a
 new separately approved versioned artifact. No reader, conversion, rewrite,
 migration, or fallback is permitted. Candidate IDs, preparation IDs, input
-fingerprints, and digests naturally recompute from the schema-v2 domains.
+fingerprints, and digests naturally recompute from the schema-v3 domains.
 
 Required catalog observations are `loaded`, `absent`, `empty`, `no-match`, and
 `blocked`. `blocked` is fail-closed: no catalogued candidate may be presented
@@ -295,7 +332,8 @@ permitted subsequent action; it does not invoke one.
 <instructions>
 - Validate exact output keys, allowed enums, required-empty arrays, canonical
   ordering, ID uniqueness, digest reproduction, request-controls equality and
-  digest, selected-count limit, and candidate/disposition semantics.
+  digest, full selected-candidate preservation without a ceiling, and
+  candidate/disposition semantics.
 - Validate root provenance once, catalog index/record parity through
   `lf-analytic-inference`, and index-first filtering against `PIR-INDEX-01`
   through `PIR-INDEX-04`.

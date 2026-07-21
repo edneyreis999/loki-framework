@@ -106,15 +106,20 @@ def validate_policy(policy: Any, errors: list[str]) -> dict[str, Any] | None:
         errors.append("policy:DIGEST_MISMATCH")
     values = candidate.get("values")
     value_keys = {
-        "catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks",
-        "promotion_min", "purge_review_max", "removals_per_cycle",
-        "reorganization_max", "score_weights",
+        "candidate_ceiling", "catalog_retrieval_page_size",
+        "concurrent_handoff_limit", "handoff_timeout_ticks",
+        "max_delegated_investigations_per_round", "max_investigation_rounds",
+        "minimum_candidate_floor", "persistent_catalog_limit", "promotion_min",
+        "purge_review_max", "removals_per_cycle", "reorganization_max",
+        "score_weights",
     }
     if not exact_keys(values, value_keys, "policy.values", errors):
         return None
-    for key in ("catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks", "removals_per_cycle"):
-        if not is_int(values.get(key)) or values[key] < 0:
-            errors.append(f"policy.values:{key}:NON_NEGATIVE_INTEGER")
+    for key in ("catalog_retrieval_page_size", "concurrent_handoff_limit", "handoff_timeout_ticks", "max_delegated_investigations_per_round", "max_investigation_rounds", "minimum_candidate_floor", "persistent_catalog_limit", "removals_per_cycle"):
+        if not is_int(values.get(key)) or values[key] <= 0:
+            errors.append(f"policy.values:{key}:POSITIVE_INTEGER")
+    if values.get("candidate_ceiling") is not None:
+        errors.append("policy.values:candidate_ceiling:MUST_BE_NULL")
     for key in ("promotion_min", "purge_review_max", "reorganization_max"):
         if not is_int(values.get(key)):
             errors.append(f"policy.values:{key}:INTEGER")
@@ -131,6 +136,11 @@ def validate_policy(policy: Any, errors: list[str]) -> dict[str, Any] | None:
         "approved_candidate_status_is_identity_bound": True,
         "thresholds_are_inclusive": True,
         "score_is_eligibility_only": True,
+        "candidate_floor_is_non_terminal": True,
+        "cost_is_telemetry_only": True,
+        "retrieval_page_size_is_not_total_limit": True,
+        "persistent_catalog_limit_is_storage_only": True,
+        "semantic_saturation_ends_generation": True,
         "automatic_mutation": False,
         "purge_requires_independent_just_in_time_approval": True,
         "consumer_state_required": True,
@@ -396,7 +406,7 @@ def main() -> int:
             active_limit = index.get("active_limit")
             active_limits[registry_entry["technology"]] = active_limit
             catalog_ids.append(index.get("catalog_id"))
-            if values is not None and is_int(active_limit) and active_limit != values["catalog_limit"]:
+            if values is not None and is_int(active_limit) and active_limit != values["persistent_catalog_limit"]:
                 errors.append("index:active_limit:POLICY_MISMATCH")
         expected_record_count += len(entries)
         loaded.append(registry_entry["locator"])
@@ -462,7 +472,7 @@ def main() -> int:
         for technology, occupancy in catalog_occupancy.items()
     )
     exceeds_policy_limit = any(
-        values is not None and occupancy > values["catalog_limit"]
+        values is not None and occupancy > values["persistent_catalog_limit"]
         for occupancy in catalog_occupancy.values()
     )
     if exceeds_index_limit or exceeds_policy_limit:

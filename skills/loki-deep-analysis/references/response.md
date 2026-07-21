@@ -54,7 +54,7 @@ Use exactly one report status:
 - `completed`: all selected investigations and material validators are
   terminal, required gates are resolved, and the artifact or response-only
   report is valid;
-- `partial`: useful validated results exist, but a source, capability, cost,
+- `partial`: useful validated results exist, but a source, capability,
   handoff, evidence dimension or optional investigation is degraded;
 - `insufficient`: available evidence cannot support an adequate inference or
   material finding;
@@ -80,13 +80,25 @@ The response and deep report must make these items recoverable:
   selected, investigated and validated inferences, each preserving origin;
 - one immutable preparation-core reference with its exact locator,
   `preparation_id`, `preparation_digest`, input fingerprint, status,
-  validator outcomes and zero-state execution boundary;
+  validator outcomes, complete generation state, retrieval exhaustion/cursors,
+  and zero-state execution boundary;
 - canonical preparation candidate projections in their original order, with no
   report-scoped identity or provenance added to the core;
 - specialist matches, capability gaps, handoff identities and terminal states;
+- round-ledger binding to the preparation ID/digest/candidate IDs, the complete
+  candidate universe, exact preparation-selected initial admission set, one
+  observable matching decision per selected candidate, zero-to-three rounds,
+  initial useful set, subwaves, barriers and full reclassifications; rejected
+  and deferred candidates remain in every decision universe but cannot enter
+  `useful_next_round` or any operational round without a new preparation
+  version selecting them; no materialized round may have both action arrays
+  empty;
+- round-ledger validation command with the ledger path and separate mandatory
+  `--preparation` artifact path;
 - material findings, negative findings, conflicts, hypotheses and evidence;
-- observed context/tool costs or honest `unknown`/`unsupported`, cumulative
-  budget, degradation and stop decisions;
+- observed context/tool costs or honest `unknown`/`unsupported` as telemetry,
+  adaptive round ledger, terminal barriers, reclassification, early-stop and
+  round-limit decisions; numeric costs are finite real values at least zero;
 - policy ID/digest and non-normative request controls with values/source or
   `not-configured`;
 - structured inference events and generated `unreviewed` candidates;
@@ -94,7 +106,9 @@ The response and deep report must make these items recoverable:
 - validators, gates, approvals and human-validation status;
 - canonical consumer root and resolution source, derived state root, catalog
   state, registry/catalog/record locators loaded, and `mutation_applied: false`;
-- limitations, blockers, residual risks, allowed downstream destinations,
+- limitations, blockers, residual risks, at least one sorted unique allowed
+  downstream destination, local-resolution uniqueness and justified
+  local/delegated cross-round transitions,
   resume state and `minimum_next_path`.
 
 Use `none` only after verifying that a category is inapplicable. Otherwise use

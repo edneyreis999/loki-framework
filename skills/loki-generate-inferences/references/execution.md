@@ -31,7 +31,7 @@ the sole allowed write mechanism.
    directory, directory snapshot identity, exact resolved absent target,
    basename/version, approval binding, and all forbidden writes. Do not derive
    a second root or alter the resolved name.
-2. Derive the exact one-key `request_controls` mapping from the validated
+2. Derive the exact three-key `request_controls` mapping from the validated
    active policy as specified below, serialize it as canonical UTF-8 JSON with
    lexicographically sorted keys and no insignificant whitespace, and compute
    `request_controls_digest` as lowercase `sha256:` plus SHA-256 of those bytes.
@@ -39,8 +39,8 @@ the sole allowed write mechanism.
    demand, permitted local sources, these request controls, and the active policy.
    Compose its `lf-analytic-inference` authority rather than duplicating its
    root, XML, retrieval, policy, identity, digest, or disposition logic.
-3. Accept only a canonical schema-v2 preparation object satisfying its exact
-   schema and terminal boundary. Reject schema v1 before candidate use and
+3. Accept only a canonical schema-v3 preparation object satisfying its exact
+   schema and terminal boundary. Reject schema v1/v2 before candidate use and
    require regeneration to a new separately approved versioned artifact; do
    not rewrite, migrate, or fall back to an existing v1 artifact. `blocked`
    produces no artifact. A `partial` object may be
@@ -88,24 +88,31 @@ The required mapping is exactly:
 
 ```yaml
 request_controls:
-  discovery_limit: <validated integer from active_policy.values.catalog_limit>
+  candidate_ceiling: null
+  catalog_retrieval_page_size: <validated positive integer from active policy>
+  minimum_candidate_floor: <validated positive integer from active policy>
 ```
 
-Missing or invalid `catalog_limit` blocks before invocation. The preparation
+Missing or invalid controls block before invocation. The preparation
 control has these atomic semantics:
 
-- select no more than `discovery_limit` candidates;
+- preserve every distinct material candidate without a total ceiling;
+- continue after reaching the floor until semantic saturation;
+- complete below the floor only at honest semantic saturation, without padding;
+- on context interruption, return `partial` with a resume cursor and unexplored
+  surfaces;
+- continue catalog retrieval across deterministic pages until exhaustion or a
+  resumable context interruption;
 - reject exact duplicates;
 - preserve near duplicates as separate candidates and relations;
 - never use cost or impact to select, reject, or defer a candidate.
 
-Candidates within the limit are selected only when relevant, investigable,
+Candidates are selected only when relevant, investigable,
 supported by observable provenance, valid and compatible, and not exact
 duplicates. `deferred` is reserved for unresolved essential evidence,
-compatibility, or context, and for otherwise eligible candidates excluded by
-`discovery_limit`. These rules limit candidate admission; they do not cancel
-an otherwise valid request, introduce a timer, or control later handoff budget
-admission.
+compatibility, or context. Neither persistent catalog capacity nor retrieval
+page size can exclude an otherwise eligible candidate. These rules do not
+introduce a timer or control later round capacity or concurrency.
 
 ## Deterministic destination resolution
 

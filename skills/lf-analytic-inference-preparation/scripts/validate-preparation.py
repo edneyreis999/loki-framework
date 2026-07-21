@@ -18,7 +18,7 @@ PREP_KEYS = {
     "preparation_digest", "status", "input", "root", "source_map", "policy",
     "catalog_observation", "technologies", "candidates", "duplicate_analysis",
     "selected_for_investigation", "planned_investigations", "dispatch_admitted",
-    "validators", "blockers", "minimum_next_path", "execution_boundary",
+    "generation_state", "validators", "blockers", "minimum_next_path", "execution_boundary",
 }
 CANDIDATE_KEYS = {
     "candidate_id", "origin", "lifecycle_status", "summary", "investigable_statement",
@@ -26,7 +26,10 @@ CANDIDATE_KEYS = {
     "stop_condition", "catalog_locator", "catalog_revision",
     "duplicate_relation", "disposition", "disposition_reason", "suggested_capabilities",
 }
-REQUEST_CONTROL_KEYS = {"discovery_limit"}
+REQUEST_CONTROL_KEYS = {
+    "candidate_ceiling", "catalog_retrieval_page_size",
+    "minimum_candidate_floor",
+}
 DUPLICATE_ITEM_KEYS = {"candidate_id", "duplicate_of"}
 DISPOSITION_REASON_CODES = {
     "selected": {"selected:essential-criteria-satisfied"},
@@ -36,7 +39,7 @@ DISPOSITION_REASON_CODES = {
     },
     "deferred": {
         "deferred:essential-evidence", "deferred:compatibility",
-        "deferred:context", "deferred:discovery-limit",
+        "deferred:context",
     },
 }
 BOUNDARY = {
@@ -98,13 +101,15 @@ def sha(value: Any, label: str, nullable: bool = False) -> None:
 
 
 def integer(value: Any, label: str, positive: bool = False) -> None:
-    if isinstance(value, bool) or not isinstance(value, int) or (positive and value <= 0):
+    if type(value) is not int or (positive and value <= 0):
         fail("E006", f"{label} must be a{' positive' if positive else 'n'} integer")
 
 
-def string_list(value: Any, label: str, *, sorted_unique: bool = False) -> list[str]:
+def string_list(value: Any, label: str, *, sorted_unique: bool = False, nonempty_items: bool = False) -> list[str]:
     if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
         fail("E007", f"{label} must be an array of strings")
+    if nonempty_items and any(not item for item in value):
+        fail("E004", f"{label} items must be non-empty strings")
     if sorted_unique and (value != sorted(value) or len(value) != len(set(value))):
         fail("E008", f"{label} must be lexicographically sorted and unique")
     return value
@@ -148,7 +153,7 @@ def validate_candidate(candidate: Any, input_fingerprint: str, index: int) -> st
     for key in ("summary", "investigable_statement", "stop_condition", "disposition_reason"):
         string(candidate[key], f"{label}.{key}", nonempty=True)
     for key in ("technologies", "surfaces", "support_evidence_refs", "confirm_or_reject_evidence", "suggested_capabilities"):
-        string_list(candidate[key], f"{label}.{key}")
+        string_list(candidate[key], f"{label}.{key}", nonempty_items=True)
     if candidate["technologies"] != sorted(candidate["technologies"]):
         fail("E008", f"{label}.technologies must be lexicographically sorted")
     if candidate["duplicate_relation"] not in {"none", "exact-duplicate", "near-duplicate"}:
@@ -223,7 +228,7 @@ def validate_duplicate_items(
 def validate_preparation(obj: Any) -> None:
     obj = mapping(obj, "inference_preparation", PREP_KEYS)
     reject_runtime_ids(obj)
-    if obj["schema_version"] != 2 or obj["artifact_type"] != "analytic-inference-preparation":
+    if type(obj["schema_version"]) is not int or obj["schema_version"] != 3 or obj["artifact_type"] != "analytic-inference-preparation":
         fail("E010", "schema_version or artifact_type is invalid")
     if obj["status"] not in {"pre-investigation-complete", "partial", "blocked"}:
         fail("E010", "status is invalid")
@@ -233,13 +238,16 @@ def validate_preparation(obj: Any) -> None:
         fail("E005", "preparation_id is invalid")
     inp = mapping(obj["input"], "input", {"demand_digest", "ordered_source_digests", "request_controls", "request_controls_digest"})
     sha(inp["demand_digest"], "input.demand_digest")
-    for index, value in enumerate(string_list(inp["ordered_source_digests"], "input.ordered_source_digests")):
+    for index, value in enumerate(string_list(inp["ordered_source_digests"], "input.ordered_source_digests", nonempty_items=True)):
         sha(value, f"input.ordered_source_digests[{index}]")
     sha(inp["request_controls_digest"], "input.request_controls_digest")
     request_controls = mapping(inp["request_controls"], "input.request_controls", REQUEST_CONTROL_KEYS)
-    integer(request_controls["discovery_limit"], "input.request_controls.discovery_limit", positive=True)
+    if request_controls["candidate_ceiling"] is not None:
+        fail("E031", "input.request_controls.candidate_ceiling must be null")
+    integer(request_controls["catalog_retrieval_page_size"], "input.request_controls.catalog_retrieval_page_size", positive=True)
+    integer(request_controls["minimum_candidate_floor"], "input.request_controls.minimum_candidate_floor", positive=True)
     if inp["request_controls_digest"] != digest(request_controls):
-        fail("E030", "request_controls_digest does not reproduce the exact one-key mapping")
+        fail("E030", "request_controls_digest does not reproduce the exact mapping")
     root = mapping(obj["root"], "root", {"consumer_root", "root_provenance"})
     string(root["consumer_root"], "root.consumer_root", nonempty=True)
     if root["root_provenance"] != "canonical-pwd": fail("E010", "root_provenance must be canonical-pwd")
@@ -257,27 +265,42 @@ def validate_preparation(obj: Any) -> None:
     policy = mapping(obj["policy"], "policy", {"policy_id", "policy_digest", "values"})
     string(policy["policy_id"], "policy.policy_id", nonempty=True); sha(policy["policy_digest"], "policy.policy_digest")
     if not isinstance(policy["values"], dict): fail("E002", "policy.values must be an object")
-    if "catalog_limit" not in policy["values"]:
-        fail("E031", "policy.values.catalog_limit is required for preparation v2")
-    integer(policy["values"]["catalog_limit"], "policy.values.catalog_limit", positive=True)
-    if request_controls["discovery_limit"] != policy["values"]["catalog_limit"]:
-        fail("E031", "discovery_limit must equal policy.values.catalog_limit")
-    catalog = mapping(obj["catalog_observation"], "catalog_observation", {"state", "catalog_snapshot_digest", "indices_read", "record_locators_loaded", "diagnostics"})
+    for key in ("catalog_retrieval_page_size", "minimum_candidate_floor"):
+        if key not in policy["values"]:
+            fail("E031", f"policy.values.{key} is required for preparation v3")
+        integer(policy["values"][key], f"policy.values.{key}", positive=True)
+        if request_controls[key] != policy["values"][key]:
+            fail("E031", f"request control {key} must equal policy.values.{key}")
+    if policy["values"].get("candidate_ceiling", "missing") is not None:
+        fail("E031", "policy.values.candidate_ceiling must be null")
+    catalog = mapping(obj["catalog_observation"], "catalog_observation", {"state", "catalog_snapshot_digest", "indices_read", "record_locators_loaded", "diagnostics", "retrieval_pages_read", "retrieval_exhausted", "retrieval_resume_cursor"})
     state = catalog["state"]
     if state not in {"loaded", "absent", "empty", "no-match", "blocked"}: fail("E010", "catalog_observation.state is invalid")
     sha(catalog["catalog_snapshot_digest"], "catalog_snapshot_digest", nullable=True)
     if (state == "loaded") != (catalog["catalog_snapshot_digest"] is not None):
         fail("E014", "loaded catalog requires digest; non-loaded catalog requires null digest")
     for key in ("indices_read", "record_locators_loaded"):
-        string_list(catalog[key], f"catalog_observation.{key}", sorted_unique=True)
+        string_list(catalog[key], f"catalog_observation.{key}", sorted_unique=True, nonempty_items=True)
     diagnostics = string_list(
         catalog["diagnostics"], "catalog_observation.diagnostics",
-        sorted_unique=True)
+        sorted_unique=True, nonempty_items=True)
     if any(not item for item in diagnostics):
         fail("E004", "catalog_observation.diagnostics items must be non-empty strings")
+    integer(catalog["retrieval_pages_read"], "catalog_observation.retrieval_pages_read")
+    if catalog["retrieval_pages_read"] < 0:
+        fail("E006", "catalog_observation.retrieval_pages_read must be non-negative")
+    if type(catalog["retrieval_exhausted"]) is not bool:
+        fail("E010", "catalog_observation.retrieval_exhausted must be boolean")
+    if catalog["retrieval_exhausted"]:
+        if catalog["retrieval_resume_cursor"] is not None:
+            fail("E039", "exhausted retrieval requires a null cursor")
+    else:
+        string(catalog["retrieval_resume_cursor"], "catalog_observation.retrieval_resume_cursor", nonempty=True)
+        if obj["status"] == "pre-investigation-complete":
+            fail("E039", "an unexhausted retrieval requires partial or blocked status")
     expected_fp = digest({"demand_digest": inp["demand_digest"], "ordered_source_digests": inp["ordered_source_digests"], "catalog_snapshot_digest": catalog["catalog_snapshot_digest"], "policy_digest": policy["policy_digest"], "request_controls_digest": inp["request_controls_digest"]})
     if obj["input_fingerprint"] != expected_fp: fail("E015", "input_fingerprint does not reproduce")
-    string_list(obj["technologies"], "technologies", sorted_unique=True)
+    string_list(obj["technologies"], "technologies", sorted_unique=True, nonempty_items=True)
     candidate_ids = [validate_candidate(item, obj["input_fingerprint"], index) for index, item in enumerate(obj["candidates"])] if isinstance(obj["candidates"], list) else fail("E007", "candidates must be an array")
     if candidate_ids != sorted(candidate_ids) or len(candidate_ids) != len(set(candidate_ids)):
         fail("E016", "candidates must be sorted by unique candidate_id")
@@ -304,16 +327,10 @@ def validate_preparation(obj: Any) -> None:
         if item["duplicate_relation"] == "near-duplicate"}
     if exact_ids != expected_exact_ids or near_ids != expected_near_ids:
         fail("E036", "duplicate_analysis must have bidirectional candidate relation parity")
-    selected = string_list(obj["selected_for_investigation"], "selected_for_investigation", sorted_unique=True)
+    selected = string_list(obj["selected_for_investigation"], "selected_for_investigation", sorted_unique=True, nonempty_items=True)
     expected_selected = sorted(item["candidate_id"] for item in obj["candidates"] if item["disposition"] == "selected")
     if selected != expected_selected: fail("E018", "selected_for_investigation must equal selected candidate IDs")
-    discovery_limit = request_controls["discovery_limit"]
-    if len(selected) > discovery_limit:
-        fail("E032", "selected candidate count exceeds discovery_limit")
-    limit_deferred = [item for item in obj["candidates"] if item["disposition_reason"].startswith("deferred:discovery-limit")]
-    if limit_deferred and len(selected) != discovery_limit:
-        fail("E032", "discovery-limit deferral requires the selected set to fill discovery_limit")
-    unresolved_deferred = [item for item in obj["candidates"] if item["disposition"] == "deferred" and item not in limit_deferred]
+    unresolved_deferred = [item for item in obj["candidates"] if item["disposition"] == "deferred"]
     if unresolved_deferred and obj["status"] == "pre-investigation-complete":
         fail("E033", "unresolved essential deferral requires partial or blocked status")
     if not isinstance(obj["planned_investigations"], list): fail("E007", "planned_investigations must be an array")
@@ -325,10 +342,35 @@ def validate_preparation(obj: Any) -> None:
     if plan_ids != selected:
         fail("E019", "planned_investigations must exactly match selected candidates in sorted order")
     if obj["dispatch_admitted"] is not False: fail("E020", "dispatch_admitted must be false")
-    validators = string_list(obj["validators"], "validators", sorted_unique=True)
+    generation = mapping(obj["generation_state"], "generation_state", {"completion_reason", "semantic_saturation", "resume_cursor", "unexplored_surfaces", "explored_surfaces", "final_pass_new_distinct_candidates", "saturation_evidence_refs"})
+    if generation["completion_reason"] not in {"semantic-saturation", "context-interruption"}:
+        fail("E010", "generation_state.completion_reason is invalid")
+    if type(generation["semantic_saturation"]) is not bool:
+        fail("E010", "generation_state.semantic_saturation must be boolean")
+    string_list(generation["unexplored_surfaces"], "generation_state.unexplored_surfaces", sorted_unique=True, nonempty_items=True)
+    explored = string_list(generation["explored_surfaces"], "generation_state.explored_surfaces", sorted_unique=True, nonempty_items=True)
+    evidence_refs = string_list(generation["saturation_evidence_refs"], "generation_state.saturation_evidence_refs", sorted_unique=True, nonempty_items=True)
+    if generation["completion_reason"] == "semantic-saturation":
+        if (not generation["semantic_saturation"] or generation["resume_cursor"] is not None or
+                generation["unexplored_surfaces"] or not explored or
+                type(generation["final_pass_new_distinct_candidates"]) is not int or
+                generation["final_pass_new_distinct_candidates"] != 0 or not evidence_refs):
+            fail("E040", "semantic saturation requires explored surfaces and an evidenced zero-new-candidate final pass")
+    else:
+        if generation["semantic_saturation"]:
+            fail("E040", "context interruption cannot claim semantic saturation")
+        string(generation["resume_cursor"], "generation_state.resume_cursor", nonempty=True)
+        if not generation["unexplored_surfaces"] or obj["status"] != "partial":
+            fail("E040", "context interruption requires partial status and unexplored surfaces")
+        if generation["final_pass_new_distinct_candidates"] is not None or evidence_refs:
+            fail("E040", "context interruption cannot claim saturation evidence")
+    material_count = sum(item["disposition"] != "rejected" for item in obj["candidates"])
+    if material_count < request_controls["minimum_candidate_floor"] and not generation["semantic_saturation"] and obj["status"] != "partial":
+        fail("E041", "below-floor generation without saturation must be partial and resumable")
+    validators = string_list(obj["validators"], "validators", sorted_unique=True, nonempty_items=True)
     if not validators or any(not item for item in validators):
         fail("E035", "validators must name one or more checks that passed")
-    blockers = string_list(obj["blockers"], "blockers", sorted_unique=True)
+    blockers = string_list(obj["blockers"], "blockers", sorted_unique=True, nonempty_items=True)
     if any(not item for item in blockers):
         fail("E004", "blockers items must be non-empty strings")
     if obj["status"] == "partial" and not blockers and not diagnostics:
@@ -336,7 +378,15 @@ def validate_preparation(obj: Any) -> None:
     if obj["status"] == "pre-investigation-complete" and blockers:
         fail("E038", "pre-investigation-complete requires an empty blockers array")
     string(obj["minimum_next_path"], "minimum_next_path", nonempty=True)
-    if obj["execution_boundary"] != BOUNDARY: fail("E021", "execution_boundary must be literal zero/false/empty boundary")
+    boundary = mapping(obj["execution_boundary"], "execution_boundary", set(BOUNDARY))
+    for key in ("dispatch_authorized", "web_research_performed", "catalog_mutation_applied"):
+        if type(boundary[key]) is not bool or boundary[key] is not False:
+            fail("E021", "execution_boundary must be literal zero/false/empty boundary")
+    for key in ("investigation_handoffs_dispatched", "agent_runs_created", "handoffs_created"):
+        if type(boundary[key]) is not int or boundary[key] != 0:
+            fail("E021", "execution_boundary must be literal zero/false/empty boundary")
+    if type(boundary["downstream_workflows_invoked"]) is not list or boundary["downstream_workflows_invoked"]:
+        fail("E021", "execution_boundary must be literal zero/false/empty boundary")
     expected_prep = "prep-" + digest({"input_fingerprint": obj["input_fingerprint"], "candidate_ids": sorted(candidate_ids)})[7:]
     if obj["preparation_id"] != expected_prep: fail("E022", "preparation_id does not reproduce")
     digest_domain = dict(obj); del digest_domain["preparation_digest"]
@@ -344,8 +394,8 @@ def validate_preparation(obj: Any) -> None:
 
 
 def fixture() -> dict[str, Any]:
-    controls = {"discovery_limit": 3}
-    value: dict[str, Any] = {"schema_version": 2, "artifact_type": "analytic-inference-preparation", "preparation_id": "", "input_fingerprint": "", "preparation_digest": "", "status": "pre-investigation-complete", "input": {"demand_digest": "sha256:" + "1" * 64, "ordered_source_digests": ["sha256:" + "2" * 64], "request_controls": controls, "request_controls_digest": digest(controls)}, "root": {"consumer_root": "/fixture", "root_provenance": "canonical-pwd"}, "source_map": {"sources": [{"locator": "source.md", "digest": "sha256:" + "2" * 64, "facts": []}]}, "policy": {"policy_id": "fixture-policy", "policy_digest": "sha256:" + "4" * 64, "values": {"catalog_limit": 3}}, "catalog_observation": {"state": "no-match", "catalog_snapshot_digest": None, "indices_read": [], "record_locators_loaded": [], "diagnostics": []}, "technologies": [], "candidates": [], "duplicate_analysis": {"exact_duplicates": [], "near_duplicates": []}, "selected_for_investigation": [], "planned_investigations": [], "dispatch_admitted": False, "validators": ["fixture"], "blockers": [], "minimum_next_path": "return-to-caller", "execution_boundary": copy.deepcopy(BOUNDARY)}
+    controls = {"candidate_ceiling": None, "catalog_retrieval_page_size": 20, "minimum_candidate_floor": 8}
+    value: dict[str, Any] = {"schema_version": 3, "artifact_type": "analytic-inference-preparation", "preparation_id": "", "input_fingerprint": "", "preparation_digest": "", "status": "pre-investigation-complete", "input": {"demand_digest": "sha256:" + "1" * 64, "ordered_source_digests": ["sha256:" + "2" * 64], "request_controls": controls, "request_controls_digest": digest(controls)}, "root": {"consumer_root": "/fixture", "root_provenance": "canonical-pwd"}, "source_map": {"sources": [{"locator": "source.md", "digest": "sha256:" + "2" * 64, "facts": []}]}, "policy": {"policy_id": "fixture-policy", "policy_digest": "sha256:" + "4" * 64, "values": {"candidate_ceiling": None, "catalog_retrieval_page_size": 20, "minimum_candidate_floor": 8}}, "catalog_observation": {"state": "no-match", "catalog_snapshot_digest": None, "indices_read": [], "record_locators_loaded": [], "diagnostics": [], "retrieval_pages_read": 0, "retrieval_exhausted": True, "retrieval_resume_cursor": None}, "technologies": [], "candidates": [], "duplicate_analysis": {"exact_duplicates": [], "near_duplicates": []}, "selected_for_investigation": [], "planned_investigations": [], "dispatch_admitted": False, "generation_state": {"completion_reason": "semantic-saturation", "semantic_saturation": True, "resume_cursor": None, "unexplored_surfaces": [], "explored_surfaces": ["fixture-surface"], "final_pass_new_distinct_candidates": 0, "saturation_evidence_refs": ["source.md#final-pass"]}, "validators": ["fixture"], "blockers": [], "minimum_next_path": "return-to-caller", "execution_boundary": copy.deepcopy(BOUNDARY)}
     refresh_identities(value)
     return value
 
@@ -454,13 +504,13 @@ def apply_fixture_duplicate_analysis(
 
 def assert_case_matrix() -> None:
     matrix = load_fixture("preparation-cases.json")
-    if matrix.get("schema_version") != 2 or matrix.get("fixture_kind") != "analytic-inference-preparation-case-matrix":
+    if matrix.get("schema_version") != 3 or matrix.get("fixture_kind") != "analytic-inference-preparation-case-matrix":
         raise AssertionError("preparation case matrix schema is invalid")
     if matrix.get("byte_replay_is_out_of_scope") is not True or matrix.get("execution_boundary") != BOUNDARY:
         raise AssertionError("case matrix must declare byte replay out of scope and literal zero boundary")
     cases = matrix.get("cases")
     if not isinstance(cases, list): raise AssertionError("case matrix cases must be an array")
-    required_case_ids = {"loaded-relevant-without-cost", "registry-absent", "catalog-empty", "technology-no-match", "catalog-blocked", "candidate-outcomes-and-duplicates", "discovery-limit", "adversarial-order"}
+    required_case_ids = {"loaded-relevant-without-cost", "registry-absent", "catalog-empty", "technology-no-match", "catalog-blocked", "candidate-outcomes-and-duplicates", "more-than-floor-preserved", "below-floor-saturated", "below-floor-context-resume", "page-boundary-resume", "adversarial-order"}
     if {case.get("id") for case in cases if isinstance(case, dict)} != required_case_ids:
         raise AssertionError("case matrix lacks required unique scenarios")
     for case in cases:
@@ -472,11 +522,11 @@ def assert_case_matrix() -> None:
         if not isinstance(fixture_input, dict) or not isinstance(expected, dict):
             raise AssertionError(f"{case.get('id')}: scenario input and expected must be objects")
         value = fixture()
-        discovery_limit = fixture_input.get("discovery_limit")
-        if not isinstance(discovery_limit, int) or isinstance(discovery_limit, bool) or discovery_limit <= 0:
-            raise AssertionError(f"{case['id']}: discovery_limit must be a positive integer")
-        value["input"]["request_controls"]["discovery_limit"] = discovery_limit
-        value["policy"]["values"]["catalog_limit"] = discovery_limit
+        minimum_floor = fixture_input.get("minimum_candidate_floor", 8)
+        if not isinstance(minimum_floor, int) or isinstance(minimum_floor, bool) or minimum_floor <= 0:
+            raise AssertionError(f"{case['id']}: minimum_candidate_floor must be a positive integer")
+        value["input"]["request_controls"]["minimum_candidate_floor"] = minimum_floor
+        value["policy"]["values"]["minimum_candidate_floor"] = minimum_floor
         state, expected_status = fixture_input.get("catalog_state"), expected.get("status")
         value["catalog_observation"]["state"] = state
         value["catalog_observation"]["catalog_snapshot_digest"] = ("sha256:" + "5" * 64) if fixture_input.get("catalog_snapshot") else None
@@ -487,6 +537,12 @@ def assert_case_matrix() -> None:
             raise AssertionError(f"{case['id']}: catalog_diagnostics must be an array")
         value["catalog_observation"]["diagnostics"] = diagnostics
         value["status"] = expected_status
+        value["catalog_observation"]["retrieval_pages_read"] = fixture_input.get("retrieval_pages_read", 0)
+        value["catalog_observation"]["retrieval_exhausted"] = fixture_input.get("retrieval_exhausted", True)
+        value["catalog_observation"]["retrieval_resume_cursor"] = fixture_input.get("retrieval_resume_cursor")
+        value["generation_state"] = copy.deepcopy(fixture_input.get("generation_state", value["generation_state"]))
+        if expected_status == "partial" and not diagnostics:
+            value["blockers"] = ["fixture partial limitation"]
         if state == "blocked": value["minimum_next_path"] = "repair-permitted-catalog-input"
         specs = fixture_input.get("candidates")
         if not isinstance(specs, list): raise AssertionError(f"{case['id']}: candidates must be an array")
@@ -507,8 +563,10 @@ def assert_case_matrix() -> None:
             if actual_relations != expected_relations:
                 raise AssertionError(f"{case['id']}: duplicate relations differ from fixture expectation")
         selected_count = len(value["selected_for_investigation"])
-        if selected_count != expected.get("selected_count") or selected_count > discovery_limit:
-            raise AssertionError(f"{case['id']}: selected count violates fixture expectation or discovery_limit")
+        if selected_count != expected.get("selected_count"):
+            raise AssertionError(f"{case['id']}: selected count differs from fixture expectation")
+        if expected.get("all_material_candidates_preserved") and len(value["candidates"]) != len(specs):
+            raise AssertionError(f"{case['id']}: material candidates were truncated")
     adversarial = next(case["scenario"]["input"] for case in cases if case["id"] == "adversarial-order")
     ordered = fixture(); ordered["catalog_observation"].update({"state": adversarial["catalog_state"], "catalog_snapshot_digest": "sha256:" + "5" * 64})
     ordered["candidates"] = [candidate_from_fixture(spec) for spec in adversarial["candidates"]]
@@ -522,7 +580,7 @@ def assert_structural_parity() -> None:
     parity = load_fixture("parity-cases.json")
     expected = parity.get("expected", {})
     projections = parity.get("caller_projections")
-    if parity.get("schema_version") != 2 or parity.get("byte_replay_is_out_of_scope") is not True or not isinstance(projections, dict) or set(projections) != {"loki-deep-analysis", "loki-generate-inferences"}:
+    if parity.get("schema_version") != 3 or parity.get("byte_replay_is_out_of_scope") is not True or not isinstance(projections, dict) or set(projections) != {"loki-deep-analysis", "loki-generate-inferences"}:
         raise AssertionError("parity fixture is invalid")
     common = parity.get("common_normalized_input")
     if not isinstance(common, dict): raise AssertionError("parity fixture has no common normalized input")
@@ -533,7 +591,7 @@ def assert_structural_parity() -> None:
         value = fixture()
         value["input"]["demand_digest"] = common["demand_digest"]
         value["input"]["request_controls"] = copy.deepcopy(common["request_controls"])
-        value["policy"]["values"]["catalog_limit"] = common["request_controls"]["discovery_limit"]
+        value["policy"]["values"] = copy.deepcopy(common["request_controls"])
         value["source_map"]["sources"] = common["sources"]
         value["input"]["ordered_source_digests"] = [source["digest"] for source in common["sources"]]
         value["policy"].update({"policy_id": common["policy_id"], "policy_digest": common["policy_digest"]})
@@ -545,7 +603,7 @@ def assert_structural_parity() -> None:
     if expected.get("zero_dispatch_web_downstream") is not True or outputs[0]["execution_boundary"] != BOUNDARY:
         raise AssertionError("parity fixture did not retain zero execution boundary")
     if sorted(outputs[0]["input"]["request_controls"]) != expected.get("request_controls_exact_keys"):
-        raise AssertionError("parity fixture request_controls keys differ from v2 contract")
+        raise AssertionError("parity fixture request_controls keys differ from v3 contract")
     for excluded_key in expected.get("candidate_keys_exclude", []):
         if any(excluded_key in candidate for candidate in outputs[0]["candidates"]):
             raise AssertionError(f"parity fixture retained legacy candidate key {excluded_key!r}")
@@ -572,12 +630,6 @@ def self_test() -> None:
         candidate = generated_candidate("duplicate")
         candidate["duplicate_relation"] = "exact-duplicate"
         value["candidates"] = [candidate]
-        refresh_identities(value)
-
-    def selected_over_limit(value: dict[str, Any]) -> None:
-        value["input"]["request_controls"]["discovery_limit"] = 1
-        value["policy"]["values"]["catalog_limit"] = 1
-        value["candidates"] = [generated_candidate("one"), generated_candidate("two")]
         refresh_identities(value)
 
     def selected_without_support(value: dict[str, Any]) -> None:
@@ -610,6 +662,42 @@ def self_test() -> None:
         value["status"] = "blocked"
         value["catalog_observation"]["state"] = "blocked"
         value["catalog_observation"]["catalog_snapshot_digest"] = "sha256:" + "5" * 64
+        refresh_identities(value)
+
+    def saturation_without_evidence(value: dict[str, Any]) -> None:
+        value["generation_state"]["explored_surfaces"] = []
+        value["generation_state"]["saturation_evidence_refs"] = []
+        refresh_identities(value)
+
+    def empty_candidate_semantic_item(value: dict[str, Any], key: str) -> None:
+        candidate = generated_candidate(f"empty-{key}")
+        candidate[key] = [""]
+        value["candidates"] = [candidate]
+        refresh_identities(value)
+
+    def empty_explored_surface(value: dict[str, Any]) -> None:
+        value["generation_state"]["explored_surfaces"] = [""]
+        refresh_identities(value)
+
+    def empty_unexplored_surface(value: dict[str, Any]) -> None:
+        value["status"] = "partial"
+        value["blockers"] = ["context interrupted before surface exploration"]
+        value["generation_state"].update({
+            "completion_reason": "context-interruption",
+            "semantic_saturation": False,
+            "resume_cursor": "surface:pending",
+            "unexplored_surfaces": [""],
+            "final_pass_new_distinct_candidates": None,
+            "saturation_evidence_refs": [],
+        })
+        refresh_identities(value)
+
+    def empty_catalog_semantic_item(value: dict[str, Any], key: str) -> None:
+        value["catalog_observation"][key] = [""]
+        refresh_identities(value)
+
+    def empty_top_level_technology(value: dict[str, Any]) -> None:
+        value["technologies"] = [""]
         refresh_identities(value)
 
     def install_duplicate_specs(
@@ -712,7 +800,27 @@ def self_test() -> None:
     cases = [
         ("tampered-digest", lambda x: x.__setitem__("preparation_digest", "sha256:" + "0" * 64), "E023"),
         ("extra-field", lambda x: x.__setitem__("extra", True), "E003"),
-        ("legacy-schema-v1", lambda x: x.__setitem__("schema_version", 1), "E010"),
+        ("legacy-schema-v2", lambda x: x.__setitem__("schema_version", 2), "E010"),
+        ("schema-version-bool", lambda x: x.__setitem__("schema_version", True), "E010"),
+        ("schema-version-float", lambda x: x.__setitem__("schema_version", 3.0), "E010"),
+        ("schema-version-string", lambda x: x.__setitem__("schema_version", "3"), "E010"),
+        ("request-page-size-bool", lambda x: x["input"]["request_controls"].__setitem__("catalog_retrieval_page_size", True), "E006"),
+        ("request-floor-float", lambda x: x["input"]["request_controls"].__setitem__("minimum_candidate_floor", 8.0), "E006"),
+        ("request-floor-string", lambda x: x["input"]["request_controls"].__setitem__("minimum_candidate_floor", "8"), "E006"),
+        ("policy-page-size-float", lambda x: x["policy"]["values"].__setitem__("catalog_retrieval_page_size", 20.0), "E006"),
+        ("policy-floor-bool", lambda x: x["policy"]["values"].__setitem__("minimum_candidate_floor", True), "E006"),
+        ("retrieval-pages-bool", lambda x: x["catalog_observation"].__setitem__("retrieval_pages_read", False), "E006"),
+        ("retrieval-pages-float", lambda x: x["catalog_observation"].__setitem__("retrieval_pages_read", 0.0), "E006"),
+        ("retrieval-pages-string", lambda x: x["catalog_observation"].__setitem__("retrieval_pages_read", "0"), "E006"),
+        ("retrieval-exhausted-integer", lambda x: x["catalog_observation"].__setitem__("retrieval_exhausted", 1), "E010"),
+        ("semantic-saturation-integer", lambda x: x["generation_state"].__setitem__("semantic_saturation", 1), "E010"),
+        ("final-pass-count-bool", lambda x: x["generation_state"].__setitem__("final_pass_new_distinct_candidates", False), "E040"),
+        ("final-pass-count-float", lambda x: x["generation_state"].__setitem__("final_pass_new_distinct_candidates", 0.0), "E040"),
+        ("final-pass-count-string", lambda x: x["generation_state"].__setitem__("final_pass_new_distinct_candidates", "0"), "E040"),
+        ("boundary-count-bool", lambda x: x["execution_boundary"].__setitem__("agent_runs_created", False), "E021"),
+        ("boundary-count-float", lambda x: x["execution_boundary"].__setitem__("handoffs_created", 0.0), "E021"),
+        ("boundary-count-string", lambda x: x["execution_boundary"].__setitem__("investigation_handoffs_dispatched", "0"), "E021"),
+        ("boundary-boolean-integer", lambda x: x["execution_boundary"].__setitem__("dispatch_authorized", 0), "E021"),
         ("legacy-candidate-cost-impact", legacy_candidate_keys, "E003"),
         ("request-control-extra-key", lambda x: x["input"]["request_controls"].__setitem__("cost_budget", 6), "E003"),
         ("request-control-digest", lambda x: x["input"].__setitem__("request_controls_digest", "sha256:" + "0" * 64), "E030"),
@@ -721,15 +829,26 @@ def self_test() -> None:
         ("blocked-as-loaded", blocked_as_loaded, "E017"),
         ("loaded-without-snapshot", loaded_without_snapshot, "E014"),
         ("blocked-with-snapshot", blocked_with_snapshot, "E014"),
+        ("saturation-without-evidence", saturation_without_evidence, "E040"),
+        ("saturation-empty-evidence-reference", lambda x: x["generation_state"].__setitem__("saturation_evidence_refs", [""]), "E004"),
+        ("empty-explored-surface", empty_explored_surface, "E004"),
+        ("empty-unexplored-surface", empty_unexplored_surface, "E004"),
+        ("empty-candidate-technology", lambda x: empty_candidate_semantic_item(x, "technologies"), "E004"),
+        ("empty-candidate-surface", lambda x: empty_candidate_semantic_item(x, "surfaces"), "E004"),
+        ("empty-candidate-support-reference", lambda x: empty_candidate_semantic_item(x, "support_evidence_refs"), "E004"),
+        ("empty-candidate-confirm-reference", lambda x: empty_candidate_semantic_item(x, "confirm_or_reject_evidence"), "E004"),
+        ("empty-candidate-capability", lambda x: empty_candidate_semantic_item(x, "suggested_capabilities"), "E004"),
+        ("empty-catalog-index", lambda x: empty_catalog_semantic_item(x, "indices_read"), "E004"),
+        ("empty-record-locator", lambda x: empty_catalog_semantic_item(x, "record_locators_loaded"), "E004"),
+        ("empty-top-level-technology", empty_top_level_technology, "E004"),
         ("selected-exact-duplicate", selected_exact_duplicate, "E028"),
         ("selected-without-support", selected_without_support, "E029"),
-        ("selected-over-discovery-limit", selected_over_limit, "E032"),
         ("planned-investigation-extra-key", planned_investigation_extra_key, "E003"),
         ("planned-investigation-missing-key", planned_investigation_missing_key, "E003"),
         ("planned-investigation-non-string", planned_investigation_non_string, "E004"),
         ("partial-without-limitation", lambda x: x.__setitem__("status", "partial"), "E034"),
         ("validators-empty", lambda x: x.__setitem__("validators", []), "E035"),
-        ("validators-empty-name", lambda x: x.__setitem__("validators", [""]), "E035"),
+        ("validators-empty-name", lambda x: x.__setitem__("validators", [""]), "E004"),
         ("validators-not-sorted", lambda x: x.__setitem__("validators", ["z-check", "a-check"]), "E008"),
         ("validators-not-unique", lambda x: x.__setitem__("validators", ["check", "check"]), "E008"),
         ("complete-with-blocker", lambda x: x.__setitem__("blockers", ["unresolved blocker"]), "E038"),

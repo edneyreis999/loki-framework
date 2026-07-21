@@ -1,0 +1,540 @@
+{
+  "inference_preparation": {
+    "artifact_type": "analytic-inference-preparation",
+    "blockers": [],
+    "candidates": [
+      {
+        "candidate_id": "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-a",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-a",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-b",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-b",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-c",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-c",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-f",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-f",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-g",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-g",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-d",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-d",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      },
+      {
+        "candidate_id": "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823",
+        "catalog_locator": null,
+        "catalog_revision": null,
+        "confirm_or_reject_evidence": [
+          "fixture-check"
+        ],
+        "disposition": "selected",
+        "disposition_reason": "selected:essential-criteria-satisfied",
+        "duplicate_relation": "none",
+        "investigable_statement": "Investigate candidate-e",
+        "lifecycle_status": "unreviewed",
+        "origin": "generated",
+        "stop_condition": "fixture stop",
+        "suggested_capabilities": [],
+        "summary": "candidate-e",
+        "support_evidence_refs": [
+          "source.md#fixture"
+        ],
+        "surfaces": [
+          "fixture-surface"
+        ],
+        "technologies": [
+          "fixture"
+        ]
+      }
+    ],
+    "catalog_observation": {
+      "catalog_snapshot_digest": null,
+      "diagnostics": [],
+      "indices_read": [],
+      "record_locators_loaded": [],
+      "retrieval_exhausted": true,
+      "retrieval_pages_read": 0,
+      "retrieval_resume_cursor": null,
+      "state": "no-match"
+    },
+    "dispatch_admitted": false,
+    "duplicate_analysis": {
+      "exact_duplicates": [],
+      "near_duplicates": []
+    },
+    "execution_boundary": {
+      "agent_runs_created": 0,
+      "catalog_mutation_applied": false,
+      "dispatch_authorized": false,
+      "downstream_workflows_invoked": [],
+      "handoffs_created": 0,
+      "investigation_handoffs_dispatched": 0,
+      "web_research_performed": false
+    },
+    "generation_state": {
+      "completion_reason": "semantic-saturation",
+      "explored_surfaces": [
+        "fixture-surface"
+      ],
+      "final_pass_new_distinct_candidates": 0,
+      "resume_cursor": null,
+      "saturation_evidence_refs": [
+        "source.md#final-pass"
+      ],
+      "semantic_saturation": true,
+      "unexplored_surfaces": []
+    },
+    "input": {
+      "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "ordered_source_digests": [
+        "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      ],
+      "request_controls": {
+        "candidate_ceiling": null,
+        "catalog_retrieval_page_size": 20,
+        "minimum_candidate_floor": 8
+      },
+      "request_controls_digest": "sha256:80324b89b8c5759f021e8a99f60921a5be5e2778f7163b83066ff76208e46db9"
+    },
+    "input_fingerprint": "sha256:fddfc8abb0ea8d0fcf4983aa8cc7065ae7f03cacc2b682995d09c80c3fedc46e",
+    "minimum_next_path": "return-to-caller",
+    "planned_investigations": [
+      {
+        "candidate_id": "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b"
+      },
+      {
+        "candidate_id": "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5"
+      },
+      {
+        "candidate_id": "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295"
+      },
+      {
+        "candidate_id": "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf"
+      },
+      {
+        "candidate_id": "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3"
+      },
+      {
+        "candidate_id": "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731"
+      },
+      {
+        "candidate_id": "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+      }
+    ],
+    "policy": {
+      "policy_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "policy_id": "fixture-policy",
+      "values": {
+        "candidate_ceiling": null,
+        "catalog_retrieval_page_size": 20,
+        "minimum_candidate_floor": 8
+      }
+    },
+    "preparation_digest": "sha256:117038a26c19edbc4aa35abf660827c5e3048839eeb4b0ddf0c097727c432190",
+    "preparation_id": "prep-9126b307918b47489e0873776bb1a9f2bd6ea7379fc55c514e3289a4e445f425",
+    "root": {
+      "consumer_root": "/fixture",
+      "root_provenance": "canonical-pwd"
+    },
+    "schema_version": 3,
+    "selected_for_investigation": [
+      "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+      "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+      "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+      "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+      "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+      "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+      "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+    ],
+    "source_map": {
+      "sources": [
+        {
+          "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "facts": [],
+          "locator": "source.md"
+        }
+      ]
+    },
+    "status": "pre-investigation-complete",
+    "technologies": [],
+    "validators": [
+      "fixture"
+    ]
+  },
+  "investigation_round_ledger": {
+    "schema_version": 1,
+    "preparation_binding": {
+      "preparation_id": "prep-9126b307918b47489e0873776bb1a9f2bd6ea7379fc55c514e3289a4e445f425",
+      "preparation_digest": "sha256:117038a26c19edbc4aa35abf660827c5e3048839eeb4b0ddf0c097727c432190",
+      "candidate_ids": [
+        "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+        "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+        "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+        "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+        "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+        "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+        "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+      ]
+    },
+    "candidate_universe": [
+      "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+      "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+      "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+      "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+      "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+      "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+      "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+    ],
+    "initial_useful_investigations": [
+      "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+      "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+      "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+      "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+      "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+      "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+      "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+    ],
+    "policy": {
+      "max_rounds": 3,
+      "max_delegated_per_round": 6,
+      "concurrent_handoff_limit": 2,
+      "cost_mode": "telemetry-only"
+    },
+    "rounds": [
+      {
+        "round": 1,
+        "status": "terminal",
+        "delegated_investigations": [
+          {
+            "candidate_id": "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+            "owner": "specialist-one",
+            "material_question": "question-a-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 1,
+            "handoff_id": "handoff-r1-a",
+            "agent_run_id": "agent-run-r1-a",
+            "evidence_id": "evidence-r1-a",
+            "cost": "unknown",
+            "terminal_state": "completed"
+          },
+          {
+            "candidate_id": "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+            "owner": "specialist-one",
+            "material_question": "question-b-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 1,
+            "handoff_id": "handoff-r1-b",
+            "agent_run_id": "agent-run-r1-b",
+            "evidence_id": "evidence-r1-b",
+            "cost": 9,
+            "terminal_state": "completed"
+          },
+          {
+            "candidate_id": "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+            "owner": "specialist-two",
+            "material_question": "question-c-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 2,
+            "handoff_id": "handoff-r1-c",
+            "agent_run_id": "agent-run-r1-c",
+            "evidence_id": "evidence-r1-c",
+            "cost": "unsupported",
+            "terminal_state": "partial"
+          },
+          {
+            "candidate_id": "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+            "owner": "specialist-three",
+            "material_question": "question-d-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 2,
+            "handoff_id": "handoff-r1-d",
+            "agent_run_id": "agent-run-r1-d",
+            "evidence_id": "evidence-r1-d",
+            "cost": 1,
+            "terminal_state": "completed"
+          },
+          {
+            "candidate_id": "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823",
+            "owner": "specialist-four",
+            "material_question": "question-e-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 3,
+            "handoff_id": "handoff-r1-e",
+            "agent_run_id": "agent-run-r1-e",
+            "evidence_id": "evidence-r1-e",
+            "cost": 2,
+            "terminal_state": "completed"
+          },
+          {
+            "candidate_id": "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+            "owner": "specialist-five",
+            "material_question": "question-f-r1",
+            "reinvestigation_rationale": null,
+            "subwave": 3,
+            "handoff_id": "handoff-r1-f",
+            "agent_run_id": "agent-run-r1-f",
+            "evidence_id": "evidence-r1-f",
+            "cost": 3,
+            "terminal_state": "completed"
+          }
+        ],
+        "local_resolutions": [
+          "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3"
+        ],
+        "terminal_barrier": [
+          "handoff-r1-a",
+          "handoff-r1-b",
+          "handoff-r1-c",
+          "handoff-r1-d",
+          "handoff-r1-e",
+          "handoff-r1-f"
+        ],
+        "reclassification": {
+          "all_candidate_ids": [
+            "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+            "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+            "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+            "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+            "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+            "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+            "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+          ],
+          "useful_next_round": [
+            "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b"
+          ],
+          "decisions": {
+          "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b": "new evidence keeps this preparation-selected actionable candidate useful for a materially different question",
+            "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5": "resolved",
+            "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295": "partial evidence is sufficient",
+            "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731": "resolved",
+            "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823": "resolved",
+            "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf": "resolved",
+            "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3": "resolved locally"
+          }
+        }
+      },
+      {
+        "round": 2,
+        "status": "terminal",
+        "delegated_investigations": [
+          {
+            "candidate_id": "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+            "owner": "specialist-one",
+            "material_question": "question-a-r2-materially-new",
+            "reinvestigation_rationale": "round-one evidence exposed a distinct mechanism",
+            "subwave": 1,
+            "handoff_id": "handoff-r2-a",
+            "agent_run_id": "agent-run-r2-a",
+            "evidence_id": "evidence-r2-a",
+            "cost": 100,
+            "terminal_state": "completed"
+          }
+        ],
+        "local_resolutions": [],
+        "terminal_barrier": [
+          "handoff-r2-a"
+        ],
+        "reclassification": {
+          "all_candidate_ids": [
+            "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+            "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+            "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+            "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+            "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+            "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+            "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+          ],
+          "useful_next_round": [],
+          "decisions": {
+            "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b": "resolved after reinvestigation",
+            "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5": "remains resolved",
+            "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295": "remains sufficient",
+            "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731": "remains resolved",
+            "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823": "remains resolved",
+            "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf": "remains resolved",
+            "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3": "remains locally resolved"
+          }
+        }
+      }
+    ],
+    "analysis_terminal_reason": "analysis-sufficient",
+    "downstream_handoff": {
+      "analysis_phase_complete": true,
+      "auto_invoked": false,
+      "allowed_destinations": [
+        "loki-continuous-improvement",
+        "loki-generate-action-plan",
+        "loki-human-decision-preflight"
+      ],
+      "minimum_next_path": "return downstream handoff recommendation to caller"
+    },
+    "initial_classification": {
+      "selected_candidate_ids": [
+        "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+        "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+        "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+        "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+        "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+        "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+        "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+      ],
+      "useful_candidate_ids": [
+        "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b",
+        "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5",
+        "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295",
+        "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf",
+        "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3",
+        "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731",
+        "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823"
+      ],
+      "decisions": {
+        "gen-081c0cbe47d31df8618a69fca483d49c1e1e925e8bdedf6942fec802a6055a7b": "command-stage matching retained this selected candidate as materially useful",
+        "gen-1693ddb1b3da0762a3c3a39f5b04043528a2b35d7cc2814c909d85fff3e47cd5": "command-stage matching retained this selected candidate as materially useful",
+        "gen-24f56902313182e4e4389b0b70fb06ee8531396b612af7c60b5c5f011c453295": "command-stage matching retained this selected candidate as materially useful",
+        "gen-7d9425649d4e08e857af13adf9dc81df5cfb30d58d7689c524dd46ac0282fcaf": "command-stage matching retained this selected candidate as materially useful",
+        "gen-9a8521e669ef2e40db4e5a9a89946a382aff18f14ea9c2a7c19d5abd9fa941a3": "command-stage matching retained this selected candidate for local round-one resolution",
+        "gen-9df36f097e324cbc2041b4a429cc96a6b5a1581f3c04998e7ebc0ec5f40b5731": "command-stage matching retained this selected candidate as materially useful",
+        "gen-dbbd33205efb47ae011906a8b5c75c064234b5624bfbefd8451baeb36128c823": "command-stage matching retained this selected candidate as materially useful"
+      }
+    }
+  }
+}

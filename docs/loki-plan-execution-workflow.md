@@ -47,15 +47,12 @@ Quando for util separar a preparacao deterministica da investigacao,
 `loki-generate-inferences` e um fork opcional antes de `loki-deep-analysis`.
 Ele recebe uma entrada de analise, fontes locais permitidas e um diretorio
 existente e aprovado abaixo de `<consumer-root>/planos/`, sem symlink ou
-traversal. Deriva exatamente
-`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
-somente candidatos relevantes, investigaveis, sustentados por proveniencia
-observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
-rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
-exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
-compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
-`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
-essa disposicao pre-investigacao. Antes da approval, resolve target versionado
+traversal. Deriva piso minimo 8, nenhum teto e pagina de recuperacao 20. Piso
+nao encerra geracao, pagina nao limita recuperacao total e o limite persistente
+3 vale somente para armazenamento/manutencao. Preserva todo candidato material
+distinto ate saturacao semantica; interrupcao de contexto retorna parcial com
+estado retomavel e saturacao abaixo do piso nao gera padding. Custo e impacto
+nao influenciam disposicao. Antes da approval, resolve target versionado
 por slug/digest e menor `-vN` ausente. A approval vincula diretorio canonico,
 target exato, basename/versao, before-state/snapshot e um create exclusivo.
 Colisao posterior invalida a approval e bloqueia sem retry; exige nova resolucao
@@ -64,6 +61,13 @@ Cria somente esse unico output e termina
 em `pre-investigation-complete`; nao executa investigacao, fan-out, handoff,
 agent run, web research, CI, catalog mutation ou workflow downstream. A rota
 seguinte e sempre escolhida manualmente em novo pedido; este fork nao a invoca.
+
+Quando a rota seguinte e `loki-deep-analysis`, a investigacao ocorre em no
+maximo 3 rodadas de ate 6 delegacoes, em subondas de concorrencia 2. Cada
+rodada termina antes da reclassificacao de todas as inferencias; a seguinte so
+abre se ainda houver investigacao material util. Reinvestigacao posterior usa
+pergunta, justificativa e IDs novos. Resolucao local nao consome slot e custo e
+telemetria. A terceira rodada encerra a fase e apenas retorna o handoff.
 
 O caminho integrado v2 usa `loki-agentic-development` quando o usuario quer
 sair de uma demanda simples para analise agentica, gates materiais antes do

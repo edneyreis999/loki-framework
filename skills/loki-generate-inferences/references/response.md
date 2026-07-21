@@ -37,6 +37,9 @@ loki_generate_inferences_response:
     input_fingerprint: "sha256:<64-lowercase-hex> | none"
     preparation_digest: "sha256:<64-lowercase-hex> | none"
     status: "pre-investigation-complete | partial | blocked | not-run"
+    generation_completion: "semantic-saturation | context-interruption | not-run"
+    generation_resume_cursor: "non-empty cursor | none"
+    unexplored_surfaces: []
   validators:
     - name: "non-empty validator name"
       status: "passed | failed | blocked | not-run"
@@ -118,6 +121,9 @@ model. Element names map one-to-one to model fields; collections use repeated
     <input_fingerprint></input_fingerprint>
     <preparation_digest></preparation_digest>
     <status></status>
+    <generation_completion></generation_completion>
+    <generation_resume_cursor></generation_resume_cursor>
+    <unexplored_surfaces><item></item></unexplored_surfaces>
   </preparation>
   <validators>
     <item><name></name><status></status><evidence></evidence></item>

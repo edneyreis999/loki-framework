@@ -24,7 +24,7 @@ adapter_projection:
   claude_code: "May map to model/effort frontmatter where supported."
 escalation_signals:
   - uncertain technology or conflicting evidence
-  - independent investigation fan-out near policy limits
+  - adaptive investigation rounds near round capacity or concurrency limits
   - missing specialist capability or non-terminal handoff
   - report destination or interaction-gate target ambiguity
 context: standard
@@ -113,7 +113,7 @@ layout is the only active layout, using `registry.xml`, `index.xml`,
 Identify every missing or invalid required input and request it before
 continuing. Do not invent sources, technologies, destination, policy,
 specialist capability, approval, validator, gate, cost, or evidence. Normalize
-the objective, parameters, canonical sources, discovery limits, destination,
+the objective, parameters, canonical sources, generation and retrieval controls, destination,
 policy identity/digest, allowed and forbidden writes, risks, validators, gates,
 known gaps, completion criteria, and exact interaction target if independently
 approved. The preparation result adds the canonical consumer/state roots and

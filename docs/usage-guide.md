@@ -106,16 +106,13 @@ validacao de runtime.
 `loki-generate-inferences` e um fork opcional anterior a investigacao. Ele
 recebe `analysis_input`, `source_paths` locais permitidos e um `destination`
 aprovado; o destino deve ser um diretorio existente abaixo de
-`<consumer-root>/planos/`, sem symlink ou traversal. O command deriva
-internamente exatamente
-`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
-somente candidatos relevantes, investigaveis, sustentados por proveniencia
-observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
-rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
-exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
-compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
-`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
-essa disposicao pre-investigacao. Depois resolve o digest da demanda e
+`<consumer-root>/planos/`, sem symlink ou traversal. O command deriva piso
+minimo 8, nenhum teto e pagina de recuperacao 20. O piso nao encerra geracao e
+a pagina nao limita recuperacao total. Preserva todo candidato material
+distinto ate saturacao semantica; interrupcao de contexto retorna parcial com
+cursor e superficies nao exploradas, enquanto saturacao abaixo do piso termina
+sem padding. O limite persistente 3 e somente armazenamento/manutencao. Custo
+e impacto nao influenciam disposicao. Depois resolve o digest da demanda e
 escolhe antes da approval um target versionado: slug NFKD/ASCII do
 stem para arquivo ou `inferences-<digest12>` para inline, seguido pelo menor
 `-vN` ausente quando o basename ja existir. A approval fica vinculada ao
@@ -129,6 +126,14 @@ handoff ou agent run, nao pesquisa a web, nao roda CI, nao invoca workflow
 downstream e nao altera o catalogo. Depois da resposta, a pessoa escolhe
 manualmente uma rota posterior permitida, como `loki-deep-analysis`; o command
 nao a agenda nem a invoca.
+
+`loki-deep-analysis` usa no maximo 3 rodadas de ate 6 investigacoes delegadas,
+em subondas de concorrencia 2. Ao fim de cada rodada terminal, reclassifica
+todas as inferencias e para cedo quando nao resta investigacao util. A mesma
+inferencia pode ser reinvestigada apenas em rodada posterior, com nova pergunta,
+justificativa material e IDs novos. Resolucao local nao consome os seis slots e
+custo e telemetria, nunca gate. A terceira rodada encerra a fase e o handoff
+downstream e retornado sem auto-invocacao.
 
 As duas projecoes suportadas, Codex e Claude Code, compartilham
 `lf-analytic-inference` com escopo de instalacao `both`. O pacote distribui

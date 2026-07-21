@@ -11,7 +11,9 @@ Normalize only observed query data:
 - versions and affected surfaces;
 - objectives and observable signals;
 - available evidence;
-- the discovery limit derived from the active policy's `catalog_limit`.
+- an optional opaque retrieval cursor and the active policy's
+  `catalog_retrieval_page_size`. Page size is transport capacity, never a total
+  result ceiling.
 
 Do not turn an uncertain technology into a confirmed one. If no technology has
 sufficient evidence, return `partial` or `insufficient` with the uncertainty.
@@ -33,11 +35,12 @@ sufficient evidence, return `partial` or `insufficient` with the uncertainty.
    investigability, observable provenance support, validity/compatibility, and
    evidence able to confirm or reject it. Record a short observable reason for
    each ordinal rank.
-6. Select no more than `discovery_limit` eligible records. Reject irrelevant,
-   invalid, incompatible, unverifiable, and exact-duplicate records. Defer only
-   unresolved essential evidence/compatibility/context or an otherwise eligible
-   record excluded by the discovery limit. Never pad the limit with an
-   irrelevant record.
+6. Return eligible records in deterministic pages of at most
+   `catalog_retrieval_page_size`. Preserve the next cursor and continue until
+   the eligible sequence is exhausted. Reject irrelevant, invalid,
+   incompatible, unverifiable, and exact-duplicate records. Defer only
+   unresolved essential evidence, compatibility, or context. A page boundary
+   never rejects or defers an eligible record and never means total exhaustion.
 
 ## Output
 
@@ -49,7 +52,8 @@ Return:
 - deterministic filter facts and semantic reranking reasons;
 - rejected entries and typed reasons;
 - stale, incompatible, broken-locator, or uncertain items;
-- discovery limit, eligible count, selected count, and terminal state;
+- page size, pages read, exhaustion state, next cursor, eligible count,
+  selected count, and terminal state;
 - policy ID and approved-candidate digest when policy limits are used.
 
 The caller must distinguish these reused records from newly generated

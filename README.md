@@ -68,15 +68,14 @@ de inferencias antes da investigacao. Ele requer `analysis_input` e um
 symlink ou traversal. Depois do digest da demanda, resolve um target versionado
 deterministico: slug NFKD/ASCII do stem para input em arquivo, ou
 `inferences-<digest12>` para inline; se `<base>.md` existir, escolhe antes da
-approval o menor `<base>-vN.md` ausente. Internamente, deriva exatamente
-`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
-somente candidatos relevantes, investigaveis, sustentados por proveniencia
-observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
-rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
-exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
-compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
-`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
-essa disposicao pre-investigacao. A approval vincula diretorio canonico,
+approval o menor `<base>-vN.md` ausente. Internamente, deriva piso minimo 8,
+nenhum teto de candidatos e pagina de recuperacao 20. O piso nao encerra a
+geracao e a pagina nao limita a recuperacao total. Preserva todo candidato
+material distinto e termina somente por saturacao semantica; se o contexto
+interromper antes disso, retorna parcial com cursor e superficies nao
+exploradas. Saturacao abaixo do piso e valida sem padding. O limite persistente
+3 existe somente para armazenamento/manutencao do catalogo. Custo e impacto
+nao influenciam essa disposicao pre-investigacao. A approval vincula diretorio canonico,
 target exato,
 basename/versao, before-state/snapshot e um create exclusivo. Colisao posterior
 invalida a approval e bloqueia sem retry; exige nova resolucao e nova approval.
@@ -85,6 +84,14 @@ O command cria somente esse arquivo uma vez e termina em
 CI, mutacao de catalogo ou chamada downstream. Uma pessoa pode escolher, em
 novo pedido, uma rota posterior permitida — por exemplo
 `loki-deep-analysis` — usando o artefato validado.
+
+Na investigacao, `loki-deep-analysis` executa no maximo 3 rodadas de ate 6
+investigacoes delegadas, em subondas de concorrencia 2. Cada rodada espera seus
+handoffs terminais, reclassifica todas as inferencias e so abre a seguinte se
+ainda houver investigacao material util. Uma inferencia pode voltar em rodada
+posterior com nova pergunta, justificativa material e IDs novos. Custo e apenas
+telemetria. A terceira rodada encerra a analise; o command retorna a rota
+downstream sem invoca-la automaticamente.
 
 Identidade operacional:
 

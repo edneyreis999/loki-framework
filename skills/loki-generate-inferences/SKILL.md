@@ -87,12 +87,13 @@ readable regular file and pass it only when the preparation capability accepts
 its required authority, provenance, and digest.
 
 Select one active policy: the validated explicit override when supplied,
-otherwise the composed active policy. Require
-`active_policy.values.catalog_limit` to be present and valid under the
-composed policy contract; a missing or invalid value blocks. This policy value
-is the sole input to deterministic pre-investigation control derivation and is
-never a new public parameter. Post-preparation cost budgets remain outside this
-command and do not influence candidate disposition.
+otherwise the composed active policy. Require `minimum_candidate_floor`,
+`candidate_ceiling: null`, and `catalog_retrieval_page_size` in the active
+policy. These values are the sole inputs to deterministic pre-investigation
+control derivation and are never new public parameters. The floor does not
+terminate generation; page size does not limit total retrieval; there is no
+candidate ceiling. Post-preparation cost is telemetry only and does not
+influence candidate disposition.
 
 Resolve the canonical consumer root once from canonical `pwd` through the
 composed preparation capability. The caller cannot supply or override it.

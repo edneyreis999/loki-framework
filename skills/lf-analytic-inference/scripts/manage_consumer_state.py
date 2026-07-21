@@ -473,20 +473,37 @@ def _string_array(value: Any, diagnostic: str) -> list[str]:
     return value
 
 
-def load_policy(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+def _policy_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def validate_policy_object(raw: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     policy = _exact_object(
-        load_json(path),
+        raw,
         {"schema_version", "policy_id", "status", "approved_candidate_digest_sha256", "approved_candidate", "semantics"},
         "POLICY_KEYS",
     )
     if policy["schema_version"] != "1" or policy["policy_id"] != "analytic-inference-policy-v1" or policy["status"] != "active":
         raise StateError("POLICY_IDENTITY")
-    candidate = policy.get("approved_candidate")
-    if not isinstance(candidate, dict) or digest_value(candidate) != policy["approved_candidate_digest_sha256"]:
+    candidate = _exact_object(policy.get("approved_candidate"), {"candidate_id", "policy_source", "schema_version", "status", "values"}, "POLICY_CANDIDATE_KEYS")
+    if candidate.get("candidate_id") != "analytic-inference-policy-v1-candidate-001" or candidate.get("policy_source") != "PC-BALANCED" or candidate.get("schema_version") != "1" or candidate.get("status") != "proposed":
+        raise StateError("POLICY_CANDIDATE_IDENTITY")
+    if digest_value(candidate) != policy["approved_candidate_digest_sha256"]:
         raise StateError("POLICY_DIGEST_MISMATCH")
-    values = candidate.get("values")
-    if not isinstance(values, dict):
-        raise StateError("POLICY_VALUES")
+    value_keys = {"candidate_ceiling", "catalog_retrieval_page_size", "concurrent_handoff_limit", "handoff_timeout_ticks", "max_delegated_investigations_per_round", "max_investigation_rounds", "minimum_candidate_floor", "persistent_catalog_limit", "promotion_min", "purge_review_max", "removals_per_cycle", "reorganization_max", "score_weights"}
+    values = _exact_object(candidate.get("values"), value_keys, "POLICY_VALUE_KEYS")
+    if values["candidate_ceiling"] is not None:
+        raise StateError("POLICY_CANDIDATE_CEILING")
+    positive_keys = {"catalog_retrieval_page_size", "concurrent_handoff_limit", "handoff_timeout_ticks", "max_delegated_investigations_per_round", "max_investigation_rounds", "minimum_candidate_floor", "persistent_catalog_limit", "removals_per_cycle"}
+    if any(not _policy_int(values[key]) or values[key] <= 0 for key in positive_keys):
+        raise StateError("POLICY_POSITIVE_INTEGER")
+    if values["concurrent_handoff_limit"] > values["max_delegated_investigations_per_round"]:
+        raise StateError("POLICY_CONCURRENCY_EXCEEDS_ROUND_CAPACITY")
+    if any(not _policy_int(values[key]) for key in ("promotion_min", "purge_review_max", "reorganization_max")):
+        raise StateError("POLICY_THRESHOLD_INTEGER")
+    weights = _exact_object(values["score_weights"], set(WEIGHT_COMPONENT), "POLICY_WEIGHT_KEYS")
+    if any(not _policy_int(weight) for weight in weights.values()) or weights["selected"] != 0:
+        raise StateError("POLICY_WEIGHTS")
     expected = {
         "automatic_mutation": False,
         "consumer_state_required": True,
@@ -494,11 +511,37 @@ def load_policy(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         "purge_requires_independent_just_in_time_approval": True,
         "score_is_eligibility_only": True,
         "thresholds_are_inclusive": True,
+        "candidate_floor_is_non_terminal": True,
+        "cost_is_telemetry_only": True,
+        "retrieval_page_size_is_not_total_limit": True,
+        "persistent_catalog_limit_is_storage_only": True,
+        "semantic_saturation_ends_generation": True,
+        "approved_candidate_status_is_identity_bound": True,
+        "initial_consumer_catalog": "absent-or-empty",
     }
     semantics = policy.get("semantics")
-    if not isinstance(semantics, dict) or any(semantics.get(key) != value for key, value in expected.items()):
+    if not isinstance(semantics, dict) or set(semantics) != set(expected) or any(semantics.get(key) != value for key, value in expected.items()):
         raise StateError("POLICY_SEMANTICS_WEAKENED")
     return policy, values
+
+
+def load_policy(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    return validate_policy_object(load_json(path))
+
+
+def strict_policy_self_test(path: Path) -> None:
+    policy = load_json(path)
+    validate_policy_object(policy)
+    invalid = json.loads(json.dumps(policy))
+    invalid["approved_candidate"]["values"]["candidate_ceiling"] = 1
+    invalid["approved_candidate_digest_sha256"] = digest_value(invalid["approved_candidate"])
+    try:
+        validate_policy_object(invalid)
+    except StateError as exc:
+        if exc.diagnostic != "POLICY_CANDIDATE_CEILING":
+            raise StateError(f"POLICY_SELF_TEST_WRONG_DIAGNOSTIC:{exc.diagnostic}") from exc
+    else:
+        raise StateError("POLICY_SELF_TEST_ACCEPTED_NON_NULL_CEILING")
 
 
 def classify_eligibility(score: int, protected: bool, values: dict[str, Any]) -> dict[str, bool]:
@@ -807,13 +850,13 @@ def _lifecycle_base(consumer_root: Path, technology: str, catalog_id: str, value
     else:
         registry_entry = {"technology": technology, "aliases": [], "catalog_id": catalog_id, "locator": f"catalogs/{technology}/index.xml"}
         registry_entries = [*registry_entries, registry_entry]
-        catalog = catalog_document(technology, catalog_id, [], values["catalog_limit"])
+        catalog = catalog_document(technology, catalog_id, [], values["persistent_catalog_limit"])
         catalog_before = None
     registry_entries = sorted(registry_entries, key=lambda item: item["technology"])
     validate_registry(registry_document(registry_entries))
     if catalog.get("schema_version") != 1 or catalog.get("technology") != technology or catalog.get("catalog_id") != catalog_id:
         raise StateError("CATALOG_IDENTITY_MISMATCH")
-    if catalog.get("active_limit") != values["catalog_limit"]:
+    if catalog.get("active_limit") != values["persistent_catalog_limit"]:
         raise StateError("ACTIVE_LIMIT_POLICY_MISMATCH")
     if not isinstance(catalog.get("entries"), list):
         raise StateError("CATALOG_ENTRIES")
@@ -834,7 +877,7 @@ def lifecycle_proposal(consumer_root: Path, source: str, request_path: Path, pol
         raise StateError("REVISION_REGRESSION")
     proposed_entries = sorted([item for item in entries if item["inference_id"] != entry["inference_id"]] + [entry], key=lambda item: item["inference_id"])
     active_occupancy = sum(item.get("status") in {"active", "protected"} for item in proposed_entries)
-    if active_occupancy > values["catalog_limit"] or active_occupancy > catalog["active_limit"]:
+    if active_occupancy > values["persistent_catalog_limit"] or active_occupancy > catalog["active_limit"]:
         raise StateError("CATALOG_ACTIVE_LIMIT_EXCEEDED")
     state_root = state_root_for(consumer_root)
     _validate_proposed_lineage(state_root, technology, proposed_entries, record)
@@ -1175,7 +1218,7 @@ def _validate_catalog_structure(catalog: dict[str, Any], technology: str, values
         seen.add(inference_id)
         previous = inference_id
     active = sum(entry.get("status") in {"active", "protected"} for entry in catalog["entries"])
-    if catalog["active_limit"] != values["catalog_limit"] or active > catalog["active_limit"]:
+    if catalog["active_limit"] != values["persistent_catalog_limit"] or active > catalog["active_limit"]:
         raise StateError("CATALOG_ACTIVE_LIMIT")
 
 
@@ -1296,6 +1339,7 @@ def main() -> int:
     parser.add_argument("--request", type=Path)
     parser.add_argument("--approval", type=Path)
     parser.add_argument("--policy", type=Path, default=POLICY_PATH)
+    parser.add_argument("--strict-policy-self-test", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--fail-before-registry", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--fail-before-commit", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--fail-after-commit", action="store_true", help=argparse.SUPPRESS)
@@ -1303,6 +1347,8 @@ def main() -> int:
     consumer_root: Path | None = None
     source: str | None = None
     try:
+        if args.strict_policy_self_test:
+            strict_policy_self_test(args.policy)
         consumer_root, source = resolve_consumer_root()
         reject_legacy_state_layout(consumer_root)
         if args.operation == "inspect":

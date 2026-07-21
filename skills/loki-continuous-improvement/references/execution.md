@@ -266,7 +266,7 @@ Valide o catálogo antes e depois do diff proposto com
 IDs, locators contidos, revisions, lineage acíclica, paridade exata índice ↔
 registro, `active_limit` compatível e policy ID
 `analytic-inference-policy-v1` com digest exato
-`cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130`.
+`7d5ec8247b28c831bc705593e193f12707309839b3a745d424efa84bc6f05fc7`.
 Snapshot observado que divergir da reconstrução é inválido.
 
 O score usa apenas pesos aprovados: investigated `1`, validated `3`, material

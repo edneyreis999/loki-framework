@@ -11,7 +11,14 @@ from pathlib import Path
 from typing import Any
 
 
-VALUE_KEYS = {"catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks", "promotion_min", "purge_review_max", "removals_per_cycle", "reorganization_max", "score_weights"}
+VALUE_KEYS = {
+    "candidate_ceiling", "catalog_retrieval_page_size",
+    "concurrent_handoff_limit", "handoff_timeout_ticks",
+    "max_delegated_investigations_per_round", "max_investigation_rounds",
+    "minimum_candidate_floor", "persistent_catalog_limit", "promotion_min",
+    "purge_review_max", "removals_per_cycle", "reorganization_max",
+    "score_weights",
+}
 WEIGHT_KEYS = {"false_positive", "investigated", "material_finding", "repeated_evidence", "selected", "stale", "task_helped", "validated"}
 PROFILES = {
     "false_positive": {"investigated": 1, "false_positive": 1},
@@ -55,9 +62,20 @@ def validate_values(values: Any) -> list[str]:
         return ["POLICY_VALUES_OBJECT"]
     errors.extend(f"POLICY_REQUIRED:{key}" for key in sorted(VALUE_KEYS - values.keys()))
     errors.extend(f"POLICY_UNKNOWN:{key}" for key in sorted(values.keys() - VALUE_KEYS))
-    for key in ("catalog_limit", "cost_budget", "fan_out_limit", "handoff_timeout_ticks", "removals_per_cycle"):
-        if key in values and (not is_int(values[key]) or values[key] < 0):
-            errors.append(f"POLICY_NON_NEGATIVE_INTEGER:{key}")
+    for key in (
+        "catalog_retrieval_page_size", "concurrent_handoff_limit",
+        "handoff_timeout_ticks", "max_delegated_investigations_per_round",
+        "max_investigation_rounds", "minimum_candidate_floor",
+        "persistent_catalog_limit", "removals_per_cycle",
+    ):
+        if key in values and (not is_int(values[key]) or values[key] <= 0):
+            errors.append(f"POLICY_POSITIVE_INTEGER:{key}")
+    if "candidate_ceiling" in values and values["candidate_ceiling"] is not None:
+        errors.append("POLICY_CANDIDATE_CEILING_MUST_BE_NULL")
+    if (is_int(values.get("concurrent_handoff_limit")) and
+            is_int(values.get("max_delegated_investigations_per_round")) and
+            values["concurrent_handoff_limit"] > values["max_delegated_investigations_per_round"]):
+        errors.append("POLICY_CONCURRENCY_EXCEEDS_ROUND_CAPACITY")
     for key in ("promotion_min", "purge_review_max", "reorganization_max"):
         if key in values and not is_int(values[key]):
             errors.append(f"POLICY_INTEGER:{key}")
@@ -138,18 +156,14 @@ def verify_case(case: dict[str, Any], policies: dict[str, dict[str, Any]]) -> tu
     return score_value == case["output"].get("score") and case.get("patch") == [], "evaluated"
 
 
-def budget_result(values: dict[str, Any]) -> dict[str, Any]:
-    items = [("q1", 4), ("q2", 3)]
-    selected: list[str] = []
-    deferred: list[str] = []
-    cost = 0
-    for item_id, item_cost in items:
-        if len(selected) >= values["fan_out_limit"] or cost + item_cost > values["cost_budget"]:
-            deferred.append(item_id)
-        else:
-            selected.append(item_id)
-            cost += item_cost
-    return {"deferred": deferred, "observed_cost": cost, "selected": selected, "unknown_cost": "degraded"}
+def investigation_controls(values: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "concurrent_handoff_limit": values["concurrent_handoff_limit"],
+        "cost_admission_gate": False,
+        "cost_mode": "telemetry-only",
+        "max_delegated_investigations_per_round": values["max_delegated_investigations_per_round"],
+        "max_investigation_rounds": values["max_investigation_rounds"],
+    }
 
 
 def main() -> int:
@@ -186,8 +200,9 @@ def main() -> int:
             score_value = score(values, components)
             profiles[name] = {"eligibility": classify(values, score_value), "score": score_value}
         summaries[identifier] = {
-            "budget": budget_result(values),
-            "catalog": {"active_count": 2, "headroom": max(values["catalog_limit"] - 2, 0), "limit": values["catalog_limit"], "removals_per_cycle": values["removals_per_cycle"]},
+            "generation": {"candidate_ceiling": None, "completion": "semantic-saturation", "minimum_candidate_floor": values["minimum_candidate_floor"]},
+            "investigation": investigation_controls(values),
+            "catalog": {"active_count": 2, "headroom": max(values["persistent_catalog_limit"] - 2, 0), "persistent_limit": values["persistent_catalog_limit"], "retrieval_page_size": values["catalog_retrieval_page_size"], "retrieval_total_limit": None, "removals_per_cycle": values["removals_per_cycle"]},
             "digest_sha256": hashlib.sha256(canonical(values)).hexdigest(),
             "profiles": profiles,
             "values": values,

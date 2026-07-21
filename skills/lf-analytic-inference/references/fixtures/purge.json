@@ -12,7 +12,7 @@
   "control_plane_serialization": "canonical-json",
   "policy": {
     "policy_id": "analytic-inference-policy-v1",
-    "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
+    "policy_digest_sha256": "7d5ec8247b28c831bc705593e193f12707309839b3a745d424efa84bc6f05fc7",
     "active_limit": 3,
     "purge_review_max": -4,
     "removals_per_cycle": 1
@@ -46,7 +46,7 @@
       "inference_ids": ["inference-synthetic-purge-001"],
       "inference_revisions": {"inference-synthetic-purge-001": 1},
       "policy_id": "analytic-inference-policy-v1",
-      "policy_digest_sha256": "cadff64025e7fc0dc6dfc3be7b225c31d42fb9714e6628935dc7b25ddc2d7130",
+      "policy_digest_sha256": "7d5ec8247b28c831bc705593e193f12707309839b3a745d424efa84bc6f05fc7",
       "targets": [
         {
           "artifact_kind": "index-entry",

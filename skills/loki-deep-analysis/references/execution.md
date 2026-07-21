@@ -48,9 +48,9 @@ command_contract:
   required_commands: []
   validators:
     - "input, canonical-path, scope, approval and destination-collision validation"
-    - "preparation schema v2, root provenance, policy, index/record parity, locator and exact-dedup validation"
+    - "preparation schema v3, root provenance, policy, index/record parity, locator and exact-dedup validation"
     - "preparation identity, candidate provenance, command-specific matching, request-control and report-contract validation"
-    - "handoff terminality, evidence sanitization, budget, target-overlap and report write-set validation"
+    - "adaptive-round ledger, handoff terminality, evidence sanitization, target-overlap and report write-set validation"
   human_gates:
     - "technical-review when the report proposes a material policy or durable package decision"
     - "approval before any exact interaction-gate record is written"
@@ -76,16 +76,18 @@ command_contract:
 3. Build the approved preparation envelope from normalized demand facts and
    digest, ordered permitted local-source locators, digests and facts, the
    optional approved policy, and one required `request_controls` mapping with
-   exactly the sole preparation-contract key:
+   exactly the preparation-contract keys:
 
    ```yaml
    request_controls:
-     discovery_limit: "<validated active_policy.values.catalog_limit>"
+     candidate_ceiling: null
+     catalog_retrieval_page_size: "<validated positive policy value>"
+     minimum_candidate_floor: "<validated positive policy value>"
    ```
 
    Preserve the active-policy provenance, authorization, and canonical
    request-controls digest with the envelope. The invocation passes the exact
-   one-key mapping as `request_controls`; it does not add a command-defined
+   mapping as `request_controls`; it does not add a command-defined
    control, derive a second digest, or reinterpret a normalized control. The
    preparation skill alone validates and normalizes these controls against the
    active policy. They do not grant root, candidate, dispatch, or write
@@ -118,7 +120,7 @@ blockers, and `minimum_next_path` in the command report and resume state. A
 `blocked` preparation result stops with its exact `minimum_next_path`; it is
 never retried or repaired locally.
 
-Accept only preparation schema v2. Reject a schema-v1 preparation before
+Accept only preparation schema v3. Reject a schema-v1 or schema-v2 preparation before
 candidate interpretation and require regeneration to a new separately approved
 versioned artifact. Existing v1 artifacts remain immutable; do not rewrite,
 migrate, convert, or use a fallback reader.
@@ -137,7 +139,7 @@ resistance, collision behavior, and the frozen report write set against
 `root.consumer_root`. No second root resolution is permitted. This command
 creates no state root or catalog component.
 
-Preserve every schema-v2 preparation candidate, duplicate relation, disposition, and
+Preserve every schema-v3 preparation candidate, duplicate relation, disposition, and
 observable reason in the report. Start capability matching only from the
 validated `selected_for_investigation` list and corresponding immutable
 preparation candidates. A selection is eligibility for command-specific
@@ -150,19 +152,19 @@ bounded local resolution is sufficient or construct an investigation unit for
 Section 7. Local resolution is permitted only when it is trivial, bounded,
 read-only, low-risk, and cheaper than a handoff; record its exception, accepted
 risk, scope, validators, and validation owner. Agent matching, handoff identity,
-budget admission, dispatch, liveness, evidence, events, consolidation, and
+round admission, dispatch, liveness, evidence, events, consolidation, and
 report materialization remain exclusively command responsibilities.
 
 ## 4. Command-specific replanning and degradation
 
 Replan only command-owned post-preparation work when matching, local
-resolution, cost, capability, evidence, a gate, or a report validator changes
+resolution, capability, evidence, a gate, or a report validator changes
 what can continue. Record the original assumption, observable result, affected
 candidate IDs, revised ordering or scope, validators, and new stop condition.
 Do not modify the preparation core to make a later command decision fit.
 
 - Use `partial` when a valid core exists but an optional capability, local
-  resolution, source, observed cost, or later evidence is unavailable.
+  resolution, source, or later evidence is unavailable.
 - Use `insufficient` when the valid core and later evidence support no adequate
   material finding.
 - Use `blocked` for a preparation boundary failure, material conflict, missing
@@ -170,13 +172,13 @@ Do not modify the preparation core to make a later command decision fit.
 - Use `failed` only for a terminal command execution error without a valid
   result.
 
-Unknown or unsupported command-stage cost is never zero. This rule begins only
-after the immutable preparation boundary. Do not dispatch hidden
-work against a fictitious budget. Preserve the valid preparation result and
-completed command stages with the exact `minimum_next_path` so a retry
-converges without repeating accepted work.
+Unknown or unsupported command-stage cost remains explicit telemetry and is
+never converted to zero. It is not an admission, degradation, early-stop, or
+completion gate. Preserve the valid preparation result and completed command
+stages with the exact `minimum_next_path` so a retry converges without
+repeating accepted work.
 
-## 7. Investigation fan-out and terminal evidence
+## 7. Adaptive investigation rounds and terminal evidence
 
 Apply the agent selection, liveness and completion rules from
 [lf-agentic-orchestration](../../lf-agentic-orchestration/SKILL.md), and the
@@ -271,30 +273,86 @@ risks; and next destination. Use `pending`, `unavailable`, `unsupported`,
 satisfied gate, approval or parent correlation. The executing agent supplies
 no runtime identity or usage claim.
 
-### DAG, fan-out and budget admission
+### Adaptive investigation rounds, DAG and concurrency
 
-The active v1 policy fixes `fan_out_limit: 2`, `cost_budget: 6` and
-`handoff_timeout_ticks: 3`. Validate the active policy digest before using
-these values. The preparation `discovery_limit` never changes them.
+Validate the active policy digest, then create a post-boundary round ledger.
+The immutable preparation core is never reclassified or rewritten; each round
+records command-owned decisions that reference its candidate IDs.
 
-- Dispatch at most two handoffs concurrently.
-- Parallel handoffs must be independent in the DAG and have read-only targets
-  or provably disjoint exact targets. Any shared target, report write,
-  interaction write or consolidation is serialized under one owner.
-- Do not place a handoff in a parallel group with its ancestor, descendant,
-  cyclic dependency, shared mutable state or unresolved material gate.
-- Admit work only while the cumulative observed/authorized cost plus the next
-  bounded cost remains at or below 6. Defer the next investigation before an
-  overrun; never execute first and explain the excess later.
-- `unknown` or `unsupported` cost is never zero. Without a safe authorized
-  upper bound proving admission within the remaining budget, do not dispatch;
-  degrade to `partial`, `unavailable` or `unsupported`, record the candidate
-  and the minimum next evidence needed.
-- Quotas and request floors cannot compel fan-out, irrelevant work or a budget
-  overrun. Prefer fewer useful independent investigations.
+Pass the immutable preparation artifact as a separate validator input; the
+ledger never validates itself as preparation authority. Bind the ledger to
+that validated core with its exact `preparation_id`, `preparation_digest`, and
+candidate IDs. Require exact equality between the core IDs,
+`preparation_binding.candidate_ids`, and `candidate_universe`.
+Keep that universe complete for every reclassification, including rejected and
+deferred candidates. Derive initial action admission only from the core's exact
+`selected_for_investigation` list. Record one observable command-stage matching
+decision for every selected candidate; `initial_useful_investigations` is
+exactly the ordered selected subset still materially useful. No rejected or
+deferred candidate may enter round-one local or delegated work.
+Use exact JSON types: `schema_version`, policy integer controls, round numbers
+and subwaves are integers, never booleans, floats or numeric strings;
+downstream flags are booleans. Cost alone follows its separate finite numeric
+telemetry rule.
 
-Record the candidate order, admitted/deferred/rejected sets, per-handoff cost
-state, cumulative cost, remaining budget and the observable admission reason.
+- Run at most three sequential rounds. There is no fourth round.
+- Zero rounds is valid when initial classification finds no material delegated
+  investigation; record decisions for every preparation-selected candidate, an empty initial useful set and
+  `no-useful-investigation` before returning the downstream handoff.
+- Each round delegates at most six useful investigations. Local bounded
+  resolutions are recorded separately and consume no delegated slot. Within a
+  round, local and delegated candidate sets are disjoint.
+- Execute delegated work in subwaves of at most two concurrent handoffs.
+  Concurrency `2` is not round capacity `6`.
+- Parallel handoffs must be DAG-independent and read-only or have provably
+  disjoint exact targets. Shared targets and consolidation remain serialized.
+- Give every delegated investigation globally unique `handoff_id`,
+  `agent_run_id`, and evidence identity. The same owner may execute multiple
+  investigations without sharing IDs.
+- Cost is telemetry only. Record a finite real number greater than or equal to
+  zero, `unknown`, or `unsupported`; reject booleans, non-finite numbers and
+  every other string or type. Never admit, reject, defer, stop, or degrade an
+  investigation because of a valid cost value.
+- Wait until every delegated handoff in the round is terminal before the
+  barrier opens. Then reclassify every preparation candidate against all
+  accumulated evidence. Decisions continue to cover the complete candidate
+  universe, but `useful_next_round` is a subset only of the immutable core's
+  `selected_for_investigation` actionable set. A rejected or deferred candidate
+  may receive a new observational decision; it cannot be promoted into local
+  or delegated work without a newly versioned preparation artifact that
+  selects it.
+- Start the next round only when reclassification identifies at least one
+  still-useful material investigation. Every later delegated candidate must
+  belong to the immediately preceding `useful_next_round` set. The same rule
+  applies to every later local resolution. Stop early
+  otherwise; fewer than three rounds cannot terminate with a non-empty useful
+  set.
+- Do not materialize a round with both `delegated_investigations` and
+  `local_resolutions` empty. When no useful action is admitted, stop before
+  creating that round and record the early terminal reason.
+- Delegate a candidate at most once within a round. Reinvestigation is only a
+  cross-round operation.
+- Reinvestigate a candidate only in a later round, with an observable rationale
+  and a materially different question. Create fresh handoff, run, and evidence
+  identities; never reuse the prior dispatch.
+- Resolve a candidate locally at most once because `local_resolutions` has no
+  question, rationale or evidence fields that could justify repetition. A
+  delegated-to-local transition remains valid only through the prior full
+  reclassification and useful set. A local-to-delegated transition additionally
+  requires the delegated record's non-empty `reinvestigation_rationale`.
+- After round three, end the analysis phase even when a candidate remains
+  useful. Return a downstream handoff with at least one sorted unique permitted
+  destination; do not auto-invoke it.
+
+Validate the two inputs exactly with
+`../scripts/validate-investigation-rounds.py <round-ledger.json> --preparation
+<preparation-v3.json>`. The preparation path is mandatory and must contain a
+canonical schema-v3 core accepted by the preparation validator. Use
+`fixtures/investigation-round-cases.json` only as a combined synthetic fixture
+whose two named objects exercise the same two-input CLI. Record round number, subwave,
+candidate order, local/delegated sets, terminal barrier, full reclassification,
+reinvestigation rationale, cost telemetry, early-stop or round-limit reason,
+and downstream handoff state.
 
 ### Liveness and terminal tracking
 

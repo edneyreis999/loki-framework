@@ -1,11 +1,11 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "fixture_kind": "analytic-inference-preparation-structural-parity",
   "byte_replay_is_out_of_scope": true,
   "common_normalized_input": {
     "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
     "sources": [{"locator": "source.md", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "facts": []}],
-    "request_controls": {"discovery_limit": 3},
+    "request_controls": {"candidate_ceiling": null, "catalog_retrieval_page_size": 20, "minimum_candidate_floor": 8},
     "policy_id": "fixture-policy",
     "policy_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
     "catalog_state": "no-match"
@@ -15,8 +15,8 @@
     "loki-generate-inferences": {"command": "loki-generate-inferences", "run_id": "excluded-from-core", "destination": "excluded-from-core"}
   },
   "expected": {
-    "equal_fields": ["input_fingerprint", "preparation_id", "preparation_digest", "candidates", "selected_for_investigation", "execution_boundary"],
-    "request_controls_exact_keys": ["discovery_limit"],
+    "equal_fields": ["input_fingerprint", "preparation_id", "preparation_digest", "candidates", "selected_for_investigation", "generation_state", "execution_boundary"],
+    "request_controls_exact_keys": ["candidate_ceiling", "catalog_retrieval_page_size", "minimum_candidate_floor"],
     "candidate_keys_exclude": ["cost", "impact"],
     "zero_dispatch_web_downstream": true,
     "same_structural_core_and_ids": true
