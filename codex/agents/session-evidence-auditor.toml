@@ -1,13 +1,6 @@
 name = "session-evidence-auditor"
 description = "Audit authorized sanitized session evidence proposal-only; never write, promote, or infer private reasoning."
 nickname_candidates = ["session-evidence-auditor", "evidence-auditor"]
-source_agent = "agents/session-evidence-auditor.md"
-projection_contract = "custom-semantic-v1"
-semantic_invariants = [
-  "validated-manifest-and-authorized-sanitized-evidence-only",
-  "proposal-only-no-write-or-promotion",
-  "partial-inferences-and-gaps-remain-explicit",
-]
 model_reasoning_effort = "medium"
 sandbox_mode = "read-only"
 approval_policy = "never"

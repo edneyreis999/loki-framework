@@ -59,14 +59,13 @@ PARITY_FIELDS = {
     "domain_context_preflight",
 }
 CONSUMER_DOC_CAPABILITIES = {"consumer-docs", "docs-index"}
+FORBIDDEN_CODEX_AGENT_TOP_LEVEL_FIELDS = {
+    "source_agent",
+    "projection_contract",
+    "semantic_invariants",
+}
 CUSTOM_CODEX_PROJECTIONS = {
     "execution-knowledge-cataloger": {
-        "semantic_invariants": {
-            "self-contained-envelope",
-            "exact-run-local-target-and-temporary-only",
-            "sanitize-evidence-and-no-policy-promotion",
-            "validate-before-atomic-publish",
-        },
         "model_reasoning_effort": "medium",
         "sandbox_mode": "workspace-write",
         "required_phrases": (
@@ -77,12 +76,6 @@ CUSTOM_CODEX_PROJECTIONS = {
         ),
     },
     "framework-artifact-quality-auditor": {
-        "semantic_invariants": {
-            "independent-read-only-audit",
-            "complete-handoff-and-mechanical-checks-required",
-            "findings-or-inconclusive-results-block",
-            "technical-review-and-approval-not-replaced",
-        },
         "model_reasoning_effort": "high",
         "sandbox_mode": "read-only",
         "required_phrases": (
@@ -93,12 +86,6 @@ CUSTOM_CODEX_PROJECTIONS = {
         ),
     },
     "framework-artifact-writer": {
-        "semantic_invariants": {
-            "self-contained-approved-task-envelope",
-            "exact-target-write-scope",
-            "deterministic-validation-and-independent-audit-handoff",
-            "no-consumer-or-installed-destination-writes",
-        },
         "model_reasoning_effort": "high",
         "sandbox_mode": "workspace-write",
         "required_phrases": (
@@ -109,11 +96,6 @@ CUSTOM_CODEX_PROJECTIONS = {
         ),
     },
     "session-evidence-auditor": {
-        "semantic_invariants": {
-            "validated-manifest-and-authorized-sanitized-evidence-only",
-            "proposal-only-no-write-or-promotion",
-            "partial-inferences-and-gaps-remain-explicit",
-        },
         "model_reasoning_effort": "medium",
         "sandbox_mode": "read-only",
         "required_phrases": (
@@ -531,14 +513,11 @@ def validate_custom_projection(source: Path, projection: Path, data: dict[str, o
     """Validate the explicit behavioral contract of non-embedded Codex projections."""
     name = source.stem
     contract = CUSTOM_CODEX_PROJECTIONS[name]
-    require(data.get("projection_contract") == "custom-semantic-v1", f"{projection}: custom projection_contract is invalid")
-    require(data.get("source_agent") == f"agents/{source.name}", f"{projection}: source_agent must point to {source.name}")
+    unsupported_fields = sorted(FORBIDDEN_CODEX_AGENT_TOP_LEVEL_FIELDS & set(data))
+    require(not unsupported_fields, f"{projection}: unsupported Codex top-level fields: {', '.join(unsupported_fields)}")
     require(data.get("approval_policy") == "never", f"{projection}: approval_policy must be never")
     require(data.get("model_reasoning_effort") == contract["model_reasoning_effort"], f"{projection}: model_reasoning_effort drift")
     require(data.get("sandbox_mode") == contract["sandbox_mode"], f"{projection}: sandbox_mode drift")
-    invariants = data.get("semantic_invariants")
-    require(isinstance(invariants, list), f"{projection}: semantic_invariants must be a list")
-    require(set(invariants) == contract["semantic_invariants"], f"{projection}: semantic_invariants drift")
     instructions = data.get("developer_instructions")
     require(isinstance(instructions, str) and instructions.strip(), f"{projection}: missing developer_instructions")
     normalized_instructions = re.sub(r"\s+", " ", instructions)
