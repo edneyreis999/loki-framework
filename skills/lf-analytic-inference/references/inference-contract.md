@@ -257,10 +257,10 @@ after it blocks for audit and never claims rollback.
 Package-contract writes use `framework-artifact-writer`, which never writes
 `.loki`. The consumer-state writer never changes package contracts in the same
 envelope. Installation, upgrade, uninstall, cleanup, and dry-run never create,
-remove, or migrate `.loki`. Non-empty legacy state outside this layout blocks
-automatic migration and requires a separately planned inventory, digest,
-approval, and cutover. Whether `.loki` is ignored or versioned remains a
-consumer decision.
+remove, or migrate `.loki`. Any unsupported legacy layout is rejected before
+every read or write; this contract prescribes no reader, converter, migration,
+or future cutover. Whether `.loki` is ignored or versioned remains a consumer
+decision.
 
 Promotion, reorganization, rewrite, deduplication, and merge require evidence,
 lineage, deterministic validation, `technical-review`, and applicable human
@@ -283,45 +283,6 @@ Partial failure reports `failed` or `blocked` and all residue, and never claims
 rollback or zero traces. Post-validation proves the approved catalog-owned
 traces absent, the remaining catalog valid, and external reports,
 retrospectives, evidence, and sources byte-identical.
-
-## Legacy v1 and copy-only cutover
-
-`<consumer-root>/.loki/analytic-inference/v1/**` is legacy JSON state and is
-read-only. Its `index.json`, technology indices, records, and events may be read
-only to validate or inventory a proposed migration. No promotion,
-reorganization, replay write, purge, overwrite, rename, or delete targets v1.
-The JSON schemas `registry-schema.json`, `catalog-schema.json`, and
-`event-schema.json` are legacy readers only; they never authorize new live JSON
-state.
-
-A v1-to-v2 migration is a copy, never a move or in-place conversion:
-
-1. resolve canonical `consumer_root` from `pwd`, lstat both version roots, and
-   block symlink ancestors, root drift, or any pre-existing divergent v2 target;
-2. inventory every v1 registry, index, record, and event path; validate v1;
-   record byte length and SHA-256 for every source plus one sorted inventory
-   digest in a JSON migration manifest;
-3. deterministically map each validated logical object to its exact v2 XML
-   locator, canonical bytes, SHA-256, and target-set digest without writing;
-4. obtain a new exact approval after that dry-run, bound to canonical consumer,
-   v1 and v2 roots, every source/target path and hash, inventory and target-set
-   digests, policy ID/digest, and operation ID;
-5. revalidate all roots, paths, source hashes, absence/collision state, manifest,
-   and unused approval immediately before copying;
-6. write only create-if-absent temporary files inside the v2 state root,
-   validate round-trip logical equality and canonical bytes, publish records
-   and events, publish technology indices last for each catalog, and publish
-   `registry.xml` last as the cutover commit point;
-7. post-validate the complete v2 graph, byte-compare every v1 source against
-   the inventory, consume the approval once, and record the migration result.
-
-Any failure preserves all v1 bytes, reports v2 staging residue, and never
-claims rollback or cutover. Existing identical v2 canonical targets make retry
-a no-op; any divergent collision blocks. Approvals, manifests, or digests made
-for v1 JSON maintenance before this decision are superseded and cannot
-authorize migration or v2 mutation. Migration approval does not replace
-technical review, human validation, or final cutover approval, and no task in
-this cutover removes v1.
 
 ## Validation outcomes
 

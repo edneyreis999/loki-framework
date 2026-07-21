@@ -141,8 +141,7 @@ returns `insufficient` for retrieval with `mutation_applied: false` and creates
 nothing. For `loaded`, record the registry locator, each selected relative
 `catalogs/<technology-id>/index.xml` locator, and every loaded `rev-N.xml`
 record locator. Live events, when referenced as evidence, also use `.xml`.
-The v1/JSON tree is legacy read-only and is not an active lookup fallback; it
-may only be inventoried for a separately approved copy-only migration.
+No JSON tree is an active lookup fallback or a catalog source.
 Invalid schema, absolute/escaping locator, identity/revision mismatch, missing
 target, symlink escape or root mismatch yields `blocked`.
 

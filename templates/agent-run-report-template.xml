@@ -23,7 +23,7 @@
     <reason>{{knowledge_capture_reason}}</reason>
     <minimum_next_path>{{knowledge_minimum_next_path}}</minimum_next_path>
   </execution_knowledge>
-  <write_test_review schema_version="1" legacy_reader_optional="true">
+  <write_test_review schema_version="1">
     <policy_ref>{{review_policy_ref}}</policy_ref>
     <policy_digest>{{review_policy_digest}}</policy_digest>
     <execution_id>{{review_execution_id}}</execution_id>

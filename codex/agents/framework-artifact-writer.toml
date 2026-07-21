@@ -1,6 +1,14 @@
 name = "framework-artifact-writer"
 description = "Aplica mudancas internas do pacote Loki somente em targets exatos de uma task aprovada, sob envelope autocontido e com entrega obrigatoria a auditor independente."
 nickname_candidates = ["framework-artifact-writer", "package-writer"]
+source_agent = "agents/framework-artifact-writer.md"
+projection_contract = "custom-semantic-v1"
+semantic_invariants = [
+  "self-contained-approved-task-envelope",
+  "exact-target-write-scope",
+  "deterministic-validation-and-independent-audit-handoff",
+  "no-consumer-or-installed-destination-writes",
+]
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 approval_policy = "never"

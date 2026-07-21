@@ -5,7 +5,7 @@ when_to_use:
   - "Use after a Loki phase is completed or clearly paused."
   - "Use after a real task difficulty is resolved and reusable evidence should be captured."
   - "Use when execution consumed avoidable tokens, tools, searches, scripts, validations, or user corrections."
-argument-hint: "[completed or paused scope, tasks, builds, interactions, operational trace, target retrospective]"
+argument-hint: "[completed or paused scope, tasks, builds, execution evidence sources, target retrospective]"
 arguments:
   required:
     - completed_or_paused_scope
@@ -13,7 +13,7 @@ arguments:
     - tasks
     - builds
     - interaction_records
-    - operational_trace
+    - execution_evidence_sources
     - residual_risks
     - target_retrospective
 disable-model-invocation: false
@@ -78,16 +78,11 @@ parameters:
     requirement: optional
     default: []
     description: Decisoes humanas, gates, correcoes e interacoes materiais.
-  - key: operational_trace
-    input_type: list[path_or_string_or_mapping]
-    requirement: optional
-    default: []
-    description: Ferramentas, comandos, scripts, buscas, tentativas, resultados e correcoes de rota observaveis.
   - key: execution_evidence_sources
     input_type: list[path_or_mapping]
     requirement: optional
     default: []
-    description: Manifests validados, session_audits ou referencias autorizadas; sem trace bruto.
+    description: Manifests validados, completion records, relatorios de auditoria somente leitura ou referencias autorizadas; sem trace bruto.
   - key: residual_risks
     input_type: list[string_or_mapping]
     requirement: optional
@@ -103,6 +98,8 @@ parameters:
 Valide presenca, tipo e evidencia de conclusao/pausa/resolucao em
 `completed_or_paused_scope`; valide listas, existencia de paths e, quando
 fornecido, o path exato de `target_retrospective` dentro do plano autorizado.
+Rejeite o input legado `operational_trace` com explicacao acionavel: remova-o e
+forneca as fontes persistidas em `execution_evidence_sources`.
 Pare se a dificuldade ainda estiver em teste, a fase nao tiver resultado claro
 ou evidencias essenciais forem contraditorias. Rejeite entrada invalida com
 correcao acionavel.

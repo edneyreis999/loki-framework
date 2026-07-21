@@ -93,8 +93,8 @@ state writes belong exclusively to one `technical-implementer` in
 `task_scoped_writer` mode with canonical root, exact targets, validators and
 gates; that envelope forbids package commands, contracts and docs. Consumer
 docs remain a third surface owned by `catalogador` and never include `.loki`.
-The v1/JSON layout is legacy read-only and copy-only migration source; it is
-never an active lookup fallback or mutation destination.
+Only the XML v2 layout is a catalog source; JSON is never an active lookup
+fallback or mutation destination.
 Serialize every shared file under one owner and reject overlapping envelopes.
 
 ## Planning, Participants And Handoffs

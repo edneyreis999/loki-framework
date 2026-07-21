@@ -103,7 +103,9 @@ parallel writes, hand off to planning and execution, and record completion.
 ## Outputs
 
 - Selected and skipped agent records with `selection_reason`.
-- XML run state and analysis state.
+- XML run state and analysis state. Canonical run artifacts use manifest schema
+  4, agent-run report schema 5 and digest schema 4; older or unknown root
+  schemas are rejected.
 - Agent POVs, optional reviews and synthesis.
 - Plan handoff state.
 - Agent run reports with `agent_run_id`, `handoff_id`, owner, target files,

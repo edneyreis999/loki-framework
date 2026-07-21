@@ -1,6 +1,6 @@
 ---
 name: lf-index-navigator
-description: Navigate consumer project documentation through `docs/index.xml` first, with `index.md` only as a legacy fallback. Use when `bibliotecario` needs low-cost discovery, when a workflow must inspect existing business docs before editing, or when a project keeps durable context in `/docs`.
+description: Navigate consumer project documentation through required `docs/index.xml`. Use when `bibliotecario` needs low-cost discovery, when a workflow must inspect existing business docs before editing, or when a project keeps durable context in `/docs`.
 when_to_use:
   - "Use when navigating consumer project documentation through docs/index.xml before reading durable docs."
   - "Use when bibliotecario needs low-cost discovery or a workflow must inspect existing business docs before editing."
@@ -45,8 +45,9 @@ used_by:
 Use esta skill quando a documentacao duradoura de um projeto consumidor morar
 em `/docs` e houver um `docs/index.xml` servindo como catalogo navegavel.
 
-Use tambem quando existir um legado com `index.md`; nesse caso, `index.md` e
-apenas fallback, nao a superficie preferencial.
+O catalogo e obrigatorio para navegacao do consumidor. O `index.md` da raiz do
+pacote Loki e uma superficie distinta: ele continua sendo o indice interno do
+framework e nao e lido para navegar a documentacao do consumidor.
 
 ## Procedure
 
@@ -61,9 +62,11 @@ apenas fallback, nao a superficie preferencial.
    - `not_covered`
    - `keywords`
    - `sections/section` com `anchor`, `tokens` e `purpose`
-3. Se `docs/index.xml` nao existir, procure `index.md` apenas como fallback
-   para projetos legados.
-4. Escolha a menor leitura suficiente:
+3. Se `docs/index.xml` nao existir, pare com a lacuna explicita
+   `consumer_docs_index_missing`; nao tente ler nenhum `index.md`. O proximo
+   caminho minimo e solicitar ao `catalogador` que crie ou publique o catalogo
+   antes de continuar a navegacao.
+4. Escolha a menor leitura suficiente quando o catalogo existir:
    - use uma secao quando o catalogo apontar ancora especifica;
    - use documento inteiro quando a pergunta exigir visao global ou varias
      secoes somarem a maior parte do arquivo.
@@ -71,7 +74,8 @@ apenas fallback, nao a superficie preferencial.
    - se `use_when` nao combinar, procure outro documento;
    - se `not_covered` excluir a pergunta, nao force leitura.
 6. Quando a navegacao falhar por catalogo ausente, desatualizado ou ambiguo,
-   devolva a lacuna ao orquestrador e recomende `catalogador`.
+   devolva a lacuna ao orquestrador e recomende `catalogador`; para catalogo
+   ausente, mantenha o codigo `consumer_docs_index_missing` e nao continue.
 7. Responda apenas com base no que foi lido. Nao invente regra local nem infira
    contexto de negocio sem evidencia textual.
 
@@ -84,11 +88,12 @@ apenas fallback, nao a superficie preferencial.
 ## References
 
 - Read [index-xml-contract.md](references/index-xml-contract.md) when parsing
-  `docs/index.xml`, deciding required fields, or checking fallback behavior.
+  `docs/index.xml`, deciding required fields, or handling a catalog failure.
 
 ## Limits
 
 - Nao abrir toda a arvore `/docs` por default.
+- Nao usar nem tentar `index.md` como catalogo da documentacao do consumidor.
 - Nao tratar `AGENTS.md` ou `CLAUDE.md` como deposito principal de regra de
   negocio.
 - Nao atualizar `docs/index.xml`; isso pertence ao `catalogador`.

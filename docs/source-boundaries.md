@@ -43,5 +43,21 @@ promover essa regra automaticamente para o pacote Loki.
 Qualquer nova dependencia fora deste diretorio precisa de approval explicito e deve ser copiada, resumida ou substituida por uma referencia interna antes de publicar o pacote para outro projeto.
 
 `index.md` na raiz do pacote continua sendo o indice do framework. Ja
-`docs/index.xml` pertence ao projeto consumidor e serve apenas para navegacao da
-documentacao local.
+`docs/index.xml` pertence ao projeto consumidor e e o catalogo obrigatorio para
+navegacao da documentacao local. A ausencia de `docs/index.xml` deve falhar
+explicitamente, sem tentativa de usar qualquer `index.md` para esse fim.
+
+## Contratos apos o corte
+
+Cada familia conserva apenas a sua forma canonica: manifest/report/digest
+agentic 4/5/4 com WTR 1; evidencia de sessao e conhecimento de execucao em
+schema 1; catalogo analitico XML v2; e escopos de instalacao schema 2. Um
+formato removido deve ser rejeitado antes de leitura que possa interpretá-lo e
+antes de qualquer escrita; esta regra nao cria um leitor, conversor ou remocao
+automatico. Schema 1 permanece valido nas familias que o declaram
+explicitamente, e JSON de control plane nao e estado analitico persistido.
+
+A projecao retirada nao e fonte, destino nem fallback do pacote. A
+compatibilidade de dominio atual continua pertencendo a documentacao duradoura
+do consumidor; os fallbacks operacionais que continuem validos devem ser
+declarados pelo seu proprio contrato, nunca inferidos de um formato removido.

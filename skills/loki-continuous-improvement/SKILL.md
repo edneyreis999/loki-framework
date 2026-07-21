@@ -123,9 +123,8 @@ schemas, scripts, policy e docs do pacote; o segundo é resolvido do `pwd` canô
 na raiz do consumidor; não aceite parâmetro de root, metadata de adapter, Git,
 ambiente, fontes ou descoberta de `.loki` como override.
 
-O layout v1/JSON e legado read-only. Ele so pode ser inventariado como fonte de
-uma migracao copy-only separada, com technical review e approval exata; nunca e
-destino ativo, fallback de lookup ou alvo de mutacao deste command.
+O unico layout de catalogo suportado e XML v2; JSON nao e destino ativo,
+fallback de lookup ou alvo de mutacao deste command.
 
 Identifique e solicite cada informação obrigatória ausente. Não invente fonte,
 evidência, escopo, destino, classificação, causa, approval ou gate; não avance

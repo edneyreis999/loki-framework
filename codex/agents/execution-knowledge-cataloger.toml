@@ -1,6 +1,14 @@
 name = "execution-knowledge-cataloger"
 description = "Catalog one run-local execution-knowledge XML entry from persisted sanitized evidence; never write shared state or promote policy."
 nickname_candidates = ["execution-knowledge-cataloger", "knowledge-cataloger"]
+source_agent = "agents/execution-knowledge-cataloger.md"
+projection_contract = "custom-semantic-v1"
+semantic_invariants = [
+  "self-contained-envelope",
+  "exact-run-local-target-and-temporary-only",
+  "sanitize-evidence-and-no-policy-promotion",
+  "validate-before-atomic-publish",
+]
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 approval_policy = "never"

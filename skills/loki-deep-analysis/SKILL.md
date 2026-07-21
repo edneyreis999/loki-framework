@@ -106,8 +106,7 @@ from adapter metadata, Git, environment, source/report paths, documentation or
 `.loki` presence. Derive, never accept independently, the fixed state root
 `<consumer_root>/.loki/analytic-inference/v2`. Este e o unico layout ativo e
 usa `registry.xml`, indices `index.xml`, records `rev-N.xml` e events `.xml`.
-O layout v1/JSON e legado read-only e so pode ser fonte de uma migracao
-copy-only separadamente inventariada e aprovada; nunca e fallback de lookup.
+Nenhum layout JSON participa de lookup ou de escrita.
 
 Identify every missing or invalid required input and request it before
 continuing. Do not invent sources, technologies, destination, policy,

@@ -112,17 +112,17 @@ orchestrator kept the work and who validates the result.
 
 Use split state to keep files reviewable and resumable:
 
-- `agentic-run-manifest.xml`: run-level demand, phase, selected agents,
-  handoffs, gates, invalidation, validators and next action.
+- `agentic-run-manifest.xml` (schema 4): run-level demand, phase, selected
+  agents, handoffs, gates, invalidation, validators and next action.
 - `analise/manifest.xml`: analysis-stage selected agents, skipped agents, POVs,
   reviews, synthesis and decision gates.
 - `analise/agentes/<agent-name>.xml`: POV from one selected agent.
 - `analise/agentes/<agent-name>-review.xml`: optional cross-review result.
 - `analise/sintese.xml`: orchestrator synthesis, post-MVP wave checkpoint and
   plan handoff.
-- `agent-runs/faseN/<agent-run-id>.xml`: execution handoff, owner, writes,
-  validators, gates, evidence, completion and blockers.
-- `digest.xml`: integrated run summary for review.
+- `agent-runs/faseN/<agent-run-id>.xml` (report schema 5): execution handoff,
+  owner, writes, validators, gates, evidence, completion and blockers.
+- `digest.xml` (schema 4): integrated run summary for review.
 - `backlog.md`: postponed or non-blocking items for later handling.
 
 The integrated parent records input presence before dispatch, then persists the
@@ -179,11 +179,13 @@ Require a technical retrospective when an agent:
 - resolved a real difficulty;
 - generated a reusable lesson that may later be promoted.
 
-For schema v2, every material handoff carries `agent_run_id`, `handoff_id`, an
+Every canonical manifest handoff carries `agent_run_id`, `handoff_id`, an
 `evidence_id` and evidence-manifest path. Handoff dependencies, when present,
-use `depends_on_handoff_id` and must be acyclic. Readers retain schema v1;
-writers emit schema v2 and record evidence-first policy. Retrospectives remain
-an explicit evidence input. Durable promotion is a separate improvement
+use `depends_on_handoff_id` and must be acyclic. The agentic run-state
+validator accepts only manifest schema 4, agent-run report schema 5 and digest
+schema 4; reader and schema 1/2 root compatibility are not current contracts.
+Write-test-review remains schema 1 within those canonical roots. Retrospectives
+remain an explicit evidence input. Durable promotion is a separate improvement
 workflow with its own gate.
 
 ## Execution knowledge capture and liveness

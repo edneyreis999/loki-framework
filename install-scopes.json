@@ -17,6 +17,26 @@
     },
     "skills/lf-*/SKILL.md": {
       "operational_role": "skill"
+    },
+    "claude_code": {
+      "projection": "manual-copy",
+      "categories": {
+        "skills": {
+          "source": "skills/*/",
+          "scope_source": "artifacts.skills",
+          "target": ".claude/skills/"
+        },
+        "agents": {
+          "source": "agents/*.md",
+          "scope_source": "artifacts.agents",
+          "target": ".claude/agents/"
+        },
+        "templates": {
+          "source": "templates/*",
+          "scope": "all-profiles",
+          "target": ".claude/templates/loki/"
+        }
+      }
     }
   },
   "artifacts": {

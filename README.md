@@ -20,7 +20,9 @@ versionada. Instalacao global esta fora de escopo.
 
 Conhecimento especifico do projeto consumidor nao pertence ao pacote. O destino
 duradouro desse tipo de contexto e `/docs` do consumidor, com `docs/index.xml`
-como catalogo navegavel.
+como catalogo obrigatorio de navegacao. Sem esse arquivo, a navegacao deve
+falhar explicitamente; `index.md` nao e fallback para documentacao do
+consumidor.
 
 Fluxos principais:
 
@@ -110,8 +112,9 @@ copiaria artefatos `internal-only`.
 
 Dry-run manual recomendado antes de aplicar: gere e revise a lista exata a
 partir de `install-scopes.json`, confirme que cada destino ainda não existe e
-registre essa lista para rollback. Para `consumer`, a lista esperada contém 49
-skills e 22 agents; templates Markdown são copiados separadamente.
+registre essa lista para rollback. Para `consumer`, a lista esperada contém 52
+skills, 23 agents e 23 projecoes Codex; `templates/` e compartilhado por todos
+os perfis.
 
 ```bash
 find "$PACKAGE_ROOT" -maxdepth 4 -type f | sort
@@ -195,16 +198,17 @@ perfil solicitado, o instalador bloqueia a execucao. Trocar entre `consumer`,
 anterior e um novo dry-run limpo para o perfil desejado; a troca nao e
 incremental.
 
-Instalacoes antigas podem ter `.agents/agents` como symlink para o diretorio
-inteiro `agents/`. O instalador atual usa um link por agente para respeitar
-`install-scopes.json`; se esse symlink legado existir, o dry-run bloqueia a
-instalacao ate ele ser removido no destino aprovado.
+O instalador aceita somente o layout schema 2. Se encontrar `.agents/agents`
+como symlink de diretorio, `.agents/commands` ou um manifest com links de
+command/historico de remocao, ele falha sem escrever no destino. Resolva o
+layout existente manualmente fora do instalador e rode um novo dry-run.
 
-Upgrades anteriores a consolidacao podem conter links legados de command. O
-instalador apenas os diagnostica no dry-run. A remocao exige apply explicito com
-`--yes --cleanup-legacy-commands`; remove somente symlink que aponta exatamente
-para o antigo arquivo do mesmo pacote, nunca arquivo real, link divergente ou
-caminho sob parent symlink. Revise o plano de cleanup antes de aprovar.
+Contratos removidos seguem politica de rejeicao, nunca de conversao automatica:
+o estado agentic aceita somente manifest 4, report 5 e digest 4 (mantendo WTR
+schema 1); o catalogo de inferencias usa somente XML v2; e a projecao retirada
+nao possui superficie instalavel. Os formatos schema 1 que pertencem a evidencia, conhecimento
+de execucao e subdocumentos analiticos continuam contratos atuais de suas
+proprias familias.
 
 Validacao pos-instalacao:
 

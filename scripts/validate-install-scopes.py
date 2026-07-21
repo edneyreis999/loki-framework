@@ -13,6 +13,16 @@ from pathlib import Path
 
 VALID_SCOPES = {"internal-only", "both", "consumer-only"}
 SCOPE_FILE = "install-scopes.json"
+INSTALL_SCOPE_ROOT_KEYS = frozenset(
+    {"schema_version", "profiles", "artifact_identity_policy", "artifacts"}
+)
+INSTALL_SCOPE_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents", "docs"})
+INSTALL_SCOPE_REQUIRED_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents"})
+INSTALL_SCOPE_PROFILE_SCOPES = {
+    "consumer": frozenset({"both", "consumer-only"}),
+    "package-source": frozenset({"both", "internal-only"}),
+    "all": frozenset(VALID_SCOPES),
+}
 SUSPICIOUS_BOTH_TERMS = (
     "package source",
     "inside the package",
@@ -68,37 +78,80 @@ def load_scopes(package_root: Path) -> dict:
     path = package_root / SCOPE_FILE
     with path.open(encoding="utf-8") as handle:
         data = json.load(handle)
-    schema_version = data.get("schema_version")
-    if schema_version not in {1, 2}:
-        raise ValueError("install-scopes.json must use schema_version 1 or 2")
-    identity_policy = data.get("artifact_identity_policy", {})
+    if not isinstance(data, dict):
+        raise ValueError("INSTALL_SCOPES:ROOT_TYPE: root must be an object")
+    unknown_root = sorted(set(data) - INSTALL_SCOPE_ROOT_KEYS)
+    missing_root = sorted(INSTALL_SCOPE_ROOT_KEYS - set(data))
+    if unknown_root or missing_root:
+        details = []
+        if missing_root:
+            details.append("missing " + ", ".join(missing_root))
+        if unknown_root:
+            details.append("unknown " + ", ".join(unknown_root))
+        raise ValueError("INSTALL_SCOPES:ROOT_KEYS: " + "; ".join(details))
+    if data["schema_version"] != 2:
+        raise ValueError("INSTALL_SCOPES:SCHEMA_VERSION: schema_version must be 2")
+    profiles = data["profiles"]
+    if not isinstance(profiles, dict):
+        raise ValueError("INSTALL_SCOPES:PROFILES_TYPE: profiles must be an object")
+    unknown_profiles = sorted(set(profiles) - set(INSTALL_SCOPE_PROFILE_SCOPES))
+    missing_profiles = sorted(set(INSTALL_SCOPE_PROFILE_SCOPES) - set(profiles))
+    if unknown_profiles or missing_profiles:
+        details = []
+        if missing_profiles:
+            details.append("missing " + ", ".join(missing_profiles))
+        if unknown_profiles:
+            details.append("unknown " + ", ".join(unknown_profiles))
+        raise ValueError("INSTALL_SCOPES:PROFILE_KEYS: " + "; ".join(details))
+    for profile, expected_scopes in INSTALL_SCOPE_PROFILE_SCOPES.items():
+        configured = profiles[profile]
+        if not isinstance(configured, list) or not all(isinstance(scope, str) for scope in configured):
+            raise ValueError(
+                f"INSTALL_SCOPES:PROFILE_SCOPES: profile {profile} must be a list of scopes"
+            )
+        if frozenset(configured) != expected_scopes:
+            raise ValueError(
+                "INSTALL_SCOPES:PROFILE_SCOPES: "
+                f"profile {profile} must map to {sorted(expected_scopes)}"
+            )
+    identity_policy = data["artifact_identity_policy"]
+    if not isinstance(identity_policy, dict):
+        raise ValueError("INSTALL_SCOPES:IDENTITY_POLICY_TYPE: artifact_identity_policy must be an object")
     command_projection = identity_policy.get("skills/loki-*/SKILL.md", {})
-    if schema_version == 1:
-        expected_command_policy = {
-            "operational_role": "command",
-            "projection": "installable-skill",
-            "paired_contract": "commands/loki-*.md",
-        }
-    else:
-        expected_command_policy = {
-            "operational_role": "command",
-            "serialization": "skill-bundle",
-            "required_resources": list(FINAL_BUNDLE_RESOURCES),
-        }
+    expected_command_policy = {
+        "operational_role": "command",
+        "serialization": "skill-bundle",
+        "required_resources": list(FINAL_BUNDLE_RESOURCES),
+    }
     if command_projection != expected_command_policy:
         raise ValueError(
             "install-scopes.json has an invalid skills/loki-*/SKILL.md "
-            f"identity policy for schema {schema_version}"
+            "identity policy for schema 2"
         )
-    artifacts = data.get("artifacts", {})
-    if schema_version == 1 and not isinstance(artifacts.get("commands"), dict):
-        raise ValueError("schema 1 must define artifacts.commands")
-    if schema_version == 2 and "commands" in artifacts:
-        raise ValueError("schema 2 must not define artifacts.commands")
+    artifacts = data["artifacts"]
+    if not isinstance(artifacts, dict):
+        raise ValueError("INSTALL_SCOPES:ARTIFACTS_TYPE: artifacts must be an object")
+    unknown_artifacts = sorted(set(artifacts) - INSTALL_SCOPE_ARTIFACT_KEYS)
+    missing_artifacts = sorted(INSTALL_SCOPE_REQUIRED_ARTIFACT_KEYS - set(artifacts))
+    if unknown_artifacts or missing_artifacts:
+        details = []
+        if missing_artifacts:
+            details.append("missing " + ", ".join(missing_artifacts))
+        if unknown_artifacts:
+            details.append("unknown " + ", ".join(unknown_artifacts))
+        raise ValueError("INSTALL_SCOPES:ARTIFACT_KEYS: " + "; ".join(details))
+    invalid_artifacts = sorted(
+        key for key, value in artifacts.items() if not isinstance(value, dict)
+    )
+    if invalid_artifacts:
+        raise ValueError(
+            "INSTALL_SCOPES:ARTIFACT_VALUES: artifact maps must be objects: "
+            + ", ".join(invalid_artifacts)
+        )
     framework_skill = identity_policy.get("skills/lf-*/SKILL.md", {})
     has_framework_skills = any(
         name.startswith("lf-")
-        for name in artifacts.get("skills", {})
+        for name in artifacts["skills"]
     )
     if has_framework_skills and framework_skill.get("operational_role") != "skill":
         raise ValueError(
@@ -516,6 +569,108 @@ def validate_toml(package_root: Path) -> None:
     for path in sorted((package_root / "codex" / "agents").glob("*.toml")):
         with path.open("rb") as handle:
             tomllib.load(handle)
+
+
+def parse_manifest_file_catalog(package_root: Path, section_name: str) -> set[str]:
+    """Read a simple manifest catalog without treating presentation as authority."""
+    files: set[str] = set()
+    in_section = False
+    for line in (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines():
+        if line == f"{section_name}:":
+            in_section = True
+            continue
+        if in_section and line and not line.startswith(" "):
+            break
+        if in_section and line.startswith("    file:"):
+            files.add(parse_manifest_scalar(line.split(":", 1)[1]))
+    return files
+
+
+def validate_claude_coverage(package_root: Path, data: dict) -> None:
+    """Prove manual Claude categories from the manifest and scope inventory."""
+    policy = data["artifact_identity_policy"].get("claude_code")
+    if not isinstance(policy, dict) or policy.get("projection") != "manual-copy":
+        raise ValueError("Claude coverage must declare the manual-copy projection")
+    categories = policy.get("categories")
+    if not isinstance(categories, dict):
+        raise ValueError("Claude coverage must declare categories")
+    expected_categories = {
+        "skills": {"source": "skills/*/", "scope_source": "artifacts.skills", "target": ".claude/skills/"},
+        "agents": {"source": "agents/*.md", "scope_source": "artifacts.agents", "target": ".claude/agents/"},
+        "templates": {"source": "templates/*", "scope": "all-profiles", "target": ".claude/templates/loki/"},
+    }
+    if categories != expected_categories:
+        raise ValueError("Claude coverage categories drift from the schema-2 contract")
+
+    skill_sources = {path.parent.name for path in (package_root / "skills").glob("*/SKILL.md")}
+    agent_sources = {path.name for path in (package_root / "agents").glob("*.md")}
+    template_sources = {
+        str(path.relative_to(package_root))
+        for path in (package_root / "templates").glob("*")
+        if path.is_file()
+    }
+    manifest_skills = set(parse_manifest_skill_catalog(package_root))
+    manifest_agents = {
+        entry.get("file", "") for entry in parse_manifest_agent_catalog(package_root)["agents"]
+    }
+    manifest_templates = parse_manifest_file_catalog(package_root, "templates")
+    failures: list[str] = []
+    for label, actual, expected in (
+        ("Claude skills", skill_sources, set(artifact_scopes(data, "skills"))),
+        ("Claude agents", agent_sources, set(artifact_scopes(data, "agents"))),
+        ("manifest skills", manifest_skills, skill_sources),
+        ("manifest agents", manifest_agents, {f"agents/{name}" for name in agent_sources}),
+        ("manifest templates", manifest_templates, template_sources),
+    ):
+        missing = sorted(expected - actual)
+        extra = sorted(actual - expected)
+        if missing or extra:
+            detail = []
+            if missing:
+                detail.append("missing " + ", ".join(missing))
+            if extra:
+                detail.append("extra " + ", ".join(extra))
+            failures.append(f"{label} coverage: " + "; ".join(detail))
+    if failures:
+        raise ValueError("Claude coverage failures:\n- " + "\n- ".join(failures))
+
+
+def validate_no_goose_projection(package_root: Path) -> None:
+    """Reject the retired Goose adapter before any profile can be accepted."""
+    failures: list[str] = []
+    goose_root = package_root / "goose"
+    if goose_root.exists() and any(path.is_file() for path in goose_root.rglob("*")):
+        failures.append("goose/: retired projection files are present")
+    scanned_roots = (
+        package_root / "README.md",
+        package_root / "manifest.yaml",
+        package_root / "install-scopes.json",
+        package_root / "docs",
+        package_root / "skills",
+        package_root / "agents",
+        package_root / "codex",
+        package_root / "templates",
+        package_root / "scripts",
+    )
+    validator_path = package_root / "scripts" / "validate-install-scopes.py"
+    for root in scanned_roots:
+        candidates = [root] if root.is_file() else sorted(root.rglob("*")) if root.is_dir() else []
+        for path in candidates:
+            if not path.is_file() or path == validator_path or path.suffix == ".pyc":
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            if re.search(
+                r"(?i)(?:\bgoose/|\bgoose[-_ ](?:recipe|agent|skill|projection)\b)",
+                text,
+            ):
+                failures.append(
+                    f"{path.relative_to(package_root)}: residual Goose projection reference"
+                )
+    if failures:
+        raise ValueError("Goose projection failures:\n- " + "\n- ".join(failures))
 
 
 def validate_loki_command_projection_namespace(
@@ -1257,7 +1412,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     try:
         data = load_scopes(package_root)
-        schema_version = data["schema_version"]
         skill_scopes = artifact_scopes(data, "skills")
         skill_names = {
             path.parent.name
@@ -1267,29 +1421,16 @@ def main(argv: list[str] | None = None) -> int:
         validate_frontmatter_duplicate_keys(package_root)
         validate_no_production_consumer_state(package_root)
 
-        if schema_version == 2:
-            if (package_root / "commands").exists():
-                raise ValueError("schema 2 final state must not contain commands/")
-            validate_final_loki_bundles(
-                package_root,
-                data,
-                require_full_inventory=not args.scope_contract_only,
-            )
-            validate_final_command_dependencies(package_root, data)
-        else:
-            command_scopes = artifact_scopes(data, "commands")
-            command_names = {
-                path.name for path in (package_root / "commands").glob("*.md")
-            }
-            assert_exact_keys("command", set(command_scopes), command_names)
-            validate_loki_command_projection_namespace(skill_names, command_names)
-            validate_loki_command_projection_identity(package_root, data)
-            validate_transitional_loki_bundles(package_root)
-            validate_command_dependency_identity(package_root, data)
+        if (package_root / "commands").exists():
+            raise ValueError("schema 2 final state must not contain commands/")
+        validate_final_loki_bundles(
+            package_root,
+            data,
+            require_full_inventory=not args.scope_contract_only,
+        )
+        validate_final_command_dependencies(package_root, data)
 
         if args.scope_contract_only:
-            if schema_version != 2:
-                raise ValueError("--scope-contract-only requires schema_version 2")
             print("install scope validation: ok (schema 2 fixture contract)")
             return 0
 
@@ -1317,16 +1458,12 @@ def main(argv: list[str] | None = None) -> int:
                 + "; ".join(mismatched_agent_scopes)
             )
 
-        if schema_version == 2:
-            validate_final_neutrality(package_root, data)
-        else:
-            validate_neutrality(package_root, data)
+        validate_final_neutrality(package_root, data)
         validate_toml(package_root)
+        validate_claude_coverage(package_root, data)
+        validate_no_goose_projection(package_root)
         validate_manifest_entries(package_root)
-        if schema_version == 2:
-            validate_final_manifest(package_root, data)
-        else:
-            validate_manifest_command_projection_identity(package_root)
+        validate_final_manifest(package_root, data)
         validate_agent_project_tags(package_root)
         validate_agentic_agent_metadata(package_root)
     except (OSError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as exc:

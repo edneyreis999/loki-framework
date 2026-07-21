@@ -36,7 +36,6 @@ paths:
   package_skill: "skills/lf-analytic-inference/SKILL.md"
   inference_contract: "references/inference-contract.md"
   state_document_schema: "references/state-document-v2.xsd"
-  legacy_registry_schema: "references/registry-schema.json"
   retrieval_and_ranking: "references/retrieval-and-ranking.md"
   policy: "references/policy-v1.json"
 shell: bash
@@ -91,9 +90,7 @@ documentation path or `.loki` discovery may override that boundary.
    `propose-maintenance`, and whenever a retrieved record will be interpreted
    or emitted. Validate a registry against
    [state-document-v2.xsd](references/state-document-v2.xsd) and the semantic
-   invariants in the contract before following a catalog locator. The legacy
-   [registry-schema.json](references/registry-schema.json) is read-only and is
-   used only to inventory v1 state for an approved copy migration.
+   invariants in the contract before following a catalog locator.
 2. For `retrieve`, read
    [retrieval-and-ranking.md](references/retrieval-and-ranking.md) completely;
    load technology indices first and only then load candidate records.
@@ -152,12 +149,8 @@ fabricated success.
 - Do not accept a caller-selected consumer or catalog root or create state outside
   `<consumer_root>/.loki/analytic-inference/v2/`.
 - Persist live registry, catalog, record, and event documents only as canonical
-  XML v2. Policy, request, proposal, approval, target manifests, migration
-  inventory/digest, and CLI output remain JSON control-plane artifacts.
-- Treat `.loki/analytic-inference/v1/**` JSON as legacy read-only input. Never
-  promote, reorganize, purge, overwrite, or delete v1. Migration is a separate,
-  exact-approved copy into v2 after inventory and digest validation; prior v1
-  digests or approvals cannot authorize v2 writes.
+  XML v2. Policy, request, proposal, approval, target manifests, and CLI output
+  remain JSON control-plane artifacts.
 - Read-only operations, installation, upgrade, uninstall, cleanup, and dry-run
   create, remove, and migrate no `.loki` state. Bootstrap is allowed only as
   part of the first independently approved mutation.

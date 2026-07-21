@@ -84,7 +84,8 @@ Antes de invocar subagente, entregue objetivo, unidade, fatos/decisoes, fontes,
 paths, dependencias, escopo, allowed/forbidden writes, criterios, validators,
 gates, formato e destino. Nao use contexto implicito. Registre origem, destino,
 objetivo, entrada, resultado esperado, status, evidencia e proximo destino;
-acompanhe ate estado terminal.
+acompanhe ate estado terminal. Todo handoff retorna completion record com
+resultado, arquivos, validacoes, gates, riscos e proximo destino.
 
 ## Procedure
 
@@ -250,8 +251,8 @@ lineage exatamente como observados pela execucao de origem. A retrospectiva
 nao resolve root por cwd/Git/ambiente, nao faz lookup adicional e nunca cria,
 atualiza ou reorganiza registry, indices, records, events ou outro catalog state.
 Quando a origem observar estado ativo, o layout esperado e XML v2 sob
-`.loki/analytic-inference/v2`; v1/JSON e somente evidencia legada read-only de
-uma eventual migracao copy-only e nunca um destino de escrita da retrospectiva.
+`.loki/analytic-inference/v2`; JSON nao e uma fonte de catalogo nem um destino
+de escrita da retrospectiva.
 
 Preserve separacao entre fatos, inferencias e hipoteses. Uma inferencia parcial
 ou hipotese continua assim rotulada; a retrospectiva e seu proprio score nao
@@ -273,8 +274,8 @@ e interrompa concorrentes; leituras independentes podem ser paralelas.
 
 Escrita direta so depois de registrar ausencia de Write Agent. Assuma envelope
 com allowed/forbidden writes, validators, approvals, criterios e evidencias e
-registre na propria retrospectiva tipo de escrita, motivo, oportunidade/escopo
-de writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
+registre no completion record o tipo de escrita, motivo, oportunidade/escopo de
+writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 
 ## Validators
 
@@ -326,9 +327,8 @@ writers, gates, etapas concluidas, proxima acao e condicao para continuar.
 Retome desse estado em vez de reiniciar.
 # Evidence-first source rule
 
-Accept `execution_evidence_sources` (validated manifests, completion records,
-and read-only audit reports) as the preferred input. A legacy
-`operational_trace` is contextual only and must not be reopened by default.
-The orchestrator captures completion evidence; this command does not trigger an
-automatic agent retrospective and must preserve gaps, inference labels and
-lineage without exposing raw traces or private reasoning.
+Accept only `execution_evidence_sources` (validated manifests, completion
+records and read-only audit reports) for execution evidence. The orchestrator
+captures completion evidence; this command does not trigger an automatic agent
+retrospective and must preserve gaps, inference labels and lineage without
+exposing raw traces or private reasoning.

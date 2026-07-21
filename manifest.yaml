@@ -27,6 +27,8 @@ install_policy:
   automatic_installation: false
   codex_install_script: "scripts/install-loki-symlinks.py"
   codex_install_scope_source: "install-scopes.json"
+  codex_install_schema_version: 2
+  codex_previous_layout_behavior: "reject-without-writes"
   codex_generated_manifest: ".agents/loki-installation-manifest.json"
   codex_install_profiles:
     consumer:
@@ -51,6 +53,22 @@ install_policy:
   claude_code_target:
     agents: ".claude/agents/"
     skills: ".claude/skills/"
+    templates: ".claude/templates/loki/"
+  claude_code_coverage:
+    source_contract: "install-scopes.json#artifact_identity_policy.claude_code"
+    categories:
+      skills:
+        source: "skills/*/"
+        scope_source: "artifacts.skills"
+        target: ".claude/skills/"
+      agents:
+        source: "agents/*.md"
+        scope_source: "artifacts.agents"
+        target: ".claude/agents/"
+      templates:
+        source: "templates/*"
+        scope: "all-profiles"
+        target: ".claude/templates/loki/"
   codex_target:
     skills: ".agents/skills/"
     agents: ".agents/agents/"
@@ -429,11 +447,11 @@ scripts:
   - name: "validate-install-loki-upgrade"
     file: "scripts/validate-install-loki-upgrade.py"
     status: draft
-    purpose: "Validate clean installer profile baselines and provide tempfile schema-v2 and legacy-cleanup fixtures without touching consumer destinations."
+    purpose: "Validate clean installer profile baselines and reject non-schema-v2 layouts in temporary fixtures without touching consumer destinations."
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
-    purpose: "Validate current and legacy Loki agentic XML run state, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
+    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 5, digest 4 and WTR 1), reject removed schemas, and check evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
   - name: "validate-execution-knowledge"
     file: "scripts/validate-execution-knowledge.py"
     status: draft
@@ -1067,6 +1085,7 @@ templates:
     status: draft
 
 docs:
+  # Indice interno do framework; nao e catalogo de documentacao do consumidor.
   - file: "index.md"
     status: completed
   - file: "docs/source-boundaries.md"

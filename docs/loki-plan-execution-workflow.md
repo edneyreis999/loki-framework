@@ -116,8 +116,9 @@ execucao.
     serializados por arquivo. Registry ausente ou vazio em leitura retorna
     `insufficient` e zero writes; instalacao e lookup nunca fazem bootstrap. O
     estado ativo usa `registry.xml`, indices `index.xml`, records `rev-N.xml` e
-    events `.xml`. O v1/JSON e legado read-only, sem fallback de lookup, e pode
-    apenas alimentar migracao copy-only separadamente inventariada e aprovada.
+    events `.xml`. JSON nao e fallback de lookup nem fonte de catalogo
+    suportada. O layout v1 e rejeitado antes de processamento; JSON de policy,
+    request, approval e output permanece control plane, nao estado de catalogo.
     O pacote distribui somente contratos, schemas, scripts, fixtures e policy:
     nunca catalogo de producao, seed ou overlay.
 16. Promocao e reorganizacao em `.loki` exigem validators, technical review e

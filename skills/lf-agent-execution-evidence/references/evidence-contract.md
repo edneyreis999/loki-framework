@@ -88,7 +88,7 @@ sanitization is required for a persisted snapshot. Secret/PII hardening,
 retention duration, and purge policy may be recorded as deferred; that
 deferral does not permit raw persistence.
 
-## Integrity and retrospective policy
+## Integrity and evidence-first policy
 
 For every persisted payload, record the SHA-256 of its exact sanitized bytes.
 The manifest records its canonical-content SHA-256 (excluding its own checksum
@@ -96,15 +96,18 @@ field) and an integrity result of `verified`, `unverified`, or `mismatch`.
 Checksum mismatch makes `complete` invalid. A pointer-only or unavailable
 manifest records why no payload checksum exists.
 
-## Boundary from execution knowledge
+## Evidence-first boundary
 
-This manifest is observable evidence, not a learning summary. A later
-execution-knowledge entry may reference its sanitized path and lineage but must
-not copy the snapshot or change evidence status. The orchestrator persists this
-evidence first, then may dispatch a non-blocking cataloger. Cataloger failure,
-timeout or validation never changes the evidence manifest and never invalidates
-an implementation result established by separate validators.
+This manifest is observable evidence, not a learning summary. Its closed
+`evidence_policy` records `mode` as `evidence-first`, `gap_handling` as
+`preserve-gap`, `capture_owner` as `collector-only`, and
+`retrospective_dispatch` as `explicit-only`. These positive rules make the
+collector the sole session-evidence writer, preserve an evidence gap as a gap,
+and require an explicit, separately authorized dispatch for any retrospective.
 
-The retrospective policy is evidence-first: no automatic agent retrospective,
-no dual capture, and no legacy retrospective fallback. An evidence gap remains
-a gap; it cannot reactivate a narrative fallback.
+A later execution-knowledge entry may reference the sanitized path and lineage
+but must not copy the snapshot or change evidence status. The orchestrator
+persists this evidence first, then may dispatch a non-blocking cataloger.
+Cataloger failure, timeout or validation never changes the evidence manifest
+and never invalidates an implementation result established by separate
+validators.

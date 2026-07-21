@@ -1,6 +1,14 @@
 name = "framework-artifact-quality-auditor"
 description = "Revisa patches internos do pacote Loki de forma independente, executando checks mecanicos e rubrica bloqueante sem editar artefatos de producao."
 nickname_candidates = ["framework-artifact-quality-auditor", "package-quality-auditor"]
+source_agent = "agents/framework-artifact-quality-auditor.md"
+projection_contract = "custom-semantic-v1"
+semantic_invariants = [
+  "independent-read-only-audit",
+  "complete-handoff-and-mechanical-checks-required",
+  "findings-or-inconclusive-results-block",
+  "technical-review-and-approval-not-replaced",
+]
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 approval_policy = "never"
