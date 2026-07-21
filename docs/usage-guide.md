@@ -107,11 +107,15 @@ validacao de runtime.
 recebe `analysis_input`, `source_paths` locais permitidos e um `destination`
 aprovado; o destino deve ser um diretorio existente abaixo de
 `<consumer-root>/planos/`, sem symlink ou traversal. O command deriva
-internamente exatamente `discovery_limit=policy.catalog_limit`,
-`relevant_result_floor=null`, `cost_budget=policy.cost_budget` e
-`safe_preference=fail-closed`. Isso nao preenche quota/floor, rejeita duplicata
-exata, preserva near duplicate separada e adia custo desconhecido quando a
-admissao no budget nao pode ser provada. Depois resolve o digest da demanda e
+internamente exatamente
+`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
+somente candidatos relevantes, investigaveis, sustentados por proveniencia
+observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
+rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
+exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
+compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
+`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
+essa disposicao pre-investigacao. Depois resolve o digest da demanda e
 escolhe antes da approval um target versionado: slug NFKD/ASCII do
 stem para arquivo ou `inferences-<digest12>` para inline, seguido pelo menor
 `-vN` ausente quando o basename ja existir. A approval fica vinculada ao

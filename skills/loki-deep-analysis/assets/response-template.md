@@ -1,5 +1,7 @@
 # loki-deep-analysis — Deep Analysis Report
 
+- Report contract version: 2
+
 ## Status
 
 <completed | partial | insufficient | blocked | failed>
@@ -53,20 +55,21 @@ If empty: <no sufficiently supported technology + consequence>.
 - Fan-out limit: <observed approved value>
 - Cost budget: <observed approved value>
 - Handoff timeout ticks: <observed approved value>
-- Requested catalogued floor: <integer + source + authorization + digest | not-configured>
-- Requested generated floor: <integer + source + authorization + digest | not-configured>
+- Preparation discovery limit: <integer from active policy catalog_limit>
+- Preparation request-controls digest: <verified digest of the exact one-key mapping>
 - Invariants: <eligibility-only, no automatic mutation, other enforced limits>
 
 ## Immutable preparation core
 
 ```yaml
 preparation_core:
+  schema_version: 2
   locator: "<approved immutable preparation artifact locator>"
   preparation_id: "prep-<64-lowercase-hex>"
   preparation_digest: "sha256:<64-lowercase-hex>"
   input_fingerprint: "sha256:<64-lowercase-hex>"
   status: "<pre-investigation-complete | partial | blocked>"
-  validator_outcomes: []
+  validators: ["<sorted unique non-empty name of a preparation check that passed>"]
   execution_boundary:
     dispatch_authorized: false
     investigation_handoffs_dispatched: 0
@@ -113,7 +116,7 @@ the immutable core.
 - Consumer root source: canonical-pwd
 - Derived state root: <consumer-root>/.loki/analytic-inference/v2
 - Live serialization/layout: XML v2 (`registry.xml`, `index.xml`, `rev-N.xml`, event `.xml`)
-- Catalog state: <absent | empty | loaded | blocked>
+- Catalog state: <absent | empty | no-match | loaded | blocked>
 - Registry locator: <relative/root-bound locator | absent>
 - Catalog mutation applied: false
 - Zero-mutation proof: <validator/evidence that no catalog-owned target changed>
@@ -130,7 +133,7 @@ If empty: <empty catalog, uncertain technology or no matching index + reason>.
 
 | Inference ID/revision | Record locator | Index filter facts | Record-only checks | Rerank reason | Result |
 | --- | --- | --- | --- | --- | --- |
-| <ID/revision> | <validated locator> | <technology/surface/objective/signal> | <version/exclusion/evidence/freshness/risk/cost> | <observable reason> | <selected/rejected> |
+| <ID/revision> | <validated locator> | <technology/surface/objective/signal> | <version/exclusion/evidence/freshness> | <observable reason> | <selected/rejected> |
 
 If empty: <no record loaded + reason>. Confirm that the whole catalog was not
 loaded.
@@ -145,15 +148,24 @@ loaded.
 
 ### Immutable preparation candidate projection
 
-| Candidate ID | Origin | Summary | Confirm/reject evidence | Impact | Cost | Stop condition | Disposition |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| <existing content-addressed ID> | <catalogued/generated> | <core summary> | <core refs> | <core impact> | <core cost> | <core condition> | <core disposition> |
+The table below is a human-readable view derived from the canonical YAML
+payload above. It displays a column subset, preserves row order and every
+displayed value, and does not treat omitted columns as absent fields. It is not
+a second normative projection or schema and must not be used for machine
+interpretation.
 
-### Deduplicated and near-duplicate candidates
+| Candidate ID | Origin | Summary | Support evidence | Confirm/reject evidence | Stop condition | Disposition |
+| --- | --- | --- | --- | --- | --- | --- |
+| <existing content-addressed ID> | <catalogued/generated> | <core summary> | <core support refs> | <core confirm/reject refs> | <core condition> | <core disposition> |
+
+### Duplicate relations
+
+Exact duplicates remain represented as rejected candidates and are never
+merged or removed; near duplicates remain distinct proposals.
 
 | Candidate | Match | Kind | Deterministic/proposal result | Provenance preserved |
 | --- | --- | --- | --- | --- |
-| <ID> | <other ID> | <exact/near-duplicate> | <deduplicated/review-proposed> | <yes + refs> |
+| <ID> | <other ID> | <exact/near-duplicate> | <represented-and-rejected/review-proposed> | <yes + refs> |
 
 ### Rejected candidates
 
@@ -167,8 +179,8 @@ loaded.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <ID> | <catalogued/generated> | <yes/no> | <yes/no> | <yes/no> | <yes/no> | <yes/no> | <refs> |
 
-Each state is independent. If a category is empty or below a configured floor,
-state the evidence, utility or budget reason; never pad a quota.
+Each state is independent. If a category is empty, state the evidence, utility
+or post-boundary budget reason; never pad the preparation discovery limit.
 
 ## Investigations and specialist coverage
 
@@ -297,6 +309,7 @@ Do not auto-invoke a downstream workflow from this response.
 
 ```yaml
 deep_analysis_resume_state:
+  report_contract_version: 2
   status: "<completed | partial | insufficient | blocked | failed>"
   delivery_mode: "<report-artifact | response-only>"
   report_destination: "<exact path | null>"
@@ -305,12 +318,13 @@ deep_analysis_resume_state:
   policy_id: "<ID>"
   policy_digest: "<digest>"
   preparation_core:
+    schema_version: 2
     locator: "<approved immutable preparation artifact locator>"
     preparation_id: "prep-<64-lowercase-hex>"
     preparation_digest: "sha256:<64-lowercase-hex>"
     input_fingerprint: "sha256:<64-lowercase-hex>"
     status: "<pre-investigation-complete | partial | blocked>"
-    validator_outcomes: []
+    validators: ["<sorted unique non-empty name of a preparation check that passed>"]
     execution_boundary:
       dispatch_authorized: false
       investigation_handoffs_dispatched: 0
@@ -320,13 +334,8 @@ deep_analysis_resume_state:
       downstream_workflows_invoked: []
       catalog_mutation_applied: false
   request_controls:
-    schema_version: 1
-    requested_catalogued_floor: "<integer | null>"
-    requested_generated_floor: "<integer | null>"
-    provenance:
-      source: "<source | not-configured>"
-    authorization: "<ref | not-configured>"
-    digest: "<digest | not-configured>"
+    discovery_limit: "<positive integer from active policy catalog_limit>"
+  request_controls_digest: "<sha256 digest of the exact one-key request_controls mapping>"
   completed_stages: []
   loaded_locators: []
   candidate_decisions: []

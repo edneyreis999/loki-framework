@@ -56,8 +56,8 @@ Use exactly one report status:
   report is valid;
 - `partial`: useful validated results exist, but a source, capability, cost,
   handoff, evidence dimension or optional investigation is degraded;
-- `insufficient`: available evidence cannot support an adequate inference,
-  material finding or configured relevant floor;
+- `insufficient`: available evidence cannot support an adequate inference or
+  material finding;
 - `blocked`: missing authority, policy integrity, source, validator, gate,
   target safety, material conflict or non-terminal required handoff prevents
   safe completion;
@@ -76,7 +76,7 @@ The response and deep report must make these items recoverable:
 - report artifact or response-only result and any approved interaction record;
 - sources, research gate, technology/surface confidence and limitations;
 - catalog indices read and exact record locators selectively loaded;
-- catalogued, generated, exact-deduplicated, near-duplicate, rejected,
+- catalogued, generated, represented exact-duplicate, near-duplicate, rejected,
   selected, investigated and validated inferences, each preserving origin;
 - one immutable preparation-core reference with its exact locator,
   `preparation_id`, `preparation_digest`, input fingerprint, status,

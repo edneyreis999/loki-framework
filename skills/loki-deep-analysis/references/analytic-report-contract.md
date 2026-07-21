@@ -1,4 +1,4 @@
-# Deep Analysis Report Contract v1
+# Deep Analysis Report Contract v2
 
 Use this contract when constructing or validating the single immutable output
 of `loki-deep-analysis`. The report is Markdown for human and LLM consumers,
@@ -9,7 +9,7 @@ catalog mutation or proof that a candidate deserves promotion.
 
 Record the internally resolved `consumer_root.canonical`, source
 `canonical-pwd`, the derived `state_root`, catalog state
-`absent | empty | loaded | blocked`, registry
+`absent | empty | no-match | loaded | blocked`, registry
 locator, selected catalog/index locators and loaded record locators. Also
 record `mutation_applied: false` and proof that no catalog-owned target was
 created, changed or removed. These values are root-bound and resumable without
@@ -24,8 +24,8 @@ policy ID and digest, creation time when observed, destination or
   terminal and no material gate remains unresolved;
 - `partial`: useful validated findings exist, but a declared capability,
   source, cost, handoff, or optional investigation is unavailable;
-- `insufficient`: the available evidence cannot support a material finding or
-  the configured relevant-candidate floor;
+- `insufficient`: the available evidence cannot support an adequate material
+  finding;
 - `blocked`: required input, permission, policy, validator, gate, or material
   conflict prevents safe completion;
 - `failed`: execution reached a terminal error and no valid report result can
@@ -44,12 +44,13 @@ consumer, never a second preparation result.
 
 ```yaml
 preparation_core:
+  schema_version: 2
   locator: "<approved immutable preparation artifact locator>"
   preparation_id: "prep-<64-lowercase-hex>"
   preparation_digest: "sha256:<64-lowercase-hex>"
   input_fingerprint: "sha256:<64-lowercase-hex>"
   status: "pre-investigation-complete | partial | blocked"
-  validator_outcomes: []
+  validators: ["sorted unique non-empty name of a preparation check that passed"]
   execution_boundary:
     dispatch_authorized: false
     investigation_handoffs_dispatched: 0
@@ -61,11 +62,18 @@ preparation_core:
 ```
 
 `locator`, `preparation_id`, `preparation_digest`, `input_fingerprint`,
-`status`, `validator_outcomes`, and `execution_boundary` are projections of
-the validated core. `validator_outcomes` preserves the core validator records
-without reinterpretation. Verify the digest against the exact referenced core
-before using any candidate. A missing, mismatched, or failed material core
-validator blocks completion and records a resumable minimum next path.
+`status`, `validators`, and `execution_boundary` are projections of the
+validated core. `validators` preserves the core's sorted unique names of
+checks that passed without reinterpretation. A failed check remains in the
+core blockers or catalog diagnostics and is never projected as a passed
+validator. Verify the digest against the exact referenced core before using
+any candidate. A missing, mismatched, or failed material core validator blocks
+completion and records a resumable minimum next path.
+
+Only preparation schema v2 is accepted. Schema-v1 artifacts remain immutable
+historical evidence and are rejected before candidate interpretation. Require
+regeneration to a new separately approved versioned artifact; do not rewrite,
+migrate, convert, or use a fallback reader.
 
 Project `candidates`, `selected_for_investigation`, and
 `planned_investigations` from that same core in canonical order. Do not sort,
@@ -94,8 +102,9 @@ The report contains:
 6. immutable preparation-core candidate projections, kept distinct from reused
    records and from post-boundary evidence;
 7. exact duplicates, near-duplicates, rejected candidates, and reasons;
-8. candidate classification by relevance, risk, investigation cost,
-   independence, evidence availability, and material-finding potential;
+8. preparation candidate classification by relevance, investigability,
+   observable provenance support, validity/compatibility, exact deduplication,
+   and discovery limit;
 9. selected investigations, handoff identities, capabilities, owners, sources,
    limits, stop conditions, validators, terminal states and sanitized evidence;
 10. material findings, negative findings, hypotheses, contradictions, and
@@ -139,10 +148,17 @@ addressed `candidate_id`, `origin`, `lifecycle_status`, disposition and
 observable `disposition_reason`. Do not create a report-scoped candidate
 schema or a second candidate list.
 
-A configured minimum remains a relevance floor, not permission to invent,
-reorder, or delegate weak candidates. If fewer useful candidates exist, the
-core status and the post-boundary report status must honestly be `insufficient`
-or `partial` with stopping evidence.
+Any candidate table in the human-readable report is only a derived summary of
+that canonical payload. It may show a column subset for readability but must
+preserve row order and every displayed value. An omitted column remains
+available only from the canonical payload and never means that the field is
+absent. The table may not be used for machine interpretation and never
+replaces or extends the normative YAML/JSON projection.
+
+The preparation `discovery_limit` is an upper bound, not permission to invent,
+reorder, or delegate weak candidates. Cost and impact are absent from the
+schema-v2 candidate projection and never change its disposition. Handoff cost,
+risk, independence, and budget admission are post-boundary command evidence.
 
 ## Inference event
 
@@ -212,13 +228,16 @@ Before `completed`, verify:
 - every source and loaded locator is readable, scoped and traceable;
 - origins remain distinct and IDs are unique;
 - the preparation-core candidate projection reproduces every required
-  candidate field, provenance, confirm/reject evidence, impact, cost, stop
+  schema-v2 candidate field, provenance, confirm/reject evidence, stop
   condition and distinction without changing identity or order;
 - exact deduplication is deterministic and near-duplicates remain proposals;
+- selected preparation candidates satisfy the essential disposition criteria,
+  and their count does not exceed `discovery_limit`;
 - every selected investigation is useful, independent or correctly serialized,
   policy-budgeted, and terminal;
 - every event satisfies schema, idempotency and stage-independence rules;
-- unknown cost remains unknown and no quota is padded with irrelevant work;
+- post-boundary unknown cost remains unknown and no limit is padded with
+  irrelevant work;
 - evidence is sanitized and contains no private reasoning;
 - report writes match the exact approved destination;
 - no catalog or unapproved interaction target changed.

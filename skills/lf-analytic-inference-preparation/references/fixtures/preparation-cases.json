@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "fixture_kind": "analytic-inference-preparation-case-matrix",
   "byte_replay_is_out_of_scope": true,
   "execution_boundary": {
@@ -13,46 +13,58 @@
   },
   "cases": [
     {
-      "id": "loaded-relevant-below-floor",
+      "id": "loaded-relevant-without-cost",
       "scenario": {
-        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 3, "candidates": [{"label": "relevant-catalogued", "origin": "catalogued", "disposition": "selected", "cost": "unknown"}]},
-        "expected": {"status": "pre-investigation-complete", "selected_count": 1, "relevant_result_floor": 3, "zero_padding": true, "dispositions": {"relevant-catalogued": "selected"}, "unknown_cost_values": ["unknown"]}
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "discovery_limit": 3, "candidates": [{"label": "relevant-catalogued", "origin": "catalogued", "disposition": "selected"}]},
+        "expected": {"status": "pre-investigation-complete", "selected_count": 1, "dispositions": {"relevant-catalogued": "selected"}, "candidate_keys_exclude": ["cost", "impact"]}
       }
     },
     {
       "id": "registry-absent",
-      "scenario": {"input": {"catalog_state": "absent", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+      "scenario": {"input": {"catalog_state": "absent", "catalog_snapshot": false, "discovery_limit": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "dispositions": {}}}
     },
     {
       "id": "catalog-empty",
-      "scenario": {"input": {"catalog_state": "empty", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+      "scenario": {"input": {"catalog_state": "empty", "catalog_snapshot": false, "discovery_limit": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "dispositions": {}}}
     },
     {
       "id": "technology-no-match",
-      "scenario": {"input": {"catalog_state": "no-match", "catalog_snapshot": false, "relevant_result_floor": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "relevant_result_floor": 1, "zero_padding": true, "dispositions": {}}}
+      "scenario": {"input": {"catalog_state": "no-match", "catalog_snapshot": false, "discovery_limit": 1, "candidates": []}, "expected": {"status": "pre-investigation-complete", "selected_count": 0, "dispositions": {}}}
     },
     {
       "id": "catalog-blocked",
-      "scenario": {"input": {"catalog_state": "blocked", "catalog_snapshot": false, "relevant_result_floor": 0, "candidates": []}, "expected": {"status": "blocked", "selected_count": 0, "relevant_result_floor": 0, "zero_padding": false, "dispositions": {}}}
+      "scenario": {"input": {"catalog_state": "blocked", "catalog_snapshot": false, "discovery_limit": 1, "candidates": []}, "expected": {"status": "blocked", "selected_count": 0, "dispositions": {}}}
     },
     {
       "id": "candidate-outcomes-and-duplicates",
       "scenario": {
-        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 2, "candidates": [
-          {"label": "exact-duplicate", "disposition": "rejected", "duplicate_relation": "exact-duplicate", "reason": "exact duplicate is represented without merge"},
-          {"label": "near-duplicate", "disposition": "deferred", "duplicate_relation": "near-duplicate", "reason": "near duplicate remains separate pending evidence"},
-          {"label": "irrelevant", "disposition": "rejected", "reason": "irrelevant to normalized demand"},
-          {"label": "unverifiable", "disposition": "deferred", "reason": "insufficient observable evidence"},
-          {"label": "over-budget", "disposition": "rejected", "reason": "observed cost exceeds budget", "cost": "cost:7"}
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "catalog_diagnostics": ["required local context remains unresolved for context-pending"], "discovery_limit": 3, "candidates": [
+          {"label": "canonical-original", "disposition": "selected"},
+          {"label": "exact-duplicate", "disposition": "rejected", "duplicate_relation": "exact-duplicate", "duplicate_of": "canonical-original", "reason": "rejected:exact-duplicate | represented without merge"},
+          {"label": "near-duplicate", "disposition": "selected", "duplicate_relation": "near-duplicate", "duplicate_of": "canonical-original", "reason": "selected:essential-criteria-satisfied | near duplicate remains separate"},
+          {"label": "irrelevant", "disposition": "rejected", "reason": "rejected:irrelevant | unrelated to normalized demand"},
+          {"label": "unverifiable", "disposition": "rejected", "reason": "rejected:unverifiable | no confirm-or-reject test exists", "confirm_or_reject_evidence": []},
+          {"label": "context-pending", "disposition": "deferred", "reason": "deferred:context | required local context is unresolved"}
         ]},
-        "expected": {"status": "partial", "selected_count": 0, "relevant_result_floor": 2, "zero_padding": true, "dispositions": {"exact-duplicate": "rejected", "near-duplicate": "deferred", "irrelevant": "rejected", "unverifiable": "deferred", "over-budget": "rejected"}, "duplicate_relations": {"exact-duplicate": "exact-duplicate", "near-duplicate": "near-duplicate", "irrelevant": "none", "unverifiable": "none", "over-budget": "none"}}
+        "expected": {"status": "partial", "selected_count": 2, "dispositions": {"canonical-original": "selected", "exact-duplicate": "rejected", "near-duplicate": "selected", "irrelevant": "rejected", "unverifiable": "rejected", "context-pending": "deferred"}, "duplicate_relations": {"canonical-original": "none", "exact-duplicate": "exact-duplicate", "near-duplicate": "near-duplicate", "irrelevant": "none", "unverifiable": "none", "context-pending": "none"}}
+      }
+    },
+    {
+      "id": "discovery-limit",
+      "scenario": {
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "discovery_limit": 2, "candidates": [
+          {"label": "selected-one", "disposition": "selected"},
+          {"label": "selected-two", "disposition": "selected"},
+          {"label": "eligible-outside-limit", "disposition": "deferred", "reason": "deferred:discovery-limit | two eligible candidates already selected"}
+        ]},
+        "expected": {"status": "pre-investigation-complete", "selected_count": 2, "dispositions": {"selected-one": "selected", "selected-two": "selected", "eligible-outside-limit": "deferred"}}
       }
     },
     {
       "id": "adversarial-order",
       "scenario": {
-        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "relevant_result_floor": 1, "candidates": [{"label": "zeta", "disposition": "selected"}, {"label": "alpha", "disposition": "selected"}]},
-        "expected": {"status": "pre-investigation-complete", "selected_count": 2, "relevant_result_floor": 1, "zero_padding": false, "dispositions": {"zeta": "selected", "alpha": "selected"}, "canonical_order": true}
+        "input": {"catalog_state": "loaded", "catalog_snapshot": true, "discovery_limit": 2, "candidates": [{"label": "zeta", "disposition": "selected"}, {"label": "alpha", "disposition": "selected"}]},
+        "expected": {"status": "pre-investigation-complete", "selected_count": 2, "dispositions": {"zeta": "selected", "alpha": "selected"}, "canonical_order": true}
       }
     }
   ]

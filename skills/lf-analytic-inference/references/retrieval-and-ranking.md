@@ -1,4 +1,4 @@
-# Selective Retrieval and Ranking v1
+# Selective Retrieval and Ranking v2
 
 Read this reference for catalog lookup. Retrieval is deliberately index-first:
 it must not read all inference records to discover whether they are relevant.
@@ -11,7 +11,7 @@ Normalize only observed query data:
 - versions and affected surfaces;
 - objectives and observable signals;
 - available evidence;
-- risk, investigation cost constraints, and requested relevant-result floor.
+- the discovery limit derived from the active policy's `catalog_limit`.
 
 Do not turn an uncertain technology into a confirmed one. If no technology has
 sufficient evidence, return `partial` or `insufficient` with the uncertainty.
@@ -23,18 +23,21 @@ sufficient evidence, return `partial` or `insufficient` with the uncertainty.
 2. From index metadata, reject entries with incompatible status, version,
    surface, objective, explicit exclusion, or unavailable required evidence.
 3. Order candidate summaries deterministically by exact technology, surface,
-   objective, signal, compatible version, freshness, risk, cost, then
-   `inference_id`. Booleans are descending; risk and cost use caller-declared
-   safe preference; `inference_id` is the final ascending tie-breaker.
+   objective, signal, compatible version, freshness, then `inference_id`.
+   Matching booleans are descending and `inference_id` is the final ascending
+   tie-breaker. Cost and impact are not retrieval ranking inputs.
 4. Load only the records that survive deterministic filtering. Validate every
    loaded record and require index/record identity, revision, status, and
    locator parity.
-5. Rerank the loaded set semantically for relation to the demand, evidence able
-   to confirm or reject it, material-finding potential, risk, and cost. Record a
-   short observable reason for each score or ordinal rank.
-6. Stop when the relevant floor is met and additional records cannot improve
-   material coverage within the approved lookup budget. A floor is not a quota:
-   never add an irrelevant record to satisfy it.
+5. Rerank the loaded set semantically only for relation to the demand,
+   investigability, observable provenance support, validity/compatibility, and
+   evidence able to confirm or reject it. Record a short observable reason for
+   each ordinal rank.
+6. Select no more than `discovery_limit` eligible records. Reject irrelevant,
+   invalid, incompatible, unverifiable, and exact-duplicate records. Defer only
+   unresolved essential evidence/compatibility/context or an otherwise eligible
+   record excluded by the discovery limit. Never pad the limit with an
+   irrelevant record.
 
 ## Output
 
@@ -46,7 +49,7 @@ Return:
 - deterministic filter facts and semantic reranking reasons;
 - rejected entries and typed reasons;
 - stale, incompatible, broken-locator, or uncertain items;
-- requested floor, relevant count, and terminal state;
+- discovery limit, eligible count, selected count, and terminal state;
 - policy ID and approved-candidate digest when policy limits are used.
 
 The caller must distinguish these reused records from newly generated
@@ -58,9 +61,9 @@ free to generate contextual candidates beyond the catalog.
 - Broken, escaping, or mismatched locators are `blocked`, not silently skipped.
 - Unknown status, unsupported schema, invalid policy, or duplicate identity is
   `blocked`.
-- No adequate record or too few relevant records is `insufficient` or
-  `partial`, not padded success.
-- Unknown cost remains unknown and cannot consume a fictitious zero budget.
+- No adequate record is `insufficient` or `partial`, not padded success.
+- Cost and impact do not participate in pre-investigation retrieval,
+  disposition, or the preparation candidate schema.
 - Exact duplicates may be identified deterministically. Near-duplicates are
   reported for judgment and never merged automatically.
 - Retrieval performs no catalog write and grants no promotion,

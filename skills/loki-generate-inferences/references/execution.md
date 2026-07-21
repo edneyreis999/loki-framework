@@ -31,7 +31,7 @@ the sole allowed write mechanism.
    directory, directory snapshot identity, exact resolved absent target,
    basename/version, approval binding, and all forbidden writes. Do not derive
    a second root or alter the resolved name.
-2. Derive the exact four-key `request_controls` mapping from the validated
+2. Derive the exact one-key `request_controls` mapping from the validated
    active policy as specified below, serialize it as canonical UTF-8 JSON with
    lexicographically sorted keys and no insignificant whitespace, and compute
    `request_controls_digest` as lowercase `sha256:` plus SHA-256 of those bytes.
@@ -39,8 +39,11 @@ the sole allowed write mechanism.
    demand, permitted local sources, these request controls, and the active policy.
    Compose its `lf-analytic-inference` authority rather than duplicating its
    root, XML, retrieval, policy, identity, digest, or disposition logic.
-3. Accept only a canonical preparation object satisfying its exact schema and
-   terminal boundary. `blocked` produces no artifact. A `partial` object may be
+3. Accept only a canonical schema-v2 preparation object satisfying its exact
+   schema and terminal boundary. Reject schema v1 before candidate use and
+   require regeneration to a new separately approved versioned artifact; do
+   not rewrite, migrate, or fall back to an existing v1 artifact. `blocked`
+   produces no artifact. A `partial` object may be
    written only when all its validators pass and it remains structurally valid;
    preserve every blocker and `minimum_next_path` exactly.
 4. Verify literally: `dispatch_authorized: false`, zero investigation handoffs,
@@ -86,21 +89,23 @@ The required mapping is exactly:
 ```yaml
 request_controls:
   discovery_limit: <validated integer from active_policy.values.catalog_limit>
-  relevant_result_floor: null
-  cost_budget: <validated integer from active_policy.values.cost_budget>
-  safe_preference: fail-closed
 ```
 
-Missing or invalid `catalog_limit` or `cost_budget` blocks before invocation.
-`fail-closed` has these atomic semantics:
+Missing or invalid `catalog_limit` blocks before invocation. The preparation
+control has these atomic semantics:
 
-- never pad a quota or result floor;
+- select no more than `discovery_limit` candidates;
 - reject exact duplicates;
 - preserve near duplicates as separate candidates and relations;
-- defer an unknown-cost candidate whenever budget admission cannot be proven.
+- never use cost or impact to select, reject, or defer a candidate.
 
-These rules limit candidate admission; they do not cancel an otherwise valid
-request or introduce a timer.
+Candidates within the limit are selected only when relevant, investigable,
+supported by observable provenance, valid and compatible, and not exact
+duplicates. `deferred` is reserved for unresolved essential evidence,
+compatibility, or context, and for otherwise eligible candidates excluded by
+`discovery_limit`. These rules limit candidate admission; they do not cancel
+an otherwise valid request, introduce a timer, or control later handoff budget
+admission.
 
 ## Deterministic destination resolution
 

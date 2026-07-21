@@ -69,11 +69,15 @@ symlink ou traversal. Depois do digest da demanda, resolve um target versionado
 deterministico: slug NFKD/ASCII do stem para input em arquivo, ou
 `inferences-<digest12>` para inline; se `<base>.md` existir, escolhe antes da
 approval o menor `<base>-vN.md` ausente. Internamente, deriva exatamente
-`discovery_limit=policy.catalog_limit`, `relevant_result_floor=null`,
-`cost_budget=policy.cost_budget` e `safe_preference=fail-closed`.
-`fail-closed` nao preenche quota/floor, rejeita duplicata exata, preserva near
-duplicate separada e adia custo desconhecido quando a admissao no budget nao
-pode ser provada. A approval vincula diretorio canonico, target exato,
+`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
+somente candidatos relevantes, investigaveis, sustentados por proveniencia
+observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
+rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
+exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
+compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
+`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
+essa disposicao pre-investigacao. A approval vincula diretorio canonico,
+target exato,
 basename/versao, before-state/snapshot e um create exclusivo. Colisao posterior
 invalida a approval e bloqueia sem retry; exige nova resolucao e nova approval.
 O command cria somente esse arquivo uma vez e termina em

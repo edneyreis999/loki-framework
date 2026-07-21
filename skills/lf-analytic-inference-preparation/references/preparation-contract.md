@@ -1,8 +1,8 @@
 ---
 doc_id: "analytic-inference-preparation-contract"
-version: "1.0.0"
+version: "2.0.0"
 status: "draft"
-last_updated: "2026-07-20"
+last_updated: "2026-07-21"
 scope: "Exact deterministic pre-investigation preparation object and its pure execution boundary"
 not_scope: "XML parsing, catalog mutation, report materialization, investigation, dispatch admission, or workflow orchestration"
 authority: "Approved caller envelope, this contract, then lf-analytic-inference contracts"
@@ -52,7 +52,7 @@ permitted_local_sources:
   required_keys: [sources]
   source_item_keys: [locator, digest, facts]
 request_controls:
-  required_keys: [discovery_limit, relevant_result_floor, cost_budget, safe_preference]
+  required_keys: [discovery_limit]
 inference_policy:
   required: false
   required_when_supplied: [policy_id, policy_digest, values]
@@ -95,7 +95,7 @@ provenance, traversal, symlink, or containment is `blocked` and fails closed.
 
 <output_format>
 inference_preparation:
-  schema_version: 1
+  schema_version: 2
   artifact_type: analytic-inference-preparation
   preparation_id: "prep-<64-lowercase-hex>"
   input_fingerprint: "sha256:<64-lowercase-hex>"
@@ -104,6 +104,8 @@ inference_preparation:
   input:
     demand_digest: "sha256:<64-lowercase-hex>"
     ordered_source_digests: ["sha256:<64-lowercase-hex>"]
+    request_controls:
+      discovery_limit: "positive integer copied from policy.values.catalog_limit"
     request_controls_digest: "sha256:<64-lowercase-hex>"
   root:
     consumer_root: "canonical root resolved from pwd"
@@ -122,17 +124,22 @@ inference_preparation:
     catalog_snapshot_digest: "sha256:<64-lowercase-hex> | null"
     indices_read: []
     record_locators_loaded: []
-    diagnostics: []
+    diagnostics: ["sorted unique non-empty observable diagnostic"]
   technologies: []
   candidates: []
   duplicate_analysis:
-    exact_duplicates: []
-    near_duplicates: []
+    exact_duplicates:
+      - candidate_id: "existing exact-duplicate candidate ID"
+        duplicate_of: "different existing candidate ID"
+    near_duplicates:
+      - candidate_id: "existing near-duplicate candidate ID"
+        duplicate_of: "different existing candidate ID"
   selected_for_investigation: []
-  planned_investigations: []
+  planned_investigations:
+    - candidate_id: "(cat|gen)-<64-lowercase-hex>"
   dispatch_admitted: false
-  validators: []
-  blockers: []
+  validators: ["sorted unique non-empty name of a check that passed"]
+  blockers: ["sorted unique non-empty observable limitation or blocker"]
   minimum_next_path: "non-empty next permitted action"
   execution_boundary:
     dispatch_authorized: false
@@ -144,10 +151,25 @@ inference_preparation:
     catalog_mutation_applied: false
 </output_format>
 
-All shown keys are required, including empty arrays. `status` is
+All shown keys are required, including arrays when empty. `status` is
 `pre-investigation-complete` only when validators pass and
-`catalog_observation.state` is not `blocked`. `partial` retains the same exact
-keys and names its limitation in `blockers` or validator diagnostics.
+`catalog_observation.state` is not `blocked`. Honest `absent`, `empty`, and
+`no-match` observations do not degrade status by themselves. `partial` retains
+the same exact keys and requires a real observable non-blocking limitation as
+a non-empty string in `blockers` or `catalog_observation.diagnostics`.
+`blocked` retains its integrity, authority, root, schema, locator, policy, and
+required-provenance failure semantics.
+
+`pre-investigation-complete` requires `blockers: []`. It may retain a catalog
+diagnostic only when that diagnostic is informational and does not describe an
+unresolved limitation or blocker; diagnostics must never disguise a status
+that should be `partial` or `blocked`.
+
+`validators` is a non-empty, lexicographically sorted, unique list of stable,
+non-empty check names whose checks passed. A failed check is never listed as a
+validator; record the observable failure in `blockers` or
+`catalog_observation.diagnostics`. Those two arrays are also sorted, unique
+lists of non-empty strings when populated.
 
 Each candidate has exactly these keys:
 
@@ -162,8 +184,6 @@ candidate:
   surfaces: []
   support_evidence_refs: []
   confirm_or_reject_evidence: []
-  impact: "typed observed impact or unknown"
-  cost: "typed observed cost or unknown"
   stop_condition: "non-empty"
   catalog_locator: "relative locator or null"
   catalog_revision: "positive integer or null"
@@ -175,9 +195,17 @@ candidate:
 
 `selected_for_investigation` is a sorted list of candidate IDs whose
 `disposition` is `selected`. `planned_investigations` is a sorted list of
-future, declarative investigation intents keyed by candidate ID and contains no
+future, declarative investigation intents. Every item is an exact one-key
+object `{candidate_id}` whose non-empty string value is the corresponding
+selected candidate ID; no missing or additional key is valid. It contains no
 agent identity. `dispatch_admitted` is always `false`; selection and planning
 never authorize dispatch.
+
+`request_controls` has exactly one key. Its `discovery_limit` equals the
+validated active `policy.values.catalog_limit`, and
+`request_controls_digest` is the digest of that exact one-key mapping. Cost
+budget, impact, safe preference, relevant-result floors, fan-out admission and
+post-investigation accounting are not preparation controls.
 
 ## Deterministic identity and digest domains
 
@@ -186,7 +214,8 @@ never authorize dispatch.
   for exactly `demand_digest`, `ordered_source_digests`,
   `catalog_snapshot_digest`, `policy_digest`, and `request_controls_digest`.
 - `PID-02`: `catalog_snapshot_digest` is supplied by composed validated catalog
-  observation; it is `null` only for `absent`, `empty`, or `no-match`.
+  observation; it is non-null only for `loaded` and is `null` for `absent`,
+  `empty`, `no-match`, and `blocked`.
 - `PID-03`: `candidate_id` is `cat-` plus SHA-256 of canonical JSON for a
   catalogued candidate's validated `catalog_locator`, `catalog_revision`, and
   semantic payload; it is `gen-` plus SHA-256 of canonical JSON for
@@ -204,17 +233,57 @@ never authorize dispatch.
 
 Sort source digests by the ordered `sources` input, technologies and locators
 lexicographically, candidates by `candidate_id`, and every ID list
-lexicographically. Exact duplicates share a semantic digest and are represented
-without merge. Near duplicates remain separate with an observable relation.
+lexicographically. Each `duplicate_analysis` array contains exact two-key
+objects `{candidate_id, duplicate_of}`, sorted lexicographically by that pair
+and unique by `candidate_id`. Both IDs must name distinct existing candidates.
+`candidate_id` is the duplicate; `duplicate_of` is its canonical representative
+or reference and must have `duplicate_relation: none`. A representative does
+not receive the duplicate relation of the pair and may be referenced by
+multiple duplicates.
+The `candidate_id` in `exact_duplicates` has `duplicate_relation:
+exact-duplicate`; the one in `near_duplicates` has `duplicate_relation:
+near-duplicate`. Every candidate with either relation appears exactly once in
+the corresponding array, and no other candidate appears there. No
+`duplicate_of` may also occur as `candidate_id` in either array; chains,
+reciprocal pairs, and cycles are invalid within or across the arrays. Exact
+duplicates remain represented without merge; near duplicates remain separate
+with an observable relation and are not rejected merely for being near.
+Duplicate analysis has no separate semantic digest field or digest domain.
 
 ## Dispositions and stops
 
-Use `selected` only for candidates that are relevant, investigable, within
-policy controls, supported by observable provenance, and not exact duplicates.
-Use `rejected` for incompatible, irrelevant, unverifiable, invalid, duplicate,
-or over-budget candidates. Use `deferred` for otherwise plausible candidates
-whose evidence, cost, or policy decision remains insufficient. Never pad a
-floor, treat a score as mutation authority, or promote a candidate.
+Use `selected` only for candidates that are relevant, investigable, supported
+by observable provenance, valid and compatible, not exact duplicates, and
+within `discovery_limit`. Use `rejected` only for irrelevant, invalid,
+incompatible, unverifiable, or exact-duplicate candidates. Use `deferred` only
+for unresolved essential evidence, compatibility, or context, or for an
+otherwise eligible candidate excluded by `discovery_limit`. Cost and impact
+never select, reject, defer, rank, or identify a preparation candidate. Never
+pad a limit, treat a score as mutation authority, or promote a candidate.
+
+`disposition_reason` begins with exactly one machine-checkable reason code,
+followed optionally by ` | ` and observable detail:
+
+- `selected:essential-criteria-satisfied` for `selected`;
+- `rejected:irrelevant`, `rejected:invalid`, `rejected:incompatible`,
+  `rejected:unverifiable`, or `rejected:exact-duplicate` for `rejected`;
+- `deferred:essential-evidence`, `deferred:compatibility`,
+  `deferred:context`, or `deferred:discovery-limit` for `deferred`.
+
+An exact duplicate is always rejected with
+`rejected:exact-duplicate`. A near duplicate remains a distinct candidate and
+may not use the exact-duplicate reason. A selected candidate has non-empty
+`support_evidence_refs` and `confirm_or_reject_evidence`. The selected count
+never exceeds `discovery_limit`.
+
+## Version compatibility
+
+Schema v2 is the only preparation schema accepted for new selection. Existing
+schema-v1 artifacts are immutable historical evidence. Readers and consumers
+must reject v1 before candidate interpretation and require regeneration to a
+new separately approved versioned artifact. No reader, conversion, rewrite,
+migration, or fallback is permitted. Candidate IDs, preparation IDs, input
+fingerprints, and digests naturally recompute from the schema-v2 domains.
 
 Required catalog observations are `loaded`, `absent`, `empty`, `no-match`, and
 `blocked`. `blocked` is fail-closed: no catalogued candidate may be presented
@@ -225,8 +294,8 @@ permitted subsequent action; it does not invoke one.
 
 <instructions>
 - Validate exact output keys, allowed enums, required-empty arrays, canonical
-  ordering, ID uniqueness, digest reproduction, and candidate/disposition
-  consistency.
+  ordering, ID uniqueness, digest reproduction, request-controls equality and
+  digest, selected-count limit, and candidate/disposition semantics.
 - Validate root provenance once, catalog index/record parity through
   `lf-analytic-inference`, and index-first filtering against `PIR-INDEX-01`
   through `PIR-INDEX-04`.

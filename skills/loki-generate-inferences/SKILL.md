@@ -88,11 +88,11 @@ its required authority, provenance, and digest.
 
 Select one active policy: the validated explicit override when supplied,
 otherwise the composed active policy. Require
-`active_policy.values.catalog_limit` and
-`active_policy.values.cost_budget` to be present and valid under the composed
-policy contract; a missing or invalid value blocks. These policy values are
-inputs to deterministic internal control derivation, never new public
-parameters.
+`active_policy.values.catalog_limit` to be present and valid under the
+composed policy contract; a missing or invalid value blocks. This policy value
+is the sole input to deterministic pre-investigation control derivation and is
+never a new public parameter. Post-preparation cost budgets remain outside this
+command and do not influence candidate disposition.
 
 Resolve the canonical consumer root once from canonical `pwd` through the
 composed preparation capability. The caller cannot supply or override it.

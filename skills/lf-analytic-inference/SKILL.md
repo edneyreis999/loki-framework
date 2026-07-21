@@ -62,8 +62,7 @@ promotion.
   process working directory. Transient validation or derivation over
   caller-supplied objects does not require consumer state.
 - `retrieve` requires observed `technology_evidence` and a query describing
-  objectives, surfaces, signals, versions, evidence, risk, and cost
-  constraints.
+  objectives, surfaces, signals, versions, evidence, and a discovery limit.
 - `validate` requires one or more registry, index, record, event, snapshot, or
   policy objects. It is catalog-backed only when it reads consumer state or
   follows registry or catalog locators.
@@ -121,8 +120,7 @@ documentation path or `.loki` discovery may override that boundary.
   ranking reasons, deterministic derived state, or a non-applied maintenance
   proposal.
 - `partial`: valid usable results plus explicit exclusions, stale entries,
-  unavailable cost, uncertain technology, or fewer relevant results than the
-  requested floor.
+  uncertain technology, unresolved essential evidence, or unresolved context.
 - `insufficient`: no adequate catalog entry or required evidence was found.
 - `blocked`: invalid schema, policy, locator or lineage; conflicting event ID;
   untrusted or ambiguous consumer root; containment or ownership failure;
@@ -167,10 +165,13 @@ fabricated success.
 
 Use deterministic validation for schema, exact duplicates, IDs, revisions,
 locators, lineage, event replay, counters, score, ordering, limits, and policy
-digests. For persisted state, parse and canonicalize with Python stdlib only as
-defined by the contract, validate against `state-document-v2.xsd`, reject
-unknown structure, and compare canonical bytes before hashing. Unknown cost
-remains `unknown` or `unsupported`, never zero.
+digests. Pre-investigation retrieval and preparation never use cost or impact
+as candidate fields, ranking inputs, or eligibility gates. Post-boundary event,
+handoff, and derived-state cost remains `unknown` or `unsupported` when it is
+not observed, never zero. For persisted state, parse and canonicalize with
+Python stdlib only as defined by the contract, validate against
+`state-document-v2.xsd`, reject unknown structure, and compare canonical bytes
+before hashing.
 
 Every mutation is serialized and root-bound. It must revalidate root,
 ancestors, containment, symlinks, targets, hashes, gates, and approvals

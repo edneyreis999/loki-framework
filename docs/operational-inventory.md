@@ -65,12 +65,15 @@ não existe projection ou command físico separado.
 
 ### Contrato resumido de `loki-generate-inferences`
 
-O command deriva exatamente quatro controles internos:
-`discovery_limit=policy.catalog_limit`, `relevant_result_floor=null`,
-`cost_budget=policy.cost_budget` e `safe_preference=fail-closed`. O modo
-fail-closed nao preenche quota/floor, rejeita duplicatas exatas, preserva near
-duplicates separadas e adia candidatas de custo desconhecido quando a admissao
-no budget nao pode ser provada.
+O command deriva exatamente um controle interno:
+`request_controls={discovery_limit: policy.values.catalog_limit}`. Seleciona
+somente candidatos relevantes, investigaveis, sustentados por proveniencia
+observavel, validos/compativeis, nao duplicatas exatas e dentro do limite;
+rejeita irrelevantes, invalidos, incompativeis, inverificaveis e duplicatas
+exatas. Preserva near duplicates separadas e adia somente evidencia essencial,
+compatibilidade ou contexto ainda nao resolvido, ou candidato elegivel fora do
+`discovery_limit`. Custo e impacto nao pertencem ao candidato nem influenciam
+essa disposicao pre-investigacao.
 
 Depois de resolver digest, basename e versao por um snapshot do diretorio, a
 approval vincula diretorio canonico, target exato, basename/versao,

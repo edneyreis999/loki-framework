@@ -48,7 +48,7 @@ command_contract:
   required_commands: []
   validators:
     - "input, canonical-path, scope, approval and destination-collision validation"
-    - "preparation schema, root provenance, policy, index/record parity, locator and exact-dedup validation"
+    - "preparation schema v2, root provenance, policy, index/record parity, locator and exact-dedup validation"
     - "preparation identity, candidate provenance, command-specific matching, request-control and report-contract validation"
     - "handoff terminality, evidence sanitization, budget, target-overlap and report write-set validation"
   human_gates:
@@ -76,24 +76,20 @@ command_contract:
 3. Build the approved preparation envelope from normalized demand facts and
    digest, ordered permitted local-source locators, digests and facts, the
    optional approved policy, and one required `request_controls` mapping with
-   exactly the preparation-contract keys:
+   exactly the sole preparation-contract key:
 
    ```yaml
    request_controls:
-     discovery_limit: "<contract-valid bounded discovery control>"
-     relevant_result_floor: "<contract-valid floor or null>"
-     cost_budget: "<contract-valid bounded cost control>"
-     safe_preference: "<contract-valid deterministic preference>"
+     discovery_limit: "<validated active_policy.values.catalog_limit>"
    ```
 
-   Preserve the caller or approved-record provenance, authorization, and
-   canonical request-controls digest with the envelope whenever those are
-   required by the supplied policy. The invocation passes the exact four-key
-   mapping as `request_controls`; it does not add a command-defined control,
-   derive a second digest, or reinterpret a normalized control. The preparation
-   skill alone validates and normalizes these controls against the active
-   policy. They do not grant root, candidate, dispatch, or write authority to
-   this command.
+   Preserve the active-policy provenance, authorization, and canonical
+   request-controls digest with the envelope. The invocation passes the exact
+   one-key mapping as `request_controls`; it does not add a command-defined
+   control, derive a second digest, or reinterpret a normalized control. The
+   preparation skill alone validates and normalizes these controls against the
+   active policy. They do not grant root, candidate, dispatch, or write
+   authority to this command.
 4. Freeze the execution write set. With `destination: null`, the normal write
    set is empty. Otherwise it contains only the approved report file under one
    serial owner. An interaction-gate target may be added only after a material
@@ -122,6 +118,11 @@ blockers, and `minimum_next_path` in the command report and resume state. A
 `blocked` preparation result stops with its exact `minimum_next_path`; it is
 never retried or repaired locally.
 
+Accept only preparation schema v2. Reject a schema-v1 preparation before
+candidate interpretation and require regeneration to a new separately approved
+versioned artifact. Existing v1 artifacts remain immutable; do not rewrite,
+migrate, convert, or use a fallback reader.
+
 ## 3. Core validation and local routing
 
 For a `pre-investigation-complete` or usable `partial` result, validate the
@@ -136,20 +137,21 @@ resistance, collision behavior, and the frozen report write set against
 `root.consumer_root`. No second root resolution is permitted. This command
 creates no state root or catalog component.
 
-Preserve every preparation candidate, duplicate relation, disposition, and
+Preserve every schema-v2 preparation candidate, duplicate relation, disposition, and
 observable reason in the report. Start capability matching only from the
 validated `selected_for_investigation` list and corresponding immutable
 preparation candidates. A selection is eligibility for command-specific
 matching only: it is not dispatch admission, a handoff, an agent run, an
 investigation, or catalog mutation.
 
-For each selected candidate, decide whether bounded local resolution is
-sufficient or construct an investigation unit for Section 7. Local resolution
-is permitted only when it is trivial, bounded, read-only, low-risk, and cheaper
-than a handoff; record its exception, accepted risk, scope, validators, and
-validation owner. Agent matching, handoff identity, budget admission, dispatch,
-liveness, evidence, events, consolidation, and report materialization remain
-exclusively command responsibilities.
+Cost and impact are absent from the preparation candidate schema and never
+change preparation disposition. For each selected candidate, decide whether
+bounded local resolution is sufficient or construct an investigation unit for
+Section 7. Local resolution is permitted only when it is trivial, bounded,
+read-only, low-risk, and cheaper than a handoff; record its exception, accepted
+risk, scope, validators, and validation owner. Agent matching, handoff identity,
+budget admission, dispatch, liveness, evidence, events, consolidation, and
+report materialization remain exclusively command responsibilities.
 
 ## 4. Command-specific replanning and degradation
 
@@ -168,7 +170,8 @@ Do not modify the preparation core to make a later command decision fit.
 - Use `failed` only for a terminal command execution error without a valid
   result.
 
-Unknown or unsupported command-stage cost is never zero. Do not dispatch hidden
+Unknown or unsupported command-stage cost is never zero. This rule begins only
+after the immutable preparation boundary. Do not dispatch hidden
 work against a fictitious budget. Preserve the valid preparation result and
 completed command stages with the exact `minimum_next_path` so a retry
 converges without repeating accepted work.
@@ -272,7 +275,7 @@ no runtime identity or usage claim.
 
 The active v1 policy fixes `fan_out_limit: 2`, `cost_budget: 6` and
 `handoff_timeout_ticks: 3`. Validate the active policy digest before using
-these values. Optional request floors never change them.
+these values. The preparation `discovery_limit` never changes them.
 
 - Dispatch at most two handoffs concurrently.
 - Parallel handoffs must be independent in the DAG and have read-only targets
