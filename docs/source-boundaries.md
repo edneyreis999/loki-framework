@@ -57,7 +57,9 @@ antes de qualquer escrita; esta regra nao cria um leitor, conversor ou remocao
 automatico. Schema 1 permanece valido nas familias que o declaram
 explicitamente, e JSON de control plane nao e estado analitico persistido.
 
-A projecao retirada nao e fonte, destino nem fallback do pacote. A
+Uma projecao, instrucao ou contrato retirado nao e fonte, destino nem fallback
+do pacote. O pacote nao mantem compatibilidade retroativa: uma versao removida
+nao recebe reader, conversor, migracao ou instrucao condicional. A
 compatibilidade de dominio atual continua pertencendo a documentacao duradoura
-do consumidor; os fallbacks operacionais que continuem validos devem ser
-declarados pelo seu proprio contrato, nunca inferidos de um formato removido.
+do consumidor; fallbacks operacionais da versao atual devem ser declarados pelo
+seu proprio contrato e nunca podem interpretar um formato removido.

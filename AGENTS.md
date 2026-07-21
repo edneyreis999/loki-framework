@@ -21,6 +21,16 @@ Write Markdown with concise YAML frontmatter where existing artifacts use it. Co
 
 For documentation-only changes, review rendered Markdown structure and run the integrity commands above. When adding, renaming, or removing commands, skills, agents, templates, or docs, update `manifest.yaml` in the same change. For package policy changes, also check `docs/package-authoring-guardrails.md` for required validation and approval gates.
 
+## Current-Only Contracts
+
+Loki supports only the current canonical version of each instruction, contract,
+schema, template, asset and installed projection. Breaking changes are allowed.
+When replacing one of these artifacts, remove the superseded version and its
+references instead of preserving a compatibility reader, converter, migration
+or fallback. Retain historical evidence only outside the operational context.
+See `docs/package-authoring-guardrails.md` for the canonical policy and its
+required preflight and validation.
+
 ## Installation Workflow Routing
 
 When installing or synchronizing Loki into a consumer project, do not assume

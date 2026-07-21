@@ -38,6 +38,36 @@ Antes de escrever:
 5. Se a mudanca for normativa para o pacote, exija pelo menos `technical-review`.
 6. Se a mudanca relaxar politica, instalar em `.claude/**`, `.codex/**` ou `.agents/**`, sincronizar contexto duradouro no consumidor, ou promover regra duradoura, exija `approval`.
 
+## Contratos Atuais, Sem Compatibilidade Retroativa
+
+O Loki suporta somente a versao canonica atual de cada instruction, contract,
+schema, template, asset e projection instalada. Breaking changes sao
+permitidas: a Coreto e a unica consumidora do pacote e sincroniza a versao
+atual nos projetos consumidores quando necessario.
+
+Ao substituir um artefato normativo:
+
+1. Atualize a fonte canonica para a nova versao.
+2. Remova a versao supersedida, suas referencias, projections, fixtures e
+   caminhos de instalacao ou validacao que a mantinham operante.
+3. Nao crie nem preserve reader, tradutor, conversor, migracao, instrucao
+   condicional ou fallback para interpretar a versao removida.
+4. Faca o validator aceitar somente o contrato atual e rejeitar a forma
+   removida antes de interpreta-la ou escreve-la, quando houver leitura
+   estruturada envolvida.
+5. Preserve evidencia historica apenas em Git ou em artefatos transitorios;
+   ela nao pode permanecer como contexto operacional, fonte normativa ou rota
+   de fallback.
+
+Cada instrucao operacional adicional aumenta manutencao, ambiguidade e custo de
+contexto para a LLM. Prefira substituir integralmente e apagar a instrucao
+obsoleta a estende-la para comportar as regras nova e antiga.
+
+Esta regra trata compatibilidade entre versoes do Loki. Um fallback operacional
+da versao atual para indisponibilidade de uma ferramenta ou provedor nao e
+compatibilidade retroativa; ele deve ser declarado pelo contrato que o usa e
+nao pode interpretar um artefato supersedido.
+
 ## Superficies Duradouras vs Transitorias
 
 ### Superficies duradouras

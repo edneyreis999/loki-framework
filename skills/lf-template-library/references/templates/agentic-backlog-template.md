@@ -31,7 +31,7 @@ schema_version: 1
 ## Consultive Write Test Outcomes
 
 These items never change the run, task, phase, validator, approval or gate
-status. New writers emit this section; legacy backlog readers may ignore it.
+status. Readers must consume this current template version.
 
 | ID | Checkpoint | Review Handoff | Agent Run | Evidence | Coverage | Risk | Status | Reason | Description | Suggested Owner |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
