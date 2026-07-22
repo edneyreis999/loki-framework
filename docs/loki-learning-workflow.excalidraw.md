@@ -42,13 +42,12 @@ Backlog
 evidencia
 insuficiente ^learn-backlog
 
-Gates
-technical-review
-approval ^learn-gates
+Rota de pacote
+approval aplicavel ^learn-gates
 
 Aplicar e validar
-Writer → checks → auditor
-approved ou bloqueado ^learn-apply
+Writer → checks → Auditor
+independente: aprovado ou bloqueado ^learn-apply
 
 %%
 ## Drawing
@@ -86,10 +85,10 @@ approved ou bloqueado ^learn-apply
     {"id":"backlog-text","type":"text","x":1496,"y":255,"width":168,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":318,"version":1,"versionNonce":318,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Backlog\nevidencia\ninsuficiente","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Backlog\nevidencia\ninsuficiente","lineHeight":1.25,"baseline":50},
 
     {"id":"gates-box","type":"rectangle","x":1740,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#fff4e6","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":319,"version":1,"versionNonce":319,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"gates-text","type":"text","x":1756,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":320,"version":1,"versionNonce":320,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"text":"Gates\ntechnical-review\napproval","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Gates\ntechnical-review\napproval","lineHeight":1.25,"baseline":50},
+    {"id":"gates-text","type":"text","x":1756,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":320,"version":2,"versionNonce":320,"isDeleted":false,"boundElements":null,"updated":2,"link":null,"locked":false,"text":"Rota de pacote\napproval aplicavel","fontSize":16,"fontFamily":1,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Rota de pacote\napproval aplicavel","lineHeight":1.25,"baseline":50},
 
     {"id":"apply-box","type":"rectangle","x":1990,"y":60,"width":190,"height":86,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"#f3f0ff","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":3},"seed":321,"version":1,"versionNonce":321,"isDeleted":false,"boundElements":[],"updated":1,"link":null,"locked":false},
-    {"id":"apply-text","type":"text","x":2006,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":322,"version":2,"versionNonce":322,"isDeleted":false,"boundElements":null,"updated":2,"link":null,"locked":false,"text":"Writer → checks → auditor\napproved ou bloqueado","fontSize":16,"fontFamily":5,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Writer → checks → auditor\napproved ou bloqueado","lineHeight":1.25,"baseline":50},
+    {"id":"apply-text","type":"text","x":2006,"y":75,"width":158,"height":55,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":null,"seed":322,"version":3,"versionNonce":322,"isDeleted":false,"boundElements":null,"updated":3,"link":null,"locked":false,"text":"Writer → checks → Auditor\nindependente: aprovado ou bloqueado","fontSize":16,"fontFamily":5,"textAlign":"center","verticalAlign":"middle","containerId":null,"originalText":"Writer → checks → Auditor\nindependente: aprovado ou bloqueado","lineHeight":1.25,"baseline":50},
 
     {"id":"arrow-a","type":"arrow","x":190,"y":112,"width":60,"height":0,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":2},"seed":401,"version":1,"versionNonce":401,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"points":[[0,0],[60,0]],"lastCommittedPoint":null,"startBinding":null,"endBinding":null,"startArrowhead":null,"endArrowhead":"arrow"},
     {"id":"arrow-b","type":"arrow","x":440,"y":112,"width":60,"height":0,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":2,"strokeStyle":"solid","roughness":1,"opacity":100,"groupIds":[],"frameId":null,"roundness":{"type":2},"seed":402,"version":1,"versionNonce":402,"isDeleted":false,"boundElements":null,"updated":1,"link":null,"locked":false,"points":[[0,0],[60,0]],"lastCommittedPoint":null,"startBinding":null,"endBinding":null,"startArrowhead":null,"endArrowhead":"arrow"},

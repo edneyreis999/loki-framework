@@ -36,8 +36,7 @@ configuração `llm-artifact-quality-v1`/`rubric-v2`/`prompt-v2`,
 `correction_replay_required`, `gates_invalidated` e `next_destination`. Projete
 `needs-human-review` como `blocked` com
 `block_reason: human_review_required`. Após correção ou decisão humana, declare
-o rerun obrigatório do auditor; não o confunda com `technical-review` ou
-`approval`.
+o rerun obrigatório do auditor; não o confunda com `approval`.
 
 Se o package target for human-only, reporte `not-applicable` com justificativa,
 profile completo e dez skips; use `second_family_calibration: not-run`, registre
@@ -90,7 +89,7 @@ elegibilidade, target exato com before/after/dry validation quando proposto,
 Writer/auditor/gates e estado de mutação. Preserve status `unreviewed` até
 promoção posterior realmente aprovada e validada. Reorganização pode aparecer
 como proposta gated e somente como aplicada após targets/before-after/lineage
-exatos, Writer, auditor, `technical-review`, approval e validators. Purge pode
+exatos, Writer, auditor, approval e validators. Purge pode
 aparecer somente como proposal/dry-run sem mutação; nunca reporte purge físico
 nesta task. Nunca trate elegibilidade ou
 similaridade como autoridade e sempre reporte `catalog_mutation_applied`.

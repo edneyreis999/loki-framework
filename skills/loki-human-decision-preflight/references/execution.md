@@ -169,7 +169,9 @@ writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 - `research-consent` antes de qualquer busca externa, com query exata.
 - `human-validation` para comportamento perceptivel, runtime, integracoes,
   estado persistido ou output gerado.
-- `technical-review` se a preflight propuser alterar artefato consolidado.
+- Se a preflight identificar candidato de alteração do pacote, registre apenas
+  a rota para futura `loki-continuous-improvement` com
+  `destination_scope: package`; a preflight não invoca Writer nem Auditor.
 
 ## Packaging Checks
 

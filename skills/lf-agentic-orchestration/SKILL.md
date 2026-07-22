@@ -139,8 +139,9 @@ parallel writes, hand off to planning and execution, and record completion.
   ambiguous and no local source resolves it.
 - `approval` for installation, policy changes, sensitive writes or durable
   promotion.
-- `technical-review` for command, skill, agent, template, validator or
-  consolidated documentation changes.
+- A package candidate is recorded for a later
+  `loki-continuous-improvement` execution with `destination_scope: package`;
+  this orchestration does not invoke package Writer or Auditor.
 - `<human_validation_gate>` for behavior on `<consumer_runtime_surfaces>`.
 
 ## Validation

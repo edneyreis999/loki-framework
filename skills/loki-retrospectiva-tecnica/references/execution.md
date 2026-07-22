@@ -262,8 +262,9 @@ falsa, mas nao autoriza delecao, purge, reorganizacao ou alteracao de score.
 merge, reorganizacao ou purge do catalogo.
 
 `loki-continuous-improvement` e o unico proximo owner permitido para avaliar,
-deduplicar e decidir destino duradouro com seus validators, technical review e
-approvals. Esta retrospectiva apenas persiste candidatos `unreviewed` dentro do
+deduplicar e decidir destino duradouro com seus validators e approvals. Para
+destino `package`, somente sua ramificação confirmada coordena Writer, checks e
+Auditor independente. Esta retrospectiva apenas persiste candidatos `unreviewed` dentro do
 proprio target autorizado.
 
 ## Write Ownership And Serialization
@@ -296,7 +297,6 @@ writer futuro, evidencias e riscos. Conveniencia nao justifica a excecao.
 
 ## Human Gates
 
-- `technical-review` para recomendacao de mudanca duradoura.
 - `approval` para promocao posterior ou sincronizacao de contexto duradouro.
 
 ## Packaging Checks

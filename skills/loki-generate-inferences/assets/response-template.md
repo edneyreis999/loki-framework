@@ -65,7 +65,6 @@ exactly `- Validators: []` instead of the repeated block.
     - Status: `{{passed | failed | blocked | not-run}}`
     - Evidence: {{non-empty observed evidence or not-run reason}}
 - Exact-target approval: `{{pending | resolved | invalidated | not-applicable}}`
-- Technical review: `{{pending | resolved | not-applicable}}`
 
 ## Zero execution boundary
 

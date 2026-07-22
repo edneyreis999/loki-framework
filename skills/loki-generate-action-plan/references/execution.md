@@ -158,12 +158,16 @@ justificativa.
 - `interview` para escopo, risco, prioridade ou referencia bloqueante.
 - `approval` separado antes de criar o diretorio e para escrita sensivel futura.
 - `human-validation` para comportamento, runtime, integracoes, persistencia ou output.
-- `technical-review` quando o plano alterar artefato ou politica consolidada.
+- Quando o plano identificar futura alteração do pacote, descreva somente o
+  encaminhamento para `loki-continuous-improvement` com
+  `destination_scope: package`; gerar o plano não invoca Writer nem Auditor.
 
 ## Packaging Checks
 
-Gerar o plano nao altera o pacote. Quando o escopo futuro tocar o pacote, cada
-task deve incluir guardrails e technical-review aplicaveis.
+Gerar o plano não altera o pacote. Quando o escopo futuro tocar o pacote, cada
+task deve incluir targets exatos, approval aplicável e o roteamento exclusivo
+pela ramificação `destination_scope: package` de
+`loki-continuous-improvement`.
 
 ## Stop Conditions
 

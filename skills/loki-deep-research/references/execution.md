@@ -127,7 +127,9 @@ evidence sanitizada ou declara gap, sem fallback de retrospectiva.
 - Implementacao posterior aponta para `loki-tech-analysis`/plano.
 - `interview` para pergunta/escopo/destino ambiguo.
 - `approval` para pesquisa longa/cara/paga/login/scraping/dados pessoais.
-- `technical-review` para recomendacao duradoura do pacote/projeto.
+- Para recomendação que possa mudar o pacote, registre somente candidato para
+  futura `loki-continuous-improvement`; esta pesquisa não invoca Writer nem
+  Auditor do pacote.
 - `human-validation` para comportamento, integracao, compliance ou negocio.
 - Pare quando validator/gate/approval falhar ou estiver pendente.
 

@@ -93,7 +93,10 @@ skill-name/
 - Do not create auxiliary README/changelog files inside a skill unless a platform explicitly requires them.
 - Do not leave package validation implicit; packaged skill work must finish with structural and self-containment checks.
 
-## Required Gates
+## Required Concrete Controls
 
-- `technical-review` for changes to packaged skills.
 - `approval` for installation, promotion to normative framework behavior, or broad workflow changes.
+- A package candidate is recorded for a later
+  `loki-continuous-improvement` execution; only its confirmed
+  `destination_scope: package` branch coordinates package Writer, checks and
+  Auditor.

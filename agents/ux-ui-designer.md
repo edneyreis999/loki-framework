@@ -51,7 +51,6 @@ required_skills:
   - "rpg-maker-mz-visustella-plugin-parameters quando menus, options, save, message defaults, UI layout ou parametros globais dependerem do Plugin Manager VisuStella"
   - "rpg-maker-mz-visustella-compat-diagnostics quando UX/UI falhar por conflito, load order, dependencia, visual glitch, save/options/debug ou sintoma runtime VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor fluxo ou layout sem restricoes suficientes de engine, input, resolucao, fonte ou componentes reais."
@@ -208,7 +207,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -226,7 +224,6 @@ separados.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos usabilidade,
   legibilidade, leitura, input, pacing, feedback visual/sonoro ou comportamento
   perceptivel.

@@ -90,7 +90,9 @@ private reasoning into a stronger claim than it is.
 
 ## Required Gates
 
-- `technical-review` for changes to this contract, collector, template, or
-  validator.
+- Changes to this package contract, collector, template, or validator are
+  routed only through `loki-continuous-improvement` with
+  `destination_scope: package`; the confirmed branch applies its scoped Writer,
+  deterministic checks, independent Auditor, and any applicable approval.
 - `<human_validation_gate>` before declaring behavior on
   `<consumer_runtime_surfaces>` validated.

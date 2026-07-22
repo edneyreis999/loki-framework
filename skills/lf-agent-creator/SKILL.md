@@ -168,7 +168,10 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - Se o agente for empacotado, a mudanca respeita `docs/package-authoring-guardrails.md`.
 - Se houver projecao Codex, o TOML em `codex/agents/` existe, acompanha o nome base do agente e parseia com `tomllib`.
 - O agente nao generaliza aprendizado local sem approval.
-- A mudanca em agente consolidado tem `technical-review` ou `approval`.
+- Para uma mudança de pacote, use somente a ramificação
+  `destination_scope: package` de `loki-continuous-improvement`, com approval
+  aplicável, Writer, checks determinísticos e Auditor independente; trabalho do
+  consumidor não aciona esse fluxo.
 - O contrato declara capacidades/modos, handoffs de sucesso/falha, validação,
   stop conditions, temporários, testes e completion record conforme a checklist
   24/24 da referência.
@@ -198,8 +201,7 @@ Use tambem quando houver duvida entre criar um agente, uma skill ou um comando.
 - Nao criar fan-out recursivo sem necessidade explicita.
 - Nao instalar automaticamente em `.claude/**`, `.codex/**` ou `.agents/**`.
 
-## Required Gates
+## Required Concrete Controls
 
-- `technical-review` para mudanca em agente, command, skill, template, validator ou doc consolidado.
 - `approval` para permissao de escrita, nova politica duradoura, instalacao ou promocao normativa.
 - `<human_validation_gate>` quando o agente propuser validar comportamento em `<consumer_runtime_surfaces>`.

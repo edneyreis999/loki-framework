@@ -110,8 +110,8 @@ documentation path or `.loki` discovery may override that boundary.
    identical `event_id` as a no-op and a divergent payload under the same ID as
    a blocking conflict.
 5. Report promotion, reorganization, and purge-review thresholds only as
-   eligibility. Return a proposal plus required gates; never perform the
-   mutation.
+   eligibility. Return a proposal plus its concrete approval requirements;
+   never perform the mutation.
 6. Preserve origin labels so catalogued, generated, rejected, selected,
    investigated, validated, and promoted states remain distinguishable.
 
@@ -186,7 +186,7 @@ approval bound to the exact root, IDs, paths, hashes, policy digest, and dry-run
 manifest digest. It removes only enumerated catalog-owned targets and known
 empty directories, never a broad subtree.
 
-Packaged contract changes require `technical-review`. Durable promotion,
-reorganization, merge, or policy change requires applicable review and human
-approval. Purge additionally requires a separate just-in-time approval bound to
-exact inference IDs, canonical catalog-owned paths, and a dry-run digest.
+Durable promotion, reorganization, merge, or policy change requires the
+applicable human approval. Purge additionally requires a separate just-in-time
+approval bound to exact inference IDs, canonical catalog-owned paths, and a
+dry-run digest.

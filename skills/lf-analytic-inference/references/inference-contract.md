@@ -270,8 +270,8 @@ or future cutover. Whether `.loki` is ignored or versioned remains a consumer
 decision.
 
 Promotion, reorganization, rewrite, deduplication, and merge require evidence,
-lineage, deterministic validation, `technical-review`, and applicable human
-approval. Score only establishes eligibility.
+lineage, deterministic validation, and applicable human approval. Score only
+establishes eligibility.
 
 A physical purge is terminal and irreversible. Its deterministic, zero-write
 dry-run records canonical consumer and state roots, technology/catalog IDs,

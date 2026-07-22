@@ -116,7 +116,7 @@ validators e planos futuros.
 
 ## Human Gates
 
-- <interview/approval/human-validation/technical-review ou `none`>
+- <interview/approval/human-validation ou `none`>
 
 ## Affected Docs
 

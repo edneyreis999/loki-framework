@@ -71,8 +71,10 @@ seus contratos; não carregue essa skill para melhoria contínua não relacionad
 
 `allowed_writes` limita-se a Markdown transitório do plano ativo para candidato,
 backlog, approval e diff proposto; e à superfície duradoura exata somente quando
-a task autorizar, o destino tiver sido confirmado e `technical-review` mais
-`approval` estiverem satisfeitos.
+a task autorizar, o destino tiver sido confirmado e o approval aplicável estiver
+satisfeito. Para `destination_scope: package`, a sequência obrigatória é
+envelope aprovado quando aplicável, um `framework-artifact-writer`, checks
+determinísticos e um `framework-artifact-quality-auditor` independente.
 
 `forbidden_writes` inclui evidência transitória como destino final; qualquer
 `AGENTS.md`, `CLAUDE.md`, command, skill, agent, template, validator, doc
@@ -184,8 +186,8 @@ Aceite `execution_knowledge_entry` schema v1 validada como `learning_source`
 adicional. Confira source refs, capture ID, run/task/agent lineage,
 materialidade, claim typing/confidence, gaps, sanitização e promotion status
 `unreviewed`. Deduplicate por lineage/capture ID e preserve contradições. Uma
-entry não substitui `retrospective_source`, root-cause learning, technical
-review ou approval; capture nunca promove automaticamente.
+entry não substitui `retrospective_source`, root-cause learning ou approval;
+capture nunca promove automaticamente.
 
 ## Conditional Analytic-Inference Intake And Reconciliation
 
@@ -302,10 +304,10 @@ como aprovação.
 Proposta de promoção usa `destination_scope: consumer-operational-state` e
 lista targets exatos de registry/índice/registro/eventos, before/after,
 eventos e snapshot esperados, lineage/provenance, dry validation e riscos. Para
-qualquer aplicação, exija exatamente `technical-review` e approval vinculada à
-operação/root/targets/digests; depois, `technical-implementer` é o único state
-writer. O package writer nunca recebe esses targets. Sem ambos os gates, esta
-etapa registra somente proposta/dry-run root-bound:
+qualquer aplicação, exija approval vinculada à operação/root/targets/digests;
+depois, `technical-implementer` é o único state writer. O package writer nunca
+recebe esses targets. Sem esse controle, esta etapa registra somente
+proposta/dry-run root-bound:
 `catalog_mutation_applied: false`.
 
 ### Reorganization proposal contract
@@ -320,9 +322,9 @@ todo conhecimento validado; perda, ambiguidade ou lineage irresolúvel bloqueia.
 Operações permitidas na proposta são `generalize`, `merge`, `deduplicate`,
 `rewrite` e `reorder`. Similaridade semântica é somente sinal para review,
 nunca identidade, igualdade ou autorização de merge/deduplication. Antes de
-qualquer aplicação, exija exatamente `technical-review` e approval vinculada à
-proposta, consumer root, targets e digests; então serialize os targets sob owner
-único `technical-implementer`, rode validação determinística de schema,
+qualquer aplicação, exija approval vinculada à proposta, consumer root, targets
+e digests; então serialize os targets sob owner único
+`technical-implementer`, rode validação determinística de schema,
 identidade, lineage, paridade e snapshot. O state writer não escreve contratos
 do pacote e nenhum parecer substitui os gates. Sem todos os controles, registre
 somente `reorganization_proposed: true` e `catalog_mutation_applied: false`.
@@ -496,8 +498,9 @@ exata da busca ao usuário.
    preveniria repetição, before/after, validators e gates.
 4. Escolha `propose-patch`, `apply-approved-patch`, `record-only` ou
    `block-and-ask`.
-5. Aplique `interview`, `technical-review`, `approval` e pesquisa consentida
-   antes das ações dependentes.
+5. Aplique `interview`, `approval` e pesquisa consentida antes das ações
+   dependentes. Para destino `package`, siga exclusivamente a sequência
+   concreta Writer/checks/Auditor descrita neste contrato.
 6. Para `destination_scope: package`, entregue o envelope aprovado ao
    `framework-artifact-writer` somente após o preflight de manutenção interna;
    se falhar, bloqueie com retorno executável ao orquestrador. Quando passar,
@@ -528,9 +531,9 @@ exata da busca ao usuário.
    `block_reason: human_review_required`. Finding corrigível
    dentro do envelope volta ao Writer, repete checks e exige replay completo da
    auditoria.
-   Ampliação material invalida gates e retorna à proposta, review e approval;
-   `needs-human-review` é `blocked` e retorna ao `technical-review`, seguido
-   obrigatoriamente de nova auditoria.
+   Ampliação material invalida controles e retorna à proposta e ao approval
+   aplicável; `needs-human-review` é `blocked` e retorna ao `orchestrator` para
+   uma decisão humana específica, seguido obrigatoriamente de nova auditoria.
 7. Para consumer docs project-specific, delegue exclusivamente ao `catalogador`
    com o par caller/mode fixo. Para outros destinos, delegue ao Write Agent
    apropriado e preserve seus gates e validators existentes.
@@ -589,7 +592,7 @@ parecer completo bloqueia sem fallback.
   protected nunca é purge-review eligible e nenhuma mutação é inferida.
 - Candidato especializado permanece `unreviewed` e usa `record-only`, `block`
   ou `propose-promotion`; proposta lista targets, before/after, dry validation,
-  Writer, auditor read-only, technical-review e approval.
+  Writer, auditor read-only e approval.
 - Reorganização exige score inclusivo `<= 2`, targets/before-after/lineage
   exatos, preservação de protected/validated knowledge, gates prévios, Writer
   único, auditor read-only e validação determinística; similaridade não é
@@ -631,8 +634,6 @@ parecer completo bloqueia sem fallback.
 ## Human Gates
 
 - `interview`: conflito de destino, ambiguidade de escopo ou generalização.
-- `technical-review`: command, skill, agent, template, validator, manifest ou
-  doc consolidado.
 - `approval`: promoção normativa, política duradoura, instalação,
   sincronização de docs/index/AGENTS/CLAUDE ou escrita sensível.
 - `research-consent`: fonte externa atual material, com query exata.
@@ -735,7 +736,6 @@ continuous_improvement_candidate:
     before: ""
     after: ""
   required_gates:
-    - "technical-review"
     - "approval"
   verification:
     - "diff revisado"
@@ -818,7 +818,6 @@ continuous_improvement_candidate:
       lineage_after: "<proposed lineage | null>"
       dry_validation: []
       required_gates:
-        technical_review: "pending | approved | rejected | not-applicable"
         approval: "pending | approved | rejected | not-applicable"
       writer:
         agent: "technical-implementer | none"
@@ -860,7 +859,7 @@ continuous_improvement_candidate:
       residual_risks: []
     iteration: 0
     gates_invalidated: false
-    next_destination: "writer | technical-review | orchestrator | none"
+    next_destination: "writer | orchestrator | none"
 ```
 
 `analytic_inference` é condicional. Para candidato genérico,
@@ -943,6 +942,6 @@ de retomada; nunca substitua o writer.
 Prefer validated retrospective outputs, evidence audits, completion records
 and validated execution-knowledge entries as `learning_sources`. Deduplicate
 candidates by evidence lineage/capture ID and keep
-contradictions as conflicts for human/technical review. A transient evidence
+contradictions as conflicts for a specific human decision. A transient evidence
 source never directly promotes a durable rule, and raw runtime traces are not a
 default input.

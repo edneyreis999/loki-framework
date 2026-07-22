@@ -2,7 +2,7 @@
 
 ## Status
 
-<completed | partial | blocked | stopped | pending-technical-review | pending-human-validation | pending-approval | interview>
+<completed | partial | blocked | stopped | pending-human-validation | pending-approval | interview>
 
 ## Resumo
 
@@ -38,7 +38,7 @@
 
 ## Write Test review consultivo
 
-<policy: requested_frequency, effective_frequency, source, terminal_scope, selected reviewer/reason e policy_digest; checkpoints: checkpoint_id, boundary, coverage_digest/handoffs, status, review_agent_raw_status, execution_status_effect sempre none, evidence, findings, risk/backlog refs, reason e next_action. Para zero material, registrar skipped-no-material-write e zero invocacoes. Raw blocked/findings/degradacao nunca substituem o Status externo, validators, gates, approvals ou technical-review>
+<policy: requested_frequency, effective_frequency, source, terminal_scope, selected reviewer/reason e policy_digest; checkpoints: checkpoint_id, boundary, coverage_digest/handoffs, status, review_agent_raw_status, execution_status_effect sempre none, evidence, findings, risk/backlog refs, reason e next_action. Para zero material, registrar skipped-no-material-write e zero invocacoes. Raw blocked/findings/degradacao nunca substituem o Status externo, validators, gates, approvals ou human gates>
 
 ## Retrospectiva técnica
 

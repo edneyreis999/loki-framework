@@ -57,7 +57,7 @@
 - Package writer receives `.loki`: false
 - State writer receives package contracts/docs: false
 - State validation reviewer: <runtime-qa read-only + status | none>
-- Gates antes de durable write: <technical-review + approval + fontes>
+- Controles antes de durable write: <approval vinculado + fontes + validators>
 - Catalog mutation applied: <false for proposal/dry-run; true only after exact gates, index-last write and post-validation>
 - Approved lifecycle result: <not-run | index-last applied + post-validation | blocked + exact residue>
 
@@ -70,7 +70,7 @@
 - Before/after e lineage: <estado preservado | none>
 - Protected/validated knowledge preservation: <validated result | pending | blocked | none>
 - Writer: <technical-implementer state writer | none>
-- Technical-review + approval: <status e fontes | none>
+- Approval vinculado: <status e fontes | none>
 - Deterministic validators: <schema/identity/lineage/parity/snapshot + results | none>
 - Reorganization applied: <true somente após todos os controles; senão false>
 - Commit point/result: <not-run | technology index published last | blocked + before/after-commit residue>
@@ -119,7 +119,7 @@
 - `iteration`: <número>
 - `invalidated_by_correction` / `correction_replay_required`: <true/false + estado do replay completo>
 - `gates_invalidated`: <true/false e quais>
-- `next_destination`: <writer | technical-review | orchestrator | none>
+- `next_destination`: <writer | orchestrator | none>
 
 `completed` ou `applied` neste destino é válido somente em um destes casos:
 
@@ -143,7 +143,7 @@ resposta existentes.
 ## Handoffs, gates e approvals
 
 <origem, destino, estado, evidência e controles concluídos/pendentes; não
-confundir parecer automatizado do auditor com technical-review ou approval>
+confundir parecer automatizado do auditor com approval>
 
 ## Backlog
 

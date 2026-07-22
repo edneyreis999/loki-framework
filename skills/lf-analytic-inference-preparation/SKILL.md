@@ -157,5 +157,7 @@ boundary, and validators are normative in
 - Accept only preparation schema v3. Existing schema-v1 and schema-v2 artifacts remain
   immutable and must be regenerated as a new approved versioned artifact; do
   not rewrite, migrate, interpret for new selection, or use a fallback reader.
-- Packaged-skill changes require `technical-review`; this skill does not grant
-  or satisfy that gate.
+- Packaged-skill changes are handled only by the confirmed
+  `destination_scope: package` branch of `loki-continuous-improvement`; this
+  skill neither grants package-write authority nor invokes its Writer or
+  Auditor.

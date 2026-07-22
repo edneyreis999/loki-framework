@@ -139,7 +139,7 @@ agent_contract:
     codex: "Project to codex/agents/*.toml or profile for strong enforcement."
   response_format: ""
   required_gates:
-    - "<interview | approval | human-validation | technical-review>"
+    - "<interview | approval | human-validation>"
   success_destination: "<orchestrator or named next owner>"
   failure_destination: "<orchestrator or correcting owner>"
   stop_conditions:

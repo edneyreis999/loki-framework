@@ -56,7 +56,6 @@ required_skills:
   - "rpg-maker-mz-visustella-progression-economy quando o design tocar progressao, AP/SP, skills, lojas, moedas, custos, requisitos, itens, equipamentos ou economia VisuStella"
   - "rpg-maker-mz-visustella-events-presentation quando o design tocar eventos, mensagens, pictures, busts, movimento, options, save/debug ou apresentacao VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor experiencia ou tuning sem evidencia suficiente de playtest, publico ou restricoes tecnicas."
@@ -229,7 +228,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -252,7 +250,6 @@ separadamente pelo orquestrador.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos gameplay feel,
   balanceamento, pacing, feedback, compreensao do jogador ou comportamento
   perceptivel.

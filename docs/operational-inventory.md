@@ -113,8 +113,11 @@ consumidor e nao artefato do pacote. O consumer root e resolvido internamente
 do `pwd` canonico, e o command deve iniciar na raiz do projeto consumidor.
 `technical-implementer` e o writer
 exclusivo sob envelope `task_scoped_writer`, consumer root canonico, targets
-exatos, validators e gates. Promocao e reorganizacao exigem technical review e
-approval root-bound antes do write. Purge exige ainda dry-run completo e
+exatos e validators. Promocao e reorganizacao exigem approval root-bound
+vinculada a `operation_id`, operacao, `consumer_root` canonico, policy ID/digest,
+`target_manifest_digest_sha256`, targets exatos, `source_locator` e freshness;
+a identidade, containment, targets e hashes sao
+revalidados imediatamente antes do write. Purge exige ainda dry-run completo e
 approval JIT independente, single-use e ligada a root, paths, hashes e digests
 exatos.
 `framework-artifact-writer` escreve somente contratos, schemas, scripts,

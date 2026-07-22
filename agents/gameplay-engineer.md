@@ -53,7 +53,6 @@ required_skills:
   - "rpg-maker-mz-visustella-action-sequences quando a mecanica usar Battle Core Action Sequences, Custom Action Sequence, MECH Action Effect, Common Events de acao ou timing de impacto"
   - "rpg-maker-mz-visustella-compat-diagnostics quando sintomas runtime, conflitos, load order, performance, no-effect tags ou cleanup de Action Sequence forem parte do problema"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode subestimar blast radius quando superficies runtime, dados, plugins ou estado persistido estiverem incompletos."
@@ -203,7 +202,6 @@ parallel_agent_response:
   model_class: "coding"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -221,7 +219,6 @@ ficam separados. Nao declare runtime validado.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos gameplay feel, UI flow,
   pacing, audio, save/load, persistencia, integracao ativa ou comportamento
   perceptivel.

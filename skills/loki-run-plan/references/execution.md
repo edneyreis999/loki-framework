@@ -151,7 +151,7 @@ somente por `WTR-CONSULTIVE-01..02`, preservando o campo canônico
 `review_agent_raw_status`. `execution_status_effect` permanece `none`; findings
 podem alimentar riscos/evidence e, no fluxo agentic, backlog/digest, mas nunca
 alteram status de task/fase/plano, validators, approvals, human gates,
-technical-review ou iniciam retrabalho, retry ou rollback.
+nem iniciam retrabalho, retry ou rollback.
 
 ## Context And Source Handoffs
 
@@ -370,14 +370,13 @@ controles. `loki-continuous-improvement` é o único promotor.
 Quando a task tocar command, skill, agent, template, validator, manifest ou
 política de pacote, execute também os checks de packaging declarados na task,
 incluindo atualização de inventário quando aplicável, scan de referências
-proibidas e `technical-review`. Não invente que um check passou.
+proibidas e auditoria independente aplicável. Não invente que um check passou.
 
 ## Human Gates And Non-Ceremonial Resolution
 
 - `approval`: política, instalação, promoção ou escrita sensível.
 - `human-validation`: comportamento perceptível, runtime, integração ativa,
   estado persistido ou artefato gerado.
-- `technical-review`: mudança em command, skill, agent, template ou validator.
 - `interview`: fase, task, path, requisito ou decisão material ambígua.
 
 A coluna `Human Loop` e os gates de uma task aprovada documentam a natureza da
@@ -390,8 +389,8 @@ Pare e marque o status humano real somente se houver decisão nova fora do
 plano, desvio necessário, impossibilidade de executar como descrito, validator
 falho/inconclusivo, escrita sensível sem autorização específica ou validação
 runtime/perceptível ainda não confirmada. Explique por que o plano não bastou e
-liste concretamente o que falta. Não use `technical-review` como checkpoint
-cerimonial.
+liste concretamente o que falta. Não crie checkpoint cerimonial para decisão
+humana pendente.
 
 ## Stop Conditions
 

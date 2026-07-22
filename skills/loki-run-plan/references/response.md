@@ -75,15 +75,15 @@ retrospectiva iniciada ou recomendada.
 ## Material Human Input Disclaimer
 
 Emita disclaimer final destacado somente quando restar input humano material
-real, como `pending-technical-review`, `pending-human-validation`,
-`pending-approval`, `interview` ou bloqueio equivalente. Não emita disclaimer
-quando a task seguiu o plano aprovado e nenhuma decisão humana material resta.
+real, como `pending-human-validation`, `pending-approval`, `interview` ou
+bloqueio equivalente. Não emita disclaimer quando a task seguiu o plano
+aprovado e nenhuma decisão humana material resta.
 O disclaimer deve ser a última seção, usar o status exato e listar ações
 concretas:
 
 ```markdown
 --------------
-pending-technical-review
+pending-approval
 ------------
 
 - Aprovar ou ajustar ...

@@ -278,7 +278,7 @@ input: |
   Authority order: approved task envelope, package policy, examples.
   Required input: exact target_files. If absent, stop and request target_files.
   Allowed write: only target_files. Output: patch plus validation evidence.
-  Gate: technical-review after mechanical validation.
+  Gate: mechanical validation before the independent Auditor.
   Success destination: independent auditor. Failure destination: orchestrator.
 perturbation: "none"
 expected_invariant: "role, authority order, required input, exact write boundary, output, gate, stop, and both destinations are recovered"
@@ -345,11 +345,11 @@ neutral_task: "Compare identity, authority, permissions, gates, stops, and respo
 input: |
   <source>
   role=read-only auditor; writes=none; finding=>blocked; inconclusive=>blocked;
-  success_destination=technical-review; failure_destination=writer
+  success_destination=orchestrator; failure_destination=writer
   </source>
   <projection>
   role=auditor; writes=none; finding=>blocked; inconclusive=>approved-with-note;
-  success_destination=technical-review; failure_destination=writer
+  success_destination=orchestrator; failure_destination=writer
   </projection>
 perturbation: "projection changes the terminal state for inconclusive evidence"
 expected_invariant: "the pair is non-parity because inconclusive behavior differs"
@@ -459,7 +459,8 @@ input: |
   No source priority, replacement, date precedence, or conflict rule is provided.
   Normative uncertainty rule: an unresolved conflict between authoritative
   sources must return status=needs-human-review and
-  destination=technical-review; never invent precedence or conditionally approve.
+  destination=orchestrator for a specific human decision; never invent
+  precedence or conditionally approve.
 perturbation: "two normative sources conflict without a precedence rule"
 expected_invariant: "terminal status is needs-human-review; no conditional approval or invented priority"
 pass: "observation names the conflict and routes to human review"
@@ -544,15 +545,15 @@ without replay.
 Apply this order without subjective override:
 
 1. Unresolved conflict between authoritative sources =>
-   `needs-human-review`, destination `technical-review`.
+   `needs-human-review`, destination `orchestrator` for a specific human
+   decision.
 2. Invalid negative applicability or any other applicable finding,
    inconclusive, omitted fixture, unjustified skip, failed bias control, or
    material low-confidence result => `blocked`.
 3. Justified human-only classification => nested/internal `not-applicable`,
    external `approved`, `block_reason: none`, destination calling workflow;
    existing gates remain required.
-4. Otherwise => `approved`, destination calling workflow or its declared
-   technical-review gate.
+4. Otherwise => `approved`, destination calling workflow.
 
 Handoff fields:
 
@@ -561,7 +562,7 @@ Handoff fields:
   `llm_consumption_quality` or approval claim.
 - Auditor to Writer on `blocked`: complete result, exact evidence, impact,
   minimum required resolution, and replay requirement.
-- Auditor to `technical-review` on `needs-human-review`: conflicting normative
+- Auditor to orchestrator on `needs-human-review`: conflicting normative
   locators, missing priority decision, confidence, and limitations.
 - Auditor to the calling workflow on `approved` or `not-applicable`: complete
   result and evidence, without granting new write authority.

@@ -35,8 +35,11 @@ Antes de escrever:
      `docs/index.xml`, `AGENTS.md` ou `CLAUDE.md`;
    - ou apenas artefato transitorio do plano ativo.
 4. Se o aprendizado pertencer apenas a task, interaction, build, validation ou retrospectiva da fase atual, nao promova para o pacote; mantenha local ou faca handoff apropriado.
-5. Se a mudanca for normativa para o pacote, exija pelo menos `technical-review`.
-6. Se a mudanca relaxar politica, instalar em `.claude/**`, `.codex/**` ou `.agents/**`, sincronizar contexto duradouro no consumidor, ou promover regra duradoura, exija `approval`.
+5. Se a mudanca for normativa para o pacote, use exclusivamente
+   `loki-continuous-improvement` com `destination_scope: package`, envelope
+   escopado, `framework-artifact-writer`, checks e
+   `framework-artifact-quality-auditor` independente.
+6. Se a mudanca relaxar politica, instalar em `.claude/**`, `.codex/**` ou `.agents/**`, sincronizar contexto duradouro no consumidor, ou promover regra duradoura, exija `approval` aplicavel ao contrato concreto.
 
 ## Contratos Atuais, Sem Compatibilidade Retroativa
 
@@ -220,7 +223,7 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - Quando uma regra util falhar essa checklist, mova para artefato
   `internal-only`; se for historico, remova; se for reutilizavel, reescreva em
   termos neutros; se a decisao nao for objetiva, bloqueie para
-  `technical-review`.
+  decisao humana explicita.
 - O instalador deve apontar destinos `.agents/**` e `.codex/**` para fontes
   dentro do package root, nunca para artefatos instalados locais.
 - Alteracoes em comandos, skills ou agentes instalaveis devem atualizar
@@ -348,8 +351,8 @@ Este gate vale somente para criacao, alteracao ou promocao com
    irrelevantes.
 4. Finding, inconclusao, baixa confianca material, fixture aplicavel omitido,
    skip injustificado, bias check falho ou validator falho bloqueiam. Conflito
-   entre fontes normativas retorna `needs-human-review` para
-   `technical-review`; nunca produz approval condicional.
+   entre fontes normativas retorna `needs-human-review` e exige decisao humana
+   explicita; nunca produz approval condicional.
 5. Toda correcao invalida o parecer anterior. Repita checks mecanicos, nove
    criterios, fixtures aplicaveis, bias controls e revisao isolada sobre o
    estado corrigido antes de reutilizar qualquer resultado terminal.

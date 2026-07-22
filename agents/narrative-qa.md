@@ -52,7 +52,6 @@ required_skills:
   - "rpg-maker-mz-visustella-plugin-commands quando rotas, Common Events, map events, choices ou payloads dependerem de comandos VisuStella"
   - "rpg-maker-mz-visustella-compat-diagnostics quando QA narrativo detectar no-effect tags, save/load, conflitos, order, dependencias ou sintomas runtime VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode perder contradicoes se rotas, flags, saves ou estados narrativos reais nao forem fornecidos."
@@ -212,7 +211,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -232,7 +230,6 @@ evidence permanece com o orquestrador.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos percurso jogado, leitura,
   pacing, continuidade, escolhas, rotas, save/load ou comportamento
   perceptivel.

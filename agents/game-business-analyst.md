@@ -51,7 +51,6 @@ required_skills:
   - "<technology_required_skills>"
   - "rpg-maker-mz-project-inventory quando o projeto for RPG Maker MZ e o agente precisar de inventario compartilhado antes de concluir handoff"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode ocultar conflito entre especialistas se a evidencia recebida estiver incompleta."
@@ -178,7 +177,7 @@ o orquestrador.
 - `<sensitive_write_patterns>` fora de task aprovada, approval e gates exigidos.
 - Editar runtime, engine, dados, assets, saves, builds, plugins ou artefatos
   gerados do consumidor fora de envelope `task_scoped_writer` aprovado.
-- Marcar technical review, human validation, playtest, story acceptance,
+- Marcar human validation, playtest, story acceptance,
   gameplay, UI, audio, pacing, balanceamento ou comportamento runtime como
   aprovado sem resposta humana explicita.
 - Embutir regras de engine; tecnologia deve entrar por
@@ -224,7 +223,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -247,7 +245,6 @@ separadamente pelo orquestrador.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos gameplay feel, leitura,
   compreensao do jogador, pacing, UI, audio, narrativa, rotas, balanceamento ou
   comportamento perceptivel.

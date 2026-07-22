@@ -308,5 +308,7 @@ inferences tipadas e limites de coverage; nao inventa semantica especializada.
 Atualize este contrato quando um dominio ganhar/perder responsabilidade, quando
 o schema de coverage mudar ou quando validators demonstrarem que um requirement
 nao e estavel ou nao separa `map` de `deep`. Alteracoes sao package policy e
-exigem technical review. O catalogo/index do package e mantido em tarefa
-separada; este documento nao cria consumer docs.
+seguem a rota `destination_scope: package`: envelope e approval aplicavel,
+`framework-artifact-writer`, checks e
+`framework-artifact-quality-auditor` independente. O catalogo/index do package
+e mantido em tarefa separada; este documento nao cria consumer docs.

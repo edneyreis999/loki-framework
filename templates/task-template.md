@@ -99,7 +99,7 @@ de contexto. Nesses casos, `scoped_write_owner: "orchestrator"` exige
 
 ## Human Loop
 
-- Gate: <none | interview | approval | human-validation | technical-review>
+- Gate: <none | interview | approval | human-validation>
 - Required decision: <decisao ou `none`>
 
 ## Definition Of Done

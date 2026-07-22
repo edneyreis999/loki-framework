@@ -46,7 +46,6 @@ loki_generate_inferences_response:
       evidence: "non-empty observed evidence or not-run reason"
   gate_state:
     exact_target_approval: "pending | resolved | invalidated | not-applicable"
-    technical_review: "pending | resolved | not-applicable"
   zero_execution_boundary:
     dispatch_authorized: false
     investigation_handoffs_dispatched: 0
@@ -149,7 +148,6 @@ model. Element names map one-to-one to model fields; collections use repeated
   </validators>
   <gate_state>
     <exact_target_approval></exact_target_approval>
-    <technical_review></technical_review>
   </gate_state>
   <zero_execution_boundary>
     <dispatch_authorized>false</dispatch_authorized>

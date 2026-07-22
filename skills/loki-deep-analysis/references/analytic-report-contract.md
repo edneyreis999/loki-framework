@@ -278,8 +278,9 @@ It never writes an inference index, record, snapshot, event ledger, alias,
 redirect, tombstone, policy, manifest, consumer overlay, or other catalog-owned
 surface. Events and candidates remain embedded in the immutable report.
 `loki-continuous-improvement` is the only downstream workflow allowed to assess
-durable reconciliation, and it must apply its own writer, validator,
-technical-review and human-approval gates.
+durable reconciliation. Only its confirmed `destination_scope: package` branch
+may apply a package Writer, deterministic checks, independent Auditor, and any
+applicable approval.
 
 Consumer operational state is read-only in this command. An absent or empty
 registry is never bootstrapped here.

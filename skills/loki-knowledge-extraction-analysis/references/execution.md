@@ -105,9 +105,10 @@ escopo, evidências e riscos. Pare diante de overlap ou permissão insuficiente.
 
 ## Human Gates
 
-Use `interview` para fonte, escopo ou destino insuficiente; `technical-review`
-para recomendação que afete artefato Loki duradouro; `approval` para promoção,
-instalação ou escrita sensível; e consentimento explícito para pesquisa externa.
+Use `interview` para fonte, escopo ou destino insuficiente; para recomendação
+que possa afetar artefato Loki, registre somente candidato para futura
+`loki-continuous-improvement`; use `approval` para promoção, instalação ou
+escrita sensível, e consentimento explícito para pesquisa externa.
 Pare quando qualquer controle obrigatório estiver ausente, pendente, rejeitado
 ou falho. Validator não substitui decisão humana.
 

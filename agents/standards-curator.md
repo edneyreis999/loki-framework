@@ -19,7 +19,6 @@ disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_gates:
-  - technical-review
   - approval
 risks:
   - "Generalizacao prematura pode promover regra com evidencia insuficiente."
@@ -96,7 +95,6 @@ standard_proposal:
   destination_scope: "package | consumer-context | backlog"
   recommended_delegate: "catalogador | lf-skill-creator | lf-command-creator | lf-agent-creator | none"
   required_gates:
-    - "technical-review"
     - "approval"
   why_this_surface: ""
   proposed_change: ""
@@ -105,7 +103,6 @@ standard_proposal:
 
 ## Gates
 
-- `technical-review` quando a proposta tocar artefato normativo do pacote.
 - `approval` obrigatorio antes de qualquer promocao normativa ou sincronizacao para contexto duradouro do consumidor.
 - Quando a classificacao for `project-specific`, prefira `catalogador` para
   `docs/**/*.md` e `docs/index.xml`. Use `AGENTS.md` ou `CLAUDE.md` do

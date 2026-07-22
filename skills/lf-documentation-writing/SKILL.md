@@ -229,9 +229,11 @@ so downstream profiles can distinguish why the contract was activated.
 
 Stop on unresolved authority conflicts, destination or write-scope ambiguity,
 missing mandatory local references, failed validators, or a required approval.
-Durable or normative package documentation requires `technical-review`, and
-installation or normative promotion requires the approval declared by the
-calling workflow.
+Durable or normative package documentation is changed only through the
+confirmed `destination_scope: package` branch of
+`loki-continuous-improvement`, with its scoped Writer, deterministic checks,
+independent Auditor, and applicable approval. Installation or normative
+promotion requires the approval declared by the calling workflow.
 
 ## Quality Checklist
 

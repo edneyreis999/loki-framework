@@ -52,7 +52,6 @@ required_skills:
   - "rpg-maker-mz-visustella-plugin-commands quando eventos de mapa, Common Events, spawns, movement, pictures ou payloads dependerem de comandos VisuStella"
   - "rpg-maker-mz-visustella-compat-diagnostics quando mapa/evento falhar por conflito, order, dependencia, performance ou sintoma runtime VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor layout, gating ou encounter flow sem mapa real, playtest ou restricoes tecnicas suficientes."
@@ -196,7 +195,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -213,7 +211,6 @@ e separe completion/evidence. Nao declare level runtime validado.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos ritmo espacial,
   dificuldade, legibilidade, navegacao, encounter feel ou comportamento
   perceptivel.

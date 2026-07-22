@@ -136,4 +136,6 @@ Validate that the returned record:
 - contains no documentation write or broad-folder-scan authorization;
 - supplies `minimum_next_input` for every `blocked` result.
 
-Packaged changes to this skill require `technical-review`.
+Packaged changes to this skill are handled only by the confirmed
+`destination_scope: package` branch of `loki-continuous-improvement`; this
+read-only preflight never grants write authority or invokes package agents.

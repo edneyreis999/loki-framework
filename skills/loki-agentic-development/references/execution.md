@@ -108,9 +108,12 @@ com targets/limits/controls; trabalho material delegado ou exceção; checkpoint
 experience; zero must-ask pendente antes do plano; zero overlap paralelo; plano
 executável; validators/evidência ou gap explícito por fase; zero
 write fora de escopo. Aplique interview para decisões materiais pré-plano,
-approval para instalação/política/sensível, human-validation para runtime e
-technical-review para artefatos duradouros. Pare se qualquer controle falhar ou
-estiver pendente; validator não substitui gate humano.
+approval para instalação, política ou escrita sensível, e human-validation para
+runtime. Quando esta execução identificar um candidato de pacote, registre somente o
+encaminhamento para uma futura `loki-continuous-improvement` com
+`destination_scope: package`; não invoque Writer nem Auditor do pacote. Pare se
+qualquer controle concreto falhar ou estiver pendente; validator não substitui
+gate humano.
 
 Audite estaticamente que os metadados de enum/default coincidem com o executor,
 sem validar ou aplicar o input runtime no parent; valide que a propagação não

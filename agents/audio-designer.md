@@ -50,7 +50,6 @@ required_skills:
   - "rpg-maker-mz-visustella-events-presentation quando audio cue, scene timing, messages, movement, pictures, options ou apresentacao VisuStella coordenarem feedback sonoro"
   - "rpg-maker-mz-visustella-plugin-commands quando audio cue depender de map events, Common Events, movement, message flow ou payloads de comandos VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor cues sem asset list, mix real, runtime, plataforma ou validacao auditiva."
@@ -193,7 +192,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -210,7 +208,6 @@ e separe completion/evidence. Nao declare audio validado.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos audio, mix, timing,
   feedback sonoro, conforto auditivo ou comportamento perceptivel.
 - `approval` antes de qualquer escrita sensivel futura em assets, runtime ou

@@ -14,7 +14,7 @@ command_contract:
   required_skills: [lf-analytic-inference-preparation]
   required_commands: []
   validators: ["input and active-policy validation", "command-input to capability-input closure", "request-controls canonical JSON and digest", "canonical consumer-root and destination-directory containment", "basename/version resolution from one directory snapshot", "symlink, target-absence, approval-binding, and immediate collision-recheck validation", "analytic-inference-preparation contract validators", "canonical fenced JSON, human-summary, and Markdown structure validation", "zero-boundary validation"]
-  human_gates: ["approval bound to canonical directory, exact resolved target, basename/version, before-state, and one create", "technical-review for public command interface and direct-write exception"]
+  human_gates: ["approval bound to canonical directory, exact resolved target, basename/version, before-state, and one create"]
   stop_conditions: ["missing or invalid input, source, approval, active policy value, request control, root, destination directory, resolved target, validator, or gate", "collision after approval, symlink, traversal, containment failure, overwrite, retry, or scope ambiguity", "preparation blocked or execution-boundary violation", "attempted investigation, dispatch, handoff, web research, CI, downstream invocation, or catalog mutation"]
   resume_contract: "Return normalized input identity, canonical root and destination directory, exact resolved target, basename/version, before-state, source, policy and request-controls digests, preparation ID/digest/status, write completion, validators, gate state, blockers, and minimum next permitted action; never rely on conversation memory."
 ```
@@ -128,7 +128,7 @@ direct_write_exception:
   allowed_writes: ["create the exact target once with exclusive-create semantics after immediate collision recheck"]
   forbidden_writes: ["overwrite", "delete", "rename", "post-approval renumber or collision retry", "create parent", "all other paths", "<consumer_root>/.loki/**", "catalog mutation", "CI", "downstream workflows"]
   validators: ["canonical containment", "existing non-symlink destination directory", "deterministic basename/version resolution", "approval binding", "collision recheck", "preparation validation", "canonical JSON/digest", "Markdown structure", "zero boundary"]
-  gates: ["exact-target approval", "technical-review"]
+  gates: ["exact-target approval"]
   success: "one validated artifact exists at the exact target"
   failure: "no write before create failure; otherwise retain the single artifact and report partial"
   future_writer_opportunity: "Use an adapter-provided scoped writer only if it can own this exact single target without creating a handoff or changing the zero-boundary contract."
@@ -155,13 +155,12 @@ runs web research or CI, invokes a downstream command, or mutates the
 analytic-inference catalog. A human may separately route a valid artifact to a
 later workflow; that route is not an authority to invoke it here.
 
-## LLM-facing artifact profile and independent audit
+## LLM-facing artifact profile
 
 This command bundle is `agent-facing rich` documentation. It is LLM-facing
 because it is `instruction-bearing`, `routing`, and a
 `validation-contract`. The writer records the following profile as structural
-evidence only. It is not an `llm_consumption_quality` result and grants no
-approval, gate resolution, or delivery authority.
+evidence only. It does not grant approval or delivery authority.
 
 ```yaml
 llm_artifact_profile:
@@ -197,36 +196,4 @@ llm_artifact_profile:
       reason: "The bundle contains normative templates and schemas, not a non-normative example or demonstration that could grant broader authority."
     - id: "LLM-Q-09-NORMATIVE-UNCERTAINTY"
       reason: "The bundle declares source priority and no unresolved conflict between two authoritative sources."
-```
-
-Before the public-command technical-review gate may be resolved, an independent
-read-only auditor must inspect the actual current four bundle files under the
-canonical `llm-artifact-quality-v1` contract. The auditor, not this writer,
-must emit a complete `llm_consumption_quality` result with all applicable
-rubric criteria, every selected fixture result and every justified skipped
-fixture marked not-applicable, bias checks, one isolated
-review or more, and an explicit status. Delivery remains blocked unless that
-result is `approved`; a prior result is invalidated after any bundle correction.
-The required audit evidence locator, selected profile, and four inspected paths
-are part of the technical-review record; no author may fill or self-approve the
-auditor result.
-
-```yaml
-llm_consumption_quality_requirement:
-  required: true
-  producer: "independent read-only auditor"
-  writer_may_produce: false
-  profile_evidence: "skills/loki-generate-inferences/references/execution.md#LLM-facing artifact profile and independent audit"
-  inspected_paths:
-    - "skills/loki-generate-inferences/SKILL.md"
-    - "skills/loki-generate-inferences/references/execution.md"
-    - "skills/loki-generate-inferences/references/response.md"
-    - "skills/loki-generate-inferences/assets/response-template.md"
-  required_contract_version: "llm-artifact-quality-v1"
-  required_rubric: "rubric-v2"
-  required_prompt: "prompt-v2"
-  required_fixture_partition: "the single ten-ID selected/skipped partition in llm_artifact_profile above"
-  required_result_keys: [contract_version, rubric, prompt, applicable, status, profile_evidence, heuristic_results, fixture_results, bias_checks, isolated_review_count, second_family_calibration, limitations, invalidated_by_correction]
-  required_status_for_gate_resolution: "approved"
-  correction_behavior: "invalidate-prior-result-and-rerun-independent-audit"
 ```

@@ -79,7 +79,7 @@ command_contract:
   required_skills: ["<technology_required_skills>"]
   required_commands: []
   validators: ["<validator>"]
-  human_gates: ["<interview | approval | human-validation | technical-review>"]
+  human_gates: ["<interview | approval | human-validation>"]
   stop_conditions: ["<missing input, permission, validator, gate, handoff or scope>"]
   resume_contract: "<state sufficient to resume without conversation memory>"
 ```

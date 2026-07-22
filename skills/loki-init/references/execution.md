@@ -58,7 +58,6 @@ command_contract:
     - "approval"
     - "interview"
     - "human-validation"
-    - "technical-review only for package-contract changes"
   stop_conditions:
     - "missing input, permission, dependency, writer, validator, gate, handoff destination or safe resume state"
   resume_contract: "loki_init_state plus immutable packet/batch artifacts is sufficient without conversation memory or a live agent instance"
@@ -587,8 +586,10 @@ documentado, ownership scan focal, Markdown/frontmatter parse e `git diff
   ambiguo.
 - `human-validation` antes de declarar clareza/navegabilidade nao deterministica
   ou comportamento de runtime, build, gameplay, UI, audio e persistencia.
-- `technical-review` para alteracao deste package contract, agent, skill,
-  template ou validator; nao e substituido por teste automatico.
+- Alteração deste package contract, agent, skill, template ou validator é
+  encaminhada somente para futura `loki-continuous-improvement` com
+  `destination_scope: package`; este fluxo não invoca Writer nem Auditor do
+  pacote, e teste automático não concede autoridade de escrita.
 
 ## Stop Conditions
 

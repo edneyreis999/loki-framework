@@ -375,16 +375,13 @@ unavailability, incompatibility, timeout, operational error, or
 - does not change task, phase, plan, or implementation status;
 - does not satisfy, invalidate, replace, or weaken validators;
 - does not satisfy, invalidate, replace, or weaken approvals or human gates;
-- does not satisfy or replace required `technical-review`;
 - does not initiate automatic rework, retry, correction, or rollback;
 - contributes only consultive findings, risks, backlog, digest, and evidence
   references.
 
 Only active-policy conflict, checkpoint persistence failure, checkpoint
 integrity failure, or an independent validator/gate from the implementation
-workflow may block execution. The consultive mapping does not alter the
-separate blocking semantics of the package's independent technical-review
-audit over the implementation patch.
+workflow may block execution.
 
 ## Canonical Review Outputs
 
@@ -484,15 +481,15 @@ decisoes humanas e validators em uma execucao rastreavel.
     pronta; nao encerrar entre tasks. Quando a plataforma oferecer compactacao
     de contexto, ela pode ocorrer depois do checkpoint, mas sua ausencia/falha
     nunca bloqueia a continuacao pelo estado persistido.
-19. Quando uma task tiver `pending-technical-review` ou qualquer input humano
-    material pendente, persista esse estado no checkpoint. Só emita o disclaimer
-    destacado na resposta terminal causada por esse bloqueio real, usando o
-    status exato como titulo e bullets concretos do que falta esclarecer,
-    aprovar ou validar:
+19. Quando uma task tiver `pending-human-validation`, `pending-approval`,
+    `interview` ou outro input humano material pendente, persista esse estado no
+    checkpoint. Só emita o disclaimer destacado na resposta terminal causada
+    por esse bloqueio real, usando o status exato como titulo e bullets
+    concretos do que falta esclarecer, aprovar ou validar:
 
     ```markdown
     --------------
-    pending-technical-review
+    pending-approval
     ------------
 
     - Aprovar ou ajustar ...
@@ -537,8 +534,8 @@ decisoes humanas e validators em uma execucao rastreavel.
 - Registros de `domain_context_preflight` por task/agent com durable roots/docs,
   freshness, conflicts, gaps, source precedence, result e next input.
 - Disclaimer final destacado quando o status depender de input humano material
-  nao resolvido pelo plano aprovado, como `technical-review`,
-  `human-validation`, `approval`, `interview` ou outro gate pendente.
+  nao resolvido pelo plano aprovado, como `human-validation`, `approval`,
+  `interview` ou outro gate pendente.
 - Recomendacao de retrospectiva ao fim da fase.
 - Entry refs ou estados degradados de execution knowledge, sem promoção.
 
@@ -580,8 +577,6 @@ decisoes humanas e validators em uma execucao rastreavel.
   fora do escopo aprovado.
 - `human-validation` para comportamento perceptivel, runtime, integracoes,
   estado persistido ou artefatos gerados.
-- `technical-review` para mudanca em command, skill, agent, template ou
-  validator.
 
 ## Human Gate Resolution Policy
 
@@ -595,7 +590,8 @@ decisoes humanas e validators em uma execucao rastreavel.
   cumprir o que estava descrito, validator falho/inconclusivo, escrita sensivel
   nao autorizada ou validacao perceptivel/runtime ainda nao confirmada.
 - Quando parar, registre por que o plano nao bastou e liste as decisoes
-  concretas pendentes. Nao use `technical-review` como checkpoint cerimonial.
+  concretas pendentes. Nao crie checkpoint cerimonial para uma decisao humana
+  pendente.
 
 ## Validators
 

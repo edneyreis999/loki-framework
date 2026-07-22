@@ -29,8 +29,8 @@ CATALOG_KEYS = {"schema_version", "catalog_id", "technology", "aliases", "active
 CATALOG_ENTRY_KEYS = {"inference_id", "revision", "status", "summary", "technologies", "surfaces", "objectives", "signals", "locator"}
 RECORD_KEYS = {"schema_version", "inference_id", "revision", "status", "statement", "applicability", "investigation", "provenance", "lineage", "snapshot"}
 EVENT_KEYS = {"schema_version", "event_id", "sequence", "source", "inference_id", "inference_revision", "stage", "outcome", "reason", "agent_capability", "cost"}
-LIFECYCLE_REQUEST_KEYS = {"schema_version", "operation_id", "operation", "technology", "catalog_id", "policy_id", "policy_digest_sha256", "index_entry", "record", "events", "technical_review"}
-APPROVAL_KEYS = {"schema_version", "approval_type", "status", "consumed", "issued_after_dry_run", "operation_id", "operation", "consumer_root", "policy_id", "policy_digest_sha256", "technical_review_digest_sha256", "target_manifest_digest_sha256", "targets", "source_locator"}
+LIFECYCLE_REQUEST_KEYS = {"schema_version", "operation_id", "operation", "technology", "catalog_id", "policy_id", "policy_digest_sha256", "index_entry", "record", "events"}
+APPROVAL_KEYS = {"schema_version", "approval_type", "status", "consumed", "issued_after_dry_run", "operation_id", "operation", "consumer_root", "policy_id", "policy_digest_sha256", "target_manifest_digest_sha256", "targets", "source_locator"}
 STAGES = {"selected", "investigated", "validated", "rejected", "material-finding", "task-helped", "false-positive", "repeated-evidence", "stale"}
 STAGE_COMPONENT = {
     "selected": "selected_count", "investigated": "investigated_count", "validated": "validated_count",
@@ -716,7 +716,7 @@ def require_event_derived_snapshot(record: dict[str, Any], events: list[dict[str
 
 def _validate_lifecycle_request(request: Any, policy: dict[str, Any], values: dict[str, Any]) -> dict[str, Any]:
     request = _exact_object(request, LIFECYCLE_REQUEST_KEYS, "LIFECYCLE_REQUEST_KEYS")
-    if request.get("schema_version") != 1:
+    if request.get("schema_version") != 2:
         raise StateError("LIFECYCLE_SCHEMA_VERSION")
     require_segment(request.get("operation_id"), "OPERATION_ID")
     operation = request.get("operation")
@@ -726,9 +726,6 @@ def _validate_lifecycle_request(request: Any, policy: dict[str, Any], values: di
     require_segment(request.get("catalog_id"), "CATALOG_ID")
     if request.get("policy_id") != policy["policy_id"] or request.get("policy_digest_sha256") != policy["approved_candidate_digest_sha256"]:
         raise StateError("POLICY_BINDING_MISMATCH")
-    review = request.get("technical_review")
-    if not isinstance(review, dict) or set(review) != {"status", "source_locator"} or review.get("status") != "approved" or not isinstance(review.get("source_locator"), str) or not review["source_locator"]:
-        raise StateError("TECHNICAL_REVIEW_REQUIRED")
     record = _validate_record(request.get("record"))
     entry = _validate_catalog_entry(request.get("index_entry"), technology, record)
     status = entry["status"]
@@ -916,9 +913,8 @@ def lifecycle_proposal(consumer_root: Path, source: str, request_path: Path, pol
     catalog_applied = catalog_before == hashlib.sha256(live_payload(proposed_catalog, "catalog")).hexdigest()
     registry_applied = registry_before == desired_registry_hash
     already_applied = immutable_observed and catalog_applied and registry_applied
-    technical_review_digest = digest_value(request["technical_review"])
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "operation_id": request["operation_id"],
         "operation": request["operation"],
         "consumer_root": str(consumer_root),
@@ -930,8 +926,6 @@ def lifecycle_proposal(consumer_root: Path, source: str, request_path: Path, pol
         "revision": entry["revision"],
         "policy_id": policy["policy_id"],
         "policy_digest_sha256": policy["approved_candidate_digest_sha256"],
-        "technical_review": request["technical_review"],
-        "technical_review_digest_sha256": technical_review_digest,
         "replayed_event_ids": replayed,
         "publication_order": [target["locator"] for target in targets],
         "commit_point": commit_point,
@@ -953,7 +947,7 @@ def _validate_approval(approval: Any, proposal: dict[str, Any]) -> None:
     approval = _exact_object(approval, APPROVAL_KEYS, "APPROVAL_KEYS")
     manifest = proposal["proposal"]
     expected = {
-        "schema_version": 1,
+        "schema_version": 2,
         "approval_type": "analytic-inference-lifecycle-mutation",
         "status": "approved",
         "consumed": False,
@@ -963,7 +957,6 @@ def _validate_approval(approval: Any, proposal: dict[str, Any]) -> None:
         "consumer_root": manifest["consumer_root"],
         "policy_id": manifest["policy_id"],
         "policy_digest_sha256": manifest["policy_digest_sha256"],
-        "technical_review_digest_sha256": manifest["technical_review_digest_sha256"],
         "target_manifest_digest_sha256": proposal["target_manifest_digest_sha256"],
         "targets": manifest["targets"],
     }

@@ -19,7 +19,6 @@ disallowedTools:
   - MultiEdit
   - NotebookEdit
 required_gates:
-  - technical-review
   - approval
 risks:
   - "Extrair demais pode transferir ruido para o orquestrador em vez de reduzir contexto."
@@ -111,7 +110,7 @@ Nenhuma. Este agente e read-only.
 - Promover aprendizado duradouro ou classificar destino final como decisao
   normativa.
 - Criar relatorio Markdown fora do retorno estruturado ao orquestrador.
-- Marcar `technical-review`, `approval`, research consent ou human validation
+- Marcar `approval`, research consent ou human validation
   como satisfeitos.
 
 ## Digest Procedure
@@ -212,8 +211,6 @@ retrospective_digest:
 
 ## Gates
 
-- `technical-review` se o digest alimentar mudanca em artefato normativo do
-  pacote.
 - `approval` antes de qualquer promocao duradoura, sincronizacao para contexto
   do consumidor, instalacao ou escrita sensivel.
 - `<human_validation_gate>` quando a retrospectiva depende de comportamento

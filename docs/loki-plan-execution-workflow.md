@@ -152,10 +152,14 @@ execucao.
     request, approval e output permanece control plane, nao estado de catalogo.
     O pacote distribui somente contratos, schemas, scripts, fixtures e policy:
     nunca catalogo de producao, seed ou overlay.
-17. Promocao e reorganizacao em `.loki` exigem validators, technical review e
-    approval root-bound antes da mutacao. Purge exige dry-run completo e uma
-    approval JIT independente, posterior, single-use e vinculada a root, IDs,
-    paths, hashes e digests exatos. Nenhum score autoriza write ou delete.
+17. Promocao e reorganizacao em `.loki` exigem validators e approval root-bound
+    antes da mutacao. A approval vincula `operation_id`, operacao,
+    `consumer_root` canonico, policy ID/digest,
+    `target_manifest_digest_sha256`, targets exatos, `source_locator` e
+    freshness; revalide root, containment, targets e hashes imediatamente antes
+    do write. Purge exige dry-run completo e uma approval JIT independente,
+    posterior, single-use e vinculada a root, IDs, paths, hashes e digests
+    exatos. Nenhum score autoriza write ou delete.
 18. Tasks de docs duradouros do consumidor pertencem exclusivamente ao
     `catalogador`, caller `loki-run-plan`, mode `task_scoped_writer`.
     Indisponibilidade bloqueia; nenhum fallback escreve esses targets.
@@ -247,9 +251,10 @@ execucao.
   owner exclusivo, validators e gates suficientes.
 - Nao trate `.loki` como docs do consumidor nem como artefato do pacote.
   `framework-artifact-writer` e `catalogador` nunca escrevem esse state root.
-- Pare antes de promocao ou reorganizacao em `.loki` sem technical review e
-  approval root-bound. Para purge, pare sem dry-run e approval JIT propria,
-  posterior e ainda nao consumida.
+- Pare antes de promocao ou reorganizacao em `.loki` sem validators e approval
+  root-bound com os bindings requeridos, ou se a revalidacao pre-write falhar.
+  Para purge, pare sem dry-run e approval JIT propria, posterior e ainda nao
+  consumida.
 - Pare se o preflight pessoal nao registrar fontes, freshness, conflitos,
   lacunas e suficiencia do contexto. Nao autocorrija docs nesse preflight.
 - Se uma task exigir docs do consumidor, atribua ao `catalogador`; sua

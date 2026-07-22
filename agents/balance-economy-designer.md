@@ -52,7 +52,6 @@ required_skills:
   - "rpg-maker-mz-visustella-battle-mechanics quando tuning tocar dano, cura, estados, passives, TP, ATB, AI, Aggro, targeting ou gauges VisuStella"
   - "rpg-maker-mz-visustella-compat-diagnostics quando tuning falhar por ordem, dependencias, notetags sem efeito, conflitos ou sintomas runtime VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor tuning sem playtest, telemetria, curva existente ou restricoes tecnicas suficientes."
@@ -201,7 +200,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -218,7 +216,6 @@ e separe completion/evidence. Nao declare balanceamento validado.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos balanceamento,
   dificuldade, economia, progressao, pacing ou tuning.
 - `approval` antes de qualquer escrita sensivel futura em dados, formulas,

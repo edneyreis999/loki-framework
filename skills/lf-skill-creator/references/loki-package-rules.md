@@ -87,8 +87,10 @@ file: "skills/example-skill/SKILL.md"
 
 Use:
 
-- `technical-review` for packaged command, skill, agent, template, validator, or consolidated doc changes;
 - `approval` for installation, policy changes, or normative promotion;
+- for a confirmed package destination, only
+  `loki-continuous-improvement` coordinates the scoped Writer, deterministic
+  checks and independent Auditor;
 - `<human_validation_gate>` when behavior in `<consumer_runtime_surfaces>` requires manual validation.
 
 ## Minimum Validation

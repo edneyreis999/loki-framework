@@ -230,8 +230,10 @@ humano.
 - `approval` especifico para alvo fora de `/docs`.
 - `human-validation` para coerencia, clareza e navegabilidade que nao possam
   ser comprovadas deterministicamente; registre roteiro e evidencia esperada.
-- `technical-review` para mudancas no command bundle, `catalogador`, roteamento,
-  manifest, install scopes ou validators do pacote.
+- Uma necessidade de mudar command bundle, `catalogador`, roteamento, manifest,
+  install scopes ou validators do pacote é apenas registrada para futura
+  `loki-continuous-improvement` com `destination_scope: package`; este fluxo não
+  invoca Writer nem Auditor do pacote.
 
 ## Packaging Checks
 

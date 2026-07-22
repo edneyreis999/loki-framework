@@ -136,8 +136,10 @@ recursos roteados. Validadores automáticos não substituem gates humanos.
 - Nao criar comando que permita escrita sensivel sem owner, validator e approval.
 - Nao promover aprendizado tecnico de retrospectiva para command core; crie ou atualize skill especializada.
 
-## Required Gates
+## Required Concrete Controls
 
-- `technical-review` para mudanca em comando, skill, agent, template, validator ou doc consolidado.
 - `approval` para nova politica duradoura, instalacao, escrita sensivel ou promocao normativa.
 - `<human_validation_gate>` quando o comando altera ou valida comportamento em `<consumer_runtime_surfaces>`.
+- Quando uma execução identificar candidato de pacote, registre somente o
+  encaminhamento para `loki-continuous-improvement`; apenas sua ramificação
+  confirmada `destination_scope: package` coordena Writer, checks e Auditor.

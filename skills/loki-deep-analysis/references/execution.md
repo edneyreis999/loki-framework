@@ -52,7 +52,7 @@ command_contract:
     - "preparation identity, candidate provenance, command-specific matching, request-control and report-contract validation"
     - "adaptive-round ledger, handoff terminality, evidence sanitization, target-overlap and report write-set validation"
   human_gates:
-    - "technical-review when the report proposes a material policy or durable package decision"
+    - "record a material package candidate only for later loki-continuous-improvement; this report invokes no package Writer or Auditor"
     - "approval before any exact interaction-gate record is written"
     - "<human_validation_gate> before claiming consumer runtime behavior validated"
   stop_conditions:

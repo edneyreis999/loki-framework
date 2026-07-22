@@ -177,8 +177,10 @@ Valide objetivamente que:
 - mudanças no pacote declaram os artefatos normativos impactados e passam pelos
   checks de autoria aplicáveis.
 
-Aplique `interview` para lacunas de requisito, `technical-review` para mudança
-de política ou contrato e `human-validation` apenas como gate futuro para
+Aplique `interview` para lacunas de requisito. Para uma mudança de política ou
+contrato do pacote, registre somente candidato para futura
+`loki-continuous-improvement` com `destination_scope: package`; esta análise não
+invoca Writer nem Auditor. Use `human-validation` apenas como gate futuro para
 execução que afete comportamento perceptível, runtime, integração ou estado
 persistido. Verifique o resultado antes de continuar. Pare quando validator,
 gate ou approval obrigatório estiver ausente, pendente, rejeitado ou falhar;

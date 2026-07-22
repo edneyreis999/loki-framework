@@ -51,7 +51,6 @@ required_skills:
   - "rpg-maker-mz-visustella-plugin-commands quando cena depender de comandos VisuStella em map events, troop events, Common Events, pictures, messages ou movement"
   - "rpg-maker-mz-visustella-compat-diagnostics quando cena falhar por conflito, order, dependencia, camera, visual glitch, performance ou sintoma runtime VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor apresentacao sem assets disponiveis, constraints de engine, timing real ou validacao de leitura."
@@ -202,7 +201,6 @@ parallel_agent_response:
   model_class: "frontier_reasoning"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -220,7 +218,6 @@ separados.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos pacing, leitura,
   apresentacao visual, audio, staging ou comportamento perceptivel.
 - `approval` antes de qualquer escrita sensivel futura em assets, runtime ou

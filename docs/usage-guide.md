@@ -162,11 +162,16 @@ nao e estado de catalogo.
 Estado nesse layout usa `destination_scope: consumer-operational-state` e tem
 `technical-implementer` como writer exclusivo sob `task_scoped_writer`, com
 root canonico, targets exatos e writes serializados. Promocao e reorganizacao
-exigem technical review e approval root-bound antes da mutacao; purge exige
-dry-run completo e uma approval JIT separada, posterior, single-use e ligada a
-root, IDs, paths, hashes e digests exatos. `framework-artifact-writer` escreve
-somente contratos, schemas, scripts, policy e docs do pacote; `catalogador`
-escreve somente docs duradouros do consumidor. Nenhum dos dois escreve `.loki`.
+exigem approval root-bound vinculada a `operation_id`, operacao,
+`consumer_root` canonico, policy ID/digest,
+`target_manifest_digest_sha256`, targets exatos, `source_locator` e freshness;
+root, containment, targets e hashes sao revalidados imediatamente antes da
+mutacao.
+Purge exige dry-run completo e uma approval JIT separada, posterior, single-use
+e ligada a root, IDs, paths, hashes e digests exatos.
+`framework-artifact-writer` escreve somente contratos, schemas, scripts, policy
+e docs do pacote; `catalogador` escreve somente docs duradouros do consumidor.
+Nenhum dos dois escreve `.loki`.
 
 ## Caminho Integrado v2
 
@@ -214,7 +219,11 @@ O framework usa gates para impedir validacao falsa:
 - `approval`: antes de politica duradoura, instalacao, promocao ou escrita sensivel.
 - `human-validation`: obrigatorio para comportamento perceptivel, estado
   runtime, integracoes ativas ou superficies declaradas por skill tecnica.
-- `technical-review`: para mudanca em command, skill, agent, template, validator ou doc consolidado.
+
+Mudancas do pacote Loki nao usam um gate generico: somente
+`loki-continuous-improvement` na ramificacao `destination_scope: package`
+coordena envelope, approval aplicavel, `framework-artifact-writer`, checks e
+`framework-artifact-quality-auditor` independente.
 
 Parsers estruturais, validadores de linguagem e diff restrito reduzem risco
 estrutural, mas nao substituem validacao humana quando a mudanca afeta

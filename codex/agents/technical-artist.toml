@@ -62,7 +62,6 @@ required_skills:
   - "rpg-maker-mz-visustella-plugin-parameters quando comportamento visual depender de parametros VisuStella em Plugin Manager ou js/plugins.js"
   - "rpg-maker-mz-visustella-compat-diagnostics quando arte tecnica investigar visual glitches, camera, performance, order, dependencia ou conflito VisuStella"
 required_gates:
-  - technical-review
   - "<human_validation_gate>"
 risks:
   - "Pode propor asset states, efeitos ou otimizacoes sem inventario real de assets, memoria, plataforma ou engine."
@@ -207,7 +206,6 @@ parallel_agent_response:
   model_class: "coding"
   effort: "high"
   required_validations:
-    - "technical-review"
     - "<human_validation_gate>"
   proposed_next_step: ""
   completion_record: {result: "", files: [], validators: [], gates: [], next_destination: ""}
@@ -224,7 +222,6 @@ e separe completion/evidence. Nao declare assets/runtime validados.
 
 ## Gates
 
-- `technical-review` antes de aceitar ou revisar este agente no pacote.
 - `<human_validation_gate>` antes de declarar validos assets, memoria,
   performance visual, apresentacao, runtime ou comportamento perceptivel.
 - `approval` antes de qualquer escrita sensivel futura em assets, dados,

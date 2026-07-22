@@ -48,9 +48,13 @@ formal ou auditoria interna de conformidade do pacote.
 10. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
 11. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
 12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
-13. Mudancas duradouras passam por gates: normalmente `technical-review`; e `approval` quando houver promocao normativa, instalacao, sincronizacao ou escrita sensivel.
-14. Quando `destination_scope: package`, depois dos gates o
-    `framework-artifact-writer` aplica o patch sob envelope exclusivo, classifica
+13. Mudancas duradouras usam approvals, validators e human-validation somente
+    quando o contrato concreto os exigir; nao ha um gate generico para essa
+    categoria.
+14. Quando `destination_scope: package`, somente
+    `loki-continuous-improvement` coordena o envelope e approval aplicavel. O
+    `framework-artifact-writer` aplica o patch sob ownership exclusivo, executa
+    os checks e classifica
     a aplicabilidade LLM-facing independentemente do modo documental e emite o
     `llm_artifact_profile`. As seis classes positivas sao `agent-facing`,
     `instruction-bearing`, `routing`, `prompt-assembly`, `context-hydration` e
@@ -72,10 +76,14 @@ formal ou auditoria interna de conformidade do pacote.
     recebe envelope `task_scoped_writer`, targets exatos e ownership serial por
     arquivo. Registry ausente ou vazio permanece read-only e produz zero writes;
     somente uma mutacao aprovada pode inicializar o estado.
-16. Promocao e reorganizacao nesse state root exigem diff/manifesto, validators,
-    `technical-review` e approval root-bound antes do write. Purge exige dry-run
-    e uma approval JIT propria, posterior, single-use e ligada a root, IDs,
-    paths, hashes e digests exatos. Score indica elegibilidade, nunca autoridade.
+16. Promocao e reorganizacao nesse state root exigem diff/manifesto, validators
+    e approval root-bound antes do write. A approval vincula `operation_id`,
+    operacao, `consumer_root` canonico, policy ID/digest,
+    `target_manifest_digest_sha256`, targets exatos, `source_locator` e
+    freshness; root, containment, targets e hashes sao revalidados
+    imediatamente antes da escrita. Purge exige dry-run e uma approval JIT
+    propria, posterior, single-use e ligada a root, IDs, paths, hashes e digests
+    exatos. Score indica elegibilidade, nunca autoridade.
 17. Para docs duradouros do consumidor, preserve `catalogador`; para outros
     destinos de runtime, preserve o writer e auditor de dominio aplicaveis. Os
     agentes de artefatos do pacote nao sao instalados nem recebem permissao
@@ -117,7 +125,10 @@ JSON de policy, request, approval e output continua sendo control plane, nao
 catalogo persistido.
 
 Promocao e reorganizacao exigem targets exatos, before/after, lineage,
-validators, `technical-review`, approval, writer e auditor aplicaveis. Purge e
+validators, approval root-bound e writer aplicavel. A approval preserva
+`operation_id`, operacao, root canonico, policy ID/digest,
+`target_manifest_digest_sha256`, targets, `source_locator` e freshness; esses
+bindings e a integridade dos targets sao revalidados antes da escrita. Purge e
 exclusao fisica e irreversivel apenas de registros nao protegidos elegiveis e
 de todos os seus rastros pertencentes ao catalogo. A elegibilidade ainda e
 insuficiente: primeiro ha dry-run com manifesto canonico completo e, depois,
@@ -166,7 +177,7 @@ parcial silencioso.
 | `runtime-qa` | Fornece evidencia de validacao humana ou checklist quando o aprendizado depende de comportamento perceptivel. |
 | `technical-implementer` | Writer exclusivo de `consumer-operational-state` sob `.loki/analytic-inference/v2/`, sempre com consumer root canonico, targets exatos, validators, gates e ownership serial; fora desse envelope retorna proposta. |
 | `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nunca escreve `.loki` nem substitui writers de consumidor/runtime. |
-| `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui `technical-review` nem `approval`. |
+| `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui approvals concretos nem validators. |
 | `execution-knowledge-cataloger` | Produz entry transitoria sanitizada e nao promovida; nao participa da decisao normativa. |
 
 ## Destinos corretos
