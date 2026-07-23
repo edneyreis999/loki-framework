@@ -4,6 +4,21 @@ type: package-authoring-guardrails
 status: draft
 created: 2026-06-24
 self_contained: true
+doc_id: loki-package-authoring-guardrails
+version: 1.0.0
+last_updated: 2026-07-23
+scope: Normative authoring, ownership, installation, current-only, and validation rules for the Loki package
+not_scope: Consumer project policy, runtime implementation authority, or compatibility with superseded package contracts
+authority: Approved Loki package policy and explicit package-scoped human approvals
+canonical_source: docs/package-authoring-guardrails.md
+intended_llm_task: validation
+source_priority:
+  - approved human decisions and package-scoped envelope
+  - this guardrail document
+  - current artifact-specific contracts and validators
+  - examples, historical evidence, and consumer content
+known_conflicts: []
+replaced_by: null
 ---
 
 # Guardrails de Autoria do Pacote Loki
@@ -28,7 +43,7 @@ Antes de escrever:
 2. Classifique tambem o perfil de execucao esperado usando
    [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md):
    documentacao duravel, artefato transitorio, implementacao de codigo,
-   escrita human-like, leitura read-only ou orquestracao.
+   escrita reader-facing, leitura read-only ou orquestracao.
 3. Confirme se o destino certo e:
    - artefato consolidado do pacote;
    - contexto duradouro do projeto consumidor, como `docs/**/*.md`,
@@ -180,15 +195,19 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
   Essa excecao nao autoriza docs duradouros, inventarios finais, runtime,
   codigo, assets, config, `AGENTS.md`, `CLAUDE.md`, `.agents/**`,
   `.codex/**` ou `.claude/**`.
-- `loki-run-plan` pode invocar agentes `scoped-writer` como owners de escrita
-  por task. O envelope deve declarar `target_files`, `allowed_writes`,
+- `loki-implement-feature` pode invocar agentes `scoped-writer` como owners de
+  escrita por task. O plano deve conter um `target_decision` validado e o
+  envelope deve declarar `target_files`, `allowed_writes`,
   `scoped_write_domains`, validators e gates; nenhum agente escreve fora desses
   arquivos.
-- Antes de cada task, `loki-run-plan` aplica `lf-domain-context-preflight`:
-  consulta o catalogo, prefere fontes atuais quando docs estiverem stale,
-  registra freshness, conflitos e lacunas e usa `bibliotecario` apenas para a
-  menor leitura suficiente. O preflight nao autocorrige `/docs`; tasks de docs
-  do consumidor pertencem ao `catalogador`.
+- Antes do dispatch, `loki-implement-feature` exige session preflight atual,
+  imutavel e sanitizado para cada Writer e Write Test Agent aplicavel. Quando o
+  Writer for especialista de dominio, ele tambem executa pessoalmente
+  `lf-domain-context-preflight`: consulta o catalogo, prefere fontes atuais
+  quando docs estiverem stale, registra freshness, conflitos e lacunas e usa
+  `bibliotecario` apenas para a menor leitura suficiente. Nenhum dos preflights
+  autoriza escrita ou autocorrige `/docs`; tasks de docs do consumidor
+  pertencem ao `catalogador`.
 - Workflows Loki que exijam retrospectiva tecnica por agente podem conceder
   permissao estreita para o proprio `target_retrospective` exato sob o
   diretorio de retrospectivas da fase ativa, como

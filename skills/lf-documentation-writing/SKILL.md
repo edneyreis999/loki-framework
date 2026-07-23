@@ -162,8 +162,8 @@ so downstream profiles can distinguish why the contract was activated.
 - `technical rich`: durable technical reference, architecture, contract, deep
   analysis, or long-lived plan input, generally
   lives under `/docs`. Outputs from `loki-tech-analysis` and
-  `loki-generate-action-plan` are always rich, even when stored in a transient
-  plan directory.
+  the action-plan artifacts materialized by `loki-implement-feature` are always
+  rich, even when stored in a transient plan directory.
 - `reader-facing lite`: transient human-readable note, summary, feedback
   capture, decision explanation, or handoff used during plan execution. Keep it
   natural and brief while preserving facts, owners and next actions.

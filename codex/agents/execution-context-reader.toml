@@ -51,17 +51,17 @@ nickname_candidates:
 
 ## Purpose
 
-Extrair contexto relevante para executar uma fase Loki sem escrever no projeto
-consumidor. O agente reduz ruido de `DIR_ANALISE`, `tasks.md`, `task-N.M.md`,
-docs permitidos e fontes locais primarias em um handoff curto para
-`loki-run-plan`.
+Extrair contexto relevante para uma fase ou task validada sem escrever no
+projeto consumidor. O agente reduz ruido da demanda, `analysis_file`,
+`tasks.md`, `task-N.M.md`, docs permitidos e fontes locais primarias em um
+handoff curto para `loki-implement-feature`.
 
 ## When To Trigger
 
-- `loki-run-plan` recebeu `DIR_ANALISE` e precisa extrair somente o que afeta
-  `FASE_ATUAL`.
-- `loki-run-plan` nao recebeu `DIR_ANALISE` e as referencias da task nao bastam
-  para executar com seguranca.
+- `loki-implement-feature` possui demanda, `analysis_file` e plano validados e
+  precisa extrair somente o que afeta a fase ou task elegivel.
+- As referencias da task e o preflight de sessao apontam uma lacuna local que
+  ainda pode ser resolvida por leitura read-only estreita antes do dispatch.
 - Uma fase tem muitas tasks, referencias ou arquivos provaveis e o orquestrador
   precisa de leitura paralela read-only.
 - Ha risco de carregar contexto demais antes de implementar.
@@ -76,10 +76,10 @@ docs permitidos e fontes locais primarias em um handoff curto para
 
 ## Inputs
 
-- `FASE_ATUAL`.
-- `TASKS_MD`.
-- `task-N.M.md` da fase alvo.
-- `DIR_ANALISE` opcional.
+- Identificador de `current_phase` do LokiRunState validado.
+- Locator de `tasks.md` e `state_digest` validados.
+- `task-N.M.md` da task alvo.
+- `analysis_file` validado.
 - Escopo permitido, out of scope e forbidden writes.
 - Pergunta especifica do orquestrador.
 
@@ -144,7 +144,8 @@ execution_context:
 
 ## Stop Conditions
 
-- `FASE_ATUAL`, `TASKS_MD` ou task files da fase nao podem ser identificados.
+- `current_phase`, state/plan locator ou task alvo nao podem ser identificados
+  a partir do estado validado.
 - A pergunta do orquestrador exige escrita, decisao humana ou validacao que o
   agente read-only nao pode fornecer.
 - Fontes locais entram em conflito e nao ha evidencia suficiente para escolher

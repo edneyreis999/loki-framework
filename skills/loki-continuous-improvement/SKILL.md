@@ -1,10 +1,10 @@
 ---
 name: loki-continuous-improvement
-description: Run the Loki `loki-continuous-improvement` command bundle in Codex. Promote validated retrospective learnings into the correct durable consumer or package surface through capability-aware digestion, evidence classification, root-cause analysis, normative gates, serial writes, verification, or evidence-backed backlog.
+description: Run the Loki `loki-continuous-improvement` command bundle in Codex. Promote validated learnings from approved persisted sources into the correct durable consumer or package surface through capability-aware digestion, evidence classification, root-cause analysis, normative gates, serial writes, verification, or evidence-backed backlog.
 when_to_use:
-  - "Use when validated retrospective learnings may belong in consumer docs, routing context, reusable skills, commands, agents, templates, validators, package policy, manifest, or backlog."
-  - "Use when multiple retrospectives require capability preflight, read-only digests, deduplication, root-cause boundaries, evidence classification, normative approval, and resumable candidates."
-argument-hint: "[retrospective_source or analytic_inference_sources, optional interactions, builds, target_surface, package_root, scope]"
+  - "Use when validated learnings from approved persisted sources may belong in consumer docs, routing context, reusable skills, commands, agents, templates, validators, package policy, manifest, or backlog."
+  - "Use when one or more eligible learning, retrospective, or analytic-inference sources require digestion, deduplication, root-cause boundaries, evidence classification, normative approval, and resumable candidates."
+argument-hint: "[one or more of learning_sources, retrospective_source, analytic_inference_sources; optional interactions, builds, target_surface, package_root, scope]"
 arguments:
   required: []
   optional:
@@ -46,8 +46,7 @@ required_skills:
   - lf-command-creator
   - lf-agent-creator
   - lf-skill-creator
-required_commands:
-  - loki-retrospectiva-tecnica
+required_commands: []
 status: draft
 used_by:
   - loki-continuous-improvement
@@ -65,15 +64,15 @@ parameters:
     input_type: list[path_or_mapping]
     requirement: optional
     default: []
-    description: Retrospectivas, audits, completion/evidence manifests e execution-knowledge entries validadas com lineage; sem promocao direta.
+    description: Fontes persistidas aprovadas e pertinentes, incluindo analises tecnicas, planos de acao, retrospectivas, audits, completion/evidence manifests e execution-knowledge entries validadas; sem promocao direta.
   - key: retrospective_source
     input_type: path[file_or_directory] | list[path[file]]
-    requirement: conditional
+    requirement: optional
     default: null
-    description: Retrospectiva técnica, diretório ou lista de retrospectivas concluídas, pausadas claramente ou relativas a dificuldade realmente resolvida; obrigatória quando nenhuma fonte especializada de inferência for fornecida.
+    description: Retrospectiva técnica opcional, diretório ou lista de retrospectivas concluídas, pausadas claramente ou relativas a dificuldade realmente resolvida.
   - key: analytic_inference_sources
     input_type: list[path[file] | mapping]
-    requirement: conditional
+    requirement: optional
     default: []
     description: Relatórios persistidos de deep analysis com inference_events/generated_candidates ou retrospectivas com analytic_inference_candidates; cada item entra unreviewed e sem autorização de mutação.
   - key: interactions
@@ -103,17 +102,23 @@ parameters:
     description: Escopo positivo, limites, fora de escopo e restrições da melhoria.
 ```
 
-Exija pelo menos uma fonte em `retrospective_source` ou
-`analytic_inference_sources`. Quando presente, valide que
+Exija pelo menos uma fonte não vazia entre `learning_sources`,
+`retrospective_source` e `analytic_inference_sources`; qualquer uma das três
+famílias satisfaz isoladamente o requisito mínimo. Em `learning_sources`, aceite
+somente fontes persistidas, aprovadas e pertinentes ao escopo, incluindo
+análise técnica e plano de ação aprovados, além das fontes já enumeradas no
+contrato. A fonte comprova o aprendizado, mas não substitui approval, gate ou
+validator de promoção. Quando presente, valide que
 `retrospective_source` resolve apenas arquivos legíveis de retrospectiva ou um
 diretório legível enumerável. Valide que cada `analytic_inference_source` é um
 relatório persistido de deep analysis ou retrospectiva com locator exato e
 bloco especializado reconhecível. Valide existência de paths em
 `learning_sources`, `analytic_inference_sources`, `interactions`, `builds` e `package_root`, tipos das
 mappings e compatibilidade
-entre `scope` e `target_surface`. Rejeite fontes ainda em execução, dificuldades
-não resolvidas, destinos transitórios tratados como normativos e qualquer path
-fora do escopo, explicando como corrigir.
+entre `scope` e `target_surface`. Rejeite `learning_sources` não persistidas,
+sem approval observável ou sem pertinência ao escopo; retrospectivas ainda em
+execução ou sobre dificuldades não resolvidas; destinos transitórios tratados
+como normativos; e qualquer path fora do escopo, explicando como corrigir.
 
 Mantenha `package_root` e o `consumer_root` interno distintos: o primeiro limita contratos,
 schemas, scripts, policy e docs do pacote; o segundo é resolvido do `pwd` canônico e ancora exclusivamente
@@ -137,8 +142,9 @@ locator antes de qualquer intake. Relatório ou retrospectiva sem item material
 é uma fonte válida somente quando registra lista vazia e motivo não vazio.
 
 Execution-knowledge entries são fontes adicionais: valide schema, lineage,
-sanitização e promotion status não aplicado. Elas não substituem a
-retrospectiva elegível, análise de causa raiz nem gates.
+sanitização e promotion status não aplicado. Uma entry elegível satisfaz o
+requisito mínimo de fonte, mas não substitui root-cause learning, approval ou
+validators; capture nunca promove automaticamente.
 
 Normalize objetivo, parâmetros, fontes, evidências transitórias, erro observado
 quando aplicável, atritos de execução, escopo, restrições, destino candidato,

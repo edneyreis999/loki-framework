@@ -1,13 +1,13 @@
 ---
 name: loki-agentic-development
-description: Run the Loki `loki-agentic-development` command bundle. Turn a demand into agentic analysis, material decision gates, an executable plan, autonomous phase execution, completion/evidence, non-blocking execution-knowledge capture, digest and backlog.
+description: Run the Loki `loki-agentic-development` command bundle. Add selected agent POVs, cross-review, synthesis and a decision-complete Markdown analysis before one loki-implement-feature handoff, then reconcile completion/evidence, non-blocking execution knowledge, digest and backlog.
 when_to_use:
-  - "Use when a demand should pass through multi-agent analysis, planning and autonomous Loki plan execution."
+  - "Use when a demand should pass through selected multi-agent POV analysis and synthesis before one unified feature implementation."
   - "Use when the run requires resumable XML state, scoped writers, validators, human gates, completion/evidence, non-blocking execution-knowledge capture and digest."
-argument-hint: "[demand, run_directory, allowed_scope, optional write_test_review_frequency=write_agent_handoff|task|fase|plano, out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
+argument-hint: "[demand, run_directory, allowed_scope, out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]"
 arguments:
   required: [demand, run_directory, allowed_scope]
-  optional: [write_test_review_frequency, out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]
+  optional: [out_of_scope, forbidden_surfaces, recorded_decisions, agent_catalog]
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -21,7 +21,7 @@ adapter_projection:
 escalation_signals:
   - multi-agent analysis with material conflicts
   - autonomous execution across multiple planned phases
-  - unresolved decision gates before action planning
+  - unresolved decision gates before unified implementation
   - target file conflicts between agent runs
   - high-risk runtime or integration work
 context: standard
@@ -36,8 +36,8 @@ shell: bash
 type: command
 serialization: skill-bundle
 domain: orchestration
-required_skills: [lf-agentic-orchestration, lf-execution-knowledge-capture]
-required_commands: [loki-human-decision-preflight, loki-generate-action-plan, loki-run-plan]
+required_skills: [lf-agentic-orchestration, lf-tech-analysis-authoring, lf-execution-knowledge-capture]
+required_commands: [loki-human-decision-preflight, loki-implement-feature]
 status: draft
 used_by: [loki-agentic-development]
 ---
@@ -82,27 +82,17 @@ parameters:
     requirement: optional
     default: null
     description: Catálogo de agentes disponível na instalação ativa.
-  - key: write_test_review_frequency
-    input_type: enum
-    requirement: optional
-    default: task
-    allowed_values: [write_agent_handoff, task, fase, plano]
-    description: Cadencia solicitada a propagar sem clamp para a unica chamada plan-scope de loki-run-plan.
 ```
 
 Valide presença, tipos, paths, destino aprovado, escopo e ausência de conflito
 entre superfícies permitidas/proibidas. Solicite cada obrigatório ausente e não
 invente destino, agente, decisão, approval, validator ou permissão. Normalize
 objetivo, parâmetros, escopo, restrições, decisões, gates, fontes e lacunas.
-Os `allowed_values` e o `default` acima são metadados de interface para o
-caller; não os aplique como um segundo normalizador runtime. Registre se o valor
-foi fornecido, encaminhe o valor fornecido sem alteração ou omita o parâmetro
-quando ausente, e deixe somente `loki-run-plan` validar o enum e aplicar o
-default. Reconcilie depois o requested value e a provenance
-`explicit | default | propagated | resumed` devolvidos pelo executor, e não
-derive `effective_frequency`, materialidade, coverage ou checkpoint. Em retomada,
-reconcilie com o requested value persistido e pare diante de divergência; a
-policy efetiva pertence exclusivamente a `loki-run-plan`.
+Require `run_directory` to normalize below `planos/` and reserve the safe,
+create-exclusive child `<run_directory>/implementation/` as the explicit
+`plan_directory` for the single unified call. Materialize the analysis at
+`<run_directory>/analise/technical-analysis.md`; it is an input source, not a
+managed entry inside the reserved implementation directory.
 Durante Input não crie estado, selecione agentes, gere plano, execute task,
 escreva no projeto nem declare sucesso.
 

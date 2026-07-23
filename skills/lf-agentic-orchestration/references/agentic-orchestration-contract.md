@@ -1,7 +1,7 @@
 # Agentic Orchestration Contract
 
 Use this reference when an invoking Loki workflow needs reusable rules for
-agentic analysis, planning handoff, autonomous execution checkpoints and
+agentic analysis, unified implementation handoff, autonomous checkpoints and
 resumable XML state.
 
 ## Run Stages
@@ -22,15 +22,14 @@ resumable XML state.
    synthesis. When gaps exist, compose additional read-only/proposal-only waves
    from the smallest useful set of agents selected by the current demand's
    gaps, surfaces and risks. Do not use a fixed agent list.
-7. Decision preflight: stop before action planning while unresolved
+7. Decision preflight: stop before unified implementation while unresolved
    `must_ask_now` gates remain.
-8. Planning handoff: generate an executable plan only after analysis state is
-   complete enough for autonomous execution.
-9. Execution: propagate the requested Write Test review frequency unchanged
-   when supplied and preserve absence otherwise, then call the active plan
-   executor exactly once with terminal scope `plano`; that executor alone
-   validates/applies enum/default and owns the DAG, clamp, materiality, review
-   checkpoints, serialized writes and validators.
+8. Analysis handoff: materialize a readable, decision-complete Markdown
+   analysis from the current POV/review/synthesis state.
+9. Execution: call `loki-implement-feature` exactly once with the original
+   validated demand and that Markdown `analysis_file`. The unified command owns
+   plan/DAG creation, target decisions, scoped writes, AC validation, retry,
+   resume and terminal dashboard.
 10. Completion: collect a compact completion record, validated evidence or an
    explicit gap, blockers, digest and backlog. Retrospective execution is an
    explicit human or command action, never an automatic fallback.
@@ -119,17 +118,45 @@ Use split state to keep files reviewable and resumable:
 - `analise/agentes/<agent-name>.xml`: POV from one selected agent.
 - `analise/agentes/<agent-name>-review.xml`: optional cross-review result.
 - `analise/sintese.xml`: orchestrator synthesis, post-MVP wave checkpoint and
-  plan handoff.
+  Markdown analysis handoff source.
+- `analise/technical-analysis.md`: readable decision-complete input for the
+  single unified implementation handoff.
 - `agent-runs/faseN/<agent-run-id>.xml` (report schema 5): execution handoff,
   owner, writes, validators, gates, evidence, completion and blockers.
 - `digest.xml` (schema 4): integrated run summary for review.
 - `backlog.md`: postponed or non-blocking items for later handling.
 
-The integrated parent records input presence before dispatch, then persists the
-requested review frequency/provenance returned by the executor and the single
-plan-scope handoff identity. It never persists a parent-derived
-effective frequency. After the executor returns, state references the canonical
-policy/checkpoints and reconciliation result that `loki-run-plan` owns.
+Manifest, agent-run report and digest projections use exactly one current
+handoff shape after the Markdown analysis is validated:
+
+```xml
+<implementation_handoff schema_version="1">
+  <handoff_id>implementation-handoff-v1:&lt;stable-id&gt;</handoff_id>
+  <command>loki-implement-feature</command>
+  <demand_ref>&lt;validated-demand-locator&gt;</demand_ref>
+  <demand_digest>sha256:&lt;64-lowercase-hex&gt;</demand_digest>
+  <analysis_file>&lt;run-directory&gt;/analise/technical-analysis.md</analysis_file>
+  <analysis_digest>sha256:&lt;64-lowercase-hex&gt;</analysis_digest>
+  <plan_directory>&lt;run-directory&gt;/implementation</plan_directory>
+  <status>scheduled|dispatched|completed|partial|blocked|failed|cancelled</status>
+  <execution_state_ref>&lt;loki-run-state-locator-or-null&gt;</execution_state_ref>
+  <execution_state_digest>sha256:&lt;64-lowercase-hex-or-null&gt;</execution_state_digest>
+  <result_ref>&lt;execution-result-locator-or-null&gt;</result_ref>
+  <dashboard_ref>&lt;dashboard-locator-or-null&gt;</dashboard_ref>
+  <next_action>&lt;non-empty&gt;</next_action>
+</implementation_handoff>
+```
+
+Require every field exactly once. Before dispatch, returned-state/result fields
+are null; after terminal return they reconcile to the command result. A second
+handoff, another command identity, missing Markdown analysis, changed input
+digest, or parent-created execution state is invalid.
+
+The integrated parent records demand and analysis locators/digests before
+dispatch, plus exactly one typed `implementation_handoff` identity. After the
+unified command returns, state references its current execution result, state
+digest, completion/evidence and dashboard locators. The parent never creates a
+parallel plan, DAG, validation cycle, retry ledger or terminal status.
 
 ## Freshness and Invalidation
 
@@ -184,9 +211,8 @@ Every canonical manifest handoff carries `agent_run_id`, `handoff_id`, an
 use `depends_on_handoff_id` and must be acyclic. The agentic run-state
 validator accepts only manifest schema 4, agent-run report schema 5 and digest
 schema 4; reader and schema 1/2 root compatibility are not current contracts.
-Write-test-review remains schema 1 within those canonical roots. Retrospectives
-remain an explicit evidence input. Durable promotion is a separate improvement
-workflow with its own gate.
+Retrospectives remain an explicit evidence input. Durable promotion is a
+separate improvement workflow with its own gate.
 
 ## Execution knowledge capture and liveness
 
@@ -209,7 +235,7 @@ its normal root-cause and human gates.
 ## Stop Conditions
 
 - Missing run directory or impossible-to-resolve state path.
-- Unresolved `must_ask_now` gate before action planning.
+- Unresolved `must_ask_now` gate before unified implementation.
 - Selected agent without `selection_reason`.
 - Duplicate `agent_run_id` or `handoff_id`.
 - Writer without owner, target files, allowed writes, validators or gates.
@@ -218,9 +244,9 @@ its normal root-cause and human gates.
 - Autonomous execution would need a new human question mid-run.
 - Material analysis, writing or validation remains in the main thread without a
   recorded exception and validation owner.
-- Requested review frequency conflicts with persisted state, a parent attempts
-  to derive effective policy, or integrated execution would dispatch more than
-  one plan-scope `loki-run-plan` handoff.
+- Missing/invalid Markdown analysis, divergent demand/analysis identity, more
+  than one `loki-implement-feature` handoff, or any parent-owned duplicate plan,
+  DAG, target decision, validation cycle, retry or terminal projection.
 
 Cataloger availability/failure/timeout/handoff/validator is explicitly excluded
 from these stop conditions. A final interrupted cataloger reconciled as

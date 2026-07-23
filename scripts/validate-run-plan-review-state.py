@@ -168,11 +168,10 @@ def _scalar(raw: str) -> Any:
             return ast.literal_eval(value)
         except (SyntaxError, ValueError) as exc:
             raise StateError(f"invalid quoted scalar {value!r}") from exc
-    if value.startswith("[") or value.startswith("{"):
-        try:
-            return ast.literal_eval(value)
-        except (SyntaxError, ValueError) as exc:
-            raise StateError(f"invalid flow value {value!r}") from exc
+    if value.startswith("{"):
+        return _flow_mapping(value)
+    if value.startswith("["):
+        return _flow_sequence(value)
     if re.fullmatch(r"-?[0-9]+", value):
         return int(value)
     return value
@@ -186,6 +185,85 @@ def _mapping_pair(content: str, line_number: int) -> tuple[str, str]:
     if not key:
         raise StateError(f"line {line_number}: empty mapping key")
     return key, value.strip()
+
+
+def _split_flow_parts(content: str, delimiter: str, maxsplit: int = -1) -> list[str]:
+    """Split a flow collection without splitting quoted or nested content."""
+    parts: list[str] = []
+    start = 0
+    depth = 0
+    quote = ""
+    escaped = False
+    splits = 0
+    for index, char in enumerate(content):
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\" and quote == '"':
+                escaped = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        elif char in "[{":
+            depth += 1
+        elif char in "]}":
+            if depth == 0:
+                raise StateError(f"invalid flow collection {content!r}")
+            depth -= 1
+        elif char == delimiter and depth == 0 and (maxsplit < 0 or splits < maxsplit):
+            parts.append(content[start:index].strip())
+            start = index + 1
+            splits += 1
+    if quote or escaped or depth:
+        raise StateError(f"invalid flow collection {content!r}")
+    parts.append(content[start:].strip())
+    return parts
+
+
+def _flow_mapping(raw: str) -> dict[str, Any]:
+    """Parse the strict YAML flow-mapping subset used by persisted state."""
+    if not raw.startswith("{") or not raw.endswith("}"):
+        raise StateError(f"invalid flow mapping {raw!r}")
+    content = raw[1:-1].strip()
+    if not content:
+        return {}
+    result: dict[str, Any] = {}
+    for entry in _split_flow_parts(content, ","):
+        if not entry:
+            raise StateError(f"invalid empty flow mapping entry in {raw!r}")
+        pair = _split_flow_parts(entry, ":", maxsplit=1)
+        if len(pair) != 2 or not pair[0]:
+            raise StateError(f"invalid flow mapping entry {entry!r}")
+        raw_key, raw_value = pair
+        if raw_key[0:1] in {"'", '"'}:
+            key = _scalar(raw_key)
+            if not isinstance(key, str) or not key:
+                raise StateError(f"invalid flow mapping key {raw_key!r}")
+        else:
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", raw_key):
+                raise StateError(f"invalid flow mapping key {raw_key!r}")
+            key = raw_key
+        if key in result:
+            raise StateError(f"duplicate key {key}")
+        result[key] = _scalar(raw_value)
+    return result
+
+
+def _flow_sequence(raw: str) -> list[Any]:
+    """Parse a strict flow sequence, including nested flow mappings."""
+    if not raw.startswith("[") or not raw.endswith("]"):
+        raise StateError(f"invalid flow sequence {raw!r}")
+    content = raw[1:-1].strip()
+    if not content:
+        return []
+    result: list[Any] = []
+    for item in _split_flow_parts(content, ","):
+        if not item:
+            raise StateError(f"invalid empty flow sequence item in {raw!r}")
+        result.append(_scalar(item))
+    return result
 
 
 def parse_yaml_subset(source: str) -> dict[str, Any]:
@@ -224,7 +302,21 @@ def parse_yaml_subset(source: str) -> dict[str, Any]:
                         item, index = parse_node(index, tokens[index][0])
                         result.append(item)
                     continue
-                if ":" in item_text:
+                if item_text.startswith("{"):
+                    item_value = _scalar(item_text)
+                    if not isinstance(item_value, dict):
+                        raise StateError(f"line {number}: flow list item must be a mapping")
+                    item_map = item_value
+                    if index < len(tokens) and tokens[index][0] > indent:
+                        continuation, index = parse_node(index, tokens[index][0])
+                        if not isinstance(continuation, dict):
+                            raise StateError(f"line {number}: list mapping continuation must be a mapping")
+                        duplicate = set(item_map) & set(continuation)
+                        if duplicate:
+                            raise StateError(f"line {number}: duplicate key {sorted(duplicate)[0]}")
+                        item_map.update(continuation)
+                    result.append(item_map)
+                elif ":" in item_text:
                     key, raw_value = _mapping_pair(item_text, number)
                     item_map: dict[str, Any] = {}
                     if raw_value:
@@ -1222,11 +1314,67 @@ def run_self_test() -> None:
 
     parsed = parse_yaml_subset("root:\n  schema_version: 1\n  values: [\"a\", \"b\"]\n")
     assert parsed == {"root": {"schema_version": 1, "values": ["a", "b"]}}
+    flow_sha_a = "sha256:" + "a" * 64
+    flow_sha_b = "sha256:" + "b" * 64
+    flow_parsed = parse_yaml_subset(
+        "root:\n"
+        "  changed_files:\n"
+        f"    - {{path: alpha.md, sha256: {flow_sha_a}}}\n"
+        f"    - {{path: \"dir/beta,one.md\", sha256: \"{flow_sha_b}\"}}\n"
+    )
+    assert flow_parsed == {
+        "root": {
+            "changed_files": [
+                {"path": "alpha.md", "sha256": flow_sha_a},
+                {"path": "dir/beta,one.md", "sha256": flow_sha_b},
+            ]
+        }
+    }
+    inline_flow_parsed = parse_yaml_subset(
+        "root:\n"
+        "  changed_files: "
+        f"[{{path: alpha.md, sha256: {flow_sha_a}}}, "
+        f"{{path: \"dir/beta,one.md\", sha256: \"{flow_sha_b}\"}}]\n"
+    )
+    assert inline_flow_parsed == flow_parsed
+
+    def expect_parse_invalid(source: str, fragment: str) -> None:
+        try:
+            parse_yaml_subset(source)
+        except StateError as exc:
+            assert fragment in str(exc), (fragment, str(exc))
+        else:
+            raise AssertionError(f"invalid YAML flow mapping accepted: {source!r}")
+
+    expect_parse_invalid(
+        f"root:\n  changed_files:\n    - {{path: alpha.md, sha256: {flow_sha_a}\n",
+        "invalid flow mapping",
+    )
+    expect_parse_invalid(
+        f"root:\n  changed_files:\n    - {{path alpha.md, sha256: {flow_sha_a}}}\n",
+        "invalid flow mapping entry",
+    )
+    expect_parse_invalid(
+        f"root:\n  changed_files:\n    - {{path: alpha.md, path: beta.md, sha256: {flow_sha_a}}}\n",
+        "duplicate key path",
+    )
+    expect_parse_invalid(
+        f"root:\n  changed_files:\n    - {{path: alpha.md, sha256: {flow_sha_a}}}\n      path: beta.md\n",
+        "duplicate key path",
+    )
+    expect_parse_invalid(
+        f"root:\n  changed_files: [{{path: alpha.md, path: beta.md, sha256: {flow_sha_a}}}]\n",
+        "duplicate key path",
+    )
+    expect_parse_invalid(
+        f"root:\n  changed_files: [{{path: alpha.md, sha256: {flow_sha_a}}}, ]\n",
+        "invalid empty flow sequence item",
+    )
     with tempfile.TemporaryDirectory() as directory:
         sample = Path(directory) / "tasks.md"
         sample.write_text("```yaml\nloki_plan_state:\n  status: running\n```\n", encoding="utf-8")
         assert extract_state(sample, "loki_plan_state")["status"] == "running"
-    print("self-test: passed (12 clamps, 32 materiality cases, canonical output, path, status, resume, and correlation invariants)")
+    print("self-test: passed (12 clamps, 32 materiality cases, canonical output, flow mappings, path, status, resume, and correlation invariants)")
 
 
 def main(argv: list[str] | None = None) -> int:

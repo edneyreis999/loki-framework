@@ -10,13 +10,13 @@
 <comandos, resultados e gates>
 ## Handoffs, gates e approvals
 <estado terminal ou pendência>
-## Write Test review consultivo
-<requested_frequency/provenance capturados; policy_ref, policy_digest e effective_frequency devolvidos por loki-run-plan; manifest e plan_executor_handoff plan-scope; checkpoint/boundary/coverage; review_handoff_id, review_agent_run_id e evidence; status, review_agent_raw_status e execution_status_effect none; risk/digest/backlog refs; reason e minimum_next_path para degradacao. Findings/raw blocked/skip/failure/unknown nao mudam Status, validators ou gates>
+## Unified implementation handoff
+<demand/analysis locators e digests; implementation_handoff_id unico; plan_directory; loki_run_state locator/digest; validators, completion/evidence, dashboard, status, reason e minimum_next_path. O parent nao cria plano/DAG/ciclo/retry/dashboard paralelo>
 ## Completion, evidence e execution knowledge
 <completion/evidence da implementacao e captures de execution knowledge com IDs/estados proprios; nao reutilizar como materialidade ou resultado do review>
 ## Riscos ou blockers
-<separar riscos consultivos WTR de blockers reais de policy/integridade/validator/gate; none quando vazio>
+<separar blockers reais de input/state/integridade/validator/gate de riscos do pipeline agentic; none quando vazio>
 ## Próximos passos
 <ação e owner>
 ## Resume state
-<fase/task, estado, evidências e condição de retomada; requested/provenance, chamada plan-scope unica e refs da policy/checkpoints devolvidos; dispatched reconcilia identidade existente, terminal nao reinvoca, degraded inclui reason/minimum_next_path>
+<fase/task, estado, evidências e condição de retomada; demand/analysis digests, implementation_handoff_id unico e refs do state/dashboard devolvidos; dispatched reconcilia identidade existente, terminal nao reinvoca, degraded inclui reason/minimum_next_path>

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "fixture_group": "state-resume-and-task",
+  "cases": [
+    {
+      "id": "matrix-09-valid-resume",
+      "matrix": true,
+      "scenario": "Valid resume",
+      "rule": "resume",
+      "expect": "accept",
+      "payload": {"schema_valid": true, "state_digest_valid": true, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+    },
+    {
+      "id": "matrix-10-corrupt-state",
+      "matrix": true,
+      "scenario": "Corrupt state",
+      "rule": "resume",
+      "expect": "reject",
+      "error": "STATE_CORRUPT",
+      "payload": {"schema_valid": true, "state_digest_valid": false, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+    },
+    {
+      "id": "matrix-18-task-missing-ac",
+      "matrix": true,
+      "scenario": "Task without acceptance criterion",
+      "rule": "task",
+      "expect": "reject",
+      "error": "TASK_AC_MISSING",
+      "payload": {"acceptance_criteria": [], "primary_route": {"type": "deterministic", "validator_ref": "test"}, "status": "pending"}
+    },
+    {
+      "id": "matrix-19-task-missing-route",
+      "matrix": true,
+      "scenario": "Task without validation route",
+      "rule": "task",
+      "expect": "reject",
+      "error": "TASK_ROUTE_MISSING",
+      "payload": {"acceptance_criteria": [{"id": "AC-1", "statement": "observable"}], "primary_route": {}, "status": "pending"}
+    },
+    {
+      "id": "matrix-20-deterministic-validation",
+      "matrix": true,
+      "scenario": "Deterministic validation",
+      "rule": "deterministic-validation",
+      "expect": "accept",
+      "payload": {"command": "python3 validator.py", "result": "passed", "acceptance_criterion_refs": ["task.md#AC-1"], "evidence_refs": ["builds/task-validator.json"]}
+    }
+  ]
+}

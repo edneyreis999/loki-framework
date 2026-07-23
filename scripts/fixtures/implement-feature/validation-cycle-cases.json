@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "fixture_group": "validation-cycle-retry-and-learned",
+  "cases": [
+    {
+      "id": "matrix-21-write-test-cycle",
+      "matrix": true,
+      "scenario": "Write Test Agent validation",
+      "rule": "cycle",
+      "expect": "accept",
+      "payload": {
+        "immutable_records": true,
+        "distinct_owners": true,
+        "finding": {"schema_version": 1, "cycle_id": "cycle-1", "locator": "cycle-1-finding.yaml", "acceptance_criterion_refs": ["task.md#AC-1"], "classification": "introduced", "severity": "medium", "evidence_refs": ["validator.log"], "retry_consumed": true},
+        "writer_response": {"schema_version": 1, "finding_ref": "cycle-1-finding.yaml", "evidence_refs": ["cycle-1-fix.log"]}
+      }
+    },
+    {
+      "id": "matrix-22-minor-retry",
+      "matrix": true,
+      "scenario": "Introduced/regression minor",
+      "rule": "retry",
+      "expect": "accept",
+      "payload": {"severity": "minor", "consumed": 0, "scheduler_yield": true}
+    },
+    {
+      "id": "matrix-23-medium-major-retry",
+      "matrix": true,
+      "scenario": "Introduced/regression medium or major",
+      "rule": "retry",
+      "expect": "accept",
+      "payload": {"severity": "major", "retry_limit": 3, "consumed": 3, "initial_validation": true}
+    },
+    {
+      "id": "matrix-24-learned-original-writer",
+      "matrix": true,
+      "scenario": "Resolved medium/major with original Writer available",
+      "rule": "learned",
+      "expect": "accept",
+      "payload": {"status": "created", "resolved_severity": "medium", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "cycle-1-finding.yaml", "writer_response_ref": "cycle-1-writer-response.yaml", "retest_ref": "cycle-2-finding.yaml", "transcript_required": false, "cause_supported": true, "content": "Persisted evidence supports the bounded cause.", "writer_session": "resumed"}
+    },
+    {
+      "id": "matrix-25-learned-compatible-writer",
+      "matrix": true,
+      "scenario": "Resolved medium/major without original Writer",
+      "rule": "learned",
+      "expect": "accept",
+      "payload": {"status": "created", "resolved_severity": "major", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "cycle-1-finding.yaml", "writer_response_ref": "cycle-1-writer-response.yaml", "retest_ref": "cycle-2-finding.yaml", "transcript_required": false, "cause_supported": true, "content": "A compatible writer reconstructed only persisted records.", "writer_session": "reconstructed"}
+    },
+    {
+      "id": "matrix-26-learned-missing",
+      "matrix": true,
+      "scenario": "Learned file missing or invalid",
+      "rule": "learned",
+      "expect": "accept",
+      "payload": {"status": "missing", "task_result_unchanged": true, "dashboard_limitation": "optional knowledge capture unavailable"}
+    },
+    {
+      "id": "matrix-27-exhausted-retry",
+      "matrix": true,
+      "scenario": "Exhausted medium/major retry",
+      "rule": "scheduler",
+      "expect": "accept",
+      "payload": {"failed_task_status": "unresolved", "transitive_dependents": ["task-2", "task-3"], "skipped": ["task-3", "task-2"], "independent_continues": true}
+    },
+    {
+      "id": "matrix-28-pre-existing",
+      "matrix": true,
+      "scenario": "Pre-existing failure",
+      "rule": "classification",
+      "expect": "accept",
+      "payload": {"classification": "pre-existing", "retry_consumed": false, "comparable_analysis_evidence": true, "not_worsened": true}
+    },
+    {
+      "id": "matrix-29-unknown-attribution",
+      "matrix": true,
+      "scenario": "Unknown attribution",
+      "rule": "classification",
+      "expect": "accept",
+      "payload": {"classification": "unknown", "retry_consumed": false, "scope_expanded": false, "observed": "suite failed", "evidence_gap": "no baseline", "affected_criterion": "AC-9", "investigation_recommendation": "capture comparable baseline"}
+    },
+    {
+      "id": "matrix-30-soft-fail",
+      "matrix": true,
+      "scenario": "Optional soft-fail",
+      "rule": "classification",
+      "expect": "accept",
+      "payload": {"classification": "soft-fail", "retry_consumed": false, "terminal_status": "completed-with-limitations"}
+    },
+    {
+      "id": "matrix-31-validator-unavailable",
+      "matrix": true,
+      "scenario": "Required task validator unavailable",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "validator-unavailable", "task_status": "unresolved", "dependents_skipped": true, "independent_continues": true}
+    },
+    {
+      "id": "matrix-32-final-regression",
+      "matrix": true,
+      "scenario": "Final regression",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "final-regression", "severity_policy_applied": true, "terminal_status": "partial"}
+    },
+    {
+      "id": "invalid-cycle-severity",
+      "matrix": false,
+      "scenario": "Severity is forbidden for unknown findings",
+      "rule": "cycle",
+      "expect": "reject",
+      "error": "CYCLE_SEVERITY_INVALID",
+      "payload": {
+        "immutable_records": true,
+        "distinct_owners": true,
+        "finding": {"schema_version": 1, "cycle_id": "cycle-x", "locator": "cycle-x-finding.yaml", "acceptance_criterion_refs": ["task.md#AC-X"], "classification": "unknown", "severity": "minor", "evidence_refs": ["gap.log"], "retry_consumed": false},
+        "writer_response": {"schema_version": 1, "finding_ref": "cycle-x-finding.yaml", "evidence_refs": ["response.log"]}
+      }
+    },
+    {
+      "id": "learned-secret-content",
+      "matrix": false,
+      "scenario": "Learned records reject secret or private content",
+      "rule": "learned",
+      "expect": "reject",
+      "error": "LEARNED_CONTENT_UNSAFE",
+      "payload": {"status": "created", "resolved_severity": "medium", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "finding.yaml", "writer_response_ref": "response.yaml", "retest_ref": "retest.yaml", "transcript_required": false, "cause_supported": true, "content": "secret: do-not-persist"}
+    }
+  ]
+}

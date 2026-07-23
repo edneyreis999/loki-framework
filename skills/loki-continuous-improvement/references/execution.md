@@ -53,11 +53,13 @@ required_skills:
   - lf-agent-creator
   - lf-skill-creator
   - lf-documentation-writing
-required_commands:
-  - loki-retrospectiva-tecnica
+required_commands: []
 ```
 
-Use `loki-retrospectiva-tecnica` como fonte auditável. Carregue
+`loki-retrospectiva-tecnica` não é dependência deste workflow. Ele pode ser
+usado opcionalmente para produzir um `retrospective_source` quando essa fonte
+for desejada e sua criação estiver autorizada; uma `learning_source` ou
+`analytic_inference_source` elegível não exige retrospectiva adicional. Carregue
 `lf-command-creator` para command/template de command/orquestração,
 `lf-agent-creator` para agent ou dúvida agent-skill-command e
 `lf-skill-creator` para skill, layout e progressive disclosure.
@@ -186,8 +188,9 @@ Aceite `execution_knowledge_entry` schema v1 validada como `learning_source`
 adicional. Confira source refs, capture ID, run/task/agent lineage,
 materialidade, claim typing/confidence, gaps, sanitização e promotion status
 `unreviewed`. Deduplicate por lineage/capture ID e preserve contradições. Uma
-entry não substitui `retrospective_source`, root-cause learning ou approval;
-capture nunca promove automaticamente.
+entry satisfaz o requisito mínimo de fonte quando elegível, mas não substitui
+root-cause learning, approval ou validators; capture nunca promove
+automaticamente.
 
 ## Conditional Analytic-Inference Intake And Reconciliation
 
@@ -665,7 +668,7 @@ Preserve este schema em cada candidato:
 continuous_improvement_candidate:
   id: "ci-001"
   source:
-    file: "retrospetivas/faseN/retrospectiva-faseN-<slug>.md"
+    file: "<persisted-approved-learning-source>"
     evidence: "Resumo curto do fato observado."
     execution_knowledge_refs: []
     evidence_lineage: []
@@ -939,9 +942,13 @@ handoff ao `catalogador`, `blocked_by`, targets, destinations e condicao exata
 de retomada; nunca substitua o writer.
 # Evidence-first learning sources
 
-Prefer validated retrospective outputs, evidence audits, completion records
-and validated execution-knowledge entries as `learning_sources`. Deduplicate
-candidates by evidence lineage/capture ID and keep
-contradictions as conflicts for a specific human decision. A transient evidence
-source never directly promotes a durable rule, and raw runtime traces are not a
+Accept approved persisted technical analyses and action plans, validated
+retrospective outputs, evidence audits, completion records and validated
+execution-knowledge entries as `learning_sources`. Require relevance to the
+declared scope and observable approval provenance. Any non-empty eligible
+source family among `learning_sources`, `retrospective_source` and
+`analytic_inference_sources` is sufficient for intake; none is privileged as a
+mandatory source type. Deduplicate candidates by evidence lineage/capture ID
+and keep contradictions as conflicts for a specific human decision. A source
+never directly promotes a durable rule, and raw runtime traces are not a
 default input.

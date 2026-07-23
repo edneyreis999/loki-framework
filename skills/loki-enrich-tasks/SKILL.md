@@ -2,7 +2,7 @@
 name: loki-enrich-tasks
 description: Run the Loki `loki-enrich-tasks` command bundle in Codex. Enrich only the active phase tasks from retrospectives, builds, human decisions, and scoped-write evidence before execution; preserve phase scope, source confidentiality, research gates, validators, owners, and human loops without promoting durable policy.
 when_to_use:
-  - "Use before loki-run-plan when the active phase tasks need targeted enrichment from prior retrospectives, builds, decisions, scoped-write ownership, target files, validators, success criteria, or human loops."
+  - "Use before resuming loki-implement-feature when its active-phase tasks need targeted enrichment from prior retrospectives, builds, decisions, scoped-write ownership, target files, validators, success criteria, or human loops."
   - "Use when improving active plan tasks without exposing transient sources or promoting durable context directly."
 argument-hint: "[FASE_ATUAL, TASKS_MD, DIR_RETROSPECTIVAS, DIR_BUILDS, optional INTERACTIONS_RELEVANTES and enrichment_scope]"
 arguments:

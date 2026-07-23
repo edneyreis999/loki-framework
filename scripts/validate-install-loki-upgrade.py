@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise the schema-v2 Loki installer and its legacy-layout rejection matrix."""
+"""Exercise schema-v2 install, managed upgrade, rollback, and refusal behavior."""
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import re
@@ -25,11 +27,17 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 54, "agent": 23, "codex-agent": 23, "templates": 1},
-    "package-source": {"skill": 45, "agent": 12, "codex-agent": 12, "templates": 1},
-    "all": {"skill": 59, "agent": 25, "codex-agent": 25, "templates": 1},
+    "consumer": {"skill": 53, "agent": 23, "codex-agent": 23, "templates": 1},
+    "package-source": {"skill": 44, "agent": 12, "codex-agent": 12, "templates": 1},
+    "all": {"skill": 58, "agent": 25, "codex-agent": 25, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 101, "package-source": 70, "all": 110}
+FINAL_TOTALS = {"consumer": 100, "package-source": 69, "all": 109}
+RETIRED_SKILLS = (
+    "loki-" + "generate-action-plan",
+    "loki-" + "run-plan",
+    "lf-" + "run-plan-execution",
+)
+CURRENT_REPLACEMENTS = ("loki-implement-feature", "lf-implement-feature-execution")
 
 
 @dataclass(frozen=True)
@@ -255,6 +263,47 @@ def load_scope_validator_module():
     return module
 
 
+def build_managed_previous_inventory(destination: Path) -> Path:
+    destination = destination.resolve(strict=False)
+    preview = run_installer(destination, "consumer", "--dry-run")
+    if preview.returncode != 0:
+        raise AssertionError(preview.stderr or preview.stdout)
+    applied = run_installer(destination, "consumer", "--yes")
+    if applied.returncode != 0:
+        raise AssertionError(applied.stderr or applied.stdout)
+    manifest_path = destination / MANIFEST_RELATIVE_PATH
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    retained = []
+    for entry in manifest["links"]:
+        name = Path(entry["destination"]).name
+        if name in CURRENT_REPLACEMENTS:
+            Path(entry["destination"]).unlink()
+        else:
+            retained.append(entry)
+    for name in RETIRED_SKILLS:
+        # The retired package sources are intentionally absent after the
+        # current-only cutover. The managed legacy destination is synthetic
+        # fixture state under ``destination``; its recorded origin remains the
+        # lexical former package locator so upgrade ownership can be tested
+        # without recreating a normative compatibility artifact.
+        source = (PACKAGE_ROOT / "skills" / name).resolve(strict=False)
+        destination_path = destination / ".agents" / "skills" / name
+        os.symlink(source, destination_path, target_is_directory=True)
+        retained.append(
+            {
+                "origin": str(source),
+                "destination": str(destination_path.absolute()),
+                "type": "skill",
+                "source_kind": "directory",
+                "install_scope": "both",
+                "status": "created",
+            }
+        )
+    manifest["links"] = retained
+    write_text(manifest_path, json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    return manifest_path
+
+
 class ProfileAndSchemaTests(unittest.TestCase):
     def test_all_profile_dry_runs_have_final_counts_and_zero_commands(self) -> None:
         for profile, expected in FINAL_COUNTS.items():
@@ -341,6 +390,7 @@ class ProfileAndSchemaTests(unittest.TestCase):
         self.assertEqual(
             [
                 "lf-agentic-orchestration",
+                "lf-tech-analysis-authoring",
                 "lf-execution-knowledge-capture",
             ],
             module.parse_required_skills(agentic),
@@ -348,8 +398,7 @@ class ProfileAndSchemaTests(unittest.TestCase):
         self.assertEqual(
             [
                 "loki-human-decision-preflight",
-                "loki-generate-action-plan",
-                "loki-run-plan",
+                "loki-implement-feature",
             ],
             module.parse_required_commands(agentic),
         )
@@ -417,6 +466,82 @@ required_commands: []
             )
             self.assertEqual(1, result.returncode, result.stdout)
             self.assertIn("required command loki-missing is not installed", result.stderr)
+
+
+class ManagedInventoryUpgradeTests(unittest.TestCase):
+    def test_managed_upgrade_removes_only_retired_links_and_publishes_final_manifest(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="loki-managed-upgrade-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            manifest_path = build_managed_previous_inventory(destination)
+            before = manifest_path.read_bytes()
+            preview = run_installer(destination, "consumer", "--dry-run")
+            self.assertEqual(0, preview.returncode, preview.stderr or preview.stdout)
+            self.assertEqual(3, preview.stdout.count("status=would-remove"))
+            self.assertEqual(before, manifest_path.read_bytes())
+            result = run_installer(destination, "consumer", "--yes")
+            self.assertEqual(0, result.returncode, result.stderr or result.stdout)
+            for name in RETIRED_SKILLS:
+                self.assertFalse((destination / ".agents" / "skills" / name).exists())
+                self.assertFalse((destination / ".agents" / "skills" / name).is_symlink())
+            for name in CURRENT_REPLACEMENTS:
+                target = destination / ".agents" / "skills" / name
+                self.assertTrue(target.is_symlink())
+                self.assertEqual((PACKAGE_ROOT / "skills" / name).resolve(), target.resolve())
+            final_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(FINAL_TOTALS["consumer"], len(final_manifest["links"]))
+            destinations = {Path(entry["destination"]).name for entry in final_manifest["links"]}
+            self.assertTrue(set(CURRENT_REPLACEMENTS) <= destinations)
+            self.assertTrue(set(RETIRED_SKILLS).isdisjoint(destinations))
+            self.assertEqual([], list(manifest_path.parent.glob("*.tmp")))
+
+    def test_publish_fault_restores_prior_manifest_and_managed_topology(self) -> None:
+        module = load_installer_module()
+        with tempfile.TemporaryDirectory(prefix="loki-managed-fault-") as raw_temp:
+            destination = Path(raw_temp) / "consumer"
+            manifest_path = build_managed_previous_inventory(destination)
+            previous = manifest_path.read_bytes()
+            preview = run_installer(destination, "consumer", "--dry-run")
+            self.assertEqual(0, preview.returncode, preview.stderr or preview.stdout)
+            with mock.patch.object(
+                module,
+                "publish_staged_manifest",
+                side_effect=module.InstallError("injected publication fault"),
+            ):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    result = module.run(["--dest", str(destination), "--profile", "consumer", "--yes"])
+            self.assertEqual(1, result)
+            self.assertEqual(previous, manifest_path.read_bytes())
+            for name in RETIRED_SKILLS:
+                self.assertTrue((destination / ".agents" / "skills" / name).is_symlink())
+            for name in CURRENT_REPLACEMENTS:
+                self.assertFalse((destination / ".agents" / "skills" / name).exists())
+                self.assertFalse((destination / ".agents" / "skills" / name).is_symlink())
+            self.assertEqual([], list(manifest_path.parent.glob("*.tmp")))
+
+    def test_divergent_managed_and_unmanaged_new_targets_are_refused(self) -> None:
+        for case in ("divergent-managed", "unmanaged-new"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory(
+                prefix=f"loki-managed-refusal-{case}-"
+            ) as raw_temp:
+                destination = Path(raw_temp) / "consumer"
+                manifest_path = build_managed_previous_inventory(destination)
+                before_manifest = manifest_path.read_bytes()
+                if case == "divergent-managed":
+                    target = destination / ".agents" / "skills" / RETIRED_SKILLS[0]
+                    target.unlink()
+                else:
+                    target = destination / ".agents" / "skills" / CURRENT_REPLACEMENTS[0]
+                outside = Path(raw_temp) / "outside"
+                outside.mkdir()
+                os.symlink(outside, target, target_is_directory=True)
+                before_target = os.readlink(target)
+                preview = run_installer(destination, "consumer", "--dry-run", "--replace")
+                self.assertNotEqual(0, preview.returncode)
+                result = run_installer(destination, "consumer", "--yes", "--replace")
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual(before_manifest, manifest_path.read_bytes())
+                self.assertEqual(before_target, os.readlink(target))
+                self.assertEqual([], list(manifest_path.parent.glob("*.tmp")))
 
 
 class LegacyLayoutRejectionTests(unittest.TestCase):

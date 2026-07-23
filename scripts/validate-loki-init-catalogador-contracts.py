@@ -33,7 +33,7 @@ CALLER_MODES = {
     },
     "loki-continuous-improvement": {"task_scoped_writer"},
     "loki-catalogar-docs": {"task_scoped_writer", "proposal-only"},
-    "loki-run-plan": {"task_scoped_writer"},
+    "loki-implement-feature": {"task_scoped_writer"},
 }
 INIT_MODES = CALLER_MODES["loki-init"]
 BATCH_TRANSITIONS = {
@@ -564,7 +564,29 @@ def enforce_current_tree(package_root: Path) -> int:
         paths = sorted(bundle.rglob("*.md"))
         require(paths, f"governed caller surface is missing: {bundle}")
         combined = "\n".join(path.read_text(encoding="utf-8") for path in paths)
-        validate_governed_caller_text(caller, combined, str(bundle))
+        if caller == "loki-implement-feature":
+            normalized = folded(combined)
+            manifest_text = folded(
+                (package_root / "manifest.yaml").read_text(encoding="utf-8")
+            )
+            require("catalogador" in normalized, f"{bundle}: missing catalogador ownership")
+            require(
+                "documentation remains owned by the configured catalogador" in normalized
+                and "does not become a fallback production writer" in normalized,
+                f"{bundle}: consumer-doc ownership must block fallback writers",
+            )
+            require(
+                caller in manifest_text and "task_scoped_writer" in manifest_text,
+                f"{bundle}: manifest lacks fixed caller/mode authority",
+            )
+            validate_governed_caller_policy(
+                caller,
+                {"task_scoped_writer"},
+                rejects_before_write=True,
+                consumer_docs_fallback=False,
+            )
+        else:
+            validate_governed_caller_text(caller, combined, str(bundle))
         checks += 1
     return checks
 
@@ -647,7 +669,7 @@ def run_fixture_suite() -> tuple[int, int]:
             ("missing caller", "", "task_scoped_writer", "missing calling_workflow"),
             ("unknown caller", "other", "task_scoped_writer", "unknown calling_workflow"),
             ("unknown mode", "loki-init", "direct-write", "unknown write_mode"),
-            ("crossed init mode", "loki-run-plan", "init-publication-batch", "crossed pair"),
+            ("crossed init mode", "loki-implement-feature", "init-publication-batch", "crossed pair"),
         ):
             expect_failure(label, reason, lambda caller=caller, mode=mode: validate_caller_mode(caller, mode))
             negative += 1
@@ -702,7 +724,7 @@ def run_fixture_suite() -> tuple[int, int]:
             "prohibited consumer docs fallback",
             "direct-write fallback over consumer docs is prohibited",
             lambda: validate_governed_caller_policy(
-                "loki-run-plan",
+                "loki-implement-feature",
                 {"task_scoped_writer"},
                 rejects_before_write=True,
                 consumer_docs_fallback=True,

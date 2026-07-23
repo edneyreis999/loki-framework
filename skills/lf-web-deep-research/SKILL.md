@@ -40,7 +40,7 @@ used_by:
   - loki-deep-research
   - loki-tech-analysis
   - loki-human-decision-preflight
-  - loki-generate-action-plan
+  - loki-implement-feature
 ---
 
 # lf-web-deep-research

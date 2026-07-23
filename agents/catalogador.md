@@ -113,7 +113,7 @@ escrita, valide a combinacao exata:
 | `loki-init` | `init-bootstrap-cataloger`, `init-publication-batch`, `init-final-reconciliation` |
 | `loki-continuous-improvement` | `task_scoped_writer` |
 | `loki-catalogar-docs` | `task_scoped_writer`, `proposal-only` |
-| `loki-run-plan` | `task_scoped_writer` |
+| `loki-implement-feature` | `task_scoped_writer` |
 
 Campo ausente, caller desconhecido, mode desconhecido ou par cruzado e falha
 pre-write: retorne ao `failure_destination` sem criar, editar, mover ou remover
@@ -214,10 +214,11 @@ coerentes.
 
 Para `loki-continuous-improvement`, materialize somente promocao
 project-specific aprovada. Para `loki-catalogar-docs`, preserve catalogacao
-bottom-up e indices seriais dentro dos targets autorizados. Para `loki-run-plan`,
-exija task aprovada, owner documental, targets/allowed writes, validators e
-gates. Escritas task-scoped legitimas fora de consumer docs pertencem ao writer
-da task, nao a este contrato, e permanecem validas.
+bottom-up e indices seriais dentro dos targets autorizados. Para
+`loki-implement-feature`, exija session preflight, task e `target_decision`
+validados, owner documental, targets/allowed writes, validators e gates.
+Escritas task-scoped legitimas fora de consumer docs pertencem ao writer da
+task, nao a este contrato, e permanecem validas.
 
 Em `proposal-only`, leia apenas o escopo fornecido e retorne uma recomendacao
 estruturada com arquivos candidatos, riscos, validators e proximo destino. Nao
@@ -325,7 +326,7 @@ catalogacao_result:
   category: "Write Agent"
   mode: "scoped-writer | proposal-only"
   status: "completed | no-op | blocked | divergence-blocked | validation-pending"
-  calling_workflow: "loki-init | loki-continuous-improvement | loki-catalogar-docs | loki-run-plan"
+  calling_workflow: "loki-init | loki-continuous-improvement | loki-catalogar-docs | loki-implement-feature"
   write_mode: "init-bootstrap-cataloger | init-publication-batch | init-final-reconciliation | task_scoped_writer | proposal-only"
   active_init_mode: "init-bootstrap-cataloger | init-publication-batch | init-final-reconciliation | null"
   approval_confirmed: false

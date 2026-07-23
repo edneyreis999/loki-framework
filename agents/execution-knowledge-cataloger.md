@@ -7,7 +7,7 @@ description: Catalog reusable execution knowledge from caller-supplied persisted
 mode: scoped-writer
 purpose: Produce one validated provider-neutral execution-knowledge entry from persisted completion and evidence artifacts.
 when_to_trigger:
-  - "loki-agentic-development or loki-run-plan has persisted a material completion/evidence envelope and assigned one unique target entry."
+  - "loki-agentic-development or loki-implement-feature has persisted a material completion/evidence envelope and assigned one unique target entry."
 inputs:
   - "Self-contained envelope with calling_workflow, run_directory, capture_id, target_entry, persisted_source_refs, materiality and available lineage."
 outputs:

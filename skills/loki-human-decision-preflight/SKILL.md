@@ -1,8 +1,8 @@
 ---
 name: loki-human-decision-preflight
-description: Run the Loki `loki-human-decision-preflight` command workflow in Codex. Use before action planning to classify open decisions as ask-now, delegate-to-plan, validate-later, or answer-from-local-sources through a strict one-question-at-a-time interview.
+description: Run the Loki `loki-human-decision-preflight` command workflow in Codex. Use before unified feature implementation to classify open decisions as ask-now, delegate-to-plan, validate-later, or answer-from-local-sources through a strict one-question-at-a-time interview.
 when_to_use:
-  - "Use before loki-generate-action-plan when an analysis, brief, feedback record, or retrospective has open decisions."
+  - "Use before loki-implement-feature when an analysis, brief, feedback record, or retrospective has open decisions."
   - "Use when deciding whether to ask the user now, delegate a detail to the plan, validate later, or answer from local sources."
 argument-hint: "[analysis or brief, open questions, scope, forbidden surfaces, target decision record]"
 arguments:

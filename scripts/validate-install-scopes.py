@@ -60,7 +60,11 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_LOKI_COMMAND_COUNT = 18
+FINAL_LOKI_COMMAND_COUNT = 17
+RETIRED_SOURCE_ONLY_SKILLS = frozenset(
+    {f"loki-{stem}" for stem in ("generate-action-plan", "run-plan")}
+    | {"lf-" + "run-plan-execution"}
+)
 REQUIRED_PUBLIC_LOKI_COMMANDS = frozenset(
     {
         "loki-abrir-pr",
@@ -74,12 +78,11 @@ REQUIRED_PUBLIC_LOKI_COMMANDS = frozenset(
         "loki-demand-text-improver",
         "loki-enrich-tasks",
         "loki-feedback",
-        "loki-generate-action-plan",
+        "loki-implement-feature",
         "loki-generate-inferences",
         "loki-human-decision-preflight",
         "loki-init",
         "loki-retrospectiva-tecnica",
-        "loki-run-plan",
         "loki-tech-analysis",
     }
 )
@@ -630,7 +633,9 @@ def validate_claude_coverage(package_root: Path, data: dict) -> None:
     if categories != expected_categories:
         raise ValueError("Claude coverage categories drift from the schema-2 contract")
 
-    skill_sources = {path.parent.name for path in (package_root / "skills").glob("*/SKILL.md")}
+    skill_sources = {
+        path.parent.name for path in (package_root / "skills").glob("*/SKILL.md")
+    } - RETIRED_SOURCE_ONLY_SKILLS
     agent_sources = {path.name for path in (package_root / "agents").glob("*.md")}
     template_sources = {
         str(path.relative_to(package_root))
@@ -1513,7 +1518,7 @@ def main(argv: list[str] | None = None) -> int:
         skill_names = {
             path.parent.name
             for path in (package_root / "skills").glob("*/SKILL.md")
-        }
+        } - RETIRED_SOURCE_ONLY_SKILLS
         assert_exact_keys("skill", set(skill_scopes), skill_names)
         validate_frontmatter_duplicate_keys(package_root)
         validate_no_production_consumer_state(package_root)

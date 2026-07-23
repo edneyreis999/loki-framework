@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "fixture_group": "response-dashboard-and-manual-test",
+  "cases": [
+    {
+      "id": "matrix-33-cancellation",
+      "matrix": true,
+      "scenario": "Cancellation",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "cancellation", "dispatch_stopped": true, "checkpoint_persisted": true, "terminal_status": "cancelled"}
+    },
+    {
+      "id": "matrix-34-early-human-request",
+      "matrix": true,
+      "scenario": "Human validation requested before DAG terminal",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "human-request", "dag_terminal": false, "accumulated": true, "dispatch_interrupted": false}
+    },
+    {
+      "id": "matrix-35-final-human-request",
+      "matrix": true,
+      "scenario": "Human validation at final reconciliation",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "human-request", "dag_terminal": true, "sole_remaining_condition": true, "terminal_status": "pending-human-validation"}
+    },
+    {
+      "id": "matrix-36-ancillary-observation",
+      "matrix": true,
+      "scenario": "Ancillary Write Test Agent observation",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "ancillary-observation", "linked_structured_finding": false, "projected_as": "dashboard-risk"}
+    },
+    {
+      "id": "matrix-37-full-suite-red",
+      "matrix": true,
+      "scenario": "Per-task green/full-suite red",
+      "rule": "execution-state",
+      "expect": "accept",
+      "payload": {"event": "full-suite", "task_green": true, "full_suite": "failed", "terminal_status": "partial"}
+    },
+    {
+      "id": "matrix-38-complete-dashboard",
+      "matrix": true,
+      "scenario": "Complete dashboard fixture",
+      "rule": "dashboard",
+      "expect": "accept",
+      "payload": {
+        "status": "completed",
+        "summary": "Feature and evidence reconciled.",
+        "units": [{"kind": "task", "unit": "task-1", "status": "completed"}],
+        "changed_files": ["src/feature.py"],
+        "acceptance_criteria": [{"id": "AC-1", "state": "passed", "evidence": "builds/ac-1.log"}],
+        "validators": [{"id": "suite", "required": true, "result": "passed"}],
+        "validation_cycles": [],
+        "deviations": [],
+        "inferred_targets": [],
+        "learned_records": [],
+        "decisions": ["analysis.md#decision"],
+        "manual_test": {"status": "none", "reason": "validator-only surface", "steps": []},
+        "evidence": ["builds/final.log"],
+        "risks": [],
+        "resume": {"status": "none"}
+      }
+    },
+    {
+      "id": "matrix-39-false-terminal-success",
+      "matrix": true,
+      "scenario": "Completion with failed AC/required validator",
+      "rule": "dashboard",
+      "expect": "reject",
+      "error": "TERMINAL_FALSE_SUCCESS",
+      "payload": {
+        "status": "completed",
+        "summary": "Invalid success.",
+        "units": [{"kind": "task", "unit": "task-1", "status": "unresolved"}],
+        "changed_files": [],
+        "acceptance_criteria": [{"id": "AC-1", "state": "failed", "evidence": "builds/failure.log"}],
+        "validators": [{"id": "suite", "required": true, "result": "failed"}],
+        "validation_cycles": [], "deviations": [], "inferred_targets": [], "learned_records": [], "decisions": [],
+        "manual_test": {"status": "none", "reason": "execution failed", "steps": []},
+        "evidence": ["builds/failure.log"], "risks": ["AC failed"], "resume": {"status": "unresolved"}
+      }
+    },
+    {
+      "id": "matrix-40-passed-ac-no-evidence",
+      "matrix": true,
+      "scenario": "Passed AC without evidence locator",
+      "rule": "dashboard",
+      "expect": "reject",
+      "error": "PASSED_AC_EVIDENCE_MISSING",
+      "payload": {
+        "status": "partial",
+        "summary": "Evidence gap.",
+        "units": [{"kind": "task", "unit": "task-1", "status": "pending"}],
+        "changed_files": [],
+        "acceptance_criteria": [{"id": "AC-1", "state": "passed", "evidence": ""}],
+        "validators": [], "validation_cycles": [], "deviations": [], "inferred_targets": [], "learned_records": [], "decisions": [],
+        "manual_test": {"status": "none", "reason": "no changed runtime surface", "steps": []},
+        "evidence": [], "risks": ["evidence missing"], "resume": {"status": "pending"}
+      }
+    },
+    {
+      "id": "matrix-41-manual-field-missing",
+      "matrix": true,
+      "scenario": "Manual step missing one required field",
+      "rule": "manual",
+      "expect": "reject",
+      "error": "MANUAL_FIELD_MISSING",
+      "payload": {
+        "status": "steps",
+        "steps": [{"evidence_or_acceptance_criterion_ref": "AC-1", "environment": "local", "prerequisites": [], "initial_state": "service stopped", "action": "start service", "expected_observable_result": "health is green", "success_signals": ["HTTP 200"], "failure_signals": ["HTTP 500"], "cleanup_or_restore": "stop service"}]
+      }
+    },
+    {
+      "id": "blocked-row-mapping",
+      "matrix": false,
+      "scenario": "Task rows cannot be relabeled as blocked",
+      "rule": "dashboard",
+      "expect": "reject",
+      "error": "TASK_BLOCKED_ROW_FORBIDDEN",
+      "payload": {
+        "status": "blocked",
+        "summary": "Invalid blocked mapping.",
+        "units": [{"kind": "task", "unit": "task-1", "status": "blocked"}],
+        "changed_files": [], "acceptance_criteria": [], "validators": [], "validation_cycles": [], "deviations": [], "inferred_targets": [], "learned_records": [], "decisions": [],
+        "manual_test": {"status": "none", "reason": "blocked pre-write", "steps": []}, "evidence": [], "risks": ["blocked"], "resume": {"status": "blocked"}
+      }
+    },
+    {
+      "id": "valid-blocked-scope-row",
+      "matrix": false,
+      "scenario": "Blocked state emits exactly one distinct scope row",
+      "rule": "dashboard",
+      "expect": "accept",
+      "payload": {
+        "status": "blocked",
+        "summary": "Waiting for the required validator.",
+        "units": [
+          {"kind": "task", "unit": "task-1", "status": "pending"},
+          {"kind": "scope", "unit": "blocked-scope:task-1", "status": "blocked", "state_ref": "tasks.md#loki_run_state@sha256:state", "blockers": ["validator unavailable"], "next_action": "restore validator"}
+        ],
+        "changed_files": [], "acceptance_criteria": [], "validators": [], "validation_cycles": [], "deviations": [], "inferred_targets": [], "learned_records": [], "decisions": [],
+        "manual_test": {"status": "none", "reason": "blocked before a testable surface changed", "steps": []}, "evidence": ["tasks.md#loki_run_state"], "risks": ["validator unavailable"], "resume": {"status": "blocked"}
+      }
+    },
+    {
+      "id": "valid-manual-step",
+      "matrix": false,
+      "scenario": "Complete manual step passes",
+      "rule": "manual",
+      "expect": "accept",
+      "payload": {
+        "status": "steps",
+        "steps": [{"evidence_or_acceptance_criterion_ref": "AC-1", "environment": "local fixture", "prerequisites": [], "initial_state": "fixture loaded", "action": "run the feature", "expected_observable_result": "result appears", "success_signals": ["expected result"], "failure_signals": ["error result"], "cleanup_or_restore": "not-needed because fixture is read-only", "automation_limitation": "human presentation check is not automated"}]
+      }
+    }
+  ],
+  "matrix_exclusions": [
+    {"scenario": "Installed upgrade", "routed_to": "task-3.2", "reason": "Requires the installer transaction and managed-symlink topology owned by task-3.2."},
+    {"scenario": "Upgrade fault after link mutation, before manifest publication", "routed_to": "task-3.2", "reason": "Requires transactional fault injection, manifest authority and topology restoration owned by task-3.2."}
+  ]
+}

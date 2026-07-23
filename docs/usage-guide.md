@@ -4,6 +4,20 @@ type: usage-guide
 status: draft
 created: 2026-06-24
 scope: local-project-package
+doc_id: loki-usage-guide
+version: 1.0.0
+last_updated: 2026-07-23
+not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
+authority: Approved Loki package policy and current package command contracts
+canonical_source: docs/usage-guide.md
+intended_llm_task: routing
+source_priority:
+  - approved human decisions and package policy
+  - current command and helper contracts
+  - this usage guide and linked package docs
+  - examples and consumer-provided content
+known_conflicts: []
+replaced_by: null
 ---
 
 # Guia de Uso do Loki Framework Local
@@ -41,10 +55,10 @@ Use estes documentos como fonte principal do ciclo operacional:
 - [Workflow de Instalacao do Loki em Projetos Consumidores](loki-installation-workflow.md):
   descreve dry-run, approval, aplicacao por symlink, perfis, validacao e
   rollback antes de usar Loki em um projeto alvo.
-- [Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md):
-  descreve o caminho manual e o caminho integrado v2 para transformar uma
-  descricao curta em analise, preflight de decisoes humanas, plano, tasks,
-  escrita serializada, validacao e evidencia.
+- [Workflow Unificado de Implementacao do Loki](loki-plan-execution-workflow.md):
+  descreve o caminho publico de demanda + analise Markdown para plano, DAG,
+  escrita serializada, AC/validators, dashboard, teste manual e evidencia, alem
+  do caminho agentic avancado com um unico handoff ao executor unificado.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   resultados, bugs, feedbacks e retrospectivas viram ajuste local, candidato,
   regra duradoura ou backlog.
@@ -93,7 +107,8 @@ usuario faz uma nova escolha explicita sobre o proximo workflow.
 
 Use `loki-tech-analysis` como rota padrao de analise pre-plano baseada em
 evidencias. Ela organiza fontes, fatos, inferencias, hipoteses, alternativas,
-risco, validators e gates para o decision preflight e o action plan.
+risco, validators e gates consumidos pelo planejamento interno do
+`loki-implement-feature`.
 
 Use `loki-deep-analysis` de forma opt-in quando a demanda se beneficiar de
 descoberta de tecnologias, consulta seletiva a inferencias catalogadas,
@@ -173,32 +188,40 @@ e ligada a root, IDs, paths, hashes e digests exatos.
 e docs do pacote; `catalogador` escreve somente docs duradouros do consumidor.
 Nenhum dos dois escreve `.loki`.
 
-## Caminho Integrado v2
+## Implementacao Unificada e Caminho Agentic
 
-Use `loki-agentic-development` quando a demanda deve seguir o caminho completo:
-demanda simples, analise agentica, gates humanos materiais antes do plano,
-action plan, execucao autonoma, completion reports, digest e backlog.
+Use `loki-implement-feature` quando ja houver uma demanda nao vazia e uma
+analise Markdown decision-complete. O comando recebe esses dois inputs,
+materializa ou retoma o plano, registra targets e owners antes da escrita,
+executa o DAG e termina com dashboard e passos de teste manual. Nao existe uma
+segunda chamada publica para executar o plano.
 
-Use o caminho manual quando precisar controlar cada etapa separadamente:
-`loki-deep-research` quando depender de pesquisa web citada,
-uma rota de analise (`loki-tech-analysis` por padrao ou `loki-deep-analysis`
-opt-in; opcionalmente precedida por `loki-generate-inferences` quando houver
-preparacao deterministica de candidatos), `loki-human-decision-preflight`,
-`loki-generate-action-plan`, `loki-enrich-tasks` quando aplicavel e
-`loki-run-plan` por fase ou task.
+Cada task possui ao menos um AC observavel e exatamente uma rota primaria:
+validator deterministico ou Write Test Agent independente. A conversa de
+correcao fica em findings, respostas do Writer e retestes imutaveis. Findings
+minor nao consomem budget; medium/major consomem o `retry_limit`. Ao esgotar, a
+task fica unresolved, seus dependentes transitivos sao pulados e branches
+independentes continuam.
 
-O fluxo integrado nao substitui `loki-run-plan`; ele o preserva como executor
-manual e pode usa-lo como executor delegado depois que o plano existir. O fluxo
-integrado tambem nao promove aprendizado duradouro automaticamente. Digest,
-backlog, reports e retrospectivas viram entrada para
-`loki-continuous-improvement` somente por decisao posterior.
+Use `loki-agentic-development` quando tambem forem necessarios POVs, selecao de
+agentes, cross-review, sintese, gates, completion reports, digest e backlog.
+Esse caminho permanece semanticamente distinto, mas produz ou valida uma
+analise Markdown e realiza um unico handoff ao `loki-implement-feature`.
 
-Nos dois executores, completion/evidence mínimo é persistido primeiro. Quando
-há atrito ou aprendizado material, `execution-knowledge-cataloger` pode criar
-em paralelo uma entry exclusiva no run. O fluxo principal não espera por esse
-enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`; lookup
-trivial pode ser `skipped-nonmaterial`. Somente
+O contrato e current-only: comandos, schemas e estados substituidos nao mantem
+alias, wrapper, conversor, fallback ou uma segunda autoridade operacional.
+
+Nos dois caminhos, completion/evidence minimo e persistido primeiro. Quando ha
+atrito ou aprendizado material, `execution-knowledge-cataloger` pode criar em
+paralelo uma entry exclusiva no run. O fluxo principal nao espera por esse
+enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`;
+lookup trivial pode ser `skipped-nonmaterial`. Somente
 `loki-continuous-improvement` promove conhecimento depois.
+
+O dashboard unificado deriva do estado persistido e inclui AC/evidence,
+validators, ciclos, retries, failed tasks, skipped dependents, targets
+inferidos, riscos, resume e teste manual. Human validation herdada da analise
+aparece somente no final e apenas quando for a unica condicao restante.
 
 ## Evidencia de Sessao
 
@@ -239,8 +262,8 @@ como `frontier_reasoning`, `coding`, `generalist`, `long_context` e
 Documentacao duravel, politicas, contratos, templates e mudancas normativas do
 pacote usam effort alto por padrao. Documentacao transiente de execucao pode
 usar effort baixo ou medio, exceto pesquisas de `loki-deep-research`, analises
-de `loki-tech-analysis` e planos de `loki-generate-action-plan`, que continuam
-high effort. Implementacao de codigo
+de `loki-tech-analysis` e planos materializados por `loki-implement-feature`,
+que continuam high effort. Implementacao de codigo
 usa modelo de codificacao e effort medio por padrao, escalando quando houver
 risco tecnico, integracao, arquitetura ou validacao dificil.
 
@@ -336,29 +359,30 @@ proposta de PR. Consulte `docs/loki-git-workflow.md`.
 
 Os command bundles instaláveis (`loki-init`, `loki-feedback`,
 `loki-tech-analysis`, `loki-deep-analysis`,
-`loki-human-decision-preflight`, `loki-agentic-development`,
+`loki-human-decision-preflight`, `loki-implement-feature`,
+`loki-agentic-development`,
 `loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
 meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
 
-As skills core (`lf-agentic-orchestration`, `lf-run-plan-execution`,
+As skills core (`lf-agentic-orchestration`, `lf-implement-feature-execution`,
 `lf-execution-knowledge-capture`,
 `lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
 `lf-index-navigator`, `lf-tech-analysis-authoring`, `lf-analytic-inference`,
 `lf-action-plan-authoring` e `lf-template-library`) fornecem conhecimento e
 procedimentos reutilizáveis chamados pelos commands.
 
-Juntas, essas superfícies governam entrevista, autoria de analises, preflight
-de decisoes humanas, planos, orquestracao agentica, templates, enriquecimento
-de tasks, execucao de fase, retrospectiva, navegacao de documentacao e
-evolucao controlada de commands, agents e skills.
+Juntas, essas superficies governam entrevista, autoria de analises,
+planejamento e execucao unificados, AC/validators por task, orquestracao
+agentica, templates, enriquecimento de tasks, retrospectiva, navegacao de
+documentacao e evolucao controlada de commands, agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o
 pedido do usuario ou o plano aprovado declarar aquela superficie.
 
 Planos executaveis devem declarar write owner, `target_files`,
-`allowed_writes`, validators e gates quando uma task puder ser executada por
-agente `scoped-writer`. `loki-enrich-tasks` deve preservar ou refinar esse
-escopo antes de `loki-run-plan`.
+`allowed_writes`, validators, gates, AC e primary route quando uma task puder
+ser executada por agente `scoped-writer`. `loki-enrich-tasks` deve preservar ou
+refinar esse escopo antes do dispatch por `loki-implement-feature`.
 
 ## Inicializacao Pos-Instalacao
 
@@ -399,7 +423,7 @@ analise tecnica ou planejamento que dependa de Common Events, mapas, plugins,
 assets ou save/load.
 
 Essas skills sao extensoes especializadas opcionais. Elas nao sao
-obrigatorias para feedback, analise tecnica, plano de acao, execucao de plano,
+obrigatorias para feedback, analise tecnica, implementacao unificada,
 retrospectiva ou melhoria continua do core Loki.
 
 Para evoluir o pacote, use os criadores certos por tipo de artefato e valide contra `docs/package-authoring-guardrails.md`. O objetivo e transformar aprendizado em regra operacional sem depender de memoria da conversa.
@@ -428,9 +452,9 @@ duradoura e backlog.
   e nunca autocorrige `/docs`.
 - `runtime-qa`: produz checklist e evidencia exigida; nunca simula
   confirmacao humana.
-- `execution-context-reader`: extrai contexto em modo read-only para
-  `loki-run-plan`, usando `DIR_ANALISE`, tasks e fontes locais permitidas sem
-  escrever.
+- `execution-context-reader`: extrai contexto em modo read-only da demanda,
+  `analysis_file`, state, task e fontes locais permitidas para
+  `loki-implement-feature`, sem escrever.
 - `source-researcher`: mapeia fatos, lacunas e conflitos em pesquisa
   multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao,
   sem decidir solucao nem escrever.
@@ -439,8 +463,9 @@ duradoura e backlog.
   retorna proposta, validadores e gates.
 - Agentes game-dev como `gameplay-engineer` e `narrative-designer` podem
   escrever mecanicas, conteudo narrativo, dialogos,
-  quests, tuning ou artefatos equivalentes quando `loki-run-plan` entregar
-  envelope `task_scoped_writer` com arquivos, validators e gates.
+  quests, tuning ou artefatos equivalentes quando `loki-implement-feature`
+  entregar session/domain preflights validos e envelope `task_scoped_writer`
+  com target decision, arquivos, validators e gates.
 
 ## Contexto Duradouro do Consumidor
 
@@ -454,8 +479,8 @@ duradoura e backlog.
 
 A matriz caller/mode e fechada: `loki-init` usa
 `init-bootstrap-cataloger`, `init-publication-batch` e
-`init-final-reconciliation`; `loki-continuous-improvement` e `loki-run-plan`
-usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
+`init-final-reconciliation`; `loki-continuous-improvement` e
+`loki-implement-feature` usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
 `proposal-only`. Caller ou mode ausente ou cruzado bloqueia antes da escrita.
 
 ## Regra de Uso Seguro

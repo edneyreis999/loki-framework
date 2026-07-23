@@ -15,8 +15,8 @@ appear in legacy plans, but new documents should use `reader-facing`.
 
 1. If the artifact is produced by `loki-tech-analysis`, classify it as
    `technical rich`.
-2. If the artifact is produced by `loki-generate-action-plan`, classify it as
-   `technical rich`.
+2. If the artifact is an action plan materialized by
+   `loki-implement-feature`, classify it as `technical rich`.
 3. If the document is meant primarily for AI agents, prompt assembly, retrieval,
    routing, context hydration, deterministic reuse, or machine-readable policy,
    classify it as `agent-facing lite` or `agent-facing rich`.
@@ -72,7 +72,7 @@ Purpose: preserve technical reasoning or contracts for future work.
 Typical destinations:
 
 - technical analysis artifacts;
-- generated action plans;
+- unified feature action plans;
 - architecture or integration references;
 - durable decision records;
 - validator or package policy docs;
@@ -90,9 +90,10 @@ Expected shape:
 - validators and human gates;
 - maintenance notes or update triggers.
 
-`loki-tech-analysis` and `loki-generate-action-plan` outputs are technical rich
-by exception because downstream workflows depend on them as self-contained
-handoff artifacts, even when they are stored with transient plan files.
+`loki-tech-analysis` outputs and action plans materialized by
+`loki-implement-feature` are technical rich by exception because downstream
+execution depends on them as self-contained artifacts, even when stored with
+transient plan files.
 
 ## Reader-Facing Lite
 

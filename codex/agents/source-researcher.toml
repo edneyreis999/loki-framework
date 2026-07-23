@@ -68,10 +68,11 @@ tasks e nao escreve artefatos. O comando chamador decide como usar o resultado.
   matriz de decisao.
 - `loki-feedback` ja normalizou o feedback e precisa confirmar ou rejeitar
   hipoteses com mais de uma familia de fonte.
-- `loki-generate-action-plan` recebeu contexto insuficiente para criar tasks
-  executaveis e precisa reduzir `TODO: localizar`.
-- `loki-run-plan` nao possui `DIR_ANALISE` e a lacuna e ampla demais para uma
-  pre-analise local minima do `execution-context-reader`.
+- `loki-implement-feature` encontrou durante planejamento ou replanejamento uma
+  lacuna multi-fonte que impede tasks executaveis ou um `target_decision`
+  validado.
+- A demanda, o `analysis_file` e as referencias da task nao resolvem uma lacuna
+  ampla demais para leitura local minima do `execution-context-reader`.
 - `loki-enrich-tasks` precisa verificar compatibilidade, contrato upstream ou
   conflito entre fontes antes de editar tasks da fase ativa.
 - `loki-deep-research` precisa executar uma trilha isolada de pesquisa web,
@@ -82,7 +83,7 @@ tasks e nao escreve artefatos. O comando chamador decide como usar o resultado.
 
 Use `bibliotecario` quando a pergunta for apenas localizar a menor leitura em
 `docs/index.xml`. Use `execution-context-reader` quando a pergunta ja estiver
-restrita a uma fase/task de `loki-run-plan`.
+restrita a uma fase, task ou decisao de target de `loki-implement-feature`.
 
 ## Concurrency Contract
 
@@ -97,7 +98,7 @@ restrita a uma fase/task de `loki-run-plan`.
 
 - Pergunta de pesquisa ou hipotese material.
 - Objetivo downstream: `deep-research`, `tech-analysis`, `feedback`,
-  `action-plan`, `run-plan`, `enrich-tasks` ou `continuous-improvement`.
+  `implement-feature`, `enrich-tasks` ou `continuous-improvement`.
 - Fontes candidatas, caminhos iniciais ou motivo documentado para descobri-las.
 - Escopo permitido, out of scope, forbidden writes e superficies sensiveis.
 - Status do research gate externo: `not-needed`, `pending-consent`,

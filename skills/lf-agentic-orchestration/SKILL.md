@@ -1,8 +1,8 @@
 ---
 name: lf-agentic-orchestration
-description: "Coordinate Loki agentic development: preflight, selected fan-out, XML state, gates, autonomous checkpoints, completion/evidence, non-blocking execution-knowledge capture, liveness, digest and backlog."
+description: "Coordinate Loki agentic development: selected POV fan-out, synthesis, decision-complete Markdown analysis, one unified implementation handoff, completion/evidence, non-blocking execution-knowledge capture, digest and backlog."
 when_to_use:
-  - "Use when a Loki workflow needs agentic analysis before planning or autonomous phase execution with resumable state."
+  - "Use when a Loki workflow needs agentic analysis before one unified implementation handoff with resumable state."
   - "Use when coordinating selected agents, XML run state, decision gates, completion reports, execution-knowledge capture, digest, backlog, or per-agent retrospectives."
 argument-hint: "[run directory, demand, optional scope]"
 arguments:
@@ -23,7 +23,7 @@ adapter_projection:
   claude_code: "May map to model/effort frontmatter where supported."
 escalation_signals:
   - multi-agent analysis with material conflicts
-  - unresolved decision gates before action planning
+  - unresolved decision gates before unified implementation
   - target file conflicts between agent runs
   - autonomous execution across multiple planned phases
 context: standard
@@ -45,7 +45,7 @@ used_by:
 Provide the reusable orchestration rules behind an agentic Loki run. The
 invoking command owns the public workflow, user-facing gates and allowed writes;
 this skill defines how to select agents, keep XML state resumable, avoid unsafe
-parallel writes, hand off to planning and execution, and record completion.
+parallel writes, make one unified implementation handoff, and record completion.
 
 ## Procedure
 
@@ -58,7 +58,7 @@ parallel writes, hand off to planning and execution, and record completion.
    useful for later review.
 4. Create or update split XML state for the run: run manifest, analysis
    manifest, agent POVs, reviews, synthesis, agent run reports and digest.
-5. Stop before action planning if any unresolved `must_ask_now` gate remains.
+5. Stop before unified implementation if any unresolved `must_ask_now` gate remains.
 6. Treat specialist delegation as required for material work: nontrivial
    multi-source reading, technology-specific execution, sensitive/runtime
    writes, material validation, or work that would consume substantial main
@@ -68,14 +68,14 @@ parallel writes, hand off to planning and execution, and record completion.
    recorded exception.
 7. Run one cross-review round when material conflict or risk is present. Convert
    unresolved material conflict into a gate, targeted read or stop condition.
-8. Hand off to action planning only after analysis state is complete enough to
-   generate executable phases without new human questions.
-9. During autonomous execution, propagate the requested Write Test review
-   frequency unchanged when supplied and preserve its absence otherwise, then
-   invoke `loki-run-plan` once with
-   `EXECUTION_SCOPE=plano`. The executor alone derives effective policy,
-   validates/applies enum/default, and owns materiality and checkpoints. Record blockers or post-execution items instead
-   of asking new human questions mid-run.
+8. Materialize one decision-complete Markdown analysis from the validated POV,
+   review and synthesis state. Preserve its locator and evidence; do not use XML
+   synthesis alone as the public command input.
+9. Invoke `loki-implement-feature` exactly once with the original validated
+   demand and that readable Markdown `analysis_file`. The unified command owns
+   plan creation, DAG execution, target decisions, AC validation, retry, resume
+   and dashboard. Record blockers or post-execution items instead of asking new
+   human questions mid-run.
 10. Require a compact completion record for every agent handoff. The
     orchestrator captures a validated evidence manifest after completion or
     records an explicit `partial`, `unavailable` or `unsupported` gap. A
@@ -107,7 +107,7 @@ parallel writes, hand off to planning and execution, and record completion.
   4, agent-run report schema 5 and digest schema 4; older or unknown root
   schemas are rejected.
 - Agent POVs, optional reviews and synthesis.
-- Plan handoff state.
+- One Markdown-analysis-to-implementation handoff state.
 - Agent run reports with `agent_run_id`, `handoff_id`, owner, target files,
   validators, gates, evidence, completion status and blockers.
 - Digest and backlog records.
@@ -125,9 +125,10 @@ parallel writes, hand off to planning and execution, and record completion.
   serialized before writing.
 - Do not mark runtime behavior, integrations, persisted state or perceptible
   output as validated without the relevant human gate.
-- Do not replace `loki-run-plan` or call it once per phase; use one resumable
-  plan-scope invocation as the executor when the invoking workflow reaches
-  planned execution.
+- Do not expose `loki-agentic-development` as an alias, wrapper or replacement
+  for `loki-implement-feature`. This orchestration adds selected POVs,
+  cross-review, synthesis, digest and backlog before exactly one unified call;
+  ordinary unified feature demands route directly to the public command.
 - Do not promote learnings into durable rules automatically. Record digest and
   backlog items for a later improvement workflow.
 - Do not let a cataloger write shared run state, manifest, digest or backlog,
@@ -153,7 +154,10 @@ parallel writes, hand off to planning and execution, and record completion.
   gates.
 - Material work declares an agent owner or an explicit orchestrator exception
   with reason, scope, risk and validation owner.
-- No unresolved `must_ask_now` gate exists before plan generation.
+- No unresolved `must_ask_now` gate exists before the Markdown analysis and
+  unified implementation handoff.
+- Exactly one handoff calls `loki-implement-feature` with demand and
+  `analysis_file`; no phase loop or alternate executor exists.
 - Parallel groups have no target-file conflict.
 - Completed agent runs include status, report path and evidence.
 - Every knowledge capture has a unique target and one typed state; only a valid

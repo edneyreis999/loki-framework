@@ -28,6 +28,10 @@ INSTALL_SCOPE_ROOT_KEYS = frozenset(
 INSTALL_SCOPE_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents", "docs"})
 INSTALL_SCOPE_REQUIRED_ARTIFACT_KEYS = frozenset({"skills", "agents", "codex_agents"})
 INSTALL_SCOPE_PROFILE_KEYS = frozenset(PROFILE_SCOPES)
+RETIRED_SOURCE_ONLY_SKILLS = frozenset(
+    {f"loki-{stem}" for stem in ("generate-action-plan", "run-plan")}
+    | {"lf-" + "run-plan-execution"}
+)
 
 
 def scope_error(code: str, message: str) -> "InstallError":
@@ -80,6 +84,13 @@ class PlannedLink:
         if self.reason:
             entry["reason"] = self.reason
         return entry
+
+
+@dataclass(frozen=True)
+class ManagedRemoval:
+    source: Path
+    destination: Path
+    source_kind: str
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -278,7 +289,7 @@ def discover_skills(
 
     discovered_names = {path.name for path in skill_dirs}
     configured_names = set(scope_config.skills)
-    missing = sorted(discovered_names - configured_names)
+    missing = sorted(discovered_names - configured_names - RETIRED_SOURCE_ONLY_SKILLS)
     extra = sorted(configured_names - discovered_names)
     if missing or extra:
         details = []
@@ -291,7 +302,8 @@ def discover_skills(
     return [
         (resolve_required_source(path, package_root), scope_config.skills[path.name])
         for path in skill_dirs
-        if scope_selected(scope_config.skills[path.name], profile)
+        if path.name in scope_config.skills
+        and scope_selected(scope_config.skills[path.name], profile)
     ]
 
 
@@ -682,6 +694,89 @@ def assert_profile_matches_existing_manifest(
     )
 
 
+def lexical_absolute(path: Path) -> Path:
+    """Normalize an absolute path without following its final symlink."""
+    return Path(os.path.abspath(os.fspath(path)))
+
+
+def plan_managed_upgrade(
+    destination_root: Path,
+    package_root: Path,
+    specs: list[LinkSpec],
+) -> tuple[bytes | None, list[ManagedRemoval], set[Path]]:
+    """Validate prior manifest authority and select exact retired managed links."""
+    manifest_path = destination_root / MANIFEST_RELATIVE_PATH
+    manifest = read_previous_manifest(destination_root)
+    if manifest is None:
+        return None, [], set()
+
+    previous_bytes = manifest_path.read_bytes()
+    links = manifest.get("links")
+    if not isinstance(links, list):
+        raise InstallError("installation manifest links must be a list")
+
+    expected = {lexical_absolute(spec.destination): spec for spec in specs}
+    recorded_destinations: set[Path] = set()
+    removals: list[ManagedRemoval] = []
+    for index, entry in enumerate(links):
+        if not isinstance(entry, dict):
+            raise InstallError(f"installation manifest link {index} must be an object")
+        required = {"origin", "destination", "type", "source_kind", "install_scope"}
+        if not required.issubset(entry) or not all(
+            isinstance(entry.get(key), str) and entry.get(key) for key in required
+        ):
+            raise InstallError(f"installation manifest link {index} is incomplete")
+        destination = lexical_absolute(Path(entry["destination"]))
+        source = Path(entry["origin"]).resolve(strict=False)
+        try:
+            destination.relative_to(destination_root)
+            source.relative_to(package_root)
+        except ValueError as exc:
+            raise InstallError(
+                f"installation manifest link escapes approved roots: {destination} -> {source}"
+            ) from exc
+        if destination in recorded_destinations:
+            raise InstallError(f"duplicate managed destination in prior manifest: {destination}")
+        recorded_destinations.add(destination)
+        if not destination.is_symlink():
+            raise InstallError(
+                f"managed destination is missing or unmanaged/divergent: {destination}"
+            )
+        actual = resolve_symlink_target(destination)
+        if actual != source:
+            raise InstallError(
+                f"managed destination is divergent: {destination} points to {actual}, "
+                f"prior manifest requires {source}"
+            )
+
+        current = expected.get(destination)
+        if current is not None:
+            if current.source != source or current.link_type != entry["type"]:
+                raise InstallError(
+                    f"managed destination identity changed unexpectedly: {destination}"
+                )
+            continue
+
+        relative = destination.relative_to(destination_root)
+        retired_name = relative.name
+        retired_source = (package_root / "skills" / retired_name).resolve(strict=False)
+        if (
+            relative != Path(".agents") / "skills" / retired_name
+            or retired_name not in RETIRED_SOURCE_ONLY_SKILLS
+            or source != retired_source
+            or entry["type"] != "skill"
+            or entry["source_kind"] != "directory"
+        ):
+            raise InstallError(
+                f"prior manifest contains unmanaged stale identity; refusing removal: {destination}"
+            )
+        removals.append(
+            ManagedRemoval(source=source, destination=destination, source_kind="directory")
+        )
+
+    return previous_bytes, sorted(removals, key=lambda item: str(item.destination)), recorded_destinations
+
+
 def print_plan(
     planned_links: list[PlannedLink],
     package_root: Path,
@@ -689,6 +784,7 @@ def print_plan(
     dry_run: bool,
     replace: bool,
     profile: str,
+    removals: list[ManagedRemoval],
 ) -> None:
     mode = "dry-run" if dry_run else "apply"
     print(f"mode: {mode}")
@@ -706,6 +802,11 @@ def print_plan(
         )
         if link.reason:
             print(f"  reason={link.reason}")
+    for item in removals:
+        print(
+            f"- status={'would-remove' if dry_run else 'remove'} type=skill "
+            f"scope=retired-managed source={item.source} destination={item.destination}"
+        )
 
 
 def remove_exact_conflict(path: Path, existing_state: str) -> None:
@@ -759,15 +860,13 @@ def apply_plan(planned_links: list[PlannedLink]) -> list[PlannedLink]:
     return applied
 
 
-def write_manifest(
+def manifest_payload(
     destination_root: Path,
     package_root: Path,
     replace: bool,
     profile: str,
     planned_links: list[PlannedLink],
-) -> Path:
-    manifest_path = destination_root / MANIFEST_RELATIVE_PATH
-    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+) -> str:
     manifest = {
         "package_root": str(package_root),
         "dest_root": str(destination_root),
@@ -780,7 +879,11 @@ def write_manifest(
         "install_scope": sorted(PROFILE_SCOPES[profile]),
         "links": [link.manifest_entry() for link in planned_links],
     }
-    payload = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    return json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+
+
+def stage_manifest(manifest_path: Path, payload: str) -> Path:
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -795,16 +898,136 @@ def write_manifest(
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary_path, manifest_path)
-        temporary_path = None
-    except OSError as exc:
-        raise InstallError(f"cannot atomically write manifest {manifest_path}: {exc}") from exc
-    finally:
+        staged = json.loads(temporary_path.read_text(encoding="utf-8"))
+        if not isinstance(staged, dict) or not isinstance(staged.get("links"), list):
+            raise InstallError(f"staged installation manifest is invalid: {temporary_path}")
+        return temporary_path
+    except (OSError, json.JSONDecodeError) as exc:
         if temporary_path is not None:
-            try:
-                temporary_path.unlink()
-            except FileNotFoundError:
-                pass
+            temporary_path.unlink(missing_ok=True)
+        raise InstallError(f"cannot stage installation manifest {manifest_path}: {exc}") from exc
+
+
+def publish_staged_manifest(staged_path: Path, manifest_path: Path) -> None:
+    try:
+        os.replace(staged_path, manifest_path)
+    except OSError as exc:
+        raise InstallError(
+            f"cannot atomically publish manifest {manifest_path}: {exc}"
+        ) from exc
+
+
+def rollback_managed_mutations(
+    created: list[PlannedLink],
+    removed: list[ManagedRemoval],
+) -> list[str]:
+    failures: list[str] = []
+    for link in reversed(created):
+        try:
+            if not link.destination.is_symlink():
+                failures.append(f"created target no longer symlink: {link.destination}")
+            elif resolve_symlink_target(link.destination) != link.source:
+                failures.append(f"created target diverged before rollback: {link.destination}")
+            else:
+                link.destination.unlink()
+        except OSError as exc:
+            failures.append(f"cannot remove created target {link.destination}: {exc}")
+    for item in removed:
+        try:
+            if item.destination.exists() or item.destination.is_symlink():
+                failures.append(f"retired target occupied during rollback: {item.destination}")
+            else:
+                create_symlink(item.source, item.destination, item.source_kind)
+        except OSError as exc:
+            failures.append(f"cannot restore managed target {item.destination}: {exc}")
+    return failures
+
+
+def apply_transaction(
+    destination_root: Path,
+    package_root: Path,
+    replace: bool,
+    profile: str,
+    planned_links: list[PlannedLink],
+    removals: list[ManagedRemoval],
+    previous_manifest_bytes: bytes | None,
+) -> Path:
+    manifest_path = destination_root / MANIFEST_RELATIVE_PATH
+    payload = manifest_payload(
+        destination_root, package_root, replace, profile, planned_links
+    )
+    staged_path = stage_manifest(manifest_path, payload)
+    created: list[PlannedLink] = []
+    removed: list[ManagedRemoval] = []
+    try:
+        if previous_manifest_bytes is not None:
+            if not manifest_path.is_file() or manifest_path.read_bytes() != previous_manifest_bytes:
+                raise InstallError("prior installation manifest changed before mutation")
+        elif manifest_path.exists() or manifest_path.is_symlink():
+            raise InstallError("installation manifest appeared before mutation")
+
+        for item in removals:
+            if not item.destination.is_symlink() or resolve_symlink_target(item.destination) != item.source:
+                raise InstallError(
+                    f"managed retired destination changed before removal: {item.destination}"
+                )
+            item.destination.unlink()
+            removed.append(item)
+
+        for link in planned_links:
+            if link.blocked:
+                raise InstallError(f"blocked destination {link.destination}: {link.reason}")
+            if link.status == "kept":
+                continue
+            if link.status == "replaced":
+                remove_exact_conflict(link.destination, link.existing_state)
+            create_symlink(link.source, link.destination, link.source_kind)
+            created.append(link)
+
+        for link in planned_links:
+            if not link.destination.is_symlink() or resolve_symlink_target(link.destination) != link.source:
+                raise InstallError(f"post-mutation link validation failed: {link.destination}")
+        for item in removals:
+            if item.destination.exists() or item.destination.is_symlink():
+                raise InstallError(f"retired managed link remains after mutation: {item.destination}")
+
+        publish_staged_manifest(staged_path, manifest_path)
+        staged_path = Path()
+        return manifest_path
+    except (InstallError, OSError) as exc:
+        rollback_failures = rollback_managed_mutations(created, removed)
+        if rollback_failures:
+            locators = "; ".join(rollback_failures)
+            raise InstallError(
+                f"installation transaction failed ({exc}); rollback incomplete: {locators}; "
+                f"prior manifest remains authoritative at {manifest_path}"
+            ) from exc
+        raise InstallError(
+            f"installation transaction failed and prior topology was restored: {exc}"
+        ) from exc
+    finally:
+        if staged_path != Path():
+            staged_path.unlink(missing_ok=True)
+
+
+def write_manifest(
+    destination_root: Path,
+    package_root: Path,
+    replace: bool,
+    profile: str,
+    planned_links: list[PlannedLink],
+) -> Path:
+    manifest_path = destination_root / MANIFEST_RELATIVE_PATH
+    payload = manifest_payload(
+        destination_root, package_root, replace, profile, planned_links
+    )
+    temporary_path = stage_manifest(manifest_path, payload)
+    try:
+        publish_staged_manifest(temporary_path, manifest_path)
+        temporary_path = Path()
+    finally:
+        if temporary_path != Path():
+            temporary_path.unlink(missing_ok=True)
     return manifest_path
 
 
@@ -843,6 +1066,27 @@ def run(argv: list[str]) -> int:
                 profile=args.profile,
             )
         )
+        previous_manifest_bytes, managed_removals, recorded_destinations = (
+            plan_managed_upgrade(
+                destination_root,
+                package_root,
+                specs,
+            )
+        )
+        if previous_manifest_bytes is not None:
+            for link in planned_links:
+                destination = lexical_absolute(link.destination)
+                if link.status in {"would-replace", "replaced"}:
+                    raise InstallError(
+                        f"upgrade refuses divergent or unmanaged target: {destination}"
+                    )
+                if (
+                    link.existing_state != "missing"
+                    and destination not in recorded_destinations
+                ):
+                    raise InstallError(
+                        f"upgrade refuses target absent from prior manifest authority: {destination}"
+                    )
     except InstallError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -854,6 +1098,7 @@ def run(argv: list[str]) -> int:
         dry_run=args.dry_run,
         replace=args.replace,
         profile=args.profile,
+        removals=managed_removals,
     )
     sys.stdout.flush()
 
@@ -889,13 +1134,33 @@ def run(argv: list[str]) -> int:
         if any(link.blocked for link in revalidated_links):
             raise InstallError("a destination changed or remained blocked before apply")
         assert_no_legacy_install_layout(destination_root)
-        applied_links = apply_plan(revalidated_links)
-        manifest_path = write_manifest(
+        revalidated_previous_bytes, revalidated_removals, revalidated_recorded = (
+            plan_managed_upgrade(destination_root, package_root, specs)
+        )
+        if revalidated_previous_bytes != previous_manifest_bytes:
+            raise InstallError("prior installation manifest changed before apply")
+        if revalidated_removals != managed_removals:
+            raise InstallError("managed removal topology changed before apply")
+        if revalidated_recorded != recorded_destinations:
+            raise InstallError("managed destination set changed before apply")
+        if previous_manifest_bytes is not None:
+            for link in revalidated_links:
+                destination = lexical_absolute(link.destination)
+                if link.status == "replaced" or (
+                    link.existing_state != "missing"
+                    and destination not in revalidated_recorded
+                ):
+                    raise InstallError(
+                        f"upgrade refuses divergent or unmanaged target: {destination}"
+                    )
+        manifest_path = apply_transaction(
             destination_root,
             package_root=package_root,
             replace=args.replace,
             profile=args.profile,
-            planned_links=applied_links,
+            planned_links=revalidated_links,
+            removals=revalidated_removals,
+            previous_manifest_bytes=revalidated_previous_bytes,
         )
     except InstallError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -2,7 +2,7 @@
 name: lf-command-workflows
 description: Route shared Loki command bundles from Codex. Trigger when the user invokes a public `loki-*` workflow; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
 when_to_use:
-  - "Use when routing one of the 18 public Loki command bundles available to consumer and package profiles."
+  - "Use when routing one of the 17 current public Loki command bundles available to consumer and package profiles."
   - "Use when a caller needs a catalog of public loki-* identities, not a duplicate command contract."
 argument-hint: "[loki-* command name, arguments]"
 arguments:
@@ -27,7 +27,7 @@ paths:
 shell: bash
 type: skill
 status: draft
-used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-generate-action-plan, loki-generate-inferences, loki-human-decision-preflight, loki-agentic-development, loki-deep-analysis, loki-deep-research, loki-retrospectiva-tecnica, loki-run-plan, loki-demand-text-improver, loki-tech-analysis]
+used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-implement-feature, loki-generate-inferences, loki-human-decision-preflight, loki-agentic-development, loki-deep-analysis, loki-deep-research, loki-retrospectiva-tecnica, loki-demand-text-improver, loki-tech-analysis]
 ---
 
 # lf-command-workflows
@@ -50,3 +50,7 @@ and response references, and response asset. Load its `required_skills` and
 - Never reinterpret a `type: command` bundle as a knowledge skill.
 - Do not route internal-only workflows from this router.
 - Do not edit installed mirrors during ordinary execution.
+- Route ordinary demand-plus-analysis implementation directly to
+  `loki-implement-feature`. Never route it through `loki-agentic-development`,
+  whose distinct contract adds POV/synthesis/digest/backlog before one unified
+  handoff and is not an alias or wrapper.

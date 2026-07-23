@@ -6,10 +6,10 @@ Use este contrato para a fase de execução.
 
 ## Purpose And Observable Contract
 
-Este command orquestra demanda → análise agentic → decision preflight → plano →
-execução autônoma do plano em uma chamada → completion/evidence → execution knowledge →
-digest/backlog, sem
-substituir `loki-run-plan` como executor manual. Inicia com Input normalizado e
+Este command orquestra demanda → análise agentic → decision preflight → análise
+Markdown → uma chamada a `loki-implement-feature` → completion/evidence →
+execution knowledge → digest/backlog. Ele adiciona POV, cross-review, síntese,
+digest e backlog; não é alias, wrapper ou substituto do command unificado. Inicia com Input normalizado e
 diretório aprovado; termina com todos os handoffs e validators terminais e um
 estado `completed`, `blocked` ou `pending-human-validation`. Produz manifest XML,
 POVs/síntese, plano, completion records, evidências/gaps, knowledge
@@ -24,14 +24,14 @@ riscos e próximos passos. Delegação não transfere responsabilidade global.
 
 ## Dependencies And Allowed Writes
 
-Carregue `lf-agentic-orchestration` e `lf-execution-knowledge-capture`. Use,
-nessa ordem condicional,
-`loki-human-decision-preflight`, `loki-generate-action-plan` e `loki-run-plan`.
+Carregue `lf-agentic-orchestration`, `lf-tech-analysis-authoring` e
+`lf-execution-knowledge-capture`. Use, nessa ordem condicional,
+`loki-human-decision-preflight` e `loki-implement-feature`.
 Carregue também cada
-`<technology_required_skills>` quando a demanda, a análise ou o plano aprovado
-exigir tecnologia específica. Allowed writes: estado/evidência dentro do run
-aprovado, plano no destino aprovado e targets autorizados pelas tasks quando
-executados por `loki-run-plan`. Forbidden: alterar `loki-run-plan`; `.claude/**`,
+`<technology_required_skills>` quando a demanda ou análise exigir tecnologia
+específica. Allowed writes: estado/evidência e a análise Markdown dentro do run
+aprovado; o child de implementação e production targets pertencem ao envelope
+de `loki-implement-feature`. Forbidden: alterar o command unificado; `.claude/**`,
 `.agents/**`, `.codex/**`; qualquer target fora do plano; runtime/sensível sem
 owner, validator e gate; promoção automática de retrospectiva ou execution
 knowledge.
@@ -59,20 +59,19 @@ disjuntos; serialize overlaps.
 
 1. Registre estado inicial retomável e preflight.
 2. Colete POVs read-only separados e, quando material, uma rodada de cross-review.
-3. Consolide `analise/sintese.xml` com fatos, divergências, gates, plano,
+3. Consolide `analise/sintese.xml` com fatos, divergências, gates, abordagem,
    validators e stop conditions.
 4. Registre `experience_juice_needed`; abra waves adicionais mínimas quando
    lacunas pós-MVP materiais existirem, sem lista fixa de agentes.
 5. Execute decision preflight e não avance com `must_ask_now` pendente.
-6. Gere plano executável com dependências, writers, validators, loops e resume.
-7. Invoque `loki-run-plan` exatamente uma vez por execução integrada com
-   `EXECUTION_SCOPE=plano` e o `TASKS_MD` aprovado. Se o requested
-   `write_test_review_frequency` foi fornecido, encaminhe-o inalterado; se foi
-   omitido, não fabrique o valor no parent. O executor é o único que valida o
-   enum, aplica o default e resolve internamente a
-   DAG, checkpoints por task/fase/plano, clamp e retomada. Não crie loop por
-   fase, scheduler de review paralelo nem nova pergunta no meio da execução;
-   converta limites em blocker/backlog.
+6. Materialize `analise/technical-analysis.md` com fontes, fatos, inferências,
+   decisões, restrições, validators, gates e handoff direto completos. Valide o
+   Markdown e seu digest antes de dispatch.
+7. Invoque `loki-implement-feature` exatamente uma vez com a demanda original,
+   `analysis_file: <run_directory>/analise/technical-analysis.md` e
+   `plan_directory: <run_directory>/implementation/`. Não crie plano, DAG,
+   target decisions, ciclos, retries, dashboard ou loop por fase no parent;
+   essas autoridades pertencem ao command unificado.
 8. Em cada checkpoint material, persista primeiro o completion/evidence mínimo
    sanitizado. Só depois, quando suportado, invoque
    `execution-knowledge-cataloger` em paralelo para um target exclusivo em
@@ -87,10 +86,11 @@ disjuntos; serialize overlaps.
    Retrospectiva é ação explícita, nunca fallback, e somente
    `loki-continuous-improvement` promove conhecimento.
 
-Antes da chamada única, persista requested value e provenance, nunca uma policy
-efetiva calculada pelo parent. Depois do retorno, reconcilie a policy/checkpoints
-canônicos fornecidos por `loki-run-plan`: requested divergente ou digest/
-identidade conflitante é stop condition; resultado consultivo do reviewer não é.
+Antes da chamada única, persista o locator/digest da demanda, análise Markdown,
+plan directory reservado e `implementation_handoff_id`. Depois do retorno,
+reconcilie a identidade, `loki_run_state`/digest, completion/evidence, validators
+e dashboard fornecidos pelo command unificado. Divergência ou segundo handoff é
+stop condition.
 
 ## Write Ownership And Direct-Write Exception
 
@@ -105,8 +105,9 @@ futuro writer, evidências e riscos.
 
 Valide XML parseável; selection reason por agente; handoffs completos; writers
 com targets/limits/controls; trabalho material delegado ou exceção; checkpoint
-experience; zero must-ask pendente antes do plano; zero overlap paralelo; plano
-executável; validators/evidência ou gap explícito por fase; zero
+experience; zero must-ask pendente antes da análise Markdown; zero overlap
+paralelo; um handoff unificado com inputs/digests exatos;
+validators/evidência ou gap explícito por fase; zero
 write fora de escopo. Aplique interview para decisões materiais pré-plano,
 approval para instalação, política ou escrita sensível, e human-validation para
 runtime. Quando esta execução identificar um candidato de pacote, registre somente o
@@ -115,11 +116,11 @@ encaminhamento para uma futura `loki-continuous-improvement` com
 qualquer controle concreto falhar ou estiver pendente; validator não substitui
 gate humano.
 
-Audite estaticamente que os metadados de enum/default coincidem com o executor,
-sem validar ou aplicar o input runtime no parent; valide que a propagação não
-contém `effective_frequency`, que existe uma única chamada integrada com
-`EXECUTION_SCOPE=plano`, e que a policy devolvida é reconciliada sem segundo
-owner de clamp, materialidade, dispatch ou checkpoint.
+Audite estaticamente que existe uma única identidade/call site de
+`loki-implement-feature`, que recebe demand + Markdown analysis, e que nenhum
+plano, DAG, retry, validation cycle ou dashboard paralelo é criado. Confirme
+também que ordinary command discovery continua roteando diretamente ao command
+unificado, nunca a este workflow avançado.
 
 Para execution knowledge, valide target exclusivo, lineage para fontes
 persistidas, materialidade, enum e sanitização. Falha desse validator degrada
@@ -137,9 +138,9 @@ no cutover, o bundle assume a autoridade conforme schema 2. Execute
 ## Stop Conditions
 
 Pare sem demanda/escopo/run aprovado; sem orchestration skill; com must-ask
-pendente; síntese ou experience wave impossível sem inventar; plano inválido;
-run-plan blocker/out-of-scope; overlap; trabalho material sem owner/exceção;
-requested WTR divergente do persistido; policy/checkpoint retornado com conflito;
+pendente; síntese ou experience wave impossível sem inventar; análise Markdown
+inválida; unified-command blocker/out-of-scope; overlap; trabalho material sem
+owner/exceção; demanda/análise/state digest divergente ou handoff duplicado;
 necessidade de nova pergunta durante execução; validator de estado ausente; ou
 dependência/handoff/gate da implementação indisponível. Estas stop conditions
 cobrem implementação, write safety e resumability mínima; não cobrem
@@ -151,10 +152,10 @@ conclusão genérica. Não declare conclusão com outra condição ativa.
 ## Resume Contract
 
 Registre demanda, run directory, agentes selecionados/pulados e motivos,
-handoffs, gates, síntese, experience checkpoint/waves, plano, fase/task atual,
+handoffs, gates, síntese, experience checkpoint/waves, análise Markdown,
+implementation handoff, fase/task atual,
 agent runs, targets, owners, validators, completion/evidence states, capture
 IDs, knowledge target/status/reason/minimum next path, blockers, backlog, status
-e próximo passo. Para WTR, preserve requested value/provenance, a identidade da
-chamada plan-scope e a referência/digest da policy/checkpoints devolvidos pelo
-executor. Retome a mesma chamada/estado sem loop por fase ou reinício quando
-suficiente.
+e próximo passo. Preserve locator/digests da demanda/análise, plan directory,
+handoff ID e as referências/digest do current run state e dashboard devolvidos.
+Retome o mesmo handoff/estado sem loop por fase ou reinício quando suficiente.

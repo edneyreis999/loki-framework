@@ -502,7 +502,7 @@
       "auto_invoked": false,
       "allowed_destinations": [
         "loki-continuous-improvement",
-        "loki-generate-action-plan",
+        "loki-implement-feature",
         "loki-human-decision-preflight"
       ],
       "minimum_next_path": "return downstream handoff recommendation to caller"

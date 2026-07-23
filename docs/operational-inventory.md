@@ -4,6 +4,21 @@ status: completed
 created: 2026-06-24
 type: operational-inventory
 self_contained: true
+doc_id: loki-operational-inventory
+version: 1.0.0
+last_updated: 2026-07-23
+scope: Current package commands, skills, agents, templates, docs, validators, and reference-only backlog
+not_scope: Consumer project inventory, installed destination state, or compatibility with superseded package contracts
+authority: Approved Loki package policy and the versioned package source
+canonical_source: docs/operational-inventory.md
+intended_llm_task: retrieval
+source_priority:
+  - approved package policy
+  - manifest and install-scopes machine-readable inventory when synchronized
+  - this operational inventory
+  - reference-only and backlog rows
+known_conflicts: []
+replaced_by: null
 ---
 
 # Inventario Operacional do Loki Framework Local
@@ -19,7 +34,7 @@ Status permitidos nesta fase:
 - `reference-only`: fonte de inspiracao ou evidencia, sem virar componente instalavel agora.
 
 O relacionamento entre brief, analise, plano, execucao e validacao esta em
-[Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md). O
+[Workflow Unificado de Implementacao do Loki](loki-plan-execution-workflow.md). O
 relacionamento entre `loki-enrich-tasks`, `loki-retrospectiva-tecnica` e
 `loki-continuous-improvement` esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md).
@@ -45,10 +60,9 @@ não existe projection ou command físico separado.
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
 | `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
-| `loki-agentic-development` | `mvp` | Executar o caminho integrado v2, persistir completion/evidence antes de capture paralelo não bloqueante, registrar knowledge state, digest e backlog, preservando `loki-run-plan` como executor manual. |
-| `loki-generate-action-plan` | `mvp` | Gerar plano faseado com tasks, dependencias, human loops e estrutura de artefatos. |
+| `loki-agentic-development` | `mvp` | Executar o caminho avancado com analise multiagente, gates, um unico handoff ao `loki-implement-feature`, completion/evidence, knowledge state, digest e backlog. |
+| `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com target decisions, DAG, AC/validator por task, validation cycles, retry, dashboard e teste manual. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
-| `loki-run-plan` | `mvp` | Executar fase planejada com preflight, escrita serializada, validators, retomada e capture paralelo não bloqueante de execution knowledge a partir de fontes persistidas. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana; no destino package, exige perfil LLM-facing do Writer e parecer v2 independente do Auditor sem alterar destinos nao-package. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
@@ -82,15 +96,15 @@ approval vincula diretorio canonico, target exato, basename/versao,
 before-state/snapshot e um create exclusivo. Colisao posterior invalida a
 approval, bloqueia sem retry e exige nova resolucao e nova approval.
 
-O pacote possui 20 command bundles `loki-*` ativos. O router publico
-`lf-command-workflows` expoe 18 deles; os dois bundles `internal-only`,
+O pacote possui 19 command bundles `loki-*` ativos. O router publico
+`lf-command-workflows` expoe 17 deles; os dois bundles `internal-only`,
 `loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados
 exclusivamente por `lf-internal-command-workflows`.
 
 A matriz caller/mode do `catalogador` e fechada: `loki-init` usa
 `init-bootstrap-cataloger`, `init-publication-batch` e
-`init-final-reconciliation`; `loki-continuous-improvement` e `loki-run-plan`
-usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
+`init-final-reconciliation`; `loki-continuous-improvement` e
+`loki-implement-feature` usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
 `proposal-only`. Combinacoes ausentes ou cruzadas bloqueiam antes da escrita.
 
 ### Estado operacional de inferencias do consumidor
@@ -132,10 +146,10 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 18 commands Loki publicos disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki publicos disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `lf-run-plan-execution` | `mvp` | Procedimento de execucao com Execution Brief, dependencias, preflight pessoal de dominio, owners escopados, escrita serializada, validators e estado retomavel. |
+| `lf-implement-feature-execution` | `mvp` | Autoridade current-only para plan/state, target decisions, DAG, session e domain preflights, AC/validators, validation cycles, retry, resume, dashboard e terminal truth. |
 | `lf-execution-knowledge-capture` | `mvp` | Separar evidence de knowledge, avaliar materialidade, despachar entry exclusiva sem bloquear e reconciliar estados degradados em checkpoint. |
 | `lf-domain-context-preflight` | `mvp` | Preflight pessoal reutilizavel para docs minimas, fontes atuais, freshness, conflitos e lacunas, sem autocorrecao de docs. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
@@ -154,7 +168,7 @@ bundles.
 | `lf-agent-creator` | `mvp` | Fonte compartilhada do contrato de agents por capacidades e modos, com envelope de escrita, validação e handoff claro. |
 | `lf-skill-creator` | `mvp` | Fonte compartilhada do contrato 24/24 para criar ou revisar skills com capacidade única, metadata válida, progressive disclosure e forward testing. |
 | `lf-documentation-writing` | `mvp` | Classificar modo documental e aplicabilidade LLM-facing de forma independente; rotear artefatos aplicaveis aos requisitos de autoria e ao contrato canonico de perfil, fixtures e auditoria independente. |
-| `task-onboarding` | `reference-only` | Inspiracao historica internalizada em `lf-run-plan-execution`. |
+| `task-onboarding` | `reference-only` | Inspiracao historica ja internalizada no contrato current-only de execucao unificada. |
 | `brainstorm-character` | `backlog` | Apoio futuro para design de personagens e bosses. |
 
 ## Agents
@@ -166,7 +180,7 @@ bundles.
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
 | `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: recebe envelope com targets exatos, aplica promocao package-only, emite perfil LLM-facing e selecao justificada de fixtures, executa checks mecanicos e entrega evidencia ao Auditor; nao autoaprova nem atua em consumidor/runtime. |
 | `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only e independente: valida perfil, rubrica v2, fixtures, revisao isolada e bias controls sobre o patch real; emite o parecer LLM-facing, bloqueia findings/incertezas e nunca corrige producao. |
-| `execution-context-reader` | `mvp` | Extrair contexto read-only de `DIR_ANALISE`, tasks, docs e fontes locais para alimentar `loki-run-plan` sem escrever. |
+| `execution-context-reader` | `mvp` | Extrair contexto read-only da demanda, `analysis_file`, state, task, docs e fontes locais para `loki-implement-feature` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
 | `session-evidence-auditor` | `mvp` | Auditar em modo read-only manifests de evidencia de sessao ja validados, sem inventar identidade, transcritos, uso de tokens ou raciocinio privado. |
 | `execution-knowledge-cataloger` | `mvp` | Escrever somente uma entry XML exclusiva a partir de completion/evidence sanitizados persistidos; nunca shared state ou promoção. |
@@ -246,7 +260,7 @@ bundles.
 | `docs/loki-installation-workflow.md` | `mvp` | Explicar o workflow canonico de instalacao do Loki em projetos consumidores, do dry-run ao rollback por manifest. |
 | `docs/loki-git-workflow.md` | `mvp` | Registrar comandos Git flow do Loki e dependencias minimas de Git, GitHub MCP e `gh`. |
 | `docs/loki-installation-workflow.excalidraw.md` | `mvp` | Ilustrar o workflow canonico de instalacao do Loki em projetos consumidores. |
-| `docs/loki-plan-execution-workflow.md` | `mvp` | Explicar o workflow canonico de execucao de plano, da descricao curta ate codigo, validacao e handoff para aprendizado. |
+| `docs/loki-plan-execution-workflow.md` | `mvp` | Explicar o workflow unificado de implementacao, da demanda e analise em Markdown ate codigo, validacao e handoff para aprendizado. |
 | `docs/loki-plan-execution-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de execucao. |
 | `docs/loki-learning-workflow.md` | `mvp` | Explicar o workflow canonico de aprendizado, retrospectiva e promocao de contexto duradouro. |
 | `docs/loki-learning-workflow.excalidraw.md` | `mvp` | Ilustrar a participacao de commands, skills e agents no workflow de aprendizado. |

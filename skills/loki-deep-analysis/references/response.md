@@ -161,9 +161,9 @@ Recommend only a destination supported by the report evidence:
 - `loki-continuous-improvement` for later evaluation of structured events and
   `unreviewed` candidates; this is not promotion authorization;
 - `loki-human-decision-preflight` for unresolved material human decisions;
-- `loki-generate-action-plan` when decisions and analysis are sufficient for
-  executable planning;
+- `loki-implement-feature` when the demand and readable Markdown analysis are
+  decision-complete for unified planning and implementation;
 - further bounded investigation or `blocked` when evidence is insufficient.
 
 The response must name the expected owner, required input, gates and reason for
-the route. Never auto-invoke downstream promotion or planning from Response.
+the route. Never auto-invoke a downstream workflow from Response.

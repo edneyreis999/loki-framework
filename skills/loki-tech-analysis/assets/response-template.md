@@ -33,7 +33,7 @@
 
 ## Próximos passos
 
-- Comando recomendado: <loki-human-decision-preflight | loki-generate-action-plan | investigação adicional | blocked>
+- Comando recomendado: <loki-human-decision-preflight | loki-implement-feature | investigação adicional | blocked>
 - Ação: <ação concreta>
 - Owner esperado: <papel ou agente>
 

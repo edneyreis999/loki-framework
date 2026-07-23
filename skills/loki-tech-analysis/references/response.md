@@ -59,7 +59,7 @@ Toda resposta terminal ou de parada deve comunicar:
 
 Para análise concluída, identifique o `destination`, o resultado do research
 gate, a decisão `human_decision_preflight.required` e a recomendação entre
-`loki-human-decision-preflight`, `loki-generate-action-plan`, investigação
+`loki-human-decision-preflight`, `loki-implement-feature`, investigação
 adicional ou bloqueio.
 
 Não declare `completed`, `ready` ou equivalente enquanto houver validator

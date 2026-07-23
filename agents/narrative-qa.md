@@ -151,9 +151,10 @@ Escrita escopada permitida somente quando o workflow entregar envelope com
 
 - `loki-init`: nenhuma escrita; retornar somente research packets,
   continuation e completion record ao orquestrador.
-- `loki-run-plan`: escrever somente os `target_files` da task aprovada que
-  estejam dentro de `task_allowed_writes` e dos `scoped_write_domains` do
-  agente.
+- `loki-implement-feature`: apos session preflight valido e o preflight pessoal
+  de dominio aplicavel, escrever somente os `target_files` de uma task e
+  `target_decision` validados dentro de `task_allowed_writes` e dos
+  `scoped_write_domains` do agente.
 - Runtime, engine, dados, assets, config, scripts ou artefatos gerados exigem
   plano aprovado, skill tecnica aplicavel quando houver tecnologia especifica,
   validators e gates humanos definidos pela task.

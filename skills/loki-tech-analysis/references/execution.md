@@ -156,8 +156,10 @@ de implementação, a ausência do agente, a oportunidade e o escopo de um futur
     quando artefatos forem adicionados, removidos, renomeados ou movidos, e
     valide que referências normativas continuam internas ao package root.
 11. Decida explicitamente `human_decision_preflight.required`. Recomende
-    `loki-human-decision-preflight` quando decisões humanas pré-plano permanecerem;
-    caso contrário, justifique e recomende `loki-generate-action-plan`.
+    `loki-human-decision-preflight` quando decisões humanas materiais
+    permanecerem; caso contrário, identifique a demanda e o próprio Markdown
+    como `analysis_file`, preserve restrições/validators e recomende
+    `loki-implement-feature` diretamente.
 12. Rode todos os validators e gates antes de declarar o artefato pronto.
 
 ### Validators, gates e approvals

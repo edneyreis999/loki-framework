@@ -12,14 +12,13 @@
 | `loki-continuous-improvement` | `skills/loki-continuous-improvement/SKILL.md` |
 | `loki-enrich-tasks` | `skills/loki-enrich-tasks/SKILL.md` |
 | `loki-feedback` | `skills/loki-feedback/SKILL.md` |
-| `loki-generate-action-plan` | `skills/loki-generate-action-plan/SKILL.md` |
+| `loki-implement-feature` | `skills/loki-implement-feature/SKILL.md` |
 | `loki-generate-inferences` | `skills/loki-generate-inferences/SKILL.md` |
 | `loki-human-decision-preflight` | `skills/loki-human-decision-preflight/SKILL.md` |
 | `loki-agentic-development` | `skills/loki-agentic-development/SKILL.md` |
 | `loki-deep-analysis` | `skills/loki-deep-analysis/SKILL.md` |
 | `loki-deep-research` | `skills/loki-deep-research/SKILL.md` |
 | `loki-retrospectiva-tecnica` | `skills/loki-retrospectiva-tecnica/SKILL.md` |
-| `loki-run-plan` | `skills/loki-run-plan/SKILL.md` |
 | `loki-demand-text-improver` | `skills/loki-demand-text-improver/SKILL.md` |
 | `loki-tech-analysis` | `skills/loki-tech-analysis/SKILL.md` |
 
@@ -31,3 +30,7 @@
 4. Resolve dependencies by their canonical `loki-*` or `lf-*` identity.
 5. Stop when the identity is absent from this catalog or unavailable in the
    active installation profile.
+6. Keep identities semantic: `loki-implement-feature` is the direct public
+   demand-plus-analysis workflow. `loki-agentic-development` remains a distinct
+   advanced POV/synthesis/digest/backlog workflow that makes one unified
+   implementation handoff; neither identity aliases or wraps the other.

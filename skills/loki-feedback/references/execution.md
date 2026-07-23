@@ -117,7 +117,7 @@ da entrevista; nenhuma delegacao pode violar a regra de uma pergunta por turno.
    quando nao houver duvida critica.
 9. Nao aplique a correcao. Encaminhe para o workflow apropriado, como
    `loki-tech-analysis`, `loki-human-decision-preflight`,
-   `loki-generate-action-plan`, `loki-run-plan`,
+   `loki-implement-feature`,
    `loki-retrospectiva-tecnica` ou `loki-continuous-improvement`.
 10. Retorne o diagnostico e o estado retomavel ao workflow chamador; nao crie
     registro persistente.

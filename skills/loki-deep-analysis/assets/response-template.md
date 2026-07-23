@@ -389,7 +389,7 @@ dimension.
 | --- | --- | --- | --- | --- |
 | loki-continuous-improvement | <yes/no> | <evaluate events/candidates; never automatic promotion> | <report refs + gates> | <owner> |
 | loki-human-decision-preflight | <yes/no> | <material unresolved decisions> | <decision evidence> | <owner> |
-| loki-generate-action-plan | <yes/no> | <analysis sufficiently resolved> | <approved report/decisions> | <owner> |
+| loki-implement-feature | <yes/no> | <demand and Markdown analysis are decision-complete> | <approved report/decisions + readable analysis locator> | <owner> |
 | further bounded investigation | <yes/no> | <insufficient evidence> | <minimum source/capability> | <owner> |
 
 Do not auto-invoke a downstream workflow from this response.

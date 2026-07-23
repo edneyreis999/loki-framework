@@ -38,10 +38,20 @@ REVIEW_STATUSES = {
 }
 REVIEW_DEGRADED = {"skipped-agent-unavailable", "failed-consultive", "outcome-unknown"}
 REVIEW_RISK_BACKLOG = REVIEW_DEGRADED | {"completed-with-findings"}
-PLAN_EXECUTOR_STATUSES = {
-    "planned", "dispatched", "running", "completed", "blocked", "failed",
+IMPLEMENT_FEATURE_TERMINAL_STATUSES = {
+    "completed",
+    "completed-with-limitations",
     "pending-human-validation",
+    "partial",
+    "blocked",
+    "failed",
+    "cancelled",
+    "needs-human-review",
 }
+IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES = {"scheduled", "dispatched"}
+IMPLEMENTATION_HANDOFF_STATUSES = (
+    IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES | IMPLEMENT_FEATURE_TERMINAL_STATUSES
+)
 RAW_CLEAN_STATUSES = {"approved", "clean", "passed", "success", "no-findings"}
 RAW_FINDING_STATUSES = {"blocked", "finding", "findings", "changes-requested"}
 RAW_FAILURE_STATUSES = {"error", "failed", "failure", "timeout"}
@@ -76,6 +86,26 @@ def canonical_digest(value: object) -> str:
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
     return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def documented_implement_feature_terminal_statuses() -> set[str]:
+    """Read the current public response enum used by the unified handoff."""
+    response_contract = (
+        Path(__file__).resolve().parent.parent
+        / "skills"
+        / "loki-implement-feature"
+        / "references"
+        / "response.md"
+    )
+    source = response_contract.read_text(encoding="utf-8")
+    match = re.search(
+        r"^## Terminal Status\s*$\n(?P<body>.*?)(?=^## )",
+        source,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise ValueError("loki-implement-feature response lacks Terminal Status section")
+    return set(re.findall(r"^- `([^`]+)`", match.group("body"), flags=re.MULTILINE))
 
 
 def validate_coverage_path(value: str, label: str, failures: list[str]) -> None:
@@ -139,7 +169,7 @@ def validate_wtr_leafs(root: ET.Element, label: str, failures: list[str]) -> Non
     scalar_tags = {"path", "sha256", "handoff_id", "completion_ref", "evidence_ref", "name", "contract_version", "selection_configuration_digest", "requested_frequency", "provenance", "execution_scope", "tasks_md", "status", "policy_ref", "policy_digest", "effective_frequency", "terminal_scope", "selected_agent_name", "selection_reason", "execution_id", "boundary_type", "boundary_ref", "coverage_digest", "review_handoff_id", "review_agent_run_id", "review_agent_raw_status", "execution_status_effect", "risk_ref", "backlog_ref", "checkpoint_id", "finding_id", "summary", "agent_run_id", "required_for", "code", "next_action", "reason"}
     for node in root.iter():
         if node is not root and len(node) > 0:
-            allowed_container_attrs = {"checkpoint": {"checkpoint_id"}, "finding": {"finding_id"}, "checkpoint_ref": {"checkpoint_id"}, "reason": {"required_for"}, "coverage_manifest": {"schema_version"}, "state_error": {"code"}}
+            allowed_container_attrs = {"checkpoint": {"checkpoint_id"}, "finding": {"finding_id"}, "checkpoint_ref": {"checkpoint_id"}, "reason": {"required_for"}, "coverage_manifest": {"schema_version"}, "implementation_handoff": {"schema_version"}, "state_error": {"code"}}
             if not set(node.attrib).issubset(allowed_container_attrs.get(node.tag, set())):
                 failures.append(f"{label}/{node.tag}: unexpected attributes")
         if node.tag in scalar_tags or len(node) == 0:
@@ -173,7 +203,7 @@ def validate_wtr_containers(root: ET.Element, label: str, failures: list[str]) -
 
 def validate_manifest_wtr_shape(review: ET.Element, label: str, failures: list[str]) -> None:
     validate_node_shape(review, label, {"schema_version"}, {
-        "request": (1, 1), "plan_executor_handoff": (1, 1), "reconciled_policy": (1, 1),
+        "request": (1, 1), "implementation_handoff": (1, 1), "reconciled_policy": (1, 1),
         "checkpoints": (1, 1), "risks": (1, 1), "state_errors": (1, 1), "next_action": (1, 1)
     }, failures)
     validate_node_shape(review.find("checkpoints"), f"{label}/checkpoints", set(), {"checkpoint": (1, None)}, failures)
@@ -325,9 +355,14 @@ def validate_manifest_review(
         review.find("request"), {"requested_frequency", "provenance"}, f"{label}: request", failures
     )
     require_exact_children(
-        review.find("plan_executor_handoff"),
-        {"handoff_id", "execution_scope", "tasks_md", "status"},
-        f"{label}: plan_executor_handoff",
+        review.find("implementation_handoff"),
+        {
+            "handoff_id", "command", "demand_ref", "demand_digest",
+            "analysis_file", "analysis_digest", "plan_directory", "status",
+            "execution_state_ref", "execution_state_digest", "result_ref",
+            "dashboard_ref", "next_action",
+        },
+        f"{label}: implementation_handoff",
         failures,
     )
     require_exact_children(
@@ -336,9 +371,9 @@ def validate_manifest_review(
         f"{label}: reconciled_policy",
         failures,
     )
-    for name in ("request", "plan_executor_handoff", "reconciled_policy", "risks", "state_errors", "next_action"):
+    for name in ("request", "implementation_handoff", "reconciled_policy", "risks", "state_errors", "next_action"):
         node = review.find(name)
-        if node is not None and node.attrib:
+        if node is not None and node.attrib and name != "implementation_handoff":
             failures.append(f"{label}/{name}: unexpected attributes")
     validate_node_shape(review.find("risks"), f"{label}/risks", set(), {"risk_ref": (0, None)}, failures)
     validate_child_attributes(review.find("risks"), "risk_ref", set(), f"{label}/risks", failures)
@@ -381,17 +416,43 @@ def validate_manifest_review(
     }
     if policy_digest != canonical_digest(canonical_policy):
         failures.append(f"{label}: review policy digest mismatch")
-    executor_handoffs = review.findall("plan_executor_handoff")
-    if len(executor_handoffs) != 1:
-        failures.append(f"{label}: exactly one plan_executor_handoff is required")
-    if child_text(review, "plan_executor_handoff/execution_scope") != "plano":
-        failures.append(f"{label}: integrated review executor scope must be plano")
-    for field in ("handoff_id", "tasks_md", "status"):
-        if not child_text(review, f"plan_executor_handoff/{field}"):
-            failures.append(f"{label}: plan executor handoff missing {field}")
-    executor_status = child_text(review, "plan_executor_handoff/status")
-    if executor_status not in PLAN_EXECUTOR_STATUSES:
-        failures.append(f"{label}: invalid plan executor handoff status {executor_status!r}")
+    implementation_handoffs = review.findall("implementation_handoff")
+    if len(implementation_handoffs) != 1:
+        failures.append(f"{label}: exactly one implementation_handoff is required")
+    handoff = implementation_handoffs[0] if len(implementation_handoffs) == 1 else None
+    if handoff is not None:
+        if handoff.get("schema_version") != "1" or set(handoff.attrib) != {"schema_version"}:
+            failures.append(f"{label}: implementation_handoff must use only schema_version=1")
+        if child_text(handoff, "command") != "loki-implement-feature":
+            failures.append(f"{label}: implementation_handoff command must be loki-implement-feature")
+        for field in (
+            "handoff_id", "demand_ref", "demand_digest", "analysis_file",
+            "analysis_digest", "plan_directory", "status", "next_action",
+        ):
+            if not child_text(handoff, field):
+                failures.append(f"{label}: implementation handoff missing {field}")
+        if not child_text(handoff, "handoff_id").startswith("implementation-handoff-v1:"):
+            failures.append(f"{label}: invalid implementation handoff identity")
+        if not child_text(handoff, "analysis_file").endswith(".md"):
+            failures.append(f"{label}: implementation analysis_file must be Markdown")
+        for field in ("demand_digest", "analysis_digest"):
+            if not SHA256_RE.fullmatch(child_text(handoff, field)):
+                failures.append(f"{label}: invalid implementation {field}")
+        handoff_status = child_text(handoff, "status")
+        if handoff_status not in IMPLEMENTATION_HANDOFF_STATUSES:
+            failures.append(f"{label}: invalid implementation handoff status {handoff_status!r}")
+        returned_fields = (
+            "execution_state_ref", "execution_state_digest", "result_ref", "dashboard_ref"
+        )
+        returned = [child_text(handoff, field) for field in returned_fields]
+        if handoff_status in IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES:
+            if any(value not in {"", "null"} for value in returned):
+                failures.append(f"{label}: pre-terminal implementation handoff must keep returned fields null")
+        else:
+            if any(value in {"", "null"} for value in returned):
+                failures.append(f"{label}: terminal implementation handoff requires returned refs")
+            if returned[1] not in {"", "null"} and not SHA256_RE.fullmatch(returned[1]):
+                failures.append(f"{label}: invalid execution_state_digest")
     if not policy_ref:
         failures.append(f"{label}: reconciled review policy missing policy_ref")
     if not child_text(review, "reconciled_policy/selection_reason"):
@@ -1501,6 +1562,7 @@ def run_self_test() -> None:
         execution_id, policy_digest, "plano", "plan-self-test", coverage_digest
     )
     review_handoff_id = "review-handoff-v1:" + checkpoint_id.split(":", 1)[1]
+    implementation_handoff = f"""<implementation_handoff schema_version="1"><handoff_id>implementation-handoff-v1:{'a' * 64}</handoff_id><command>loki-implement-feature</command><demand_ref>demand.md</demand_ref><demand_digest>sha256:{'b' * 64}</demand_digest><analysis_file>analise/technical-analysis.md</analysis_file><analysis_digest>sha256:{'c' * 64}</analysis_digest><plan_directory>implementation</plan_directory><status>completed</status><execution_state_ref>implementation/tasks.md#loki-run-state</execution_state_ref><execution_state_digest>sha256:{'d' * 64}</execution_state_digest><result_ref>implementation/builds/result.md</result_ref><dashboard_ref>implementation/builds/dashboard.md</dashboard_ref><next_action>return terminal dashboard</next_action></implementation_handoff>"""
     legacy = """<?xml version="1.0"?><agentic_run_manifest schema_version="1"><freshness_signature/></agentic_run_manifest>"""
     current = f"""<?xml version="1.0"?>
 <agentic_run_manifest schema_version="4">
@@ -1509,7 +1571,7 @@ def run_self_test() -> None:
   <execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy>
   <write_test_review schema_version="1">
     <request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request>
-    <plan_executor_handoff><handoff_id>handoff-plan</handoff_id><execution_scope>plano</execution_scope><tasks_md>tasks.md</tasks_md><status>completed</status></plan_executor_handoff>
+    {implementation_handoff}
     <reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>quality-auditor</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy>
     <checkpoints><checkpoint checkpoint_id="{checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{coverage_manifest['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>quality-auditor</name><contract_version>1</contract_version><selection_configuration_digest>{coverage_manifest['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>completed-clean</status><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><review_agent_raw_status>clean</review_agent_raw_status><evidence_ref>evidence/review.xml</evidence_ref><risk_refs/><backlog_refs/><execution_status_effect>none</execution_status_effect><reason/></checkpoint></checkpoints>
     <risks/><state_errors/><next_action>continue</next_action>
@@ -1530,6 +1592,55 @@ def run_self_test() -> None:
     assert any("requires manifest schema 4" in failure for failure in unknown_manifest_failures)
     current_failures = validate_fixture(current)
     assert current_failures == [], current_failures
+    documented_terminal_statuses = documented_implement_feature_terminal_statuses()
+    assert documented_terminal_statuses == IMPLEMENT_FEATURE_TERMINAL_STATUSES, (
+        "implementation handoff terminal status drift",
+        sorted(documented_terminal_statuses),
+        sorted(IMPLEMENT_FEATURE_TERMINAL_STATUSES),
+    )
+
+    def handoff_fixture_for_status(status: str) -> str:
+        candidate = implementation_handoff.replace(
+            "<status>completed</status>", f"<status>{status}</status>"
+        )
+        if status in IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES:
+            for field in (
+                "execution_state_ref",
+                "execution_state_digest",
+                "result_ref",
+                "dashboard_ref",
+            ):
+                candidate = re.sub(
+                    rf"<{field}>.*?</{field}>",
+                    f"<{field}>null</{field}>",
+                    candidate,
+                )
+        return current.replace(implementation_handoff, candidate)
+
+    for status in sorted(IMPLEMENTATION_HANDOFF_STATUSES):
+        status_failures = validate_fixture(handoff_fixture_for_status(status))
+        assert status_failures == [], (status, status_failures)
+
+    invalid_implementation_statuses = (
+        RESOLVED_GATE_STATUSES
+        | KNOWLEDGE_CAPTURE_STATES
+        | CURRENT_RUN_STATUSES
+        | REVIEW_STATUSES
+        | RAW_CLEAN_STATUSES
+        | RAW_FINDING_STATUSES
+        | RAW_FAILURE_STATUSES
+    ) - IMPLEMENTATION_HANDOFF_STATUSES | {
+        "",
+        "COMPLETED",
+        "completed_with_limitations",
+        "unknown",
+    }
+    for status in sorted(invalid_implementation_statuses):
+        status_failures = validate_fixture(handoff_fixture_for_status(status))
+        assert any(
+            "invalid implementation handoff status" in failure
+            for failure in status_failures
+        ), (status, status_failures)
     checkpoint_record = {
         checkpoint_id: {
             "status": "completed-with-findings",
@@ -1700,7 +1811,7 @@ def run_self_test() -> None:
         evidence = "evidence/review.xml" if status == "failed-consultive" else ""
         selected_xml = selected_agent or ""
         manifest_source = f"""<?xml version="1.0"?>
-<agentic_run_manifest schema_version="4"><run><run_id>run-self-test</run_id><status>running</status></run><freshness_signature/><execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy><write_test_review schema_version="1"><request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request><plan_executor_handoff><handoff_id>handoff-plan</handoff_id><execution_scope>plano</execution_scope><tasks_md>tasks.md</tasks_md><status>completed</status></plan_executor_handoff><reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>{selected_xml}</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{degraded_coverage['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>{selected_xml}</name><contract_version>1</contract_version><selection_configuration_digest>{degraded_coverage['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>{status}</status><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><execution_status_effect>none</execution_status_effect><reason>review degraded</reason></checkpoint></checkpoints><risks><risk_ref>risk-degraded</risk_ref></risks><state_errors/><next_action>continue</next_action></write_test_review></agentic_run_manifest>"""
+<agentic_run_manifest schema_version="4"><run><run_id>run-self-test</run_id><status>running</status></run><freshness_signature/><execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy><write_test_review schema_version="1"><request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request>{implementation_handoff}<reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>{selected_xml}</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{degraded_coverage['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>{selected_xml}</name><contract_version>1</contract_version><selection_configuration_digest>{degraded_coverage['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>{status}</status><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><execution_status_effect>none</execution_status_effect><reason>review degraded</reason></checkpoint></checkpoints><risks><risk_ref>risk-degraded</risk_ref></risks><state_errors/><next_action>continue</next_action></write_test_review></agentic_run_manifest>"""
         digest_source = f"""<?xml version="1.0"?>
 <agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>running</status></digest>
 <write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><status>{status}</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><reason>review degraded</reason></checkpoint></checkpoints><findings/><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review></agentic_run_digest>"""
@@ -1850,8 +1961,22 @@ def run_self_test() -> None:
         "clean-missing-evidence": current.replace("<evidence_ref>evidence/review.xml</evidence_ref>", "<evidence_ref/>", 1),
         "unavailable-with-dispatch": current.replace("completed-clean", "skipped-agent-unavailable"),
         "executor-status": current.replace(
-            "<plan_executor_handoff><handoff_id>handoff-plan</handoff_id><execution_scope>plano</execution_scope><tasks_md>tasks.md</tasks_md><status>completed</status>",
-            "<plan_executor_handoff><handoff_id>handoff-plan</handoff_id><execution_scope>plano</execution_scope><tasks_md>tasks.md</tasks_md><status>BANANA</status>",
+            implementation_handoff,
+            implementation_handoff.replace("<status>completed</status>", "<status>BANANA</status>"),
+        ),
+        "duplicate-implementation-handoff": current.replace(
+            implementation_handoff, implementation_handoff + implementation_handoff
+        ),
+        "wrong-implementation-command": current.replace(
+            "<command>loki-implement-feature</command>",
+            "<command>loki-other</command>",
+        ),
+        "non-markdown-analysis": current.replace(
+            "<analysis_file>analise/technical-analysis.md</analysis_file>",
+            "<analysis_file>analise/technical-analysis.txt</analysis_file>",
+        ),
+        "dispatched-with-returned-state": current.replace(
+            "<status>completed</status>", "<status>dispatched</status>", 1
         ),
         "forged-policy-digest": current.replace(policy_digest, "sha256:" + "f" * 64),
         "forged-coverage-digest": current.replace(coverage_digest, "sha256:" + "f" * 64),
@@ -1891,7 +2016,12 @@ def run_self_test() -> None:
     for name, source in negative_cases.items():
         failures = validate_fixture(source)
         assert failures, f"negative fixture accepted: {name}"
-    print("self-test: passed (canonical schemas positive; legacy/unknown schemas and contract violations negative)")
+    print(
+        "self-test: passed "
+        f"({len(IMPLEMENTATION_HANDOFF_STATUSES)} implementation handoff statuses "
+        f"positive; {len(invalid_implementation_statuses)} invalid statuses negative; "
+        "canonical schemas positive; legacy/unknown schemas and contract violations negative)"
+    )
 
 
 def main() -> int:
