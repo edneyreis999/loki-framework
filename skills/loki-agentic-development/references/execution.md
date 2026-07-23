@@ -82,7 +82,11 @@ disjuntos; serialize overlaps.
    não espere por handoff não terminal: interrompa/cancele e registre `partial`
    com reason e `minimum_next_path`. Falha ou validator de knowledge nunca
    invalida implementação já validada.
-10. Registre validators, digest e backlog; finalize o estado e o próximo passo.
+10. Registre timing, usage exato/estimado/indisponível sem misturar categorias,
+    replay/validator, materiality precheck e liveness probe no agent-run report
+    schema `6` e nos spans correlacionados. Telemetria falha degrada apenas
+    métricas; não existe budget/stop automático de custo.
+11. Registre validators, digest e backlog; finalize o estado e o próximo passo.
    Retrospectiva é ação explícita, nunca fallback, e somente
    `loki-continuous-improvement` promove conhecimento.
 
@@ -91,6 +95,12 @@ plan directory reservado e `implementation_handoff_id`. Depois do retorno,
 reconcilie a identidade, `loki_run_state`/digest, completion/evidence, validators
 e dashboard fornecidos pelo command unificado. Divergência ou segundo handoff é
 stop condition.
+
+Imediatamente antes de abort/interrupção/cancelamento por silêncio, execute o
+probe observado do adapter e persista timestamp, source, outcome e reason.
+`running`/`progress` proíbe essa parada. `unsupported`/`unavailable` não inventa
+heartbeat e deve ser registrado antes de outra policy stop. Cancelamento
+explícito do usuário é evento correlacionado separado.
 
 ## Write Ownership And Direct-Write Exception
 
@@ -157,5 +167,6 @@ implementation handoff, fase/task atual,
 agent runs, targets, owners, validators, completion/evidence states, capture
 IDs, knowledge target/status/reason/minimum next path, blockers, backlog, status
 e próximo passo. Preserve locator/digests da demanda/análise, plan directory,
-handoff ID e as referências/digest do current run state e dashboard devolvidos.
+handoff ID e as referências/digest do current run state, execution metrics e
+dashboard devolvidos.
 Retome o mesmo handoff/estado sem loop por fase ou reinício quando suficiente.

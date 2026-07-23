@@ -1,9 +1,9 @@
 ---
 doc_id: "lf-implement-feature-execution-execution-contract"
-version: "1.0.0"
+version: "2.0.0"
 status: active
 last_updated: "2026-07-22"
-scope: "Current unified execution state, plan artifacts, target decisions, DAG scheduling, ownership, cancellation, resume, and terminal projection"
+scope: "Current unified execution state, hierarchical execution metrics, plan artifacts, target decisions, DAG scheduling, ownership, liveness, cancellation, resume, and terminal projection"
 not_scope: "Public command inputs, session-preflight record internals, validation-cycle record internals, installation, or superseded execution contracts"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
 canonical_source: "skills/lf-implement-feature-execution/references/execution-contract.md"
@@ -22,9 +22,10 @@ replaced_by: null
 # Unified Feature Execution Contract
 
 <summary>
-Define the only current LokiRunState v1, managed artifact layout, target-decision
-provenance, DAG/owner scheduler, cancellation/resume protocol, and truthful
-terminal projection for unified feature execution.
+Define the only current LokiRunState v2, execution_metrics v1,
+implement_feature_execution_result v2, managed artifact layout,
+target-decision provenance, DAG/owner scheduler, liveness/cancellation/resume
+protocol, and truthful terminal projection for unified feature execution.
 </summary>
 
 ## Authority, Trust, And Current-Only Gate
@@ -60,6 +61,7 @@ write and report both locators plus the minimum decision.
 |   |   +-- cycle-<N>-writer-response.yaml
 |   +-- learned/learned-<finding-id>.md
 |-- builds/faseN/
+|-- builds/metrics/execution-metrics.json
 |-- retrospetivas/faseN/
 +-- execution-knowledge/entries/
 ```
@@ -117,13 +119,151 @@ restriction, or outside its owner's envelope is rejected before bytes change.
 Replanning may add a target only by persisting and validating a new decision
 before its write.
 
-## LokiRunState v1
+## Execution Metrics v1
+
+`EXEC-METRICS-01` — The orchestrator is the sole owner of
+`builds/metrics/execution-metrics.json`. Publish the complete JSON document
+atomically in the destination directory: write deterministic UTF-8 bytes to a
+unique sibling temporary, flush and fsync, verify bytes and digest, atomically
+replace the current metrics checkpoint, then fsync the directory where
+supported. Agents and collectors supply observations but never publish or
+rewrite the canonical aggregate.
+
+The document contains every key:
+
+```yaml
+execution_metrics:
+  schema_version: 1
+  metrics_id: "execution-metrics-v1:<64 lowercase hex>"
+  run_id: "<typed run ID>"
+  execution_id: "<typed execution ID>"
+  generated_at_utc: "<UTC timestamp>"
+  status: "complete | partial | unavailable"
+  degradation_reason: "<non-empty when partial/unavailable, otherwise null>"
+  clock_provenance:
+    wall_clock: "observed | partial | unavailable"
+    monotonic_clock: "observed | partial | unavailable"
+    reason: "<non-empty for any degradation, otherwise null>"
+  spans: []
+  aggregates:
+    exact_usage: {input_tokens: null, cached_input_tokens: null, output_tokens: null, reasoning_output_tokens: null, total_tokens: null}
+    estimated_usage: {estimated_tokens: null, lower_bound_tokens: null, upper_bound_tokens: null, observable_payload_bytes: null, confidence: "low | unavailable"}
+    non_agent_observations: []
+    counts: {agents: null, handoffs: null, validators_executed: null, validators_referenced: null, validators_repeated: null, retries: null, replays: null, gates: null, reconciliations: null}
+    durations: {elapsed_ms: null, active_ms: null, critical_path_ms: null}
+    critical_path_span_ids: []
+    unavailable_reasons: []
+  telemetry_changed_functional_status: false
+  metrics_digest: "sha256:<64 lowercase hex>"
+```
+
+`metrics_id` is the typed digest identity derived from the canonical mapping
+excluding both `metrics_id` and `metrics_digest`:
+`execution-metrics-v1:<same 64 hex>`. Compute
+`metrics_digest` as SHA-256 over canonical UTF-8 JSON of the complete mapping
+excluding both identity fields, with sorted object keys, preserved normalized
+array order, no insignificant whitespace, and no trailing newline. Every span
+ID, parent ID, owner and correlation reference is typed or a resolvable locator.
+
+`EXEC-METRICS-02` — Each span contains every key:
+
+```yaml
+span:
+  span_id: "execution-span-v1:<64 lowercase hex>"
+  kind: "run | phase | task | handoff | validator | gate | audit | reconciliation"
+  parent_span_id: "<typed span ID or null for the single run root>"
+  owner: "<typed owner identity or explicit orchestrator>"
+  status: "scheduled | running | completed | partial | blocked | failed | cancelled | unavailable"
+  started_at_utc: "<UTC timestamp or null>"
+  ended_at_utc: "<UTC timestamp or null>"
+  monotonic_duration_ms: "<non-negative integer or null>"
+  clock_provenance: "observed | partial | unavailable"
+  clock_degradation_reason: "<reason for partial/unavailable or null>"
+  iteration: "<non-negative integer>"
+  replay: false
+  replay_cause: null
+  cause_span_id: null
+  correlation_refs: []
+  duplicates_child_usage: false
+  usage:
+    status: "exact | estimated | unavailable"
+    exact: null
+    estimate: null
+    unavailable_reason: "<reason or null>"
+  validator_observation: null
+```
+
+The span graph has exactly one `run` root, is acyclic, and every non-root span
+resolves one parent. A parent describes orchestration time but never duplicates
+usage already assigned to a child. Aggregate exact and estimated usage
+separately from leaf ownership; never add an estimate to an exact counter.
+Missing timestamps or duration are `null` with degraded clock provenance and a
+reason at document or aggregate level; unavailable counts/durations are never
+encoded as zero.
+
+Exact usage is valid only from a verified run-scoped adapter counter and uses
+explicit non-negative `input_tokens`, `cached_input_tokens`, `output_tokens`,
+`reasoning_output_tokens`, and `total_tokens`, plus `source`,
+`source_scope: verified-agent-run`, and `measured_at_utc`. Estimated usage uses
+only sanitized observable payload bytes and exactly:
+`method: utf8-byte-estimate-v1`, point `ceil(bytes/4)`, range
+`ceil(bytes/6)..ceil(bytes/2)`, `confidence: low`, and `scope: partial`.
+Unavailable usage has `exact: null`, `estimate: null`, and a non-empty reason.
+Cumulative/account-window counters live only in `non_agent_observations` with
+their source scope and are never allocated per agent.
+
+A validator span's closed `validator_observation` supplies `command`,
+`validator_version`, `input_digest`, `policy_digest`,
+`execution_mode: executed | referenced`, `replay_cause`, and `would_reuse`.
+Non-validator spans set it to `null`. `would_reuse` is a counterfactual observation
+only; it never changes `execution_mode` or claims avoided execution. Aggregate
+counts distinguish validators executed, referenced, and repeated. Retries,
+replays, gates, reconciliations, agents, handoffs, elapsed/active time and the
+span-graph critical path are explicit or unavailable with typed reasons.
+`critical_path_span_ids` is the complete deterministic maximal root-to-leaf
+chain across timed spans. Enumerate complete root-to-leaf chains whose every
+`monotonic_duration_ms` is observed, choose the greatest summed duration, and
+on an equal sum choose the lexicographically smallest ordered span-ID tuple.
+The field equals that entire ordered chain and `critical_path_ms` equals its
+exact sum; a prefix, truncated chain, non-maximal chain or alternative tie is
+invalid. When no complete fully observed root-to-leaf chain exists, the IDs are
+empty, the duration is `null`, and a typed unavailable reason is required.
+Aggregate exact and estimated counters equal the
+corresponding span observations counted once. Counts equal the closed span
+derivations. `unavailable_reasons` contains exact `{field, reason}` entries for
+every unavailable count or duration; an unavailable field is never zero.
+
+Each `non_agent_observations` item has exactly `observation_id`, `source`,
+`source_scope: cumulative | account-window`, `measured_at_utc`, the five token
+counters, and `allocated_per_agent: false`. It is never included in per-agent
+or aggregate span usage.
+
+`EXEC-METRICS-03` — Telemetry is non-blocking. A collection, clock, estimate,
+or publication failure degrades metrics to `partial`/`unavailable` and records
+the reason; it never changes a functional task, validator, AC, or run status.
+A successfully published minimal unavailable document retains its normal
+ref/digest. Total publication failure is represented only on state, result and
+dashboard by `execution_metrics_ref: null`, `execution_metrics_digest: null`,
+`execution_metrics_status: unavailable`, and a degradation reason explicitly
+stating `publication failure`; every other combination requires normal
+ref/digest.
+
+Every state, result, dashboard and consistency metrics projection accepts
+`execution_metrics_status` only as exactly `complete`, `partial` or
+`unavailable`. Equality between projections never permits an unknown or future
+status.
+Metrics define no token/cost budget, automatic cost stop, or cancellation
+threshold. The dashboard reports resources and cost only from these proven
+categories; monetary cost is unavailable unless a separately proven pricing
+source and scope exist.
+
+## LokiRunState v2
 
 `EXEC-STATE-01` — Persist exactly one plan-level current state with every key:
 
 ```yaml
 loki_run_state:
-  schema_version: 1
+  schema_version: 2
   run_id: "<typed run ID>"
   execution_id: "<typed execution ID>"
   demand_digest: "sha256:<64 lowercase hex>"
@@ -161,6 +301,10 @@ loki_run_state:
   final_human_validation_refs: []
   cancellation_ref: null
   dashboard_ref: null
+  execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
+  execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
+  execution_metrics_status: "complete | partial | unavailable"
+  execution_metrics_degradation_reason: "<reason for partial/unavailable, otherwise null>"
   blockers: []
   risks: []
   next_action: "<non-empty>"
@@ -205,6 +349,9 @@ correlations to match. For path demand, require `bootstrap_record_ref: null`.
 A mismatch, missing nested result, unknown classification, or checksum failure
 blocks before production write. Chat reconstruction cannot repair state.
 
+State schema `1` is superseded and rejected before interpretation. There is no
+reader, migration, fallback, converter, or conditional compatibility path.
+
 ## DAG, Eligibility, Ownership, And Fairness
 
 `EXEC-DAG-01` — Validate task IDs, declared dependencies, absence of cycles,
@@ -242,6 +389,15 @@ runnable tasks before redispatching the same task. Fairness never overrides an
 owner, dependency, gate, or cancellation.
 
 ## Cancellation And Resume
+
+`EXEC-LIVENESS-01` — Immediately before an abort, interrupt, or cancel whose
+cause is silence/timeout, invoke the active adapter's observed liveness probe
+and persist a correlated probe record/span with timestamp, source, outcome and
+reason. `running` or `progress` forbids the proposed silence-based stop.
+`terminal` proceeds to normal terminal reconciliation. `unsupported` or
+`unavailable` invents no heartbeat; persist its reason before evaluating any
+other declared policy stop. Explicit correlated user cancellation remains
+`EXEC-CANCEL-01` and is not relabelled as silence or blocked by this probe.
 
 `EXEC-CANCEL-01` — A correlated explicit cancellation sets state to
 `cancelling`, stops new dispatch, requests cooperative stop from active work,
@@ -287,8 +443,9 @@ authority cannot create this record or stop dispatch.
 2. Treat published completion evidence, immutable preflight/cycle records, and
    current target digests as authority for already completed work.
 3. Do not duplicate a production write, preflight, finding, response, retry
-   debit, learned file, or execution-knowledge entry whose exact identity and
-   digest already validate.
+   debit, learned file, execution-knowledge entry, or metrics span whose exact
+   identity and digest already validate. An interrupted/resumed span retains its
+   identity and iteration; continuation cannot double-count usage or duration.
 4. Requeue only eligible non-terminal work. A missing or contradictory record
    blocks or narrows to a truthful `partial`; it never triggers chat recovery.
 
@@ -320,12 +477,25 @@ is the sole remaining condition.
 
 ```yaml
 implement_feature_execution_result:
-  schema_version: 1
+  schema_version: 2
   run_id: "<typed run ID>"
   execution_id: "<typed execution ID>"
   status: "completed | completed-with-limitations | pending-human-validation | partial | blocked | failed | cancelled | needs-human-review"
   state_ref: "<tasks.md state locator>"
   state_digest: "sha256:<64 lowercase hex>"
+  execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
+  execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
+  execution_metrics_status: "complete | partial | unavailable"
+  execution_metrics_degradation_reason: "<reason for partial/unavailable, otherwise null>"
+  aggregate_metrics_summary:
+    exact_usage: {input_tokens: null, cached_input_tokens: null, output_tokens: null, reasoning_output_tokens: null, total_tokens: null}
+    estimated_usage: {estimated_tokens: null, lower_bound_tokens: null, upper_bound_tokens: null, observable_payload_bytes: null, confidence: "low | unavailable"}
+    non_agent_observations: []
+    counts: {agents: null, handoffs: null, validators_executed: null, validators_referenced: null, validators_repeated: null, retries: null, replays: null, gates: null, reconciliations: null}
+    durations: {elapsed_ms: null, active_ms: null, critical_path_ms: null}
+    critical_path_span_ids: []
+    unavailable_reasons: []
+    provenance: "<state and execution-metrics locators/digests>"
   executive_summary: "<sanitized concise summary>"
   unit_statuses: []
   changed_surfaces: []
@@ -351,6 +521,20 @@ implement_feature_execution_result:
   minimum_next_input: "<one input or none>"
   resume: "<exact next action or none>"
 ```
+
+Result schema `1` is superseded and rejected before interpretation. The result
+summary is a projection of the exact correlated metrics ref/digest/status; it
+cannot repair metrics, combine exact and estimated totals, or turn unavailable
+into zero. Telemetry degradation does not alter the functional `status`.
+
+`EXEC-CONSISTENCY-01` — Before terminal response, execute the consistency-packet
+validator over plan state, every local task status, terminal completion/evidence,
+validator/gate results, result, dashboard, and execution metrics. Require exact
+agreement for run/execution identities, state/result schema `2`, functional
+status, metrics ref/digest/status/degradation, and `next_action`; require task
+and validator projections to be derivable without relabelling. Any divergence
+blocks response rendering and identifies the conflicting locators. The packet
+is validation data and grants no write or status authority.
 
 The dashboard is this deterministic projection of persisted state/evidence.
 For each AC use only `passed`, `failed`, `not-demonstrated`, or

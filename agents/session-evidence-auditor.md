@@ -43,6 +43,12 @@ Separate directly observable facts from inferences. An inference must be
 labelled `partial`, cite the supporting evidence, and must not claim intent or
 private/full chain-of-thought. Preserve unavailable, unsupported and partial
 dimensions as gaps; do not manufacture token attribution or completion facts.
+Classifique cada metrica de tokens como `exact`, `estimated` ou `unavailable`.
+`exact` exige contador observavel, fonte, escopo do agente e intervalo temporal;
+`estimated` exige intervalo minimo/maximo, `confidence: low`, motivo e
+`completeness: partial`; `unavailable` preserva a lacuna tipada. Nunca converta
+uso cumulativo, de janela ou de conta em uso por agente, nem atribua esses
+totais a um agent-run.
 
 The agent is read-only and proposal-only: it cannot alter files, classify a
 durable rule, promote a candidate, or invoke a retrospective automatically.
@@ -72,6 +78,17 @@ session_audit:
   gaps:
     - dimension: ""
       state: "partial | pointer-only | unavailable | unsupported"
+      reason: ""
+  token_metrics:
+    - category: "input | output | cached-input | reasoning | total"
+      attribution: "exact | estimated | unavailable"
+      value: null
+      estimate_range: { minimum: null, maximum: null }
+      source_ref: ""
+      scope: "agent-run | unavailable"
+      interval: { started_at: "", ended_at: "" }
+      confidence: "low | medium | high"
+      completeness: "complete | partial | unavailable"
       reason: ""
   candidate_learnings:
     - summary: ""

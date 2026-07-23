@@ -13,7 +13,7 @@ STATES = {"complete", "partial", "pointer-only", "unavailable", "unsupported"}
 LOCATOR_KINDS = {"runtime-pointer", "local-file", "export", "unavailable"}
 PORTABILITIES = {"same-profile", "same-machine", "portable", "none"}
 STORAGE_MODES = {"pointer-only", "pointer-plus-sanitized-snapshot", "sanitized-snapshot-only", "unavailable"}
-METRIC_KINDS = {"per-turn-delta", "cumulative", "account-window", "estimated", "unknown"}
+METRIC_KINDS = {"per-turn-delta"}
 DIMENSIONS = {"transcript", "tool_io", "errors", "reasoning_summary", "token_usage"}
 ID_TYPES = {
     "run_id": "loki-run-id", "agent_run_id": "agent-run-id",
@@ -201,8 +201,8 @@ def validate(root: ET.Element) -> list[str]:
                ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")]
     if usage_status == "complete":
         if (value(usage.find("metric_kind")) not in METRIC_KINDS or not value(usage.find("source"))
-                or not value(usage.find("source_scope")) or not value(usage.find("measured_at"))):
-            errors.append("complete usage needs kind, source, scope, and time")
+                or value(usage.find("source_scope")) != "verified-agent-run" or not value(usage.find("measured_at"))):
+            errors.append("complete usage needs a verified-agent-run per-turn source and time")
         try:
             numbers = [int(item) for item in metrics]
             if any(number < 0 for number in numbers) or numbers[4] != numbers[0] + numbers[2]:

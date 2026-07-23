@@ -1,6 +1,6 @@
 ---
 doc_id: "loki-implement-feature-response"
-version: "1.0.0"
+version: "2.0.0"
 status: active
 last_updated: "2026-07-22"
 scope: "Both-consumer terminal dashboard and manual-test projection for unified feature execution"
@@ -9,7 +9,7 @@ authority: "Validated persisted implement_feature_execution_result and this curr
 canonical_source: "skills/loki-implement-feature/references/response.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted LokiRunState and implement_feature_execution_result"
+  - "validated persisted LokiRunState v2, implement_feature_execution_result v2, and execution_metrics v1"
   - "task, validator, cycle, completion, and evidence records referenced by that state"
   - "this response contract and its template"
   - "response prose, user formatting preferences, and non-normative examples"
@@ -63,6 +63,7 @@ or terminal status.
 `RESPONSE-CURRENT-01` — Accept only the current result and template versions.
 Reject unknown, missing, malformed, or superseded response schemas before
 rendering. Do not translate, alias, wrap, convert, migrate, or fall back.
+State/result schema `1` is rejected before interpretation.
 
 ## Terminal Status
 
@@ -107,6 +108,19 @@ explicit applicability check:
   validator, and owner;
 - optional learned records created or skipped, including non-blocking reason;
 - evidence and terminal handoff locators;
+- execution-metrics ref/digest/status/degradation, hierarchical timing,
+  critical path, agent/handoff/validator/retry/replay/gate/reconciliation
+  counts, and usage provenance;
+- null metrics ref/digest only when all state/result/dashboard projections say
+  `unavailable` with an explicit total `publication failure` reason; a published
+  minimal unavailable metrics file keeps normal provenance;
+- exact and estimated tokens in separate categories; unavailable values with
+  reasons; cumulative/account-window observations only as non-agent scope;
+- cost/resource status with cost `unavailable` unless a proven pricing source
+  and scope exist, and an explicit statement that no budget/automatic cost stop
+  was applied;
+- replay/validator correlation, materiality precheck correlation, and the last
+  required liveness-probe outcome for any silence-based stop;
 - manual test steps or an explicit `none` plus a non-empty surface-specific
   reason.
 
@@ -165,6 +179,10 @@ raw prompts, source payload copies, tool payloads, transcripts, hidden prompts,
 credentials, personal data, secrets, or private/full chain-of-thought. Do not
 fabricate run, agent-run, handoff, usage, evidence, cost, validator, or artifact
 identity. An unavailable dimension remains explicit rather than zero or success.
+Telemetry failure is non-blocking and never changes functional status. Do not
+combine exact and estimated usage or report cumulative/account-window usage per
+agent. The dashboard is measurement-only and must not introduce token/cost
+budgets or automatic cost stops.
 
 ## Intermediate And Blocking Response
 
@@ -176,9 +194,11 @@ locators and one required priority decision.
 
 ## Validation And Update Trigger
 
-Before returning, validate template completeness, status/state equality,
+Before returning, execute the consistency-packet validator and validate
+template completeness, status/state equality,
 AC/evidence relations, exact task and blocked-scope unit mapping,
-validator/gate truth, category coverage, inferred-target provenance, learned
+validator/gate truth, metrics ref/digest/status and aggregate provenance,
+category coverage, inferred-target provenance, learned
 status, manual-step fields, sanitization, handoffs, and exact resume guidance.
 Revisit this unit whenever the helper result, dashboard, status, or manual-test
 contract changes.

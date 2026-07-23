@@ -61,10 +61,10 @@ não existe projection ou command físico separado.
 | `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
 | `loki-agentic-development` | `mvp` | Executar o caminho avancado com analise multiagente, gates, um unico handoff ao `loki-implement-feature`, completion/evidence, knowledge state, digest e backlog. |
-| `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com target decisions, DAG, AC/validator por task, validation cycles, retry, dashboard e teste manual. |
+| `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com target decisions, DAG, AC/validator por task, métricas hierárquicas schema v1, validation cycles, retry, dashboard e teste manual. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras com fonte, destino, verificacao e aprovacao humana; no destino package, exige perfil LLM-facing do Writer e parecer v2 independente do Auditor sem alterar destinos nao-package. |
+| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras; no destino package, exige profile, precheck mecânico ready e parecer v2 independente do Auditor sem alterar destinos nao-package. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
 | `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
@@ -149,7 +149,7 @@ bundles.
 | `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki publicos disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `lf-implement-feature-execution` | `mvp` | Autoridade current-only para plan/state, target decisions, DAG, session e domain preflights, AC/validators, validation cycles, retry, resume, dashboard e terminal truth. |
+| `lf-implement-feature-execution` | `mvp` | Autoridade current-only para LokiRunState/result v2, métricas v1, target decisions, DAG, preflights, AC/validators, liveness, retry, resume, dashboard e terminal truth. |
 | `lf-execution-knowledge-capture` | `mvp` | Separar evidence de knowledge, avaliar materialidade, despachar entry exclusiva sem bloquear e reconciliar estados degradados em checkpoint. |
 | `lf-domain-context-preflight` | `mvp` | Preflight pessoal reutilizavel para docs minimas, fontes atuais, freshness, conflitos e lacunas, sem autocorrecao de docs. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
@@ -178,7 +178,7 @@ bundles.
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
-| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: recebe envelope com targets exatos, aplica promocao package-only, emite perfil LLM-facing e selecao justificada de fixtures, executa checks mecanicos e entrega evidencia ao Auditor; nao autoaprova nem atua em consumidor/runtime. |
+| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: emite profile, executa checks e precheck mecânico de materialidade/perfil, e entrega apenas packets ready ao Auditor; não autoaprova nem atua em consumidor/runtime. |
 | `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only e independente: valida perfil, rubrica v2, fixtures, revisao isolada e bias controls sobre o patch real; emite o parecer LLM-facing, bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only da demanda, `analysis_file`, state, task, docs e fontes locais para `loki-implement-feature` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
@@ -216,7 +216,9 @@ bundles.
 | `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, manifest de instalacao e rejeicao sem writes de layouts fora do schema 2. |
 | `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json` schema 2, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex, tags de tipo de projeto, ausencia de seed/catalogo XML vivo empacotado e ausencia da projecao retirada. |
 | `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e a matriz temporaria de rejeicao de layouts fora do schema 2, sem tocar destinos consumidores. |
-| `scripts/validate-agentic-run-state.py` | `mvp` | Validar o contrato agentic XML atual (manifest 4, report 5, digest 4 e WTR 1) e rejeitar schemas removidos antes de aceitar estado, incluindo evidence/knowledge lineage, gates, writers, conflitos e completion reports. |
+| `scripts/validate-agentic-run-state.py` | `mvp` | Validar o contrato agentic XML atual (manifest 4, report 6, digest 4 e WTR 1), métricas/liveness e rejeição current-only de schemas removidos. |
+| `scripts/validate-implement-feature-contracts.py` | `mvp` | Validar state/result v2, execution metrics v1, liveness, custo sem budgets/autostop e consistência cross-surface executável. |
+| `scripts/validate-llm-artifact-precheck.py` | `mvp` | Bloquear antes do Auditor packets package fora do approval, materialidade observada ou profiles/partições/projeções incompletos; nunca aprovar qualidade. |
 | `scripts/validate-execution-knowledge.py` | `mvp` | Validar entry schema v1, lineage, materialidade, estados, targets exclusivos, sanitização e ausência de promoção. |
 
 ## Install Scope Source
@@ -243,7 +245,7 @@ bundles.
 | `agentic-agent-pov-template.xml` | `mvp` | Modelo de POV por agente selecionado, com evidencias, riscos, gates e handoff para sintese. |
 | `agentic-agent-review-template.xml` | `mvp` | Modelo de cross-review agentico para acordos, conflitos materiais, resolucao recomendada e notas de validator. |
 | `agentic-synthesis-template.xml` | `mvp` | Modelo de sintese do orquestrador com fatos, gates resolvidos, blockers e handoff para plano. |
-| `agent-run-report-template.xml` | `mvp` | Modelo de completion report por handoff, com `agent_run_id`, `handoff_id`, owner, target files, validators, gates, evidencia e status. |
+| `agent-run-report-template.xml` | `mvp` | Modelo report schema 6 por handoff, com IDs, owner, validators, métricas/tokens, liveness probe, gates, evidência e status. |
 | `agent-session-evidence-template.xml` | `mvp` | Modelo de evidencia de sessao com identidade tipada, completude, snapshots sanitizados, locators de runtime e proveniencia de uso. |
 | `execution-knowledge-entry-template.xml` | `mvp` | Modelo de knowledge run-local com claims tipadas, attempts, cause/resolution, gaps, reuse guidance, segurança e ownership de promoção. |
 | `agentic-run-digest-template.xml` | `mvp` | Modelo de digest final da rodada v2 para consolidar resultados, validators, gates pendentes, backlog e proxima acao. |

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<agent_run_report schema_version="5">
+<agent_run_report schema_version="6">
   <identity>
     <run_id>{{run_id}}</run_id>
     <phase>{{phase}}</phase>
@@ -15,6 +15,56 @@
     <capture_trigger>{{capture_trigger}}</capture_trigger>
     <capture_target>{{capture_target}}</capture_target>
   </evidence>
+  <timing>
+    <span_id>{{execution_span_id}}</span_id>
+    <parent_span_id>{{parent_execution_span_id_or_null}}</parent_span_id>
+    <started_at_utc>{{started_at_utc_or_null}}</started_at_utc>
+    <ended_at_utc>{{ended_at_utc_or_null}}</ended_at_utc>
+    <monotonic_duration_ms>{{monotonic_duration_ms_or_null}}</monotonic_duration_ms>
+    <clock_provenance>{{clock_provenance_observed_partial_or_unavailable}}</clock_provenance>
+    <clock_degradation_reason>{{clock_degradation_reason_or_null}}</clock_degradation_reason>
+  </timing>
+  <usage>
+    <metrics_ref>{{execution_metrics_ref}}</metrics_ref>
+    <metrics_digest>{{execution_metrics_digest}}</metrics_digest>
+    <metrics_status>{{execution_metrics_status_complete_partial_or_unavailable}}</metrics_status>
+    <span_id>{{execution_span_id}}</span_id>
+    <usage_status>{{usage_status_exact_estimated_or_unavailable}}</usage_status>
+    <exact_source>{{verified_run_scoped_counter_source_or_null}}</exact_source>
+    <estimate_method>{{utf8_byte_estimate_v1_or_null}}</estimate_method>
+    <unavailable_reason>{{usage_unavailable_reason_or_null}}</unavailable_reason>
+  </usage>
+  <replay_validator_correlation>
+    <iteration>{{iteration}}</iteration>
+    <replay>{{replay_true_or_false}}</replay>
+    <replay_cause>{{replay_cause_or_null}}</replay_cause>
+    <cause_span_id>{{cause_span_id_or_null}}</cause_span_id>
+    <validator_span_id>{{validator_span_id_or_null}}</validator_span_id>
+    <validator_command>{{validator_command_or_null}}</validator_command>
+    <validator_version>{{validator_version_or_null}}</validator_version>
+    <validator_input_digest>{{validator_input_digest_or_null}}</validator_input_digest>
+    <validator_policy_digest>{{validator_policy_digest_or_null}}</validator_policy_digest>
+    <execution_mode>{{validator_executed_referenced_or_not_applicable}}</execution_mode>
+    <would_reuse>{{would_reuse_true_false_or_not_applicable}}</would_reuse>
+  </replay_validator_correlation>
+  <materiality_precheck_correlation>
+    <profile_ref>{{llm_artifact_profile_ref}}</profile_ref>
+    <profile_digest>{{llm_artifact_profile_digest}}</profile_digest>
+    <materiality_ref>{{materiality_decision_ref}}</materiality_ref>
+    <materiality_digest>{{materiality_decision_digest}}</materiality_digest>
+    <status>{{materiality_precheck_valid_invalid_or_not_applicable}}</status>
+    <auditor_dispatch>{{auditor_dispatch_permitted_blocked_or_not_applicable}}</auditor_dispatch>
+  </materiality_precheck_correlation>
+  <liveness_probe>
+    <required_before_silence_stop>{{liveness_probe_required_true_or_false}}</required_before_silence_stop>
+    <trigger>{{silence_stop_or_explicit_user_cancellation_or_none}}</trigger>
+    <observed_at_utc>{{liveness_observed_at_utc_or_null}}</observed_at_utc>
+    <adapter>{{liveness_adapter}}</adapter>
+    <source>{{liveness_source_or_null}}</source>
+    <outcome>{{running_progress_terminal_unsupported_unavailable_or_not_required}}</outcome>
+    <reason>{{liveness_reason_or_null}}</reason>
+    <silence_stop_permitted>{{true_false_or_not_applicable}}</silence_stop_permitted>
+  </liveness_probe>
   <execution_knowledge>
     <capture_id>{{capture_id}}</capture_id>
     <material>{{capture_material}}</material>

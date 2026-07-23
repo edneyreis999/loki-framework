@@ -1,3 +1,19 @@
+---
+doc_id: "lf-agent-execution-evidence-adapter-capability-matrix"
+version: "2.0.0"
+status: active
+last_updated: "2026-07-23"
+scope: "Minimum evidenced adapter claims for evidence, token usage, and liveness"
+not_scope: "Provider promises, untested integrations, or fabricated fallback capability"
+authority: "skills/lf-agent-execution-evidence/SKILL.md and current adapter records"
+canonical_source: "skills/lf-agent-execution-evidence/references/adapter-capability-matrix.md"
+intended_llm_task: "routing"
+source_priority: ["approved run envelope", "parent skill and evidence contract", "validated adapter record", "provider proposal"]
+confidence: high
+known_conflicts: []
+replaced_by: null
+---
+
 # Adapter capability matrix and degradation
 
 ## How to use this matrix
@@ -30,9 +46,16 @@ they are used as a dependency for `complete`.
 | tool I/O | Sanitized, correlated tool inputs/outputs and terminal failures for the declared coverage. | Missing or truncated material is `partial`; do not infer tool I/O from a completion summary. |
 | errors | Correlated terminal and material runtime errors, including non-success status when present. | Unknown/inaccessible errors are `partial` or `unavailable`, never silently empty. |
 | reasoning summary | A declared, sanitized runtime summary with provenance; never hidden reasoning. | It is normally `partial`; hidden/private reasoning is always `unavailable`. |
-| token usage | Run-scoped, sourced, timed counters with verified semantics. | Cumulative/account-window remains `partial` evidence and is never per-agent; no capability is `unsupported`. |
+| token usage | Exact requires a run-scoped, sourced, timed adapter counter with verified semantics. | A sanitized observable-byte estimate is separate `partial` execution metrics; cumulative/account-window remains non-agent; unavailable carries a reason and is never zero. |
+| liveness probe | An adapter-observed, timestamped `running`, `progress`, or `terminal` outcome with source. | `unsupported` or `unavailable` with reason; never invent a heartbeat. |
 
 An adapter cannot make the overall manifest `complete` unless each required
 dimension meets its own `complete` condition, identity correlation is valid,
 and manifest/snapshot integrity is verified. Provider-specific details belong
 in later adapter records, not in this neutral contract.
+
+Every adapter record must state whether a synchronous liveness probe is
+supported. The orchestrator invokes it immediately before any silence-based
+abort, interrupt, or cancel. An observed `running` or `progress` result forbids
+that stop. This rule does not apply to an independently authorized explicit
+user cancellation.

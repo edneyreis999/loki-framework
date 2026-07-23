@@ -8,7 +8,7 @@
       "scenario": "Valid resume",
       "rule": "resume",
       "expect": "accept",
-      "payload": {"schema_valid": true, "state_digest_valid": true, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+      "payload": {"state_schema_version": 2, "schema_valid": true, "state_digest_valid": true, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
     },
     {
       "id": "matrix-10-corrupt-state",
@@ -17,7 +17,7 @@
       "rule": "resume",
       "expect": "reject",
       "error": "STATE_CORRUPT",
-      "payload": {"schema_valid": true, "state_digest_valid": false, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+      "payload": {"state_schema_version": 2, "schema_valid": true, "state_digest_valid": false, "identity_matches": true, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
     },
     {
       "id": "matrix-18-task-missing-ac",

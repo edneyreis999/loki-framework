@@ -25,6 +25,7 @@ RUNTIME_KEYS = {"adapter", "adapter_version", "root_session_id", "parent_thread_
 LOCATOR_KEYS = {"kind", "value", "portability", "reason"}
 DIMENSION_KEYS = {"status", "reason"}
 USAGE_KEYS = {"metric_kind", "source", "source_scope", "measured_at", "input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens"}
+USAGE_COUNTERS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")
 
 def now() -> str: return datetime.now(timezone.utc).isoformat()
 def clean(value):
@@ -71,10 +72,22 @@ def validate_input(data):
     for name, item in dimensions.items():
         if not isinstance(item, dict): raise ValueError(f"dimension {name} must be an object")
         reject_unknown(item, DIMENSION_KEYS, f"dimension {name}")
+        if item.get("status") not in STATES: raise ValueError(f"dimension {name} has invalid status")
+        if item.get("status") != "complete" and not str(item.get("reason", "")).strip(): raise ValueError(f"degraded dimension {name} needs a reason")
+    token_state = dimensions.get("token_usage", {}).get("status", "unsupported")
+    usage = data.get("usage", {}) or {}
+    if token_state == "complete":
+        if set(usage) != USAGE_KEYS: raise ValueError("complete token usage requires every provenance field and counter")
+        if usage.get("metric_kind") != "per-turn-delta" or usage.get("source_scope") != "verified-agent-run": raise ValueError("complete token usage requires a verified run-scoped per-turn counter")
+        if not str(usage.get("source", "")).strip() or not str(usage.get("measured_at", "")).strip(): raise ValueError("complete token usage requires source and measured_at")
+        if any(type(usage.get(key)) is not int or usage[key] < 0 for key in USAGE_COUNTERS): raise ValueError("complete token usage counters must be explicit non-negative integers")
+        if usage["total_tokens"] != usage["input_tokens"] + usage["output_tokens"]: raise ValueError("complete token usage total must equal input plus output")
+    elif usage:
+        raise ValueError("degraded token usage cannot carry counters; record the reason on the dimension")
 def status_for(data, name):
     item = data.get("dimensions", {}).get(name, {})
     state = item.get("status", "unsupported")
-    return (state if state in STATES else "unsupported", item.get("reason") or "adapter capability not evidenced")
+    return state, item.get("reason") or "adapter capability not evidenced"
 def build(data, snapshot_path, snapshot_sum):
     ids = data["identity"]; runtime = data.get("runtime", {}); root = ET.Element("agent_session_evidence", {"schema_version":"1"})
     identity = ET.SubElement(root,"identity")
@@ -97,8 +110,8 @@ def build(data, snapshot_path, snapshot_sum):
     add(comp,"overall_status",overall)
     usage=ET.SubElement(root,"usage"); us=data.get("usage",{}); ustate,status_reason=status_for(data,"token_usage"); add(usage,"status",ustate)
     if ustate=="complete":
-        for key in ("metric_kind","source","source_scope","measured_at"): add(usage,key,us.get(key,""))
-        for key in ("input_tokens","cached_input_tokens","output_tokens","reasoning_output_tokens","total_tokens"): add(usage,key,us.get(key,0))
+        for key in ("metric_kind","source","source_scope","measured_at"): add(usage,key,us[key])
+        for key in USAGE_COUNTERS: add(usage,key,us[key])
         add(usage,"unavailable_reason","")
     else:
         for key in ("metric_kind","source","source_scope","measured_at","input_tokens","cached_input_tokens","output_tokens","reasoning_output_tokens","total_tokens"): add(usage,key,"")

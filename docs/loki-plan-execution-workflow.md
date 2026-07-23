@@ -151,6 +151,35 @@ segredo, PII, raciocinio privado, envelope completo nem autorizacao de escrita.
 Ele tambem nao substitui `lf-domain-context-preflight` quando esse preflight
 pessoal for aplicavel.
 
+## Metricas hierarquicas de execucao
+
+O orquestrador publica atomicamente
+`builds/metrics/execution-metrics.json` schema v1 e referencia seu digest no
+`LokiRunState` v2, `implement_feature_execution_result` v2 e dashboard. Spans
+de run, phase, task, handoff, validator, gate, audit e reconciliation formam
+uma arvore aciclica com clock provenance, elapsed/active time e critical path;
+campos não observáveis ficam `unavailable` com motivo, nunca zero sintético.
+O digest é calculado sobre o mapping canônico sem `metrics_id` nem
+`metrics_digest`; o mesmo hash preenche o sufixo do ID e o digest. O critical
+path declara uma cadeia ordenada de spans cuja soma observada é verificável.
+
+Uso de tokens permanece separado em `exact`, `estimated` e `unavailable`.
+Exact exige contador run-scoped verificável; estimativa usa somente payload
+UTF-8 observável, range, confiança baixa e escopo parcial; totais mistos são
+proibidos. Falha de telemetria degrada apenas as métricas e não bloqueia o
+trabalho funcional. Antes de encerrar por silêncio, o adaptador registra um
+liveness probe: `running` ou `progress` proíbe a parada; cancelamento explícito
+do usuário continua uma rota separada.
+
+O modo `--consistency-packet <json>` de
+`scripts/validate-implement-feature-contracts.py` verifica ref, digest, status e motivo entre estado,
+resultado, dashboard e métricas. O dashboard de custo/recursos mostra apenas
+valores e provenance comprovados; não cria token/cost budgets nem automatic
+cost stops.
+Um arquivo mínimo publicado como `unavailable` mantém ref/digest. Somente falha
+total de publicação usa ref/digest nulos, status `unavailable` e motivo explícito
+`publication failure`, sem alterar o resultado funcional.
+
 ## Criterios de aceite, validators e retry
 
 Cada task tem `task_validation` com ACs, uma rota primaria, evidence refs e

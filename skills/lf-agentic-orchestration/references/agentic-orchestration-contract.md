@@ -121,7 +121,7 @@ Use split state to keep files reviewable and resumable:
   Markdown analysis handoff source.
 - `analise/technical-analysis.md`: readable decision-complete input for the
   single unified implementation handoff.
-- `agent-runs/faseN/<agent-run-id>.xml` (report schema 5): execution handoff,
+- `agent-runs/faseN/<agent-run-id>.xml` (report schema 6): execution handoff,
   owner, writes, validators, gates, evidence, completion and blockers.
 - `digest.xml` (schema 4): integrated run summary for review.
 - `backlog.md`: postponed or non-blocking items for later handling.
@@ -178,6 +178,14 @@ Treat timeout as an operational checkpoint. Mark it as failure only when there
 is no status or output, ownership was violated, a blocking gate exists, or the
 agent report declares an error.
 
+Immediately before any silence-based abort, interrupt, or cancel, invoke the
+adapter-observed liveness probe and persist its timestamp, adapter/source,
+outcome and reason in report schema `6` and the correlated metrics span. An
+observed `running` or `progress` outcome forbids that stop. `unsupported` or
+`unavailable` creates no heartbeat and must be recorded with a reason before
+another declared policy stop is evaluated. Explicit user cancellation is a
+separate correlated event and is not rewritten as silence.
+
 Each agent run report should include:
 
 - current status;
@@ -186,6 +194,10 @@ Each agent run report should include:
 - blockers;
 - next action;
 - whether retrospective is required.
+- timing/clock provenance and execution-metrics ref/digest/status;
+- exact/estimated/unavailable usage category without mixed totals;
+- replay/validator and materiality-precheck correlation;
+- liveness-probe outcome when a silence stop was considered.
 
 Treat main-thread context pressure as a liveness signal. When the next step
 requires loading broad raw sources, long data files, multiple retrospectives or
@@ -209,8 +221,9 @@ Require a technical retrospective when an agent:
 Every canonical manifest handoff carries `agent_run_id`, `handoff_id`, an
 `evidence_id` and evidence-manifest path. Handoff dependencies, when present,
 use `depends_on_handoff_id` and must be acyclic. The agentic run-state
-validator accepts only manifest schema 4, agent-run report schema 5 and digest
+validator accepts only manifest schema 4, agent-run report schema 6 and digest
 schema 4; reader and schema 1/2 root compatibility are not current contracts.
+Report schema 5 is also superseded and rejected without migration or fallback.
 Retrospectives remain an explicit evidence input. Durable promotion is a
 separate improvement workflow with its own gate.
 
@@ -252,3 +265,9 @@ Cataloger availability/failure/timeout/handoff/validator is explicitly excluded
 from these stop conditions. A final interrupted cataloger reconciled as
 `partial` with reason and `minimum_next_path` is terminal for generic handoff
 completion.
+
+Timing and usage are measurement-only. Exact usage requires a verified
+run-scoped adapter counter; estimates are low-confidence partial
+`utf8-byte-estimate-v1`; cumulative/account-window is never per-agent;
+unavailable carries a reason. There are no token/cost budgets or automatic cost
+stops, and telemetry degradation never changes functional status.

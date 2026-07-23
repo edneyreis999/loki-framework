@@ -1,3 +1,19 @@
+---
+doc_id: "lf-agent-execution-evidence-collector-contract"
+version: "2.0.0"
+status: active
+last_updated: "2026-07-23"
+scope: "Deterministic collection, sanitization, publication, usage provenance, and liveness observation"
+not_scope: "Domain writes, aggregate metrics ownership, private reasoning, or cost control"
+authority: "skills/lf-agent-execution-evidence/SKILL.md and this current contract"
+canonical_source: "skills/lf-agent-execution-evidence/references/collector-contract.md"
+intended_llm_task: "validation"
+source_priority: ["approved run envelope", "parent skill and evidence contract", "verified adapter input", "completion data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
+---
+
 # Execution evidence collector contract
 
 ## Responsibility boundary
@@ -76,6 +92,17 @@ declared/expected capability could not be accessed in this execution;
 fabricates a locator, snapshot, token count, or identifier to avoid either
 state.
 
-Usage collection retains `metric_kind`, `source`, `measured_at`, and separate
-counters. Cumulative and account-window metrics remain non-per-agent facts and
-must not be apportioned by the collector.
+Complete usage collection accepts only explicit counters from a verified
+run-scoped adapter source. It retains `metric_kind: per-turn-delta`, `source`,
+`source_scope: verified-agent-run`, `measured_at`, and every separate counter;
+it has no silent-zero default. Missing counters degrade usage and state why.
+Cumulative and account-window metrics remain non-per-agent facts and must not
+be apportioned by the collector. Estimates are emitted only into the separate
+orchestrator-owned execution-metrics artifact with `utf8-byte-estimate-v1`; the
+collector does not enlarge the fixed session-evidence XML shape.
+
+The collector or adapter also exposes a read-only liveness probe. It records
+only observed outcomes and never fabricates a heartbeat. A probe is mandatory
+immediately before a silence-based abort/interrupt/cancel, but it is not a
+budget, a background monitor, or authority to override explicit user
+cancellation.

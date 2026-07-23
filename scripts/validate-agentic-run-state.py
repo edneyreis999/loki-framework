@@ -25,7 +25,7 @@ KNOWLEDGE_CAPTURE_STATES = {
     "unsupported",
     "skipped-nonmaterial",
 }
-EVIDENCE_SCHEMAS = {"5"}
+EVIDENCE_SCHEMAS = {"6"}
 TERMINAL_RUN_STATUSES = {"completed", "blocked", "failed", "pending-human-validation"}
 CURRENT_RUN_STATUSES = TERMINAL_RUN_STATUSES | {"draft", "running"}
 REVIEW_FREQUENCIES = ("write_agent_handoff", "task", "fase", "plano")
@@ -57,6 +57,8 @@ RAW_FINDING_STATUSES = {"blocked", "finding", "findings", "changes-requested"}
 RAW_FAILURE_STATUSES = {"error", "failed", "failure", "timeout"}
 SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 CHECKPOINT_RE = re.compile(r"^review-checkpoint-v1:[0-9a-f]{64}$")
+EXECUTION_SPAN_RE = re.compile(r"^execution-span-v1:[0-9a-f]{64}$")
+UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
 
 
 def text(element: ET.Element | None) -> str:
@@ -654,11 +656,11 @@ def validate_report_review(
     checkpoints: dict[str, dict[str, str]],
     failures: list[str],
 ) -> dict[str, dict[str, str]]:
-    if root.get("schema_version") != "5":
+    if root.get("schema_version") != "6":
         return {}
     review = root.find("write_test_review")
     if review is None or review.get("schema_version") != "1":
-        failures.append(f"{path}: schema 5 missing write_test_review schema 1")
+        failures.append(f"{path}: schema 6 missing write_test_review schema 1")
         return {}
     validate_projection_wtr_shape(review, f"{path}: write_test_review", failures)
     require_exact_children(
@@ -889,6 +891,151 @@ def validate_manifest_handoffs(root: ET.Element, failures: list[str]) -> dict[st
     }
 
 
+def validate_report_v6_observability(
+    path: Path, root: ET.Element, failures: list[str]
+) -> None:
+    """Validate current report-v6 timing, usage and correlation blocks."""
+    timing = root.find("timing")
+    require_exact_children(
+        timing,
+        {"span_id", "parent_span_id", "started_at_utc", "ended_at_utc", "monotonic_duration_ms", "clock_provenance", "clock_degradation_reason"},
+        f"{path}: timing",
+        failures,
+    )
+    span_id = child_text(root, "timing/span_id")
+    if not EXECUTION_SPAN_RE.fullmatch(span_id):
+        failures.append(f"{path}: invalid timing span_id")
+    parent_span = child_text(root, "timing/parent_span_id")
+    if parent_span not in {"", "null"} and not EXECUTION_SPAN_RE.fullmatch(parent_span):
+        failures.append(f"{path}: invalid timing parent_span_id")
+    clock = child_text(root, "timing/clock_provenance")
+    if clock not in {"observed", "partial", "unavailable"}:
+        failures.append(f"{path}: invalid timing clock provenance")
+    duration = child_text(root, "timing/monotonic_duration_ms")
+    if duration not in {"", "null"}:
+        try:
+            if int(duration) < 0:
+                raise ValueError
+        except ValueError:
+            failures.append(f"{path}: invalid monotonic duration")
+    elif not child_text(root, "timing/clock_degradation_reason"):
+        failures.append(f"{path}: unavailable duration requires clock reason")
+
+    usage = root.find("usage")
+    require_exact_children(
+        usage,
+        {"metrics_ref", "metrics_digest", "metrics_status", "span_id", "usage_status", "exact_source", "estimate_method", "unavailable_reason"},
+        f"{path}: usage",
+        failures,
+    )
+    if not child_text(root, "usage/metrics_ref") or not SHA256_RE.fullmatch(child_text(root, "usage/metrics_digest")):
+        failures.append(f"{path}: usage metrics ref/digest invalid")
+    if child_text(root, "usage/metrics_status") not in {"complete", "partial", "unavailable"}:
+        failures.append(f"{path}: invalid usage metrics status")
+    if child_text(root, "usage/span_id") != span_id:
+        failures.append(f"{path}: usage span does not match timing span")
+    usage_status = child_text(root, "usage/usage_status")
+    exact_source = child_text(root, "usage/exact_source")
+    estimate_method = child_text(root, "usage/estimate_method")
+    unavailable_reason = child_text(root, "usage/unavailable_reason")
+    if usage_status == "exact":
+        if not exact_source or estimate_method not in {"", "null"} or unavailable_reason not in {"", "null"}:
+            failures.append(f"{path}: exact usage provenance is mixed or missing")
+    elif usage_status == "estimated":
+        if estimate_method != "utf8-byte-estimate-v1" or exact_source not in {"", "null"} or unavailable_reason not in {"", "null"}:
+            failures.append(f"{path}: estimated usage provenance is mixed or invalid")
+    elif usage_status == "unavailable":
+        if exact_source not in {"", "null"} or estimate_method not in {"", "null"} or not unavailable_reason:
+            failures.append(f"{path}: unavailable usage requires an unmixed reason")
+    else:
+        failures.append(f"{path}: invalid usage status")
+
+    replay = root.find("replay_validator_correlation")
+    require_exact_children(
+        replay,
+        {"iteration", "replay", "replay_cause", "cause_span_id", "validator_span_id", "validator_command", "validator_version", "validator_input_digest", "validator_policy_digest", "execution_mode", "would_reuse"},
+        f"{path}: replay_validator_correlation",
+        failures,
+    )
+    try:
+        if int(child_text(root, "replay_validator_correlation/iteration")) < 0:
+            raise ValueError
+    except ValueError:
+        failures.append(f"{path}: invalid replay iteration")
+    replay_value = child_text(root, "replay_validator_correlation/replay")
+    if replay_value not in {"true", "false"}:
+        failures.append(f"{path}: replay must be true or false")
+    if replay_value == "true" and (
+        not child_text(root, "replay_validator_correlation/replay_cause")
+        or not EXECUTION_SPAN_RE.fullmatch(child_text(root, "replay_validator_correlation/cause_span_id"))
+    ):
+        failures.append(f"{path}: replay requires cause and typed cause span")
+    mode = child_text(root, "replay_validator_correlation/execution_mode")
+    if mode not in {"executed", "referenced", "not-applicable"}:
+        failures.append(f"{path}: invalid validator execution mode")
+    if child_text(root, "replay_validator_correlation/would_reuse") not in {"true", "false", "not-applicable"}:
+        failures.append(f"{path}: would_reuse is observation-only true/false/not-applicable")
+
+    materiality = root.find("materiality_precheck_correlation")
+    require_exact_children(
+        materiality,
+        {"profile_ref", "profile_digest", "materiality_ref", "materiality_digest", "status", "auditor_dispatch"},
+        f"{path}: materiality_precheck_correlation",
+        failures,
+    )
+    materiality_status = child_text(root, "materiality_precheck_correlation/status")
+    auditor_dispatch = child_text(root, "materiality_precheck_correlation/auditor_dispatch")
+    if (materiality_status, auditor_dispatch) not in {("valid", "permitted"), ("invalid", "blocked"), ("not-applicable", "not-applicable")}:
+        failures.append(f"{path}: invalid materiality-to-Auditor gate")
+    if materiality_status in {"valid", "invalid"}:
+        for field in ("profile_ref", "materiality_ref"):
+            if not child_text(root, f"materiality_precheck_correlation/{field}"):
+                failures.append(f"{path}: materiality precheck missing {field}")
+        for field in ("profile_digest", "materiality_digest"):
+            if not SHA256_RE.fullmatch(child_text(root, f"materiality_precheck_correlation/{field}")):
+                failures.append(f"{path}: materiality precheck invalid {field}")
+    elif any(child_text(root, f"materiality_precheck_correlation/{field}") not in {"", "null"} for field in ("profile_ref", "profile_digest", "materiality_ref", "materiality_digest")):
+        failures.append(f"{path}: not-applicable materiality correlation must not invent refs")
+
+    probe = root.find("liveness_probe")
+    require_exact_children(
+        probe,
+        {"required_before_silence_stop", "trigger", "observed_at_utc", "adapter", "source", "outcome", "reason", "silence_stop_permitted"},
+        f"{path}: liveness_probe",
+        failures,
+    )
+    required = child_text(root, "liveness_probe/required_before_silence_stop")
+    trigger = child_text(root, "liveness_probe/trigger")
+    outcome = child_text(root, "liveness_probe/outcome")
+    permitted = child_text(root, "liveness_probe/silence_stop_permitted")
+    if required not in {"true", "false"}:
+        failures.append(f"{path}: liveness required flag must be boolean")
+    if trigger == "silence-stop":
+        if required != "true":
+            failures.append(f"{path}: silence-stop trigger requires a recorded liveness probe")
+        if outcome not in {"running", "progress", "terminal", "unsupported", "unavailable"}:
+            failures.append(f"{path}: required silence probe missing observed outcome")
+        observed = child_text(root, "liveness_probe/observed_at_utc")
+        if not UTC_RE.fullmatch(observed) or not child_text(root, "liveness_probe/adapter") or child_text(root, "liveness_probe/source") in {"", "null"}:
+            failures.append(f"{path}: required silence probe missing UTC timestamp/adapter/source")
+        if outcome in {"running", "progress"} and permitted != "false":
+            failures.append(f"{path}: running/progress forbids silence stop")
+        if outcome in {"unsupported", "unavailable"} and child_text(root, "liveness_probe/reason") in {"", "null"}:
+            failures.append(f"{path}: degraded liveness probe requires reason")
+        if outcome in {"terminal", "unsupported", "unavailable"} and permitted not in {"true", "false"}:
+            failures.append(f"{path}: policy stop decision requires a recorded probe result")
+    elif trigger == "explicit-user-cancellation":
+        if required != "false" or outcome != "not-required" or permitted != "not-applicable":
+            failures.append(f"{path}: explicit cancellation must remain separate from silence probe")
+    elif trigger == "none":
+        if required != "false" or outcome != "not-required" or permitted != "not-applicable":
+            failures.append(f"{path}: no silence candidate requires not-required probe")
+    else:
+        failures.append(f"{path}: invalid liveness trigger")
+    if any(node.tag in {"token_budget", "cost_budget", "automatic_cost_stop"} for node in root.iter()):
+        failures.append(f"{path}: report metrics must not define budgets or automatic cost stops")
+
+
 def validate_report(
     path: Path,
     root: ET.Element,
@@ -917,7 +1064,7 @@ def validate_report(
         for field in ("evidence_manifest_path", "evidence_status", "capture_trigger", "capture_target"):
             if not child_text(root, f"evidence/{field}"):
                 failures.append(f"{path}: schema {schema_version} missing evidence/{field}")
-    if schema_version in {"4", "5"}:
+    if schema_version == "6":
         knowledge = root.find("execution_knowledge")
         if knowledge is None:
             failures.append(f"{path}: schema {schema_version} missing execution_knowledge")
@@ -935,6 +1082,8 @@ def validate_report(
         knowledge_record_value = None
     if root.find("freshness_signature") is None:
         failures.append(f"{path}: missing freshness_signature")
+    if schema_version == "6":
+        validate_report_v6_observability(path, root, failures)
 
     if write_mode not in NON_WRITER_MODES:
         if not owner:
@@ -1323,9 +1472,9 @@ def validate_run_dir(run_dir: Path) -> list[str]:
                 f"{manifest_path}: requires manifest schema 4, got {manifest_schema or '<missing>'}"
             )
         for path, root in roots.items():
-            if root.tag == "agent_run_report" and root.get("schema_version") != "5":
+            if root.tag == "agent_run_report" and root.get("schema_version") != "6":
                 failures.append(
-                    f"{path}: requires report schema 5, got {root.get('schema_version') or '<missing>'}"
+                    f"{path}: requires report schema 6, got {root.get('schema_version') or '<missing>'}"
                 )
             if root.tag == "agentic_run_digest" and root.get("schema_version") != "4":
                 failures.append(
@@ -1411,7 +1560,7 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         for root in roots.values():
             if blocking_evidence:
                 break
-            if root.tag == "agent_run_report" and root.get("schema_version") == "5":
+            if root.tag == "agent_run_report" and root.get("schema_version") == "6":
                 handoff_id = child_text(root, "identity/handoff_id")
                 correlated = manifest_handoffs.get(handoff_id) == child_text(
                     root, "identity/agent_run_id"
@@ -1660,7 +1809,7 @@ def run_self_test() -> None:
         }
     }
     report_review = ET.fromstring(f"""
-<agent_run_report schema_version="5"><write_test_review schema_version="1">
+<agent_run_report schema_version="6"><write_test_review schema_version="1">
   <policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><execution_id>{execution_id}</execution_id><checkpoint_ref checkpoint_id="{checkpoint_id}">tasks.md#checkpoint</checkpoint_ref><coverage_digest>{coverage_digest}</coverage_digest>
   <covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><review_lineage><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><evidence_ref>evidence/review.xml</evidence_ref></review_lineage>
   <outcome><status>completed-with-findings</status><review_agent_raw_status>blocked</review_agent_raw_status><execution_status_effect>none</execution_status_effect><reason/></outcome>
@@ -1680,6 +1829,30 @@ def run_self_test() -> None:
         Path("report.xml"), report_review, {"policy_digest": policy_digest, "policy_ref": "tasks.md#policy", "requested": "plano", "effective": "plano"}, checkpoint_record, report_failures
     ) == {"finding-1": expected_finding}
     assert report_failures == [], report_failures
+    observability = ET.fromstring(f"""
+<agent_run_report schema_version="6">
+  <timing><span_id>execution-span-v1:{'1' * 64}</span_id><parent_span_id>null</parent_span_id><started_at_utc>null</started_at_utc><ended_at_utc>null</ended_at_utc><monotonic_duration_ms>null</monotonic_duration_ms><clock_provenance>unavailable</clock_provenance><clock_degradation_reason>adapter clock unavailable</clock_degradation_reason></timing>
+  <usage><metrics_ref>builds/metrics/execution-metrics.json</metrics_ref><metrics_digest>sha256:{'2' * 64}</metrics_digest><metrics_status>unavailable</metrics_status><span_id>execution-span-v1:{'1' * 64}</span_id><usage_status>unavailable</usage_status><exact_source>null</exact_source><estimate_method>null</estimate_method><unavailable_reason>run-scoped counter unavailable</unavailable_reason></usage>
+  <replay_validator_correlation><iteration>0</iteration><replay>false</replay><replay_cause>null</replay_cause><cause_span_id>null</cause_span_id><validator_span_id>null</validator_span_id><validator_command>null</validator_command><validator_version>null</validator_version><validator_input_digest>null</validator_input_digest><validator_policy_digest>null</validator_policy_digest><execution_mode>not-applicable</execution_mode><would_reuse>not-applicable</would_reuse></replay_validator_correlation>
+  <materiality_precheck_correlation><profile_ref>builds/profile.yaml</profile_ref><profile_digest>sha256:{'3' * 64}</profile_digest><materiality_ref>builds/materiality.yaml</materiality_ref><materiality_digest>sha256:{'4' * 64}</materiality_digest><status>valid</status><auditor_dispatch>permitted</auditor_dispatch></materiality_precheck_correlation>
+  <liveness_probe><required_before_silence_stop>false</required_before_silence_stop><trigger>none</trigger><observed_at_utc>null</observed_at_utc><adapter>generic</adapter><source>null</source><outcome>not-required</outcome><reason>null</reason><silence_stop_permitted>not-applicable</silence_stop_permitted></liveness_probe>
+</agent_run_report>""")
+    observability_failures: list[str] = []
+    validate_report_v6_observability(Path("report-v6.xml"), observability, observability_failures)
+    assert observability_failures == [], observability_failures
+    bypassed_liveness = copy.deepcopy(observability)
+    bypassed_liveness.find("liveness_probe/trigger").text = "silence-stop"
+    bypassed_liveness.find("liveness_probe/required_before_silence_stop").text = "false"
+    bypassed_liveness.find("liveness_probe/outcome").text = "terminal"
+    bypassed_liveness.find("liveness_probe/silence_stop_permitted").text = "true"
+    bypassed_liveness_failures: list[str] = []
+    validate_report_v6_observability(Path("report-v6.xml"), bypassed_liveness, bypassed_liveness_failures)
+    assert any("silence-stop trigger requires" in failure for failure in bypassed_liveness_failures), bypassed_liveness_failures
+    invalid_materiality = copy.deepcopy(observability)
+    invalid_materiality.find("materiality_precheck_correlation/status").text = "invalid"
+    invalid_materiality_failures: list[str] = []
+    validate_report_v6_observability(Path("report-v6.xml"), invalid_materiality, invalid_materiality_failures)
+    assert any("materiality-to-Auditor gate" in failure for failure in invalid_materiality_failures)
     def assert_report_invalid(mutator: object) -> None:
         candidate = copy.deepcopy(report_review)
         mutator(candidate)  # type: ignore[operator]
@@ -1849,15 +2022,15 @@ def run_self_test() -> None:
         run_dir = Path(directory)
         (run_dir / "agentic-run-manifest.xml").write_text(current, encoding="utf-8")
         (run_dir / "legacy-report.xml").write_text(
-            '<?xml version="1.0"?><agent_run_report schema_version="4"/>', encoding="utf-8"
+            '<?xml version="1.0"?><agent_run_report schema_version="5"/>', encoding="utf-8"
         )
         report_schema_failures = validate_run_dir(run_dir)
-        assert any("requires report schema 5" in failure for failure in report_schema_failures)
+        assert any("requires report schema 6" in failure for failure in report_schema_failures)
         (run_dir / "unknown-report.xml").write_text(
             '<?xml version="1.0"?><agent_run_report schema_version="99"/>', encoding="utf-8"
         )
         unknown_report_failures = validate_run_dir(run_dir)
-        assert any("requires report schema 5" in failure for failure in unknown_report_failures)
+        assert any("requires report schema 6" in failure for failure in unknown_report_failures)
     with tempfile.TemporaryDirectory() as directory:
         run_dir = Path(directory)
         (run_dir / "agentic-run-manifest.xml").write_text(current, encoding="utf-8")

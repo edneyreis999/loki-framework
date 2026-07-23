@@ -1,6 +1,6 @@
 ---
 doc_id: "loki-implement-feature-response-template"
-version: "1.0.0"
+version: "2.0.0"
 status: active
 last_updated: "2026-07-22"
 scope: "Complete recoverable Markdown skeleton for the loki-implement-feature terminal response"
@@ -9,7 +9,7 @@ authority: "skills/loki-implement-feature/references/response.md and the validat
 canonical_source: "skills/loki-implement-feature/assets/response-template.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted LokiRunState and implement_feature_execution_result"
+  - "validated persisted LokiRunState v2, implement_feature_execution_result v2, and execution_metrics v1"
   - "skills/loki-implement-feature/references/response.md"
   - "this output skeleton"
 confidence: high
@@ -26,6 +26,7 @@ replaced_by: null
 - Run ID: `<typed run ID | unavailable + reason>`
 - Execution ID: `<typed execution ID>`
 - State: `<locator + sha256 digest>`
+- Metrics: `<ref + sha256 digest + status/reason; or null/null + unavailable + explicit publication failure reason>`
 
 ## Executive summary
 
@@ -77,6 +78,27 @@ Never relabel a task row as blocked or invent a task status.
 - Failed tasks: `<refs or none + reason>`
 - Skipped dependents: `<task + failed ancestor refs or none + reason>`
 - Final regressions: `<refs or none + reason>`
+
+## Cost and resource dashboard
+
+- Metrics provenance: `<ref + digest + generated_at_utc; or null/null only for total publication failure>`
+- Timing: `<elapsed/active/critical-path milliseconds + ordered critical_path_span_ids, or unavailable + typed reason; clock provenance>`
+- Counts: `<agents, handoffs, validators executed/referenced/repeated, retries, replays, gates, reconciliations; unavailable is never zero>`
+- Exact token usage: `<separate counters + verified run-scoped source or unavailable + reason>`
+- Estimated token usage: `<utf8-byte-estimate-v1 point/range, observable bytes, low confidence, partial scope or unavailable + reason>`
+- Non-agent observations: `<cumulative/account-window source scopes or none + reason>`
+- Monetary cost: `<proven amount + pricing source/scope or unavailable + reason>`
+- Measurement policy: `No token/cost budget or automatic cost stop was applied.`
+
+### Hierarchical spans and correlations
+
+| Span | Kind/parent | Owner/status | UTC/monotonic timing | Iteration/replay/cause | Usage category | Correlations |
+| --- | --- | --- | --- | --- | --- | --- |
+| `<typed span ID>` | `<run/phase/task/handoff/validator/gate/audit/reconciliation + parent>` | `<owner + status>` | `<timestamps/duration/provenance or unavailable + reason>` | `<iteration + replay + cause>` | `<exact/estimated/unavailable + provenance>` | `<task/handoff/validator/gate/evidence refs>` |
+
+- Validator correlation: `<command/version/input digest/policy digest/executed-or-referenced/replay cause/would-reuse only>`
+- Materiality precheck correlation: `<profile ref/digest + materiality decision ref/digest + Auditor dispatch state>`
+- Liveness probes: `<silence-stop candidate -> observed probe timestamp/source/outcome/reason; running/progress forbids stop>`
 
 ## Deviations and limitations
 

@@ -287,7 +287,7 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - A politica para um contrato removido e `rejection-only`: rejeite-o antes de
   interpretar ou escrever, sem adicionar reader, conversor, remocao ou
   fallback implicito.
-- O estado agentic vigente e manifest schema 4, report schema 5 e digest schema
+- O estado agentic vigente e manifest schema 4, report schema 6 e digest schema
   4; WTR schema 1 permanece vigente. Evidencia de sessao e execution knowledge
   schema 1 tambem permanecem vigentes nas suas familias.
 - O unico catalogo analitico persistido e XML v2. O layout v1 deve falhar antes
@@ -360,19 +360,25 @@ Este gate vale somente para criacao, alteracao ou promocao com
    requisitos de autoria, emite `llm_artifact_profile`, particiona os dez IDs
    canonicos entre selecionados e skips justificados e executa apenas checks
    mecanicos e de empacotamento.
-2. O Writer entrega arquivos, perfil, checks e limitacoes ao
+2. O Writer executa o precheck mecânico schema v1 sobre targets aprovados,
+   diffs/digests observados, materialidade, profiles e pares de projeção.
+   `blocked-to-writer` retorna antes da auditoria;
+   `skipped-no-material-write` não concede approval; somente
+   `ready-for-auditor` com `dispatch_allowed: true` permite dispatch material.
+3. O Writer entrega arquivos, perfil, checks, precheck e limitacoes ao
    `framework-artifact-quality-auditor`; ele nunca preenche
    `llm_consumption_quality` nem aprova o proprio artefato.
-3. O Auditor permanece read-only e independente. Para artefato aplicavel, usa
+4. O Auditor permanece read-only e independente. Para artefato aplicavel, usa
    `llm-artifact-quality-v1`, `rubric-v2`, `prompt-v2`, todas as heuristicas,
    fixtures aplicaveis, revisao isolada e bias controls. Para human-only,
    valida a justificativa e retorna `not-applicable` sem executar fixtures
    irrelevantes.
-4. Finding, inconclusao, baixa confianca material, fixture aplicavel omitido,
+5. Finding, inconclusao, baixa confianca material, fixture aplicavel omitido,
    skip injustificado, bias check falho ou validator falho bloqueiam. Conflito
    entre fontes normativas retorna `needs-human-review` e exige decisao humana
    explicita; nunca produz approval condicional.
-5. Toda correcao invalida o parecer anterior. Repita checks mecanicos, nove
+6. Toda correcao invalida precheck e parecer anteriores. Repita checks mecânicos,
+   o precheck sobre o diff/digest atual, nove
    criterios, fixtures aplicaveis, bias controls e revisao isolada sobre o
    estado corrigido antes de reutilizar qualquer resultado terminal.
 

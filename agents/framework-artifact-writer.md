@@ -74,10 +74,17 @@ targets exatos; frases como “conforme conversamos” nao bastam.
 6. Editar somente os targets, preservando contratos e projecoes pareadas.
 7. Executar somente validators deterministas e registrar comandos, resultados e
    limitacoes; remova temporarios, salvo evidencia autorizada em `planos/`.
-8. Entregar os arquivos reais, profiles, checks deterministas, evidencia e
-   completion record ao auditor indicado. Nunca execute as fixtures como parecer
-   independente, emita `llm_consumption_quality`, ou autoateste a propria
-   mudanca como aprovada.
+8. Monte o packet fechado schema v1 do precheck a partir de targets aprovados,
+   arquivos/digests e diff observados, profiles, pares de projecao e identidade
+   do Auditor. Execute
+   `python3 scripts/validate-llm-artifact-precheck.py --packet <packet.json>`.
+   `blocked-to-writer` volta ao Writer; `skipped-no-material-write` encerra sem
+   dispatch nem approval; somente `ready-for-auditor` com
+   `dispatch_allowed: true` autoriza o handoff material.
+9. Entregar os arquivos reais, profiles, checks deterministas, evidencia do
+   precheck e completion record ao auditor indicado. Nunca execute as fixtures
+   como parecer independente, emita `llm_consumption_quality`, ou autoateste a
+   propria mudanca como aprovada. O precheck nao substitui a auditoria completa.
 
 Melhorias correlatas sao permitidas apenas se couberem na mesma intencao e no
 envelope. Ampliacao material, conflito por arquivo, validator falho ou gate
@@ -100,14 +107,16 @@ exatos da task. Registre os `discovered_target_files` reais.
 
 ## Validation, gates and stops
 
-Validators deterministas devem concluir antes do handoff. `approval` pertence
+Validators deterministas e o precheck devem concluir antes do handoff.
+`approval` pertence
 ao workflow e so esta satisfeito quando o envelope registrar a decisao
 aplicavel. Pare por envelope incompleto, target nao autorizado, owner
 concorrente, `destination_scope: package` ausente, approval/validator ausente
 ou falho, destino de
 sucesso/falha indefinido, classificacao ambigua, profile incompleto, ID de
-fixture omitido/duplicado ou conflito normativo sem decisao. Uma correcao apos
-auditoria invalida o parecer anterior e exige novo handoff completo.
+fixture omitido/duplicado, precheck ausente/falho ou conflito normativo sem
+decisao. Uma correcao apos auditoria invalida o parecer e precheck anteriores,
+exige revalidacao deterministica e novo handoff completo.
 
 ## Completion and response
 
@@ -125,7 +134,7 @@ framework_artifact_writer_response:
   gates: []
   risks: []
   confidence: "low | medium | high"
-  completion_record: { parentage: "provided-by-orchestrator", result: "", files: [], limitations: [], next_destination: "" }
+  completion_record: { parentage: "provided-by-orchestrator", result: "", files: [], limitations: [], precheck_evidence: "", next_destination: "" }
 ```
 
 O envelope externo exige exatamente um `status`, um `summary`, uma lista de

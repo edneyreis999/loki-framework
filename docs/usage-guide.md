@@ -223,6 +223,19 @@ validators, ciclos, retries, failed tasks, skipped dependents, targets
 inferidos, riscos, resume e teste manual. Human validation herdada da analise
 aparece somente no final e apenas quando for a unica condicao restante.
 
+O mesmo run publica `builds/metrics/execution-metrics.json` schema v1, ligado
+por ref/digest ao LokiRunState v2, resultado v2 e dashboard. Ele registra spans,
+clocks, elapsed/active/critical-path, contagens e tokens separados em
+`exact`, `estimated` ou `unavailable`; estimativas têm range, baixa confiança e
+escopo parcial. Telemetria degradada não bloqueia execução funcional. Uma
+parada por silêncio exige liveness probe do adaptador, e `running`/`progress`
+proíbe a parada. O dashboard exibe custo/recursos apenas com provenance: não há
+budgets de token/custo nem parada automática por custo.
+O mesmo hash canônico, calculado sem os dois campos de identidade, alimenta
+`metrics_id` e `metrics_digest`. Um documento mínimo `unavailable` publicado
+mantém ref/digest; somente falha total de publicação usa null/null com status
+`unavailable` e motivo explícito `publication failure`.
+
 ## Evidencia de Sessao
 
 Use `lf-agent-execution-evidence` quando o orquestrador ou collector precisar
@@ -246,7 +259,9 @@ O framework usa gates para impedir validacao falsa:
 Mudancas do pacote Loki nao usam um gate generico: somente
 `loki-continuous-improvement` na ramificacao `destination_scope: package`
 coordena envelope, approval aplicavel, `framework-artifact-writer`, checks e
-`framework-artifact-quality-auditor` independente.
+precheck mecânico. Somente `ready-for-auditor` com `dispatch_allowed: true`
+segue para `framework-artifact-quality-auditor` independente; o precheck não
+aprova nem substitui a auditoria completa.
 
 Parsers estruturais, validadores de linguagem e diff restrito reduzem risco
 estrutural, mas nao substituem validacao humana quando a mudanca afeta

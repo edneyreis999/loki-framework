@@ -172,7 +172,15 @@ pre-existing, unknown, soft-fail, pass, or cancelled cycles.
 Minor correction cycles have no numeric limit. After every minor record,
 persist checkpoint and yield scheduling so independent tasks can progress. The
 same task continues until pass, evidence-based reclassification, or correlated
-explicit cancellation; liveness is visible in state and the dashboard.
+explicit cancellation; liveness is visible in state, execution metrics and the
+dashboard. Immediately before any silence-based abort/interrupt/cancel, run and
+persist the adapter-observed liveness probe. `running` or `progress` forbids the
+stop; unsupported/unavailable records a reason and never fabricates a heartbeat.
+This probe does not delay an independently authorized explicit user cancellation.
+
+The retry limit in this contract is a functional correction-cycle control, not
+a token/cost budget. Execution metrics introduce no budgets or automatic cost
+stops and telemetry failure never consumes retry or changes validation status.
 
 On medium/major exhaustion, mark the task unresolved, preserve every finding,
 response, retest, debit, and failed AC, skip only transitive dependents, and

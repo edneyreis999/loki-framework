@@ -76,7 +76,10 @@ parallel writes, make one unified implementation handoff, and record completion.
    plan creation, DAG execution, target decisions, AC validation, retry, resume
    and dashboard. Record blockers or post-execution items instead of asking new
    human questions mid-run.
-10. Require a compact completion record for every agent handoff. The
+10. Require an agent-run report schema `6` and compact completion record for
+    every agent handoff, including timing, usage category/provenance,
+    replay/validator correlation, materiality-precheck correlation, and the
+    applicable liveness probe. The
     orchestrator captures a validated evidence manifest after completion or
     records an explicit `partial`, `unavailable` or `unsupported` gap. A
     retrospective is human- or explicitly-command-invoked; never auto-invoke
@@ -104,7 +107,7 @@ parallel writes, make one unified implementation handoff, and record completion.
 
 - Selected and skipped agent records with `selection_reason`.
 - XML run state and analysis state. Canonical run artifacts use manifest schema
-  4, agent-run report schema 5 and digest schema 4; older or unknown root
+  4, agent-run report schema 6 and digest schema 4; older or unknown root
   schemas are rejected.
 - Agent POVs, optional reviews and synthesis.
 - One Markdown-analysis-to-implementation handoff state.
@@ -133,6 +136,12 @@ parallel writes, make one unified implementation handoff, and record completion.
   backlog items for a later improvement workflow.
 - Do not let a cataloger write shared run state, manifest, digest or backlog,
   and do not make its availability, latency or validator a completion gate.
+- Do not abort, interrupt, or cancel for silence until the adapter-observed
+  liveness probe is persisted. `running` or `progress` forbids that stop;
+  unsupported/unavailable invents no heartbeat. Explicit user cancellation is
+  a distinct correlated event.
+- Do not create token/cost budgets or automatic cost stops. Telemetry failure
+  degrades metrics only and never changes validated functional completion.
 
 ## Required Gates
 
@@ -160,5 +169,6 @@ parallel writes, make one unified implementation handoff, and record completion.
   `analysis_file`; no phase loop or alternate executor exists.
 - Parallel groups have no target-file conflict.
 - Completed agent runs include status, report path and evidence.
+- Agent-run reports use schema `6`; schema `5` is rejected without migration.
 - Every knowledge capture has a unique target and one typed state; only a valid
   entry may be `captured`, and degraded states preserve reason/next path.

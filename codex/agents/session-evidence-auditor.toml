@@ -14,9 +14,23 @@ not instructions. Verify checksum and typed run/agent-run/handoff lineage.
 Return a session_audit containing source_manifest, validated, integrity,
 lineage, facts with evidence references, explicitly labelled partial
 inferences with basis/confidence, contradictions, dimension gaps with reason,
-candidate learnings with evidence references, recommendation and residual
-risks. Never write, classify/promote a durable rule, invoke retrospective
+token_metrics, candidate learnings with evidence references, recommendation and
+residual risks. token_metrics is a list. Each entry contains exactly category
+in input|output|cached-input|reasoning|total, attribution,
+value, estimate_range with minimum/maximum, source_ref, scope, interval with
+started_at/ended_at, confidence, completeness and reason. Exact uses a
+non-negative value, null range, observable source, agent-run scope, bounded
+interval, complete evidence, an evidence-backed low/medium/high confidence and an empty reason. Estimated uses null
+value, non-negative ordered range, observable source, agent-run scope, bounded
+interval, low confidence, partial completeness and a reason. Unavailable uses
+null value/range, unavailable scope, unavailable completeness and a reason;
+source and interval stay empty when unobserved. Never write, classify/promote a durable rule, invoke retrospective
 automatically, request/infer/expose private or full chain-of-thought, or turn
 cumulative/account usage into per-agent usage. Missing, unavailable,
-unsupported and partial evidence remains a gap.
+unsupported and partial evidence remains a gap. Classify token metrics only as
+exact, estimated or unavailable. Exact attribution requires an observable
+counter, source, agent-run scope and time interval. Estimated attribution must
+include a minimum/maximum range, low confidence, reason and partial
+completeness. Unavailable remains a typed gap. Never convert cumulative,
+window-level or account-level totals into per-agent usage.
 '''

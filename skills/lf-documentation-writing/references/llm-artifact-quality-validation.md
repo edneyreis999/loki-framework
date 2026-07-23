@@ -93,9 +93,9 @@ llm_artifact_profile:
     - "agent-facing | instruction-bearing | routing | prompt-assembly | context-hydration | validation-contract"
   intended_llm_task: "routing | retrieval | generation | validation | context-hydration"
   authoritative_sections:
-    - "<artifact path>#<stable heading or field>"
+    - "<artifact path>#heading:<exact Markdown heading text> | #symbol:<top-level Python symbol> | #field:<actual JSON/YAML/TOML key or XML tag>"
   untrusted_data_sections:
-    - "<artifact path>#<stable heading or field>"
+    - "<same mechanically resolvable locator forms>"
   source_priority:
     - "<highest authority first>"
   paired_projections:
@@ -119,13 +119,57 @@ Profile invariants:
 - `intended_llm_task` is required when applicable and `null` otherwise.
 - `authoritative_sections`, `source_priority`, and all referenced paths or
   locators resolve against the artifact under review.
+- Locator fragments are closed and mechanically resolvable: Markdown uses
+  `#heading:<exact heading text>`, Python uses `#symbol:<top-level symbol>`, and
+  JSON/YAML/TOML/XML use `#field:<actual key or tag>`. Unknown fragment kinds,
+  mismatched file types and absent headings/symbols/fields fail closed.
 - `untrusted_data_sections` may be empty only when the artifact receives no
   untrusted or user-controlled content.
 - `paired_projections` may be empty only when no paired source/projection exists.
+  Every declared source and projection is a normalized package-relative path
+  that resolves to a current regular file; missing or synthetic paths fail.
 - Every one of the ten canonical fixture IDs appears exactly once across
   `selected_fixture_ids` and `skipped_fixture_ids`. A skip needs a specific
   reason and may not hide a material criterion.
 - The Writer never creates or fills `llm_consumption_quality`.
+
+## Mechanical Materiality And Profile Precheck
+
+Before a material package patch is dispatched to the independent Auditor, the
+Writer must create a closed schema v1 precheck packet and run:
+
+```bash
+python3 scripts/validate-llm-artifact-precheck.py --packet <packet.json>
+```
+
+The document root is `llm_artifact_precheck_packet`; the packet contains
+exactly `schema_version`, `writer_identity`, `destination_scope`,
+`approved_target_files`, `observed_changed_files`, `materiality`,
+`artifact_profiles`, `paired_projection_pairs` and `intended_auditor`. Each
+observed changed-file record contains a normalized package-relative `path`, its
+current `sha256:<hex>` digest and non-negative `added_lines` and
+`removed_lines`. `materiality.evidence` exactly reproduces those records, so
+materiality comes from the observed diff rather than Writer prose. Each
+material changed file has exactly one `artifact_path`, classification
+`llm-facing | human-only`, and complete canonical `llm_artifact_profile`.
+Declared source/projection pairs occur in the profiles for both paths.
+
+The deterministic validator checks the closed schema, approved/changed
+containment, current digests, observed materiality, complete profile coverage,
+allowed values, exact ten-ID partition, paired locators, Writer/Auditor
+separation, and absence of Writer-owned approval, `llm_consumption_quality` or
+audit-result fields. Its packet outcome is exactly one of:
+
+- `ready-for-auditor`, `dispatch_allowed: true`;
+- `skipped-no-material-write`, `dispatch_allowed: false`, without approval;
+- `blocked-to-writer`, `dispatch_allowed: false`, with exact errors.
+
+This precheck proves only materiality, containment and profile mechanics. It
+never decides quality, approves an artifact or substitutes for the full
+independent audit. Every material applicable artifact still requires all
+Auditor checks, fixtures, bias controls and isolated review below. A correction
+invalidates prior precheck evidence and the prior audit; rebuild the packet from
+the current diff/digests and rerun both stages.
 
 ## Normative Schema: llm_consumption_quality
 
@@ -558,8 +602,9 @@ Apply this order without subjective override:
 Handoff fields:
 
 - Writer to Auditor: actual artifact paths, `llm_artifact_profile`, applicable
-  fixture selection, justified skips, mechanical checks, and limitations. No
-  `llm_consumption_quality` or approval claim.
+  fixture selection, justified skips, mechanical checks, limitations and
+  validated `ready-for-auditor` precheck evidence. No `llm_consumption_quality`
+  or approval claim.
 - Auditor to Writer on `blocked`: complete result, exact evidence, impact,
   minimum required resolution, and replay requirement.
 - Auditor to orchestrator on `needs-human-review`: conflicting normative
@@ -585,6 +630,8 @@ Stop and return the minimum blocker when:
 - isolated context contains expected invariants, diagnosis, author identity,
   preferred answer, or prior audit state;
 - Writer and Auditor are the same approval authority;
+- validated precheck evidence is missing, is not `ready-for-auditor`, or has
+  `dispatch_allowed` other than `true` for a material handoff;
 - a finding, inconclusive result, material low confidence, omitted applicable
   fixture, or failed validator remains;
 - a correction has not triggered a complete replay;

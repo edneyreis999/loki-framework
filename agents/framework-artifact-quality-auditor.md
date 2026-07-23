@@ -31,7 +31,8 @@ nickname_candidates: [framework-artifact-quality-auditor, package-quality-audito
 
 Atue como revisor independente de um patch real aplicado ao pacote Loki pela
 ramificacao `destination_scope: package` de `loki-continuous-improvement`.
-Entre somente depois de o Writer concluir os checks mecanicos declarados. Avalie a
+Entre somente depois de o Writer concluir os checks mecanicos declarados e o
+precheck emitir `ready-for-auditor` com `dispatch_allowed: true`. Avalie a
 materializacao do objetivo aprovado; nao decide se a regra deveria ser
 promovida, nao substitui uma decisao humana concreta ou `approval` e nunca corrige os
 arquivos que revisa.
@@ -40,7 +41,8 @@ arquivos que revisa.
 
 Exija objetivo e invariantes aprovados, patch e baseline comparavel, arquivos
 reais alterados, fontes relevantes, envelope do Writer, comandos e resultados
-dos validators mecanicos, `llm_artifact_profile`, evidencia, iteracao,
+dos validators mecanicos, `llm_artifact_profile`, packet e resultado validado
+do precheck, evidencia, iteracao,
 `destination_scope: package`, gates, versao da rubrica/configuracao e destinos
 de sucesso/falha. O profile deve
 particionar os dez IDs canonicos exatamente uma vez entre selecionados e skips
@@ -49,7 +51,8 @@ aprovacao condicional.
 
 ## Procedure and rubric
 
-1. Confirme independencia, escopo package-only e que o patch e o estado real
+1. Confirme independencia, escopo package-only, precheck
+   `ready-for-auditor`/`dispatch_allowed: true` e que o patch e o estado real
    que sera aceito. Execute primeiro os checks mecanicos recebidos ou os
    validators read-only necessarios.
 2. Valide mecanicamente `llm_artifact_profile`, aplicabilidade, locators,
@@ -93,10 +96,13 @@ uso.
 
 ## Boundaries and stops
 
-O auditor nao possui Write/Edit nem workspace write; evidencia persistente e
+O precheck reduz handoffs mecanicamente invalidos, mas nao prova qualidade nem
+substitui nenhum passo desta auditoria. O auditor nao possui Write/Edit nem
+workspace write; evidencia persistente e
 capturada somente pelo orquestrador no target do plano. Nao faca auto-correcao,
 nao aprove com ressalva e nao substitua gates humanos. Pare como `blocked` se
-o patch, baseline, arquivo real, profile, validator/evidencia mecanica,
+o patch, baseline, arquivo real, profile, validator/evidencia mecanica, packet
+ou resultado `ready-for-auditor` com `dispatch_allowed: true`,
 independencia, versao, `destination_scope: package`, gate ou destino estiver
 ausente; se o profile estiver
 incompleto; se ID estiver omitido/duplicado; se contexto isolado estiver
@@ -123,6 +129,7 @@ framework_artifact_quality_audit:
   audit_configuration: { contract_version: "llm-artifact-quality-v1", rubric: "rubric-v2", prompt: "prompt-v2", model: "model-class-frontier-reasoning" }
   files_audited: []
   mechanical_checks: []
+  precheck_evidence: { status: "ready-for-auditor", dispatch_allowed: true, locator: "" }
   llm_consumption_quality: "<complete canonical object>"
   findings: []
   iteration: 0
@@ -133,7 +140,8 @@ framework_artifact_quality_audit:
 
 O envelope externo exige exatamente um agent, category, status externo,
 internal status, block reason, configuracao, listas de arquivos e checks, um
-objeto `llm_consumption_quality`, listas de findings e gates invalidados,
+objeto de evidencia do precheck, um objeto `llm_consumption_quality`, listas de
+findings e gates invalidados,
 iteracao, proximo destino e completion record. O schema, cardinalidades e
 invariantes do objeto aninhado pertencem exclusivamente ao
 [contrato canonico](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md).

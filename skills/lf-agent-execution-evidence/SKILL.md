@@ -1,6 +1,23 @@
 ---
 name: lf-agent-execution-evidence
-description: Define provider-neutral agent execution evidence and its boundary from derived execution knowledge, including typed identity, sanitized snapshots, completeness, runtime locators and usage provenance without private reasoning.
+description: Define provider-neutral agent execution evidence and its boundary from derived execution knowledge and run metrics, including typed identity, sanitized snapshots, completeness, runtime locators, exact-token provenance, explicit estimates, and liveness probes without private reasoning.
+doc_id: "lf-agent-execution-evidence"
+version: "2.0.0"
+status: active
+last_updated: "2026-07-23"
+scope: "Provider-neutral agent execution evidence, metrics provenance, and liveness observation"
+not_scope: "Private reasoning, provider account allocation, cost control, or functional status authority"
+authority: "Approved Loki package policy and the invoking workflow's validated run envelope"
+canonical_source: "skills/lf-agent-execution-evidence/SKILL.md"
+intended_llm_task: "routing"
+source_priority:
+  - "approved human decisions and invoking workflow envelope"
+  - "this skill and its current references"
+  - "verified adapter observations for the correlated run"
+  - "completion data and non-normative examples"
+confidence: high
+known_conflicts: []
+replaced_by: null
 when_to_use:
   - "Use when defining, collecting, reviewing, or validating execution evidence for an agent run."
   - "Use when an adapter must degrade evidence capability explicitly instead of fabricating IDs, transcripts, or token usage."
@@ -50,12 +67,18 @@ private reasoning into a stronger claim than it is.
    in [evidence-contract.md](references/evidence-contract.md).
 3. Persist evidence before any execution-knowledge cataloger runs. Knowledge
    may cite this manifest but never replace it or duplicate its snapshot.
-3. Apply the collector's narrow write envelope, sanitization, atomic-write, and
+4. Apply the collector's narrow write envelope, sanitization, atomic-write, and
    integrity rules in [collector-contract.md](references/collector-contract.md).
-4. Select only capability states supported by the adapter record in
+5. Select only capability states supported by the adapter record in
    [adapter-capability-matrix.md](references/adapter-capability-matrix.md).
-5. Validate all dimensions independently. Do not promote an overall state to
+6. Validate all dimensions independently. Do not promote an overall state to
    `complete` when any required dimension is degraded or its integrity fails.
+7. Keep `agent_session_evidence` XML schema/shape `1` unchanged. Publish
+   hierarchical run metrics separately as orchestrator-owned
+   `builds/metrics/execution-metrics.json` schema `1`; the evidence collector
+   may supply proven facts but never owns or rewrites that aggregate.
+8. Immediately before a silence-based abort, interrupt, or cancel, require the
+   adapter-observed liveness probe defined by the selected adapter record.
 
 ## Inputs
 
@@ -67,7 +90,9 @@ private reasoning into a stronger claim than it is.
 
 - A provider-neutral evidence manifest or an explicit, typed gap.
 - A sanitized snapshot only when the collector can produce one safely.
-- Provenanced usage metrics or an explicit unavailability reason.
+- Exact provenanced usage, or an explicit estimate/unavailability reason in
+  the separate execution-metrics artifact.
+- A typed liveness-probe observation before any silence-based policy stop.
 
 ## Limits
 
@@ -77,6 +102,9 @@ private reasoning into a stronger claim than it is.
 - Full or private chain-of-thought is unavailable. A declared reasoning summary
   and an inference from operational sequence are partial evidence only.
 - Do not derive per-agent consumption from cumulative or account-window usage.
+- Do not mix exact, estimated, cumulative, or account-window quantities.
+- Do not introduce token/cost budgets or automatic cost stops; metrics are
+  measurement and reporting only.
 - Do not use a missing adapter capability as permission to invent an ID,
   transcript, token counter, or snapshot.
 
@@ -87,6 +115,8 @@ private reasoning into a stronger claim than it is.
 - Payload-bearing manifests and snapshots have verified checksums and were
   atomically written.
 - Adapter maturity and degradation are explicit.
+- Exact tokens come only from a verified run-scoped adapter counter; estimates
+  use only `utf8-byte-estimate-v1` and unavailable values carry a reason.
 
 ## Required Gates
 

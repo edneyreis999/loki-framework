@@ -2,9 +2,9 @@
 name: lf-implement-feature-execution
 description: Execute the provider-neutral, current-only implementation contract used by loki-implement-feature when a validated demand and Markdown analysis must become a persisted plan, DAG-driven scoped writes, per-task acceptance validation, resumable evidence, and a truthful terminal dashboard.
 doc_id: "lf-implement-feature-execution"
-version: "1.0.0"
+version: "2.0.0"
 status: active
-last_updated: "2026-07-22"
+last_updated: "2026-07-23"
 scope: "Reusable execution authority for unified Loki feature implementation"
 not_scope: "Public command routing, plan approval, installation, consumer-specific technology rules, or compatibility with superseded execution schemas"
 authority: "Approved Loki package policy and the invoking command's exact validated permissions"
@@ -21,7 +21,7 @@ known_conflicts: []
 replaced_by: null
 when_to_use:
   - "Use inside loki-implement-feature after its demand, Markdown analysis, plan directory, inherited restrictions, and retry limit have been validated."
-  - "Use when creating or resuming LokiRunState, scheduling a validated task DAG, enforcing single-file ownership, or deriving the terminal dashboard from disk evidence."
+  - "Use when creating or resuming LokiRunState v2, publishing execution metrics, scheduling a validated task DAG, enforcing single-file ownership, or deriving the terminal dashboard from disk evidence."
   - "Use when a task requires deterministic or independent Write Test Agent acceptance validation, correction cycles, cancellation, or dependency-aware continuation."
 argument-hint: "[validated execution input and plan directory]"
 arguments:
@@ -114,7 +114,11 @@ identity and authority correlate to the active run.
 5. Create or resume state only from validated files on disk. Dispatch eligible
    tasks topologically, serialize overlapping writes, and keep independent work
    moving after task failure or a yielded correction cycle.
-6. Persist sanitized completion/evidence locators before optional non-blocking
+6. Maintain hierarchical spans and atomically publish the orchestrator-owned
+   `builds/metrics/execution-metrics.json`. Keep exact, estimated, unavailable,
+   cumulative, and account-window observations separate; metrics never create a
+   budget or automatic functional stop.
+7. Persist sanitized completion/evidence locators before optional non-blocking
    execution-knowledge capture. Reconcile every required acceptance criterion,
    final validator, cancellation request, and prescribed human validation before
    deriving the terminal result and dashboard.
@@ -145,6 +149,14 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
   task result.
 - Do not claim completion when a required criterion, validator, evidence
   locator, or final reconciliation is unresolved.
+- Do not let telemetry failure change functional task/run status. Record
+  metrics `partial` or `unavailable` plus reason and continue functional work.
+  Total publication failure uses null metrics ref/digest only with status
+  `unavailable` and an explicit `publication failure` reason; a published
+  minimal unavailable document keeps its ref/digest.
+- Immediately before a silence-based abort, interrupt, or cancellation, persist
+  an adapter-observed liveness probe; `running` or `progress` forbids that stop.
+- Do not create token/cost budgets or automatic cost stops.
 - Stop before write on unsafe path identity, state corruption, digest mismatch,
   ambiguous ownership, missing required validator, or unresolved normative
   conflict.
@@ -155,7 +167,8 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
   links.
 - Validate the current schemas, current-only rejection, path safety, digest
   correlation, DAG behavior, owner uniqueness, preflight, AC route, retry,
-  learned, cancellation, resume, dashboard, and terminal-truth invariants.
+  learned, liveness, metrics, cancellation, resume, cross-surface consistency,
+  dashboard, and terminal-truth invariants.
 - Classify this entrypoint and all three references as LLM-facing artifacts and
   route their profiles plus mechanical evidence to an independent Auditor. The
   Writer must not emit `llm_consumption_quality` or approve its own artifact.

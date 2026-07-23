@@ -56,7 +56,8 @@ command_contract:
   start_condition: "Input is normalized; required identities, exact digests, inherited restrictions, retry limit, and safe plan path are available."
   completion_condition: "All selected DAG units are terminal; required validators, gates, evidence and final reconciliation support the reported status."
   outputs:
-    - "persisted action plan and LokiRunState"
+    - "persisted action plan and LokiRunState v2"
+    - "atomic builds/metrics/execution-metrics.json schema 1"
     - "validated production changes and completion evidence"
     - "terminal Both dashboard and manual-test guidance"
   allowed_writes:
@@ -92,7 +93,7 @@ command_contract:
     - "action-plan and target-decision structure"
     - "DAG, owner, dependency, AC, primary-route, and resume-state integrity"
     - "task primary validators and final applicable validators"
-    - "evidence, status, dashboard, and manual-step consistency"
+    - "executable consistency packet across state, tasks, evidence, validators, result, dashboard, metrics, and next action"
   human_gates:
     - "inherited material approvals or restrictions already declared by the analysis"
     - "<human_validation_gate> accumulated for final reconciliation when prescribed"
@@ -104,7 +105,7 @@ command_contract:
     - "missing or ambiguous owner, validator, permission, evidence, or gate"
     - "corrupt or uncorrelated persisted state"
     - "explicit correlated cancellation"
-  resume_contract: "Reconstruct exclusively from validated LokiRunState, task files, immutable preflights/cycles, target decisions, completion evidence, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
+  resume_contract: "Reconstruct exclusively from validated LokiRunState v2, task files, immutable preflights/cycles, target decisions, completion evidence, execution-metrics spans/digest, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
 ```
 
 Only the exact managed plan paths and validated production targets are writable.
@@ -335,6 +336,17 @@ eligible only after replanning persists and validates its decision.
    `lf-agent-execution-evidence` before any learning handoff. Preserve partial,
    pointer-only, unavailable, or unsupported evidence dimensions honestly; do
    not invent identity, usage, transcript, or private reasoning.
+   In parallel, maintain orchestrator-owned hierarchical spans and atomically
+   publish `builds/metrics/execution-metrics.json` schema `1`. Exact usage needs
+   a verified run-scoped adapter counter; estimates use only sanitized
+   observable bytes with `utf8-byte-estimate-v1`; unavailable values carry a
+   reason. Never combine these categories or allocate cumulative/account-window
+   counters per agent. Hash the closed metrics mapping after excluding both
+   `metrics_id` and `metrics_digest`, then use that one hash in both identity
+   fields. A published minimal unavailable file retains ref/digest. Total
+   publication failure alone projects null ref/digest with status `unavailable`
+   and an explicit `publication failure` reason without changing functional
+   status.
 7. Validate each task through its primary route. Persist immutable finding,
    Writer response, retest, retry debit, failed AC, and dependency-skip locators
    according to the helper. Optional learned creation remains Writer-owned and
@@ -361,7 +373,10 @@ eligible only after replanning persists and validates its decision.
 11. Accumulate analysis-prescribed human validation while tasks run. Expose it
     only at final reconciliation and only as `pending-human-validation` when it
     is the sole remaining condition.
-12. Ask for no ceremonial intermediate approval. Pause only for the minimum
+12. Run the executable cross-surface consistency packet against state v2,
+    local tasks, terminal evidence, validators/gates, result v2, dashboard,
+    metrics ref/digest/status and `next_action`. Divergence blocks rendering.
+13. Ask for no ceremonial intermediate approval. Pause only for the minimum
     material input, authority, owner, validator, gate, normative decision, or
     explicit cancellation required for safe continuation.
 
@@ -417,17 +432,26 @@ dashboard.
 
 ## Cancellation, Resume, And Completion
 
+Immediately before any silence-based abort, interrupt, or cancel, invoke and
+persist the adapter-observed liveness probe. `running` or `progress` forbids
+that stop. `unsupported`/`unavailable` records a reason and invents no
+heartbeat before another declared policy stop is evaluated. An explicit
+correlated user cancellation remains a separate cancellation event.
+
 On correlated cancellation, stop new dispatch, reconcile active work at a
 bounded checkpoint, persist retained evidence and open work, and derive
 `cancelled` only from the helper's cancellation record. Resume validates current
 schemas, typed run/input identity, state digest, DAG, target decisions, immutable
-records, and target digests before dispatch. Do not duplicate a validated write,
-preflight, cycle, retry debit, learned record, or knowledge entry.
+records, metrics digest/spans, and target digests before dispatch. Do not
+duplicate a validated write, preflight, cycle, retry debit, learned record,
+knowledge entry, span duration, or usage observation.
 
 Completion occurs only after the helper returns a terminal
 `implement_feature_execution_result` whose state digest, required ACs,
 validators, gates, evidence, skipped dependencies, risks, and human-validation
-state reconcile. Use [response.md](response.md) only to project that result;
+state and metrics reconcile. Telemetry failure degrades metrics only and never
+changes the functional status. Metrics define no token/cost budget or automatic
+cost stop. Use [response.md](response.md) only to project that result;
 Response never repairs or upgrades it.
 
 <examples>
@@ -446,6 +470,7 @@ dependencies, Both neutrality, plan/target provenance, AC routes, preflight
 coverage, helper plan-directory classification before other managed
 materialization, deterministic run/execution identity recomputation, unique
 owners, exact task/scope dashboard mapping, evidence ordering, non-blocking
-knowledge capture, replan-before-write, terminal handoffs, final
+knowledge capture, liveness-before-silence-stop, hierarchical measurement,
+cross-surface consistency, replan-before-write, terminal handoffs, final
 human-validation timing, and disk-only resume. Revisit this unit when command
 orchestration or helper routing changes.

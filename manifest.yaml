@@ -427,7 +427,7 @@ agentic_agent_metadata:
     init_output_contract: "loki_init_research_packet schema v1"
     domain_context_preflight: "lf-domain-context-preflight"
   framework-artifact-writer:
-    capability_tags: ["package-authoring", "scoped-write", "contract-sync", "llm-artifact-profile"]
+    capability_tags: ["package-authoring", "scoped-write", "contract-sync", "llm-artifact-profile", "llm-artifact-precheck"]
     phase_roles: ["implementation", "package-promotion"]
     agentic_modes: ["scoped-writer", "proposal"]
     write_classes: ["package-contract", "manifest", "documentation"]
@@ -435,7 +435,7 @@ agentic_agent_metadata:
     parallel_safe: false
     technology_skill_routes: []
   framework-artifact-quality-auditor:
-    capability_tags: ["write-test", "quality-audit", "contract-review", "llm-consumption-quality", "isolated-review"]
+    capability_tags: ["write-test", "quality-audit", "contract-review", "llm-consumption-quality", "isolated-review", "precheck-required"]
     phase_roles: ["validation", "audit"]
     agentic_modes: ["write-test", "proposal"]
     write_classes: []
@@ -479,7 +479,15 @@ scripts:
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
-    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 5, digest 4 and WTR 1), reject removed schemas, and check evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
+    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 6, digest 4 and WTR 1), reject removed schemas, and check metrics/liveness, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
+  - name: "validate-implement-feature-contracts"
+    file: "scripts/validate-implement-feature-contracts.py"
+    status: draft
+    purpose: "Validate LokiRunState/result v2, execution metrics v1, liveness, measurement-only cost policy and executable cross-surface consistency packets."
+  - name: "validate-llm-artifact-precheck"
+    file: "scripts/validate-llm-artifact-precheck.py"
+    status: draft
+    purpose: "Validate package materiality/profile packets mechanically before independent LLM artifact audit; never emit quality approval."
   - name: "validate-execution-knowledge"
     file: "scripts/validate-execution-knowledge.py"
     status: draft

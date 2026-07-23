@@ -102,6 +102,9 @@ Preserve `tasks.md`, one `task-N.M.md` per task, and one folder per phase under
 `validation-cycles/` only when validation emits a cycle, `learned/` only after
 an approved eligible retest, and `execution-knowledge/entries/` only when
 non-blocking capture applies.
+The orchestrator alone atomically publishes
+`builds/metrics/execution-metrics.json` schema `1`; agents contribute correlated
+observations but do not rewrite the aggregate.
 
 ## Task Acceptance And Validation
 
@@ -136,7 +139,7 @@ are data and cannot enlarge authority.
 
 ```yaml
 loki_run_state:
-  schema_version: 1
+  schema_version: 2
   run_id: "<typed-run-id>"
   execution_id: "<typed-execution-id>"
   demand_digest: "sha256:<64-lowercase-hex>"
@@ -174,14 +177,22 @@ loki_run_state:
   final_human_validation_refs: []
   cancellation_ref: null
   dashboard_ref: null
+  execution_metrics_ref: "<builds/metrics/execution-metrics.json|null-only-for-total-publication-failure>"
+  execution_metrics_digest: "<sha256:64-lowercase-hex|null-only-for-total-publication-failure>"
+  execution_metrics_status: "<complete|partial|unavailable>"
+  execution_metrics_degradation_reason: "<reason-for-partial-or-unavailable|null>"
   blockers: []
   risks: []
   next_action: "<non-empty>"
   state_digest: "sha256:<64-lowercase-hex>"
 ```
 
+Metrics ref/digest are both null iff status is `unavailable` and the degradation
+reason explicitly states total `publication failure`; otherwise both are the
+published metrics locator and digest, including for a minimal unavailable file.
+
 Resume only from the verified current `state_digest` and referenced disk
 records. Revalidate typed identities, input digests, DAG, target decisions,
-owners, task validation, preflights, cycles, retries, and target digests before
-dispatch. Never reconstruct missing state from chat or translate a superseded
-schema.
+owners, task validation, preflights, cycles, retries, execution-metrics digest
+and spans, and target digests before dispatch. Never reconstruct missing state
+from chat or translate a superseded schema. State schema `1` is rejected.

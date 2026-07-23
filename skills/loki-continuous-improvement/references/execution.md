@@ -521,8 +521,14 @@ exata da busca ao usuário.
    requeridas pela classificação validada. O parecer independente human-only
    usa internal `not-applicable`, external `approved`, `block_reason: none` e
    `llm_consumption_quality.status: not-applicable`; os gates existentes
-   continuam obrigatórios. Em seguida entregue patch real,
-   baseline, arquivos descobertos, profile, checks, evidência e iteração ao
+   continuam obrigatórios. Em seguida monte o packet fechado schema v1 com
+   targets aprovados, arquivos/digests e diff observados, materialidade,
+   profiles, pares de projeção e Auditor distinto; execute
+   `python3 scripts/validate-llm-artifact-precheck.py --packet <packet.json>`.
+   `blocked-to-writer` retorna ao Writer; `skipped-no-material-write` não
+   despacha Auditor nem concede approval. Somente `ready-for-auditor` com
+   `dispatch_allowed: true` permite entregar patch real, baseline, arquivos
+   descobertos, profile, checks, evidência do precheck e iteração ao
    `framework-artifact-quality-auditor`.
    O Auditor read-only valida o profile e emite `llm_consumption_quality`
    completo com `llm-artifact-quality-v1`, `rubric-v2` e `prompt-v2`. Para
@@ -839,6 +845,11 @@ continuous_improvement_candidate:
       canonical_contract: "skills/lf-documentation-writing/references/llm-artifact-quality-validation.md | not-loaded"
       llm_artifact_profile: "<complete object | null>"
       profile_evidence: []
+      precheck:
+        packet_locator: "<path | null>"
+        status: "pending | ready-for-auditor | skipped-no-material-write | blocked-to-writer | not-required"
+        dispatch_allowed: "true | false"
+        errors: []
       llm_consumption_quality: "<complete object | null>"
       audit_evidence: []
       limitations: []
@@ -883,6 +894,8 @@ caso isolado sem project-specific; tentativa de relaxar gate; regra consumidora
 proposta para pacote; root-cause required incompleta e não bloqueada; dependência
 indisponível; handoff sem destino; conflito de writers; validator ausente/falho;
 gate/approval/decisão humana pendente; ou superfície sem validação verificável.
+Na promoção package, pare também se o precheck material estiver ausente,
+`blocked-to-writer` ou sem `dispatch_allowed: true`.
 No intake de inferência, pare também diante de locator/source incompatível,
 schema/status inválido, capture/lineage/provenance quebrada, mesmo ID com payload
 divergente, policy ID/digest divergente, reducer/validator bloqueado, snapshot
@@ -929,7 +942,8 @@ approval ou prova de execução.
 
 Para `destination_scope: package`, registre também `promotion_execution`: owner
 e envelope do Writer, target/discovered files, `llm_artifact_profile` completo,
-partição selecionados/skips, evidência de checks, `llm_consumption_quality`
+partição selecionados/skips, packet/status/dispatch/errors do precheck,
+evidência de checks, `llm_consumption_quality`
 completo, profile/audit evidence, limitações, segunda família, auditor e seus
 estados interno/externo, findings, iteração, gates invalidados, replay requerido
 e próximo destino. Após correção ou decisão humana, marque o audit result

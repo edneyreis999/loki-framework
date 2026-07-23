@@ -2,14 +2,16 @@
 """Validate the current loki-implement-feature contract fixtures.
 
 This validator is intentionally self-contained.  It does not import the
-superseded run-plan validator and treats the four JSON fixture files beside it
+superseded run-plan validator and treats the five JSON fixture files beside it
 as the executable examples of the current command/helper contracts.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path, PurePosixPath
@@ -23,6 +25,7 @@ FIXTURE_FILES = (
     "state-resume-cases.json",
     "validation-cycle-cases.json",
     "response-dashboard-cases.json",
+    "execution-metrics-cases.json",
 )
 
 MATRIX_SCENARIOS = (
@@ -80,6 +83,35 @@ REQUIRED_SUPPLEMENTAL = {
     "invalid-demand-utf8",
     "blocked-row-mapping",
     "learned-secret-content",
+    "metrics-exact",
+    "metrics-estimated",
+    "metrics-unavailable",
+    "metrics-nested-spans",
+    "metrics-absent-clock",
+    "metrics-resume-no-double-count",
+    "metrics-cumulative-not-agent",
+    "metrics-telemetry-nonblocking",
+    "metrics-missing-root-field",
+    "metrics-extra-root-field",
+    "metrics-digest-mismatch",
+    "metrics-aggregate-mismatch",
+    "metrics-orphan-span",
+    "metrics-cyclic-span",
+    "metrics-cumulative-per-agent",
+    "metrics-unavailable-zero",
+    "metrics-publication-failure",
+    "metrics-publication-failure-invalid",
+    "dashboard-publication-failure",
+    "metrics-critical-path-truncated",
+    "consistency-unknown-metrics-status",
+    "materiality-invalid-before-auditor",
+    "materiality-valid-independent",
+    "consistency-divergence",
+    "silence-running-not-aborted",
+    "silence-unsupported-recorded",
+    "no-cost-budget-or-auto-stop",
+    "reject-state-v1",
+    "reject-result-v1",
 }
 
 TASK_STATUSES = {"pending", "passed", "unresolved", "skipped-dependency", "cancelled"}
@@ -99,6 +131,12 @@ REQUIRED_MANUAL_FIELDS = {
 SECRET_RE = re.compile(r"(?i)(private chain.of.thought|raw transcript|api[_ -]?key|password|secret\s*[:=])")
 AGENT_PATH_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 RUN_PATH_RE = re.compile(r"run-[0-9a-f]{32}")
+SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+SPAN_ID_RE = re.compile(r"^execution-span-v1:[0-9a-f]{64}$")
+METRICS_ID_RE = re.compile(r"^execution-metrics-v1:[0-9a-f]{64}$")
+TYPED_ID_RE = re.compile(r"^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._-]*$")
+UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
+SPAN_KINDS = {"run", "phase", "task", "handoff", "validator", "gate", "audit", "reconciliation"}
 
 
 class ContractError(ValueError):
@@ -185,6 +223,7 @@ def rule_plan_directory(p: dict[str, Any]) -> None:
 
 
 def rule_resume(p: dict[str, Any]) -> None:
+    require("STATE_SCHEMA_SUPERSEDED", p.get("state_schema_version") == 2)
     require("STATE_CORRUPT", p.get("schema_valid") is True and p.get("state_digest_valid") is True)
     require("RESUME_IDENTITY_MISMATCH", p.get("identity_matches") is True)
     require("RESUME_DUPLICATE_WRITE", p.get("duplicate_production_writes", 0) == 0)
@@ -317,8 +356,14 @@ def rule_execution_state(p: dict[str, Any]) -> None:
 def rule_dashboard(p: dict[str, Any]) -> None:
     status = p.get("status")
     require("DASHBOARD_STATUS_INVALID", status in {"completed", "completed-with-limitations", "pending-human-validation", "partial", "blocked", "failed", "cancelled", "needs-human-review"})
-    required = {"summary", "units", "changed_files", "acceptance_criteria", "validators", "validation_cycles", "deviations", "inferred_targets", "learned_records", "decisions", "manual_test", "evidence", "risks", "resume"}
+    required = {"summary", "units", "changed_files", "acceptance_criteria", "validators", "validation_cycles", "deviations", "inferred_targets", "learned_records", "decisions", "manual_test", "evidence", "risks", "resume", "execution_metrics_ref", "execution_metrics_digest", "execution_metrics_status", "execution_metrics_degradation_reason", "cost_resources"}
     require("DASHBOARD_CATEGORY_MISSING", required <= set(p))
+    require("DASHBOARD_METRICS_STATUS_INVALID", p.get("execution_metrics_status") in {"complete", "partial", "unavailable"})
+    validate_metrics_projection(p, "DASHBOARD")
+    if p.get("execution_metrics_status") != "complete":
+        require("DASHBOARD_METRICS_REASON_MISSING", nonempty(p.get("execution_metrics_degradation_reason")))
+    cost = p.get("cost_resources", {})
+    require("DASHBOARD_COST_CONTROL_FORBIDDEN", cost.get("token_budget") is None and cost.get("cost_budget") is None and cost.get("automatic_cost_stop") is False)
     for ac in p.get("acceptance_criteria", []):
         require("AC_STATE_INVALID", ac.get("state") in {"passed", "failed", "not-demonstrated", "not-applicable"})
         if ac.get("state") == "passed":
@@ -348,6 +393,297 @@ def rule_manual(p: dict[str, Any]) -> None:
         require("MANUAL_SIGNALS_MISSING", list_nonempty(step["success_signals"]) and list_nonempty(step["failure_signals"]) and isinstance(step["prerequisites"], list))
 
 
+def rule_current_schema(p: dict[str, Any]) -> None:
+    artifact = p.get("artifact")
+    require("CURRENT_SCHEMA_ARTIFACT_INVALID", artifact in {"state", "result"})
+    expected = 2
+    require(f"{artifact.upper()}_SCHEMA_SUPERSEDED", p.get("schema_version") == expected)
+
+
+def validate_usage(usage: Any) -> None:
+    require("METRICS_USAGE_INVALID", isinstance(usage, dict))
+    require("METRICS_USAGE_FIELDS_INVALID", set(usage) == {"status", "exact", "estimate", "unavailable_reason"})
+    status = usage.get("status")
+    require("METRICS_USAGE_STATUS_INVALID", status in {"exact", "estimated", "unavailable"})
+    exact = usage.get("exact")
+    estimate = usage.get("estimate")
+    reason = usage.get("unavailable_reason")
+    if status == "exact":
+        require("METRICS_EXACT_MIXED", estimate is None and reason is None and isinstance(exact, dict))
+        require("METRICS_EXACT_FIELDS_INVALID", set(exact) == {"source_scope", "source", "measured_at_utc", "input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens"})
+        require("METRICS_EXACT_SCOPE_INVALID", exact.get("source_scope") == "verified-agent-run")
+        require("METRICS_EXACT_SOURCE_MISSING", nonempty(exact.get("source")) and isinstance(exact.get("measured_at_utc"), str) and UTC_RE.fullmatch(exact["measured_at_utc"]))
+        counters = [exact.get(key) for key in ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")]
+        require("METRICS_EXACT_COUNTER_INVALID", all(type(value) is int and value >= 0 for value in counters))
+        require("METRICS_EXACT_TOTAL_INVALID", counters[4] == counters[0] + counters[2])
+    elif status == "estimated":
+        require("METRICS_ESTIMATE_MIXED", exact is None and reason is None and isinstance(estimate, dict))
+        require("METRICS_ESTIMATE_FIELDS_INVALID", set(estimate) == {"method", "observable_payload_bytes", "estimated_tokens", "lower_bound_tokens", "upper_bound_tokens", "confidence", "scope", "sanitized_observable_only"})
+        byte_count = estimate.get("observable_payload_bytes")
+        require("METRICS_ESTIMATE_BYTES_INVALID", type(byte_count) is int and byte_count >= 0)
+        require("METRICS_ESTIMATE_METHOD_INVALID", estimate.get("method") == "utf8-byte-estimate-v1")
+        require(
+            "METRICS_ESTIMATE_FORMULA_INVALID",
+            estimate.get("estimated_tokens") == math.ceil(byte_count / 4)
+            and estimate.get("lower_bound_tokens") == math.ceil(byte_count / 6)
+            and estimate.get("upper_bound_tokens") == math.ceil(byte_count / 2),
+        )
+        require("METRICS_ESTIMATE_SCOPE_INVALID", estimate.get("confidence") == "low" and estimate.get("scope") == "partial" and estimate.get("sanitized_observable_only") is True)
+    else:
+        require("METRICS_UNAVAILABLE_INVALID", exact is None and estimate is None and nonempty(reason))
+
+
+def metrics_hash(p: dict[str, Any]) -> str:
+    canonical = {key: value for key, value in p.items() if key not in {"metrics_id", "metrics_digest"}}
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def rule_metrics(p: dict[str, Any]) -> None:
+    root_keys = {"schema_version", "metrics_id", "run_id", "execution_id", "generated_at_utc", "status", "degradation_reason", "clock_provenance", "spans", "aggregates", "telemetry_changed_functional_status", "metrics_digest"}
+    require("METRICS_ROOT_FIELDS_INVALID", set(p) == root_keys)
+    require("METRICS_SCHEMA_INVALID", p.get("schema_version") == 1)
+    require("METRICS_ID_INVALID", isinstance(p.get("metrics_id"), str) and METRICS_ID_RE.fullmatch(p["metrics_id"]))
+    require("METRICS_RUN_ID_INVALID", isinstance(p.get("run_id"), str) and TYPED_ID_RE.fullmatch(p["run_id"]))
+    require("METRICS_EXECUTION_ID_INVALID", isinstance(p.get("execution_id"), str) and TYPED_ID_RE.fullmatch(p["execution_id"]))
+    require("METRICS_GENERATED_AT_INVALID", isinstance(p.get("generated_at_utc"), str) and UTC_RE.fullmatch(p["generated_at_utc"]))
+    digest_hex = metrics_hash(p)
+    require("METRICS_DIGEST_MISMATCH", p.get("metrics_id") == f"execution-metrics-v1:{digest_hex}" and p.get("metrics_digest") == f"sha256:{digest_hex}")
+    require("METRICS_STATUS_INVALID", p.get("status") in {"complete", "partial", "unavailable"})
+    if p.get("status") == "complete":
+        require("METRICS_COMPLETE_REASON_INVALID", p.get("degradation_reason") is None)
+    else:
+        require("METRICS_DEGRADATION_REASON_MISSING", nonempty(p.get("degradation_reason")))
+    clock_root = p.get("clock_provenance")
+    require("METRICS_CLOCK_ROOT_FIELDS_INVALID", isinstance(clock_root, dict) and set(clock_root) == {"wall_clock", "monotonic_clock", "reason"})
+    require("METRICS_CLOCK_ROOT_INVALID", clock_root.get("wall_clock") in {"observed", "partial", "unavailable"} and clock_root.get("monotonic_clock") in {"observed", "partial", "unavailable"})
+    if "observed" == clock_root.get("wall_clock") == clock_root.get("monotonic_clock"):
+        require("METRICS_CLOCK_ROOT_REASON_INVALID", clock_root.get("reason") is None)
+    else:
+        require("METRICS_CLOCK_ROOT_REASON_MISSING", nonempty(clock_root.get("reason")))
+    spans = p.get("spans")
+    require("METRICS_SPANS_INVALID", isinstance(spans, list) and bool(spans))
+    ids = [span.get("span_id") for span in spans]
+    require("METRICS_SPAN_ID_INVALID", len(ids) == len(set(ids)) and all(isinstance(item, str) and SPAN_ID_RE.fullmatch(item) for item in ids))
+    roots = [span for span in spans if span.get("parent_span_id") is None]
+    require("METRICS_ROOT_INVALID", len(roots) == 1 and roots[0].get("kind") == "run")
+    span_map = {span["span_id"]: span for span in spans}
+    replay_keys: set[tuple[Any, ...]] = set()
+    for span in spans:
+        span_keys = {"span_id", "kind", "parent_span_id", "owner", "status", "started_at_utc", "ended_at_utc", "monotonic_duration_ms", "clock_provenance", "clock_degradation_reason", "iteration", "replay", "replay_cause", "cause_span_id", "correlation_refs", "duplicates_child_usage", "usage", "validator_observation"}
+        require("METRICS_SPAN_FIELDS_INVALID", set(span) == span_keys)
+        require("METRICS_SPAN_KIND_INVALID", span.get("kind") in SPAN_KINDS)
+        require("METRICS_SPAN_OWNER_MISSING", span.get("owner") == "orchestrator" or (isinstance(span.get("owner"), str) and TYPED_ID_RE.fullmatch(span["owner"])))
+        require("METRICS_SPAN_STATUS_INVALID", span.get("status") in {"scheduled", "running", "completed", "partial", "blocked", "failed", "cancelled", "unavailable"})
+        for time_key in ("started_at_utc", "ended_at_utc"):
+            value = span.get(time_key)
+            require("METRICS_SPAN_TIMESTAMP_INVALID", value is None or (isinstance(value, str) and UTC_RE.fullmatch(value)))
+        require("METRICS_SPAN_ITERATION_INVALID", type(span.get("iteration")) is int and span["iteration"] >= 0)
+        parent = span.get("parent_span_id")
+        require("METRICS_PARENT_MISSING", parent is None or parent in span_map)
+        require("METRICS_PARENT_USAGE_DUPLICATED", span.get("duplicates_child_usage") is False)
+        clock = span.get("clock_provenance")
+        require("METRICS_CLOCK_INVALID", clock in {"observed", "partial", "unavailable"})
+        duration = span.get("monotonic_duration_ms")
+        require("METRICS_DURATION_INVALID", duration is None or (type(duration) is int and duration >= 0))
+        if clock == "observed":
+            require("METRICS_CLOCK_REASON_INVALID", duration is not None and span.get("clock_degradation_reason") is None)
+        else:
+            require("METRICS_CLOCK_REASON_MISSING", nonempty(span.get("clock_degradation_reason")))
+        require("METRICS_REPLAY_FLAG_INVALID", type(span.get("replay")) is bool)
+        if span.get("replay"):
+            require("METRICS_REPLAY_CAUSE_MISSING", nonempty(span.get("replay_cause")) and span.get("cause_span_id") in span_map)
+            replay_key = (span.get("cause_span_id"), span.get("replay_cause"), span.get("iteration"), span.get("kind"))
+            require("METRICS_REPLAY_CAUSE_DUPLICATE", replay_key not in replay_keys)
+            replay_keys.add(replay_key)
+        else:
+            require("METRICS_REPLAY_CAUSE_INVALID", span.get("replay_cause") is None and span.get("cause_span_id") is None)
+        refs = span.get("correlation_refs")
+        require("METRICS_CORRELATION_REFS_INVALID", isinstance(refs, list) and len(refs) == len(set(refs)) and all(nonempty(item) for item in refs))
+        validate_usage(span.get("usage"))
+        if span.get("kind") == "validator":
+            observation = span.get("validator_observation")
+            require("METRICS_VALIDATOR_OBSERVATION_MISSING", isinstance(observation, dict))
+            require("METRICS_VALIDATOR_FIELDS_INVALID", set(observation) == {"command", "validator_version", "input_digest", "policy_digest", "execution_mode", "replay_cause", "would_reuse"})
+            require("METRICS_VALIDATOR_PROVENANCE_MISSING", all(nonempty(observation.get(key)) for key in ("command", "validator_version", "input_digest", "policy_digest")))
+            require("METRICS_VALIDATOR_DIGEST_INVALID", SHA256_RE.fullmatch(observation["input_digest"]) and SHA256_RE.fullmatch(observation["policy_digest"]))
+            require("METRICS_VALIDATOR_MODE_INVALID", observation.get("execution_mode") in {"executed", "referenced"} and type(observation.get("would_reuse")) is bool)
+            require("METRICS_VALIDATOR_REPLAY_CAUSE_INVALID", observation.get("replay_cause") == span.get("replay_cause"))
+        else:
+            require("METRICS_VALIDATOR_OBSERVATION_FORBIDDEN", span.get("validator_observation") is None)
+    for start in ids:
+        seen: set[str] = set()
+        current = start
+        while current is not None:
+            require("METRICS_SPAN_CYCLE", current not in seen)
+            seen.add(current)
+            current = span_map[current].get("parent_span_id")
+    aggregates = p.get("aggregates")
+    require("METRICS_AGGREGATES_INVALID", isinstance(aggregates, dict))
+    aggregate_keys = {"exact_usage", "estimated_usage", "non_agent_observations", "counts", "durations", "critical_path_span_ids", "unavailable_reasons"}
+    require("METRICS_AGGREGATE_FIELDS_INVALID", set(aggregates) == aggregate_keys)
+    exact_keys = {"input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens"}
+    estimate_keys = {"estimated_tokens", "lower_bound_tokens", "upper_bound_tokens", "observable_payload_bytes", "confidence"}
+    require("METRICS_AGGREGATE_EXACT_FIELDS_INVALID", isinstance(aggregates.get("exact_usage"), dict) and set(aggregates["exact_usage"]) == exact_keys)
+    require("METRICS_AGGREGATE_ESTIMATE_FIELDS_INVALID", isinstance(aggregates.get("estimated_usage"), dict) and set(aggregates["estimated_usage"]) == estimate_keys)
+    exact_rows = [span["usage"]["exact"] for span in spans if span["usage"]["status"] == "exact"]
+    expected_exact = {key: sum(row[key] for row in exact_rows) for key in exact_keys} if exact_rows else {key: None for key in exact_keys}
+    require("METRICS_AGGREGATE_EXACT_MISMATCH", aggregates["exact_usage"] == expected_exact)
+    estimate_rows = [span["usage"]["estimate"] for span in spans if span["usage"]["status"] == "estimated"]
+    expected_estimate = {key: sum(row[key] for row in estimate_rows) for key in estimate_keys - {"confidence"}} if estimate_rows else {key: None for key in estimate_keys - {"confidence"}}
+    expected_estimate["confidence"] = "low" if estimate_rows else "unavailable"
+    require("METRICS_AGGREGATE_ESTIMATE_MISMATCH", aggregates["estimated_usage"] == expected_estimate)
+    observations = aggregates.get("non_agent_observations")
+    require("METRICS_NON_AGENT_OBSERVATIONS_INVALID", isinstance(observations, list))
+    observation_keys = {"observation_id", "source", "source_scope", "measured_at_utc", "input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens", "allocated_per_agent"}
+    for item in observations:
+        require("METRICS_NON_AGENT_FIELDS_INVALID", isinstance(item, dict) and set(item) == observation_keys)
+        require("METRICS_NON_AGENT_SCOPE_INVALID", item.get("source_scope") in {"cumulative", "account-window"} and item.get("allocated_per_agent") is False)
+        require("METRICS_NON_AGENT_ID_INVALID", isinstance(item.get("observation_id"), str) and TYPED_ID_RE.fullmatch(item["observation_id"]) and nonempty(item.get("source")) and isinstance(item.get("measured_at_utc"), str) and UTC_RE.fullmatch(item["measured_at_utc"]))
+        counters = [item.get(key) for key in ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")]
+        require("METRICS_NON_AGENT_COUNTER_INVALID", all(type(value) is int and value >= 0 for value in counters) and counters[4] == counters[0] + counters[2])
+    counts = aggregates.get("counts")
+    count_keys = {"agents", "handoffs", "validators_executed", "validators_referenced", "validators_repeated", "retries", "replays", "gates", "reconciliations"}
+    require("METRICS_COUNT_FIELDS_INVALID", isinstance(counts, dict) and set(counts) == count_keys)
+    early_unavailable = aggregates.get("unavailable_reasons")
+    if isinstance(early_unavailable, list):
+        for item in early_unavailable:
+            if isinstance(item, dict) and isinstance(item.get("field"), str) and item["field"].startswith("counts."):
+                key = item["field"].removeprefix("counts.")
+                require("METRICS_UNAVAILABLE_ZERO", counts.get(key) != 0)
+    derived_counts = {
+        "agents": len({span["owner"] for span in spans}),
+        "handoffs": sum(span["kind"] == "handoff" for span in spans),
+        "validators_executed": sum(span["kind"] == "validator" and span["validator_observation"]["execution_mode"] == "executed" for span in spans),
+        "validators_referenced": sum(span["kind"] == "validator" and span["validator_observation"]["execution_mode"] == "referenced" for span in spans),
+        "validators_repeated": sum(span["kind"] == "validator" and span["replay"] for span in spans),
+        "retries": sum(span["kind"] == "task" and span["iteration"] > 0 for span in spans),
+        "replays": sum(span["replay"] for span in spans),
+        "gates": sum(span["kind"] == "gate" for span in spans),
+        "reconciliations": sum(span["kind"] == "reconciliation" for span in spans),
+    }
+    require("METRICS_COUNT_MISMATCH", counts == derived_counts)
+    durations = aggregates.get("durations")
+    duration_keys = {"elapsed_ms", "active_ms", "critical_path_ms"}
+    require("METRICS_DURATION_FIELDS_INVALID", isinstance(durations, dict) and set(durations) == duration_keys)
+    children = {span["parent_span_id"] for span in spans if span["parent_span_id"] is not None}
+    children_by_parent: dict[str, list[str]] = {span_id: [] for span_id in ids}
+    for span in spans:
+        if span["parent_span_id"] is not None:
+            children_by_parent[span["parent_span_id"]].append(span["span_id"])
+    observed_leaves = [span for span in spans if span["span_id"] not in children and span["monotonic_duration_ms"] is not None]
+    expected_elapsed = roots[0]["monotonic_duration_ms"]
+    expected_active = sum(span["monotonic_duration_ms"] for span in observed_leaves) if observed_leaves else None
+    require("METRICS_ELAPSED_MISMATCH", durations.get("elapsed_ms") == expected_elapsed)
+    require("METRICS_ACTIVE_MISMATCH", durations.get("active_ms") == expected_active)
+    critical_ids = aggregates.get("critical_path_span_ids")
+    require("METRICS_CRITICAL_PATH_IDS_INVALID", isinstance(critical_ids, list) and len(critical_ids) == len(set(critical_ids)))
+    candidate_paths: list[tuple[int, tuple[str, ...]]] = []
+    def collect_complete_paths(span_id: str, path: tuple[str, ...]) -> None:
+        current_path = path + (span_id,)
+        descendants = sorted(children_by_parent[span_id])
+        if descendants:
+            for child_id in descendants:
+                collect_complete_paths(child_id, current_path)
+            return
+        path_durations = [span_map[item]["monotonic_duration_ms"] for item in current_path]
+        if all(type(value) is int for value in path_durations):
+            candidate_paths.append((sum(path_durations), current_path))
+    collect_complete_paths(roots[0]["span_id"], ())
+    if candidate_paths:
+        maximum_duration = max(score for score, _ in candidate_paths)
+        expected_path = min(path for score, path in candidate_paths if score == maximum_duration)
+        require("METRICS_CRITICAL_PATH_MISMATCH", critical_ids == list(expected_path) and durations.get("critical_path_ms") == maximum_duration)
+    else:
+        require("METRICS_CRITICAL_PATH_MISMATCH", critical_ids == [] and durations.get("critical_path_ms") is None)
+    unavailable = aggregates.get("unavailable_reasons")
+    require("METRICS_UNAVAILABLE_REASONS_INVALID", isinstance(unavailable, list) and all(isinstance(item, dict) and set(item) == {"field", "reason"} and nonempty(item.get("field")) and nonempty(item.get("reason")) for item in unavailable))
+    reason_fields = [item["field"] for item in unavailable]
+    require("METRICS_UNAVAILABLE_REASON_DUPLICATE", len(reason_fields) == len(set(reason_fields)))
+    null_fields = {f"counts.{key}" for key, value in counts.items() if value is None} | {f"durations.{key}" for key, value in durations.items() if value is None}
+    require("METRICS_UNAVAILABLE_REASON_COVERAGE", set(reason_fields) == null_fields)
+    require("METRICS_TELEMETRY_BLOCKED_FUNCTION", p.get("telemetry_changed_functional_status") is False)
+
+
+def rule_metrics_resume(p: dict[str, Any]) -> None:
+    require("METRICS_RESUME_IDENTITY_INVALID", p.get("span_identity_reused") is True and p.get("iteration_preserved") is True)
+    require("METRICS_RESUME_DOUBLE_COUNT", p.get("usage_counted_instances") == 1 and p.get("duration_counted_instances") == 1)
+
+
+def rule_liveness(p: dict[str, Any]) -> None:
+    if p.get("explicit_user_cancellation") is True:
+        require("LIVENESS_CANCELLATION_CONFLATED", p.get("trigger") == "explicit-user-cancellation" and p.get("silence_policy_used") is False)
+        return
+    require("LIVENESS_TRIGGER_INVALID", p.get("trigger") == "silence-stop")
+    require("LIVENESS_PROBE_MISSING", p.get("probe_recorded") is True and p.get("outcome") in {"running", "progress", "terminal", "unsupported", "unavailable"})
+    if p.get("outcome") in {"running", "progress"}:
+        require("LIVENESS_ACTIVE_ABORTED", p.get("stop_performed") is False)
+    if p.get("outcome") in {"unsupported", "unavailable"}:
+        require("LIVENESS_REASON_MISSING", nonempty(p.get("reason")) and p.get("heartbeat_invented") is False)
+
+
+def rule_materiality_gate(p: dict[str, Any]) -> None:
+    valid = p.get("profile_valid") is True and p.get("materiality_valid") is True
+    require("MATERIALITY_GATE_INVALID", p.get("auditor_dispatched") is valid)
+    require("MATERIALITY_TELEMETRY_COUPLED", p.get("telemetry_failure_changed_gate") is False)
+
+
+def rule_cost_policy(p: dict[str, Any]) -> None:
+    require("COST_BUDGET_FORBIDDEN", p.get("token_budget") is None and p.get("cost_budget") is None)
+    require("COST_AUTO_STOP_FORBIDDEN", p.get("automatic_cost_stop") is False and p.get("metrics_measurement_only") is True)
+
+
+def validate_metrics_projection(p: dict[str, Any], prefix: str) -> None:
+    ref = p.get("execution_metrics_ref")
+    digest = p.get("execution_metrics_digest")
+    status = p.get("execution_metrics_status")
+    reason = p.get("execution_metrics_degradation_reason")
+    published = nonempty(ref) and isinstance(digest, str) and SHA256_RE.fullmatch(digest)
+    publication_failed = ref is None and digest is None and status == "unavailable" and nonempty(reason) and "publication failure" in reason.lower()
+    require(f"{prefix}_METRICS_PUBLICATION_INVALID", bool(published) != bool(publication_failed))
+    if status == "complete":
+        require(f"{prefix}_METRICS_COMPLETE_REASON_INVALID", reason is None)
+    else:
+        require(f"{prefix}_METRICS_REASON_MISSING", nonempty(reason))
+
+
+def validate_consistency_packet(p: dict[str, Any]) -> None:
+    required = {"schema_version", "state", "tasks", "terminal_evidence", "validations", "result", "dashboard", "metrics"}
+    require("CONSISTENCY_PACKET_SHAPE_INVALID", set(p) == required and p.get("schema_version") == 1)
+    state, result, dashboard, metrics = (p[name] for name in ("state", "result", "dashboard", "metrics"))
+    require("CONSISTENCY_STATE_SCHEMA_SUPERSEDED", state.get("schema_version") == 2)
+    require("CONSISTENCY_RESULT_SCHEMA_SUPERSEDED", result.get("schema_version") == 2)
+    require("CONSISTENCY_METRICS_SCHEMA_INVALID", metrics.get("schema_version") == 1)
+    require("CONSISTENCY_STATE_DIGEST_DIVERGENCE", result.get("state_digest") == state.get("state_digest"))
+    statuses = [state.get("status"), p["terminal_evidence"].get("status"), p["validations"].get("status"), result.get("status"), dashboard.get("status")]
+    require("CONSISTENCY_STATUS_DIVERGENCE", len(set(statuses)) == 1)
+    refs = [state.get("execution_metrics_ref"), result.get("execution_metrics_ref"), dashboard.get("execution_metrics_ref"), metrics.get("ref")]
+    digests = [state.get("execution_metrics_digest"), result.get("execution_metrics_digest"), dashboard.get("execution_metrics_digest"), metrics.get("digest")]
+    metric_statuses = [state.get("execution_metrics_status"), result.get("execution_metrics_status"), dashboard.get("execution_metrics_status"), metrics.get("status")]
+    require("CONSISTENCY_METRICS_STATUS_INVALID", all(status in {"complete", "partial", "unavailable"} for status in metric_statuses))
+    require("CONSISTENCY_METRICS_REF_DIVERGENCE", len(set(refs)) == 1)
+    require("CONSISTENCY_METRICS_DIGEST_DIVERGENCE", len(set(digests)) == 1)
+    require("CONSISTENCY_METRICS_STATUS_DIVERGENCE", len(set(metric_statuses)) == 1)
+    reasons = [state.get("execution_metrics_degradation_reason"), result.get("execution_metrics_degradation_reason"), dashboard.get("execution_metrics_degradation_reason"), metrics.get("degradation_reason")]
+    require("CONSISTENCY_METRICS_REASON_DIVERGENCE", len(set(reasons)) == 1)
+    for projection in (state, result, dashboard):
+        validate_metrics_projection(projection, "CONSISTENCY")
+    published = nonempty(metrics.get("ref")) and isinstance(metrics.get("digest"), str) and SHA256_RE.fullmatch(metrics["digest"])
+    publication_failed = metrics.get("ref") is None and metrics.get("digest") is None and metrics.get("status") == "unavailable" and nonempty(metrics.get("degradation_reason")) and "publication failure" in metrics["degradation_reason"].lower()
+    require("CONSISTENCY_METRICS_PUBLICATION_INVALID", bool(published) != bool(publication_failed))
+    next_actions = [state.get("next_action"), result.get("next_action"), dashboard.get("next_action")]
+    require("CONSISTENCY_NEXT_ACTION_DIVERGENCE", len(set(next_actions)) == 1 and nonempty(next_actions[0]))
+    task_map = {task.get("task_ref"): task.get("status") for task in p.get("tasks", [])}
+    dashboard_map = {task.get("task_ref"): task.get("persisted_status") for task in dashboard.get("tasks", [])}
+    require("CONSISTENCY_TASK_DIVERGENCE", task_map == dashboard_map)
+    require("CONSISTENCY_VALIDATOR_DIVERGENCE", p["validations"].get("validator_digest") == result.get("validator_digest") == dashboard.get("validator_digest"))
+    require("CONSISTENCY_TELEMETRY_FUNCTIONAL_COUPLING", metrics.get("telemetry_changed_functional_status") is False)
+
+
+def rule_consistency(p: dict[str, Any]) -> None:
+    validate_consistency_packet(p)
+
+
 RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "demand": rule_demand,
     "analysis": rule_analysis,
@@ -368,6 +704,13 @@ RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "execution-state": rule_execution_state,
     "dashboard": rule_dashboard,
     "manual": rule_manual,
+    "current-schema": rule_current_schema,
+    "metrics": rule_metrics,
+    "metrics-resume": rule_metrics_resume,
+    "liveness": rule_liveness,
+    "materiality-gate": rule_materiality_gate,
+    "cost-policy": rule_cost_policy,
+    "consistency": rule_consistency,
 }
 
 
@@ -449,12 +792,20 @@ def self_test() -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true", help="run every current contract fixture")
+    parser.add_argument("--consistency-packet", metavar="PATH", help="validate one executable cross-surface consistency packet")
     args = parser.parse_args()
-    if not args.self_test:
-        parser.error("--self-test is required")
+    if args.self_test == bool(args.consistency_packet):
+        parser.error("select exactly one of --self-test or --consistency-packet PATH")
     try:
-        print(json.dumps(self_test(), indent=2, sort_keys=True, ensure_ascii=False))
-    except ContractError as exc:
+        if args.self_test:
+            result = self_test()
+        else:
+            document = json.loads(Path(args.consistency_packet).read_text(encoding="utf-8"))
+            require("CONSISTENCY_WRAPPER_INVALID", set(document) == {"consistency_packet"} and isinstance(document["consistency_packet"], dict))
+            validate_consistency_packet(document["consistency_packet"])
+            result = {"status": "passed", "schema_version": 1, "packet": args.consistency_packet}
+        print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    except (ContractError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         print(json.dumps({"status": "failed", "error": str(exc)}, sort_keys=True), file=sys.stderr)
         return 1
     return 0
