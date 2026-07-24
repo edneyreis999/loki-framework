@@ -1,8 +1,8 @@
 ---
 doc_id: "loki-implement-feature-execution"
-version: "1.0.0"
+version: "2.0.0"
 status: active
-last_updated: "2026-07-23"
+last_updated: "2026-07-24"
 scope: "Provider-neutral orchestration of normalized unified-feature inputs through planning, persisted DAG execution, validation, evidence, and reconciliation"
 not_scope: "Public input parsing, terminal response presentation, technology-specific implementation rules, package installation, or superseded command behavior"
 authority: "skills/loki-implement-feature/SKILL.md and this current execution reference"
@@ -56,7 +56,8 @@ command_contract:
   start_condition: "Input is normalized; required identities, exact digests, inherited restrictions, retry limit, and safe plan path are available."
   completion_condition: "All selected DAG units are terminal; required validators, gates, evidence and final reconciliation support the reported status."
   outputs:
-    - "persisted action plan and LokiRunState v2"
+    - "persisted action plan and LokiRunState v3"
+    - "immutable execution_audit_checkpoint v1 records for due boundaries"
     - "atomic builds/metrics/execution-metrics.json schema 1"
     - "validated production changes and completion evidence"
     - "terminal Both dashboard and manual-test guidance"
@@ -105,7 +106,7 @@ command_contract:
     - "missing or ambiguous owner, validator, permission, evidence, or gate"
     - "corrupt or uncorrelated persisted state"
     - "explicit correlated cancellation"
-  resume_contract: "Reconstruct exclusively from validated LokiRunState v2, task files, immutable preflights/cycles, target decisions, completion evidence, execution-metrics spans/digest, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
+  resume_contract: "Reconstruct exclusively from validated LokiRunState v3, execution input v2, task files, immutable preflights/cycles/audit checkpoints, target decisions, completion evidence, execution-metrics spans/digest, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
 ```
 
 Only the exact managed plan paths and validated production targets are writable.
@@ -115,59 +116,65 @@ path-safety check, create-exclusive rule, or cancellation state.
 ## Deterministic Run And Execution Identity
 
 `COMMAND-IDENTITY-01` — After Input normalization and before plan allocation or
-any managed write, build exactly this identity object from immutable normalized
-Input fields:
+any managed write, build exactly this closed identity mapping from immutable
+normalized Input fields. The normalized plan path is selected read-only and
+revalidated before exclusive creation; a collision that changes that path
+requires recomputing this mapping and both typed IDs before any write:
 
 ```yaml
-command_identity_input:
-  identity_schema_version: 1
-  command_name: "loki-implement-feature"
-  command_schema_version: 1
-  demand_kind: "inline | path"
-  demand_locator: "inline-demand-v1 | <normalized project-relative path locator>"
+command_identity:
+  schema_version: 2
+  command: "loki-implement-feature"
   demand_digest: "sha256:<64 lowercase hex>"
-  analysis_locator: "<normalized project-relative Markdown locator>"
   analysis_digest: "sha256:<64 lowercase hex>"
-  plan_directory_input: "__default-plan-directory__ | <normalized explicit plan path>"
+  plan_directory: "<normalized project-relative plan path strictly below planos/>"
   retry_limit: "<non-negative JSON integer>"
+  audit_configuration:
+    schema_version: 1
+    frequency: "task | phase | plan"
+    source: "default | explicit"
+    policy_digest: "sha256:<64 lowercase hex>"
 ```
 
-For inline demand, `demand_locator` is the exact literal
-`inline-demand-v1`. For a path demand, it is the normalized validated original
-file locator. When public `plan_directory` is null, use the exact literal
-`__default-plan-directory__`; never include a not-yet-finalized candidate or
-derived directory. Explicit plan paths use their already validated normalized
-value.
+`COMMAND-AUDIT-CONFIG-01` — Omitted public input produces exactly
+`frequency: phase` and `source: default`; an explicitly supplied exact enum
+value produces `source: explicit`, including explicit `phase`. Reject null,
+empty, aliases, case variants, and unknown values. Compute `policy_digest` as
+SHA-256 over canonical UTF-8 JSON of exactly `schema_version`, `frequency`, and
+`source`, excluding `policy_digest`. The configuration is immutable for the
+run and is persisted unchanged inside command identity v2; changing frequency
+or source defines another run.
 
-Serialize the object itself, without the illustrative
-`command_identity_input` wrapper, as canonical UTF-8 JSON: keys sorted
+Serialize the identity object itself, without the illustrative
+`command_identity` wrapper, as canonical UTF-8 JSON: keys sorted
 lexicographically, JSON integers unchanged, strings escaped according to RFC
 8259, non-ASCII encoded directly as UTF-8, no insignificant whitespace, and no
-trailing newline. Let `identity_hex` be the 64 lowercase hexadecimal characters
-of SHA-256 over those exact bytes. Derive distinct typed identities:
+trailing newline. Derive the run identity from those exact bytes. Then serialize
+the exact closed mapping `{command_identity: <complete identity>, run_id:
+<derived run ID>}` by the same algorithm and derive the execution identity:
 
 ```text
-run_id       = loki-run-v1:<identity_hex>
-execution_id = loki-execution-v1:<identity_hex>
+run_id       = "loki-run-v2:" + sha256(canonical_json(command_identity))
+execution_id = "loki-execution-v2:" + sha256(canonical_json({"command_identity": command_identity, "run_id": run_id}))
 ```
 
-Both IDs therefore bind the same immutable input fingerprint without becoming
-interchangeable. Missing field, invalid UTF-8, non-canonical path, invalid
-integer, or failed serialization blocks before allocation or write. Provider
-session identity, conversation position, timestamp, randomness, and the future
-default plan directory are never identity inputs.
+Both IDs bind the immutable normalized audit choice without becoming
+interchangeable. Missing/extra fields, invalid UTF-8, a non-canonical plan path,
+invalid integer, invalid configuration, or failed serialization blocks before
+allocation or write. Provider session identity, conversation position,
+timestamp, and randomness are never identity inputs.
 
-Persist both exact identities in `execution_input` and LokiRunState. The current
-inline-demand record persists `run_id`; its `execution_id` correlation is exact
-and helper-compatible because validation must parse the 64-hex suffix and derive
-`loki-execution-v1:<same-suffix>`, then require equality with normalized
-`execution_input.execution_id`. Do not add an unrecognized field to the current
-bootstrap schema.
+Persist the complete identity and both typed IDs in execution input v2 and bind
+their canonical digests into LokiRunState v3. The inline-demand record persists
+`run_id`; validate its correlation against normalized execution input rather
+than deriving execution identity from the run suffix or adding an unrecognized
+bootstrap field.
 
 On resume, recompute the canonical object and both IDs from current normalized
-Input before directory lookup. Require exact equality with bootstrap-derived and
-state identities. Changed input produces different IDs and cannot reuse,
-overwrite, merge, or repair the previous run.
+Input before accepting state. Require exact equality with execution input v2,
+bootstrap and state identities. Changed input, including only frequency or
+source, produces different IDs and cannot reuse, overwrite, merge, or repair the
+previous run.
 
 ## Deterministic Default Plan Directory
 
@@ -198,9 +205,12 @@ without writing:
 `COMMAND-PLAN-ID-02` — Before allocating a new ID, inspect valid direct child
 directories for a unique current state or inline-demand record whose demand and
 analysis digests and typed run identity match normalized Input. For an inline
-record, derive and validate `execution_id` from the run-ID digest suffix under
-`COMMAND-IDENTITY-01`. Reuse that directory as resume identity only when both
-typed identities match. More than one match blocks as identity ambiguity.
+record, reconstruct command identity v2 with that candidate plan path, derive
+both typed IDs under `COMMAND-IDENTITY-01`, require the record's `run_id` to
+match, and require any state/execution input `execution_id` to match the separate
+execution derivation. Never derive one typed ID from the other's suffix. Reuse
+that directory as resume identity only when both typed identities match. More
+than one match blocks as identity ambiguity.
 
 Execution re-scans and re-derives immediately before create-exclusive
 publication; the Input candidate is not authority. Use at most three allocation
@@ -251,11 +261,12 @@ encoded directly as UTF-8 rather than ASCII escape substitution, no
 insignificant whitespace, and no trailing newline. `demand_utf8` is the exact
 caller string with no trim, newline insertion, Unicode normalization, or
 instruction interpretation. Re-encode that value as UTF-8 and require its
-SHA-256 to equal `demand_digest`. Parse the 64-lowercase-hex suffix from the
-record's typed `run_id`, derive
-`loki-execution-v1:<same-suffix>`, and require exact equality with normalized
-`execution_input.execution_id`. This correlation is validation of the current
-six-field record, not permission to add an `execution_id` field to it.
+SHA-256 to equal `demand_digest`. Require the record's typed `run_id` to equal
+normalized execution input v2. Separately recompute that execution input's
+command identity and both v2 typed IDs and require its `execution_id` to match.
+This correlation validates the current six-field bootstrap record; it does not
+derive execution identity from the run-ID suffix or permit an `execution_id`
+field to be added to the record.
 
 `COMMAND-DEMAND-03` — After finalizing the plan directory and before initializing
 `lf-implement-feature-execution`:
@@ -267,13 +278,14 @@ six-field record, not permission to add an `execution_id` field to it.
 3. Serialize canonical bytes to the unique sibling temporary
    `.inline-demand-v1.json.<first-16-lowercase-hex-of-SHA-256-of-canonical-record-bytes>.tmp`,
    flush and fsync, re-read it, and validate schema, canonical bytes, typed run
-   identity, derived typed execution identity, and both digest correlations.
+   identity, correlated execution input v2 identity, and both digest
+   correlations.
 4. Publish with an atomic no-replace primitive in the same directory, then
    fsync the directory where supported. An overwrite-capable rename is
    forbidden. Remove only the caller-owned temporary after failure.
 5. On final-path collision, re-read the winner. Reuse it only when schema,
-   canonical representation, typed run identity, derived typed execution
-   identity, exact inline bytes, demand digest, and analysis digest all match;
+   canonical representation, typed run identity, correlated execution input v2,
+   exact inline bytes, demand digest, and analysis digest all match;
    otherwise block without overwrite, merge, converter, or alternate record.
 
 Set `execution_input.demand_ref` to that project-relative JSON locator and
@@ -288,10 +300,12 @@ finalization and record publication.
    safety, cold-start/resume classification, and current schema versions.
 2. Finalize the plan directory with `COMMAND-PLAN-ID-*`, then produce or
    revalidate the readable `demand_ref` with `COMMAND-DEMAND-*`.
-3. Initialize or resume `lf-implement-feature-execution` with normalized
-   `execution_input` containing both typed identities, that `demand_ref`, the
-   finalized plan directory, retry limit, analysis identity, and inherited
-   restrictions. Require the helper to validate and persist its exact
+3. Initialize or resume `lf-implement-feature-execution` with closed normalized
+   execution input v2 containing command identity v2, both typed v2 identities,
+   `demand_ref`, `analysis_ref`, and the exact state/result/dashboard/consistency
+   locators. Command identity contains the finalized plan directory, retry
+   limit, digests, and immutable audit configuration v1. Require the helper to
+   validate and persist its exact
    `source-only-cold-start`, `bootstrap-input-only-cold-start`, or
    `managed-resume` plan-directory classification and create or reuse matching
    current LokiRunState before any other managed artifact is materialized. A
@@ -316,7 +330,7 @@ eligible only after replanning persists and validates its decision.
 
 ## Unified Execution Flow
 
-1. Require matching current LokiRunState and the helper-persisted plan-directory
+1. Require matching current LokiRunState v3 and the helper-persisted plan-directory
    classification from Planning. Revalidate both typed identities, finalized
    plan path, demand and analysis digests, readable `demand_ref`, current plan,
    and inherited restrictions before dispatch.
@@ -346,7 +360,10 @@ eligible only after replanning persists and validates its decision.
    fields. A published minimal unavailable file retains ref/digest. Total
    publication failure alone projects null ref/digest with status `unavailable`
    and an explicit `publication failure` reason without changing functional
-   status.
+   status. Record one Metrics v1 `audit` span per boundary attempt. Correlate it
+   to boundary/checkpoint/auditor refs; set `replay`, `replay_cause`, and
+   `cause_span_id` on full replay; never duplicate usage, duration, span, or
+   evidence observations during resume.
 7. Validate each task through its primary route. Persist immutable finding,
    Writer response, retest, retry debit, failed AC, and dependency-skip locators
    according to the helper. Optional learned creation remains Writer-owned and
@@ -360,57 +377,55 @@ eligible only after replanning persists and validates its decision.
    self-approves or replaces an independent Auditor. Any condition outside that
    narrow rule uses the normal finding, response, retest, handoff, and approval
    flow.
-8. When material evidence changes the DAG, owner, validator, approach, or
+8. After every persisted task/phase/plan transition, call the helper's single
+   `next_due_audit_boundary(audit_frequency, validated_dag_state)` scheduler.
+   It returns at most one deterministic due boundary. A boundary with no
+   material Writer output creates an immutable `not-applicable` checkpoint and
+   dispatches nobody. Only a due material boundary resolves applicable
+   independent Auditors, validates their session preflights, and dispatches the
+   complete boundary coverage. Auditor absence is unresolved only at that due
+   material boundary; it never retroactively invalidates Input or earlier
+   eligible writes.
+9. Require Auditor identity and run lineage to differ from every covered Writer
+   and primary-validator identity/lineage. A finding routes only the exact
+   affected correction scopes to their Writers. Any corrected byte invalidates
+   every active checkpoint whose coverage overlaps that target; rerun affected
+   deterministic checks, applicable final validators, and the complete same
+   boundary audit. Incremental/delta-only reuse is forbidden.
+10. When material evidence changes the DAG, owner, validator, approach, or
    required target, stop the affected write, replan, validate the changed plan,
    then resume. Never write first and document the decision afterward.
-9. After the evidence checkpoint, optionally invoke
+11. After the evidence checkpoint, optionally invoke
    `lf-execution-knowledge-capture` with a unique run-contained entry. Continue
    without waiting; capture failure, latency, or invalidity cannot change an
    implementation result established by its own validators.
-10. After DAG processing, rerun applicable final validators, reconcile every
+12. After DAG processing, rerun applicable final validators, reconcile every
     AC/evidence relation, inspect expected artifacts/contracts, apply smoke
     checks, and route final regressions through the same severity/retry policy.
-11. Accumulate analysis-prescribed human validation while tasks run. Expose it
+13. Accumulate analysis-prescribed human validation while tasks run. Expose it
     only at final reconciliation and only as `pending-human-validation` when it
     is the sole remaining condition.
-12. Run the executable cross-surface consistency packet against state v2,
-    local tasks, terminal evidence, validators/gates, result v2, dashboard,
-    metrics ref/digest/status and `next_action`. Divergence blocks rendering.
-13. Ask for no ceremonial intermediate approval. Pause only for the minimum
+14. Run consistency packet v2 against state v3, local tasks, terminal evidence,
+    validators/gates, every expected boundary and latest checkpoint, result v3,
+    dashboard, metrics v1 ref/digest/status and `next_action`. Divergence blocks
+    rendering.
+15. Ask for no ceremonial intermediate approval. Pause only for the minimum
     material input, authority, owner, validator, gate, normative decision, or
     explicit cancellation required for safe continuation.
 
 ## Deterministic Dashboard Unit Mapping
 
-`COMMAND-UNIT-01` — Build `implement_feature_execution_result.unit_statuses`
-only from validated persisted state and records. For every task row, map the
-helper's current `task_validation.status` exactly:
+`COMMAND-UNIT-01` — Build result v3 `task_results` only from validated persisted
+task_validation v1 records, in exact plan task order. Each row contains exactly
+`task_ref`, the unchanged persisted status `pending | passed | unresolved |
+skipped-dependency | cancelled`, and its validated evidence refs. The command
+does not infer, backfill, or relabel a task status.
 
-| Persisted task status | Dashboard task-row status |
-| --- | --- |
-| `pending` | `pending` |
-| `passed` | `completed` |
-| `unresolved` | `unresolved` |
-| `skipped-dependency` | `skipped-dependency` |
-| `cancelled` | `cancelled` |
-
-No task status maps to `blocked`, and the command must not persist, infer, or
-backfill a new task status.
-
-`COMMAND-UNIT-02` — Emit a `blocked` implementation-unit row if and only if the
-validated LokiRunState has `status: blocked`. Emit exactly one distinct
-execution-scope row whose unit identity is `blocked-scope:<scope-ref>`. Select
-`scope-ref` deterministically as non-null `current_task`, otherwise non-null
-`current_phase`, otherwise the normalized `plan_directory`. The row's persisted
-source is the exact state locator and verified `state_digest`; its evidence is
-the non-empty state `blockers`; and its next action is the non-empty state
-`next_action`. When `current_task` is selected, retain that task's separate row
-and status under `COMMAND-UNIT-01`; the scope row does not rewrite it.
-
-No other task, phase, plan, response prose, missing evidence, or validator
-observation produces a `blocked` row. A state with `status: blocked` but empty
-`blockers`, empty `next_action`, invalid scope locator, or failed checksum
-blocks response rendering as corrupt state rather than guessing a unit status.
+`COMMAND-UNIT-02` — Dashboard presentation is owned by the separate Response
+contract. This execution unit supplies only result v3 task rows, latest audit
+checkpoint refs, final-validator refs, terminal-evidence refs, metrics
+projection, status, and next action. Response may not invent a blocked task row,
+repair a missing checkpoint, or upgrade any persisted status.
 
 ## Ownership, Evidence, And Terminal Handoffs
 
@@ -421,6 +436,9 @@ blocks response rendering as corrupt state rather than guessing a unit status.
   targets preserve their technology owner and applicable gate.
 - The independent Write Test Agent owns finding/retest records; the applicable
   Writer owns correction responses and the optional single learned record.
+- The applicable independent Auditor owns due material boundary judgment; the
+  orchestrator owns deterministic scheduling and immutable checkpoint
+  publication, never the approval itself.
 - The evidence collector owns typed execution evidence. The execution-knowledge
   cataloger owns only its unique optional entry.
 
@@ -448,10 +466,11 @@ knowledge entry, span duration, or usage observation.
 
 Completion occurs only after the helper returns a terminal
 `implement_feature_execution_result` whose state digest, required ACs,
-validators, gates, evidence, skipped dependencies, risks, and human-validation
-state and metrics reconcile. Telemetry failure degrades metrics only and never
-changes the functional status. Metrics define no token/cost budget or automatic
-cost stop. Use [response.md](response.md) only to project that result;
+validators, gates, expected/latest audit checkpoints, terminal evidence,
+skipped dependencies, next action, and metrics reconcile through consistency
+packet v2. Telemetry failure degrades metrics only and never changes the
+functional status. Metrics define no token/cost budget or automatic cost stop.
+Use [response.md](response.md) only to project result v3;
 Response never repairs or upgrades it.
 
 <examples>

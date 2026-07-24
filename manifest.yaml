@@ -2,7 +2,7 @@ llm_metadata:
   doc_id: loki-framework-package-manifest
   version: "1.0.0"
   status: active
-  last_updated: "2026-07-23"
+  last_updated: "2026-07-24"
   scope: "Canonical package inventory, artifact routing, installation policy and package guardrails."
   not_scope: "Consumer runtime truth, consumer-local policy, write approval or evidence of completed installation."
   authority: "Approved human decisions and package-authoring guardrails govern this manifest; unresolved normative conflicts require human review."
@@ -483,7 +483,7 @@ scripts:
   - name: "validate-implement-feature-contracts"
     file: "scripts/validate-implement-feature-contracts.py"
     status: draft
-    purpose: "Validate LokiRunState/result v2, execution metrics v1, liveness, measurement-only cost policy and executable cross-surface consistency packets."
+    purpose: "Validate only command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency packet v2, task_validation v1 and execution metrics v1, including due-boundary coverage, full replay, liveness and measurement-only cost policy."
   - name: "validate-llm-artifact-precheck"
     file: "scripts/validate-llm-artifact-precheck.py"
     status: draft
@@ -635,6 +635,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
   - name: "lf-agentic-orchestration"
     file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
@@ -667,6 +668,7 @@ skills:
   - name: "lf-implement-feature-execution"
     file: "skills/lf-implement-feature-execution/SKILL.md"
     status: active
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
   - name: "lf-domain-context-preflight"
     file: "skills/lf-domain-context-preflight/SKILL.md"
     status: draft
@@ -1110,6 +1112,7 @@ templates:
   - name: "tasks-template"
     file: "templates/tasks-template.md"
     status: draft
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v3", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
   - name: "task-template"
     file: "templates/task-template.md"
     status: draft

@@ -1,15 +1,15 @@
 ---
 doc_id: "loki-implement-feature-response-template"
-version: "2.0.0"
+version: "3.0.0"
 status: active
-last_updated: "2026-07-22"
+last_updated: "2026-07-24"
 scope: "Complete recoverable Markdown skeleton for the loki-implement-feature terminal response"
 not_scope: "Execution authority, evidence creation, validator decisions, or status derivation"
 authority: "skills/loki-implement-feature/references/response.md and the validated persisted execution result"
 canonical_source: "skills/loki-implement-feature/assets/response-template.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted LokiRunState v2, implement_feature_execution_result v2, and execution_metrics v1"
+  - "validated persisted command identity v2, execution input v2, LokiRunState v3, implement_feature_execution_result v3, dashboard v3, consistency packet v2, execution_audit_checkpoint v1, and execution_metrics v1"
   - "skills/loki-implement-feature/references/response.md"
   - "this output skeleton"
 confidence: high
@@ -21,12 +21,36 @@ replaced_by: null
 
 ## Status
 
-- Status: `<completed | completed-with-limitations | pending-human-validation | partial | blocked | failed | cancelled | needs-human-review>`
+- Persisted status: `<running | completed | completed-with-limitations | pending-human-validation | partial | failed | cancelled>`
+- Response status: `<same persisted status | needs-human-review only for persisted partial/failed normative conflict>`
 - Terminal reason: `<state-and-evidence-derived reason>`
+- Normative-conflict projection: `<the complete normative_conflict v1 block below | absent unless response status is needs-human-review>`
 - Run ID: `<typed run ID | unavailable + reason>`
 - Execution ID: `<typed execution ID>`
 - State: `<locator + sha256 digest>`
+- Result v3: `<locator + sha256 digest>`
+- Dashboard v3: `<locator + sha256 digest>`
+- Consistency v2: `<locator + sha256 digest + passed>`
+- Audit configuration v1: `<schema_version=1 + frequency=task|phase|plan + source=default|explicit + policy_digest>`
+- Active audit checkpoints: `<ordered refs + digests or none because no boundary is due>`
 - Metrics: `<ref + sha256 digest + status/reason; or null/null + unavailable + explicit publication failure reason>`
+
+When and only when response status is `needs-human-review`, include:
+
+```yaml
+normative_conflict:
+  schema_version: 1
+  authoritative_source_locators:
+    - type: "authoritative-source"
+      locator: "<safe-project-relative-path>#<non-empty-fragment>"
+    - type: "authoritative-source"
+      locator: "<different-safe-project-relative-path>#<non-empty-fragment>"
+  minimum_priority_decision: "<one non-empty decision needed to resolve precedence>"
+```
+
+Both locators must be distinct, safe, and repeated exactly in `Evidence and
+handoffs`. Do not use arbitrary labels, positional entries from `decisions`, or
+an uncorrelated source. Omit the entire block for every other response status.
 
 ## Executive summary
 
@@ -37,10 +61,24 @@ replaced_by: null
 | Unit | Status | Persisted status source | Dependencies | Owner | Changed targets | Completion evidence | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `<task ref>` | `<completed/skipped-dependency/unresolved/cancelled/pending>` | `<task_validation locator + persisted status>` | `<refs or none>` | `<owner>` | `<paths or none>` | `<locators or unavailable + reason>` | `<action or none>` |
-| `<blocked-scope:current_task/current_phase/plan_directory ref, only when LokiRunState.status=blocked>` | `<blocked>` | `<state locator + state_digest + selected scope field>` | `<refs or none>` | `<orchestrator>` | `<paths or none>` | `<non-empty state blockers>` | `<non-empty state next_action>` |
 
-Omit the blocked-scope row unless validated LokiRunState status is `blocked`.
-Never relabel a task row as blocked or invent a task status.
+Render only task rows derived from persisted task_validation v1. Do not invent a
+scope row, depend on fields absent from LokiRunState v3, or relabel a task.
+
+## Audit boundaries and checkpoints
+
+| Boundary | Due state | Membership | Materiality | Active checkpoint | Status | Auditor independence | Findings/corrections | Replay | Evidence/next action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<type + ref>` | `<not-due/due/terminal>` | `<ordered task refs>` | `<material/no-material + evidence>` | `<latest active ref + digest or none + reason>` | `<approved/not-applicable/unavailable/finding/inconclusive/invalidated/not-due>` | `<Auditor identity/run refs differ from all Writer and primary-validator identities/lineages, or not-applicable reason>` | `<finding refs + correction refs or none>` | `<initial or full replay + predecessor ref + replay cause>` | `<coverage/validator/Auditor refs + next action>` |
+
+- Configuration parity: `<complete audit_configuration v1 equals command identity v2, execution input v2, state v3, result v3, dashboard v3 and consistency v2>`
+- Due-boundary terminal truth: `<every due boundary approved or not-applicable; otherwise exact unresolved boundary + effect on status>`
+- Active checkpoint order: `<exact scheduler order and state/result/dashboard/consistency parity>`
+- Invalidated checkpoints: `<predecessor -> correction refs -> replacement full replay ref, or none + reason>`
+
+Do not dispatch or claim approval for `not-due` or due no-material boundaries.
+After a covered correction, report the complete same-boundary audit replay and
+replayed deterministic/final-validator evidence; delta-only review is invalid.
 
 ## Changed files and surfaces
 

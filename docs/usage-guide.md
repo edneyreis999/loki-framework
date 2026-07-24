@@ -6,7 +6,7 @@ created: 2026-06-24
 scope: local-project-package
 doc_id: loki-usage-guide
 version: 1.0.0
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
 authority: Approved Loki package policy and current package command contracts
 canonical_source: docs/usage-guide.md
@@ -196,6 +196,28 @@ materializa ou retoma o plano, registra targets e owners antes da escrita,
 executa o DAG e termina com dashboard e passos de teste manual. Nao existe uma
 segunda chamada publica para executar o plano.
 
+Um terceiro argumento publico opcional, `audit_frequency`, controla a
+granularidade da auditoria independente. Se omitido, normaliza para
+`phase/default`. Se fornecido, aceita somente `task`, `phase` ou `plan` exatos e
+usa origem `explicit`, inclusive quando o valor e `phase`. Null, vazio, aliases,
+traducao e variacao de caixa sao invalidos. Input somente persiste essa escolha
+em command identity v2/execution input v2: nao verifica disponibilidade do
+Auditor e nao despacha auditoria.
+
+Execution consulta o scheduler canonico nos pontos persistidos do DAG. Auditor
+independente e resolvido apenas para uma fronteira due com escrita material.
+Uma fronteira ainda nao due nao despacha; uma fronteira due sem bytes materiais
+registra `not-applicable`, despacha ninguem e nao concede approval. Finding
+retorna o escopo afetado ao Writer; qualquer correcao invalida checkpoint
+sobreposto, repete checks/validators aplicaveis e exige replay completo da
+mesma fronteira, nunca revisao incremental. A escolha significa:
+
+- `task`: fronteira quando a task e seus checks exigidos ficam completos;
+- `phase`: fronteira quando todos os membros da fase e seus checks ficam
+  completos;
+- `plan`: uma fronteira depois do DAG/checks terminais e antes da reconciliacao
+  terminal.
+
 Cada task possui ao menos um AC observavel e exatamente uma rota primaria:
 validator deterministico ou Write Test Agent independente. A conversa de
 correcao fica em findings, respostas do Writer e retestes imutaveis. Findings
@@ -222,9 +244,12 @@ O dashboard unificado deriva do estado persistido e inclui AC/evidence,
 validators, ciclos, retries, failed tasks, skipped dependents, targets
 inferidos, riscos, resume e teste manual. Human validation herdada da analise
 aparece somente no final e apenas quando for a unica condicao restante.
+Ele tambem mostra a configuracao v1 completa, fronteiras due, checkpoints
+ativos, materialidade, independencia, findings/corrections e full replays. Um
+status de sucesso exige toda fronteira due `approved` ou `not-applicable`.
 
 O mesmo run publica `builds/metrics/execution-metrics.json` schema v1, ligado
-por ref/digest ao LokiRunState v2, resultado v2 e dashboard. Ele registra spans,
+por ref/digest ao LokiRunState v3, resultado v3 e dashboard v3. Ele registra spans,
 clocks, elapsed/active/critical-path, contagens e tokens separados em
 `exact`, `estimated` ou `unavailable`; estimativas têm range, baixa confiança e
 escopo parcial. Telemetria degradada não bloqueia execução funcional. Uma

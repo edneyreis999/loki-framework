@@ -1,10 +1,10 @@
 ---
 doc_id: "lf-implement-feature-execution-session-preflight-contract"
-version: "1.0.0"
+version: "2.0.0"
 status: active
-last_updated: "2026-07-22"
-scope: "Plan-path safety, managed collision checks, source validity, and immutable sanitized session preflight for unified execution"
-not_scope: "Production write authorization, personal domain-context selection, validation-cycle semantics, or raw runtime evidence"
+last_updated: "2026-07-24"
+scope: "Plan-path safety, managed collision checks, source validity, and immutable sanitized session preflight for Writers, primary Write Test Agents, and due-boundary Auditors"
+not_scope: "Production write authorization, public Input-time Auditor resolution, personal domain-context selection, validation-cycle semantics, or raw runtime evidence"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
 canonical_source: "skills/lf-implement-feature-execution/references/session-preflight-contract.md"
 intended_llm_task: "validation"
@@ -23,8 +23,9 @@ replaced_by: null
 
 <summary>
 Define the current path-safe, versioned, immutable, sanitized session preflight
-required for each production Writer and primary Write Test Agent without
-turning preflight into authorization or personal domain context.
+required for each production Writer and primary Write Test Agent, and for an
+independent Auditor only when a material audit boundary is due, without turning
+preflight into authorization or personal domain context.
 </summary>
 
 ## Authority And Current-Only Input Gate
@@ -106,27 +107,27 @@ ambiguous identity blocks without overwrite, merge, cleanup, deletion,
 converter, or fallback.
 
 If concurrent state publication is observed, re-read it. Reuse only a complete
-current LokiRunState whose typed run/execution identities, finalized plan path,
-demand/analysis digests, state digest, and exact embedded
-`plan_directory_preflight_result` all match. Validate the nested result under
-`PREFLIGHT-COLLISION-OUTPUT-01`, including its complete keys, identities,
-classification-specific refs, and outer state-digest coverage. For inline
-demand, re-read the nested `bootstrap_record_ref` and require the canonical
-bootstrap bytes and all input correlations to match. A different, incomplete,
+current LokiRunState v3 whose typed run/execution identities, command-identity
+digest, execution-input digest, state digest, state/result/dashboard/consistency
+refs, and task/audit refs match the validated execution input v2. Re-read that
+execution input to validate finalized plan path, demand/analysis digests, and
+audit configuration. For inline demand, re-read its exact bootstrap record and
+require canonical bytes plus all input correlations. A different, incomplete,
 malformed, unverified, or differently classified state blocks; it never causes
 last-writer-wins or bootstrap reinterpretation.
 
 Once matching current LokiRunState is published, classify the directory as
-`managed-resume`. Before agent dispatch, atomically publish the current state
-checkpoint with its embedded `plan_directory_preflight_result` set to that
-classification, nested `state_ref` equal to the containing `tasks.md` locator,
-and a recomputed outer `state_digest`. Preserve the exact validated bootstrap
-locator for inline demand; require null for path demand. The bootstrap file is
-then an ordinary managed artifact referenced by state, and every normal managed
-collision/resume rule applies. For all other managed-entry cases, resume
-requires readable matching current state; otherwise block without merge,
-overwrite, or cleanup. Create new managed entries exclusively; a concurrent
-creator triggers identity re-read.
+`managed-resume`. Before agent dispatch, atomically publish any required state
+v3 transition with recomputed `state_digest`; state binds the validated
+execution input through `execution_input_digest` rather than embedding another
+plan-preflight schema. Preserve the exact bootstrap locator as validated
+execution evidence for inline demand and require no bootstrap locator for path
+demand. The bootstrap file is then an ordinary managed artifact correlated by
+execution input/state identities, and every normal managed collision/resume
+rule applies. For all other managed-entry cases, resume requires readable
+matching current state; otherwise block without merge, overwrite, or cleanup.
+Create new managed entries exclusively; a concurrent creator triggers identity
+re-read.
 
 A path demand whose `execution_input.demand_ref` is outside the finalized plan
 directory receives no bootstrap exception. It may use
@@ -255,6 +256,24 @@ requires the same valid preflight before dispatch when it performs primary
 validation, deterministic-failure severity classification, or retest. A missing
 valid preflight makes any of those dispatches ineligible.
 
+`PREFLIGHT-AUDITOR-01` — Public Input validation never resolves an Auditor,
+checks Auditor availability, creates this preflight, or dispatches an audit.
+After the validated DAG scheduler returns a due boundary, a no-material-write
+boundary creates `not-applicable` without an Auditor preflight or dispatch. Only
+a due material boundary resolves every applicable independent Auditor and
+requires a created, reused, or refreshed session preflight before dispatch.
+
+The requested coverage contains the complete derived boundary membership,
+Writer handoffs/target digests, primary validations, applicable final
+validators, audit policy digest, coverage digest, iteration, and predecessor/
+replay refs. The preflight records those sources as data; it cannot narrow
+coverage or approve the checkpoint. Require the Auditor's stable agent identity,
+agent-run identity, handoff/runtime lineage, and evidence ownership to differ
+from every covered Writer and primary validator. Name equality checks alone are
+insufficient. Missing required independent capacity or a blocked preflight
+creates a due-boundary `unavailable` result and minimum missing-capability next
+action; it does not retroactively block Input or earlier eligible writes.
+
 `PREFLIGHT-DOMAIN-01` — Session preflight records sources supplied to one agent
 in one run. When that Writer is a domain specialist, separately invoke
 `lf-domain-context-preflight` for the personal, smallest-sufficient read-only
@@ -272,9 +291,9 @@ runtime snapshot nor proof of private reasoning. Persist observable evidence
 before separately dispatching optional execution-knowledge capture.
 
 `PREFLIGHT-COLLISION-OUTPUT-01` — Derive and return this independently
-recoverable plan-directory decision before agent session preflight. For every
-ready classification, the mapping below is also the exact nested value of
-`loki_run_state.plan_directory_preflight_result`; it is not a parallel schema:
+recoverable plan-directory decision before agent session preflight. It remains
+an exact nested value of session_preflight_result v2 and is rederived during
+state v3 resume; it is not a LokiRunState field or a parallel persisted schema:
 
 ```yaml
 plan_directory_preflight_result:
@@ -302,34 +321,39 @@ demand whose matching state references that exact validated record; a path
 demand requires a null bootstrap ref. `blocked` preserves the observed
 classification evidence without inventing a locator.
 
-The exact stable locator of a persisted result is
-`<tasks.md state locator>#loki_run_state.plan_directory_preflight_result`.
-Canonical LokiRunState serialization includes the complete nested mapping, so
-the verified outer `state_digest` is its checksum coverage. Do not compute an
-independent nested digest or hash rendered Markdown. A consumer must validate
-both the exact field locator and that outer digest; either alone is
-insufficient.
-
-This result is state evidence, not write authority. Do not create a separate
-result file during bootstrap: that would violate the sole-file predicate. On
-first state publication, persist this complete result atomically inside the
-LokiRunState checkpoint with the cold-start `state_ref: null`. A crash before
-state re-derives the same result from the exact bootstrap bytes and normalized
-execution input. On matching state or a concurrent matching winner, validate
-the persisted cold-start result first, derive `managed-resume`, and publish the
-updated embedded result plus recomputed state digest before dispatch.
+This result is a deterministic decision returned to the invoking execution
+helper, not a nested LokiRunState v3 field and not write authority. Do not create
+a separate result file during bootstrap: that would violate the sole-file
+predicate. State v3 binds the complete validated execution input v2 through
+`execution_input_digest`; on crash/resume, rederive this result from that input,
+the exact bootstrap bytes when applicable, filesystem state, and the verified
+current state. Any changed classification blocks rather than being repaired
+from a prior response.
 
 `PREFLIGHT-OUTPUT-01` — Return every key:
 
 ```yaml
 session_preflight_result:
-  schema_version: 1
+  schema_version: 2
   result: "ready | blocked"
+  dispatch_role: "production-writer | primary-write-test-agent | boundary-auditor"
   plan_directory_classification: "source-only-cold-start | bootstrap-input-only-cold-start | managed-resume | blocked"
-  plan_directory_preflight_ref:
-    state_ref: "<tasks.md state locator>"
-    field: "loki_run_state.plan_directory_preflight_result"
-    state_digest: "sha256:<64 lowercase hex>"
+  plan_directory_preflight_result:
+    schema_version: 1
+    classification: "source-only-cold-start | bootstrap-input-only-cold-start | managed-resume | blocked"
+    plan_directory: "<normalized project-relative plan path>"
+    demand_ref: "<normalized readable locator>"
+    run_id: "loki-run-v2:<64 lowercase hex>"
+    execution_id: "loki-execution-v2:<64 lowercase hex>"
+    demand_digest: "sha256:<64 lowercase hex>"
+    analysis_digest: "sha256:<64 lowercase hex>"
+    bootstrap_record_ref: "<exact locator or null>"
+    state_ref: "<matching current state locator or null>"
+    validation_refs: []
+    result: "ready | blocked"
+    blockers: []
+    minimum_next_input: "<one input or none>"
+  audit_boundary_ref: "<due material boundary ref for boundary-auditor, otherwise null>"
   completion_status: "preflight_created | preflight_reused | preflight_refreshed | none"
   preflight_ref: "<locator or null>"
   record_digest: "sha256:<64 lowercase hex> | null"
@@ -339,14 +363,15 @@ session_preflight_result:
   minimum_next_input: "<one input or none>"
 ```
 
-`plan_directory_preflight_ref` is the exact three-key mapping shown above for a
-persisted ready result or a safely checkpointed blocked result; it is `null`
-when blocking occurs before a matching state can be safely published. Its
-`state_digest` must equal the verified digest of the state containing that exact
-field value. Blocked output never invents a locator and requests only the
-minimum material input. `ready` requires this validated field reference, a
-valid agent-preflight locator/digest and, when applicable, a non-blocking
-personal domain result.
+All keys are required and extra keys fail. The embedded
+`plan_directory_preflight_result` is the complete derived mapping above.
+`boundary-auditor` requires a due material `audit_boundary_ref`; the other roles
+require null. A no-material-write boundary produces no session-preflight result.
+Blocked output never invents a locator and requests only the minimum material
+input. `ready` requires a valid agent-preflight locator/digest, a ready plan
+classification and, when applicable, a non-blocking personal domain result.
+Reject every prior output shape before interpretation; no converter or fallback
+exists.
 
 <examples>
 These examples are non-normative.
@@ -361,8 +386,8 @@ These examples are non-normative.
 
 Validate every `PREFLIGHT-*` rule, path containment, symlink rejection, identity
 hash, version syntax, collision behavior, source validity, immutable digest,
-sanitization, embedded plan-directory result keys, field locator, outer
-state-digest coverage, matching bootstrap/state consumption, reuse/refresh
-result, and domain/evidence boundary. Revisit this unit whenever plan-path
-safety, source validity, preflight schema, publication, or required-agent policy
-changes.
+sanitization, complete plan-directory result keys, state/execution-input
+correlation, matching bootstrap/state consumption, reuse/refresh result,
+due-boundary Auditor independence, and domain/evidence boundary. Revisit this
+unit whenever plan-path safety, source validity, preflight schema, publication,
+or required-agent policy changes.

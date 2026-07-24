@@ -7,8 +7,10 @@ import argparse
 import json
 import re
 import sys
+import tempfile
 import tomllib
-from pathlib import Path
+from collections.abc import Callable
+from pathlib import Path, PurePosixPath
 
 
 VALID_SCOPES = {"internal-only", "both", "consumer-only"}
@@ -972,6 +974,466 @@ def parse_manifest_list_value(value: str) -> list[str]:
     ]
 
 
+def root_script_path(value: str) -> bool:
+    if not value or "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return (
+        not path.is_absolute()
+        and path.as_posix() == value
+        and len(path.parts) == 2
+        and path.parts[0] == "scripts"
+        and path.parts[1] not in {"", ".", ".."}
+        and path.suffix == ".py"
+    )
+
+
+def parse_manifest_script_catalog(package_root: Path) -> list[str]:
+    lines = (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines()
+    headings = [index for index, line in enumerate(lines) if line == "scripts:"]
+    if len(headings) != 1:
+        raise ValueError(
+            "script parity manifest section count: expected exactly 1 top-level scripts section; "
+            f"found {len(headings)}"
+        )
+    start = headings[0] + 1
+    end = next(
+        (
+            index
+            for index in range(start, len(lines))
+            if lines[index] and not lines[index].startswith((" ", "#"))
+        ),
+        len(lines),
+    )
+    records: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+
+    def finish_record() -> None:
+        nonlocal current
+        if current is None:
+            return
+        entry_number = len(records) + 1
+        for required in ("name", "file"):
+            if not current.get(required):
+                raise ValueError(
+                    f"script parity manifest entry {entry_number} missing required field: "
+                    f"{required}"
+                )
+        records.append(current)
+        current = None
+
+    for index in range(start, end):
+        line = lines[index]
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        entry_match = re.fullmatch(r"  - ([A-Za-z0-9_-]+):\s*(.*)", line)
+        field_match = re.fullmatch(r"    ([A-Za-z0-9_-]+):\s*(.*)", line)
+        if entry_match:
+            finish_record()
+            current = {}
+            field, raw_value = entry_match.groups()
+        elif field_match and current is not None:
+            field, raw_value = field_match.groups()
+        else:
+            raise ValueError(
+                f"script parity manifest malformed line {index + 1}: {line}"
+            )
+        if field in current:
+            raise ValueError(
+                f"script parity manifest entry {len(records) + 1} duplicate field: "
+                f"{field}"
+            )
+        current[field] = parse_manifest_scalar(raw_value)
+    finish_record()
+    if not records:
+        raise ValueError("script parity manifest catalog: scripts section has no entries")
+
+    names = [record["name"] for record in records]
+    files = [record["file"] for record in records]
+    for label, values in (("name", names), ("file", files)):
+        seen: set[str] = set()
+        for value in values:
+            if value in seen:
+                raise ValueError(f"script parity manifest duplicate {label}: {value}")
+            seen.add(value)
+    return files
+
+
+def parse_operational_inventory_script_catalog(package_root: Path) -> list[str]:
+    lines = (package_root / "docs" / "operational-inventory.md").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    headings = [
+        index
+        for index, line in enumerate(lines)
+        if re.fullmatch(r"##\s+Scripts\s*", line)
+    ]
+    if len(headings) != 1:
+        raise ValueError(
+            "script parity inventory section count: expected exactly 1 ## Scripts section; "
+            f"found {len(headings)}"
+        )
+    start = headings[0] + 1
+    end = next(
+        (
+            index
+            for index in range(start, len(lines))
+            if re.match(r"^##\s+", lines[index])
+        ),
+        len(lines),
+    )
+    table_rows = [line for line in lines[start:end] if line.lstrip().startswith("|")]
+    if len(table_rows) < 2:
+        raise ValueError(
+            "script parity inventory catalog: ## Scripts table is missing its header or separator"
+        )
+    header = table_rows[0].strip()
+    if not (header.startswith("|") and header.endswith("|")):
+        raise ValueError(
+            f"script parity inventory malformed table header: {table_rows[0]}"
+        )
+    header_cells = [cell.strip() for cell in header[1:-1].split("|")]
+    if len(header_cells) < 2 or header_cells[0] != "Componente":
+        raise ValueError(
+            f"script parity inventory malformed table header: {table_rows[0]}"
+        )
+    separator = table_rows[1].strip()
+    separator_cells = (
+        [cell.strip() for cell in separator[1:-1].split("|")]
+        if separator.startswith("|") and separator.endswith("|")
+        else []
+    )
+    if len(separator_cells) != len(header_cells) or any(
+        not re.fullmatch(r":?-{3,}:?", cell) for cell in separator_cells
+    ):
+        raise ValueError(
+            f"script parity inventory malformed table separator: {table_rows[1]}"
+        )
+
+    entries: list[str] = []
+    for line in table_rows[2:]:
+        row = line.strip()
+        cells = (
+            [cell.strip() for cell in row[1:-1].split("|")]
+            if row.startswith("|") and row.endswith("|")
+            else []
+        )
+        match = re.fullmatch(r"`([^`]+)`", cells[0]) if cells else None
+        if len(cells) != len(header_cells) or not match:
+            raise ValueError(f"script parity inventory malformed component row: {line}")
+        entries.append(match.group(1))
+    if not entries:
+        raise ValueError("script parity inventory catalog: ## Scripts table has no component entries")
+    return entries
+
+
+def filesystem_script_catalog(package_root: Path) -> list[str]:
+    entries = sorted(
+        (
+            path
+            for path in (package_root / "scripts").iterdir()
+            if path.name.endswith(".py")
+        ),
+        key=lambda path: path.name,
+    )
+    catalog: list[str] = []
+    for path in entries:
+        relative = path.relative_to(package_root).as_posix()
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(
+                f"script parity filesystem symlink/non-regular: {relative}"
+            )
+        catalog.append(relative)
+    if not catalog:
+        raise ValueError("script parity filesystem catalog: scripts/*.py is empty")
+    return catalog
+
+
+def validate_script_catalog_entries(
+    package_root: Path,
+    origin: str,
+    entries: list[str],
+) -> None:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for entry in entries:
+        if entry in seen and entry not in duplicates:
+            duplicates.append(entry)
+        seen.add(entry)
+    if duplicates:
+        raise ValueError(
+            f"script parity {origin} duplicate: " + ", ".join(duplicates)
+        )
+    for entry in entries:
+        if not root_script_path(entry):
+            raise ValueError(f"script parity {origin} invalid root path: {entry}")
+        target = package_root / entry
+        if target.is_symlink() or not target.is_file():
+            raise ValueError(
+                f"script parity {origin} nonexistent/symlink/non-regular: {entry}"
+            )
+
+
+def compare_script_catalogs(
+    filesystem_entries: list[str],
+    manifest_entries: list[str],
+    inventory_entries: list[str],
+) -> None:
+    filesystem = set(filesystem_entries)
+    for origin, entries in (
+        ("manifest", manifest_entries),
+        ("inventory", inventory_entries),
+    ):
+        catalog = set(entries)
+        missing = sorted(filesystem - catalog)
+        extra = sorted(catalog - filesystem)
+        if missing or extra:
+            details: list[str] = []
+            if missing:
+                details.append(f"{origin} missing: " + ", ".join(missing))
+            if extra:
+                details.append(f"{origin} extra: " + ", ".join(extra))
+            raise ValueError("script parity " + "; ".join(details))
+
+
+def validate_script_inventory_parity(package_root: Path) -> None:
+    filesystem_entries = filesystem_script_catalog(package_root)
+    manifest_entries = parse_manifest_script_catalog(package_root)
+    inventory_entries = parse_operational_inventory_script_catalog(package_root)
+    validate_script_catalog_entries(package_root, "filesystem", filesystem_entries)
+    validate_script_catalog_entries(package_root, "manifest", manifest_entries)
+    validate_script_catalog_entries(package_root, "inventory", inventory_entries)
+    compare_script_catalogs(filesystem_entries, manifest_entries, inventory_entries)
+
+
+def write_script_parity_fixture(root: Path) -> None:
+    (root / "scripts").mkdir(parents=True)
+    (root / "docs").mkdir(parents=True)
+    for name in ("a.py", "b.py"):
+        (root / "scripts" / name).write_text("# fixture\n", encoding="utf-8")
+    (root / "manifest.yaml").write_text(
+        "name: fixture\n"
+        "scripts:\n"
+        "  - name: a\n"
+        "    file: scripts/a.py\n"
+        "  - name: b\n"
+        "    file: scripts/b.py\n"
+        "docs:\n"
+        "  - file: docs/operational-inventory.md\n",
+        encoding="utf-8",
+    )
+    (root / "docs" / "operational-inventory.md").write_text(
+        "# Inventory\n\n"
+        "## Scripts\n\n"
+        "| Componente | Status |\n"
+        "| --- | --- |\n"
+        "| `scripts/a.py` | current |\n"
+        "| `scripts/b.py` | current |\n\n"
+        "## Docs\n",
+        encoding="utf-8",
+    )
+
+
+def expect_script_parity_failure(
+    case_id: str,
+    mutation: Callable[[Path], None],
+    expected: str,
+) -> None:
+    with tempfile.TemporaryDirectory(prefix=f"loki-script-parity-{case_id}-") as temp:
+        root = Path(temp)
+        write_script_parity_fixture(root)
+        mutation(root)
+        try:
+            validate_script_inventory_parity(root)
+        except ValueError as exc:
+            if str(exc) != expected:
+                raise AssertionError(
+                    f"{case_id}: expected {expected!r}, received {str(exc)!r}"
+                ) from exc
+        else:
+            raise AssertionError(f"{case_id}: adversarial fixture was accepted")
+
+
+def validate_script_inventory_parity_self_tests() -> None:
+    with tempfile.TemporaryDirectory(prefix="loki-script-parity-positive-") as temp:
+        root = Path(temp)
+        write_script_parity_fixture(root)
+        validate_script_inventory_parity(root)
+
+    def rewrite_manifest(root: Path, text: str) -> None:
+        (root / "manifest.yaml").write_text(text, encoding="utf-8")
+
+    def rewrite_inventory(root: Path, text: str) -> None:
+        (root / "docs" / "operational-inventory.md").write_text(
+            text,
+            encoding="utf-8",
+        )
+
+    cases: tuple[tuple[str, Callable[[Path], None], str], ...] = (
+        (
+            "manifest-missing",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: a\n    file: scripts/a.py\ndocs:\n",
+            ),
+            "script parity manifest missing: scripts/b.py",
+        ),
+        (
+            "inventory-missing",
+            lambda root: rewrite_inventory(
+                root,
+                "## Scripts\n\n| Componente | Status |\n| --- | --- |\n"
+                "| `scripts/a.py` | current |\n\n## Docs\n",
+            ),
+            "script parity inventory missing: scripts/b.py",
+        ),
+        (
+            "manifest-duplicate",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: a1\n    file: scripts/a.py\n"
+                "  - name: a2\n    file: scripts/a.py\n"
+                "  - name: b\n    file: scripts/b.py\ndocs:\n",
+            ),
+            "script parity manifest duplicate file: scripts/a.py",
+        ),
+        (
+            "inventory-duplicate",
+            lambda root: rewrite_inventory(
+                root,
+                "## Scripts\n\n| Componente | Status |\n| --- | --- |\n"
+                "| `scripts/a.py` | current |\n"
+                "| `scripts/a.py` | current |\n| `scripts/b.py` | current |\n\n"
+                "## Docs\n",
+            ),
+            "script parity inventory duplicate: scripts/a.py",
+        ),
+        (
+            "manifest-nonexistent",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: a\n    file: scripts/a.py\n"
+                "  - name: b\n    file: scripts/b.py\n"
+                "  - name: c\n    file: scripts/c.py\ndocs:\n",
+            ),
+            "script parity manifest nonexistent/symlink/non-regular: scripts/c.py",
+        ),
+        (
+            "inventory-traversal",
+            lambda root: rewrite_inventory(
+                root,
+                "## Scripts\n\n| Componente | Status |\n| --- | --- |\n"
+                "| `scripts/a.py` | current |\n"
+                "| `scripts/b.py` | current |\n"
+                "| `scripts/../outside.py` | invalid |\n\n## Docs\n",
+            ),
+            "script parity inventory invalid root path: scripts/../outside.py",
+        ),
+        (
+            "manifest-subdirectory",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: a\n    file: scripts/a.py\n"
+                "  - name: b\n    file: scripts/b.py\n"
+                "  - name: c\n    file: scripts/nested/c.py\ndocs:\n",
+            ),
+            "script parity manifest invalid root path: scripts/nested/c.py",
+        ),
+        (
+            "manifest-section-duplicate",
+            lambda root: (root / "manifest.yaml").write_text(
+                (root / "manifest.yaml").read_text(encoding="utf-8")
+                + "scripts:\n  - name: a\n    file: scripts/a.py\n",
+                encoding="utf-8",
+            ),
+            "script parity manifest section count: expected exactly 1 top-level scripts section; found 2",
+        ),
+        (
+            "inventory-section-duplicate",
+            lambda root: (root / "docs" / "operational-inventory.md").write_text(
+                (root / "docs" / "operational-inventory.md").read_text(
+                    encoding="utf-8"
+                )
+                + "\n## Scripts\n\n| `scripts/a.py` | current |\n",
+                encoding="utf-8",
+            ),
+            "script parity inventory section count: expected exactly 1 ## Scripts section; found 2",
+        ),
+        (
+            "filesystem-non-regular",
+            lambda root: (root / "scripts" / "c.py").mkdir(),
+            "script parity filesystem symlink/non-regular: scripts/c.py",
+        ),
+        (
+            "filesystem-symlink",
+            lambda root: (root / "scripts" / "c.py").symlink_to(
+                root / "scripts" / "a.py"
+            ),
+            "script parity filesystem symlink/non-regular: scripts/c.py",
+        ),
+        (
+            "manifest-entry-missing-file",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: a\n    status: draft\n"
+                "  - name: b\n    file: scripts/b.py\ndocs:\n",
+            ),
+            "script parity manifest entry 1 missing required field: file",
+        ),
+        (
+            "manifest-name-duplicate",
+            lambda root: rewrite_manifest(
+                root,
+                "scripts:\n  - name: duplicate\n    file: scripts/a.py\n"
+                "  - name: duplicate\n    file: scripts/b.py\ndocs:\n",
+            ),
+            "script parity manifest duplicate name: duplicate",
+        ),
+        (
+            "inventory-component-row-unbackticked",
+            lambda root: rewrite_inventory(
+                root,
+                "## Scripts\n\n| Componente | Status | Responsabilidade |\n"
+                "| --- | --- | --- |\n"
+                "| `scripts/a.py` | current | valid |\n"
+                "| `scripts/b.py` | current | valid |\n"
+                "| scripts/c.py | current | malformed |\n\n## Docs\n",
+            ),
+            "script parity inventory malformed component row: "
+            "| scripts/c.py | current | malformed |",
+        ),
+    )
+    for case_id, mutation, expected in cases:
+        expect_script_parity_failure(case_id, mutation, expected)
+
+    comparisons = (
+        (
+            "manifest-extra",
+            ["scripts/a.py"],
+            ["scripts/a.py", "scripts/b.py"],
+            ["scripts/a.py"],
+            "script parity manifest extra: scripts/b.py",
+        ),
+        (
+            "inventory-extra",
+            ["scripts/a.py"],
+            ["scripts/a.py"],
+            ["scripts/a.py", "scripts/b.py"],
+            "script parity inventory extra: scripts/b.py",
+        ),
+    )
+    for case_id, filesystem, manifest, inventory, expected in comparisons:
+        try:
+            compare_script_catalogs(filesystem, manifest, inventory)
+        except ValueError as exc:
+            if str(exc) != expected:
+                raise AssertionError(
+                    f"{case_id}: expected {expected!r}, received {str(exc)!r}"
+                ) from exc
+        else:
+            raise AssertionError(f"{case_id}: adversarial comparison was accepted")
+
+
 def parse_manifest_skill_catalog(package_root: Path) -> dict[str, dict[str, str]]:
     lines = (package_root / "manifest.yaml").read_text(encoding="utf-8").splitlines()
     catalog: dict[str, dict[str, str]] = {}
@@ -1535,6 +1997,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.scope_contract_only:
             print("install scope validation: ok (schema 2 fixture contract)")
             return 0
+
+        validate_script_inventory_parity(package_root)
+        validate_script_inventory_parity_self_tests()
 
         agent_scopes = artifact_scopes(data, "agents")
         codex_agent_scopes = artifact_scopes(data, "codex_agents")

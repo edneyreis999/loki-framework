@@ -1654,9 +1654,12 @@
       "rule": "consistency",
       "expect": "accept",
       "payload": {
-        "schema_version": 1,
+        "schema_version": 2,
+        "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
         "state": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": null,
@@ -1678,8 +1681,11 @@
           "status": "completed",
           "validator_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         },
+        "audits": {"frequency": "phase", "checkpoint_refs": []},
         "result": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": null,
@@ -1690,6 +1696,8 @@
           "next_action": "none because completed"
         },
         "dashboard": {
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "execution_metrics_ref": null,
           "execution_metrics_digest": null,
@@ -1721,9 +1729,12 @@
       "rule": "consistency",
       "expect": "reject",
       "payload": {
-        "schema_version": 1,
+        "schema_version": 2,
+        "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
         "state": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": null,
@@ -1745,8 +1756,11 @@
           "status": "completed",
           "validator_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         },
+        "audits": {"frequency": "phase", "checkpoint_refs": []},
         "result": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": null,
@@ -1757,6 +1771,8 @@
           "next_action": "none because completed"
         },
         "dashboard": {
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "execution_metrics_ref": null,
           "execution_metrics_digest": null,
@@ -1789,9 +1805,12 @@
       "rule": "consistency",
       "expect": "accept",
       "payload": {
-        "schema_version": 1,
+        "schema_version": 2,
+        "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
         "state": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -1813,8 +1832,11 @@
           "status": "completed",
           "validator_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         },
+        "audits": {"frequency": "phase", "checkpoint_refs": []},
         "result": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -1825,6 +1847,8 @@
           "next_action": "none because completed"
         },
         "dashboard": {
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
           "execution_metrics_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1857,9 +1881,12 @@
       "expect": "reject",
       "error": "CONSISTENCY_STATUS_DIVERGENCE",
       "payload": {
-        "schema_version": 1,
+        "schema_version": 2,
+        "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
         "state": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -1876,8 +1903,11 @@
           "status": "completed",
           "validator_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         },
+        "audits": {"frequency": "phase", "checkpoint_refs": []},
         "result": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "partial",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -1888,6 +1918,8 @@
           "next_action": "none because completed"
         },
         "dashboard": {
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
           "execution_metrics_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -2035,9 +2067,12 @@
       "rule": "consistency",
       "expect": "reject",
       "payload": {
-        "schema_version": 1,
+        "schema_version": 2,
+        "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
         "state": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -2059,8 +2094,11 @@
           "status": "completed",
           "validator_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
         },
+        "audits": {"frequency": "phase", "checkpoint_refs": []},
         "result": {
-          "schema_version": 2,
+          "schema_version": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "state_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
@@ -2071,6 +2109,8 @@
           "next_action": "none because completed"
         },
         "dashboard": {
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"},
+          "audit_checkpoint_refs": [],
           "status": "completed",
           "execution_metrics_ref": "builds/metrics/execution-metrics.json",
           "execution_metrics_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",

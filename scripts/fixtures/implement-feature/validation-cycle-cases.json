@@ -125,6 +125,23 @@
       "expect": "reject",
       "error": "LEARNED_CONTENT_UNSAFE",
       "payload": {"status": "created", "resolved_severity": "medium", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "finding.yaml", "writer_response_ref": "response.yaml", "retest_ref": "retest.yaml", "transcript_required": false, "cause_supported": true, "content": "secret: do-not-persist"}
+    },
+    {
+      "id": "audit-correction-incremental-replay",
+      "matrix": false,
+      "scenario": "A correction cannot retain approval or replay only its delta",
+      "rule": "audit-replay",
+      "expect": "reject",
+      "error": "AUDIT_INCREMENTAL_REPLAY_FORBIDDEN",
+      "payload": {"correction_refs": ["correction.json"], "replay": true, "predecessor_audit_ref": "audit-v1.json", "replay_cause": "corrected target bytes", "membership_refs": ["task-1.md"], "required_membership_refs": ["task-1.md", "task-2.md"], "coverage_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "required_coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "evidence_refs": ["retest.log"]}
+    },
+    {
+      "id": "audit-correction-full-replay",
+      "matrix": false,
+      "scenario": "A correction replays the complete affected boundary without duplicate evidence",
+      "rule": "audit-replay",
+      "expect": "accept",
+      "payload": {"correction_refs": ["correction.json"], "replay": true, "predecessor_audit_ref": "audit-v1.json", "replay_cause": "corrected target bytes", "membership_refs": ["task-1.md", "task-2.md"], "required_membership_refs": ["task-1.md", "task-2.md"], "coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "required_coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "evidence_refs": ["retest.log", "full-audit.log"]}
     }
   ]
 }

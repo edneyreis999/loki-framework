@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate the current loki-implement-feature contract fixtures.
+"""Validate current loki-implement-feature fixtures or one persisted real run.
 
-This validator is intentionally self-contained.  It does not import the
-superseded run-plan validator and treats the five JSON fixture files beside it
-as the executable examples of the current command/helper contracts.
+The real-run mode derives every decision from files and bytes below an explicit
+project root.  Caller-provided integrity booleans are not part of its closed
+schemas.  The self-test exercises the five JSON corpora plus a materialized
+fixture tree and adversarial on-disk mutations.
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ import json
 import math
 import re
 import sys
+import tempfile
+from copy import deepcopy
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
@@ -81,7 +84,18 @@ INSTALLER_EXCLUSIONS = {
 REQUIRED_SUPPLEMENTAL = {
     "invalid-demand-kind",
     "invalid-demand-utf8",
-    "blocked-row-mapping",
+    "dashboard-partial-unresolved",
+    "dashboard-failed",
+    "dashboard-needs-human-review-response-only",
+    "dashboard-needs-human-review-failed-response-only",
+    "dashboard-needs-human-review-invalid-locator",
+    "dashboard-needs-human-review-duplicate-locator",
+    "dashboard-needs-human-review-absent-locator",
+    "dashboard-needs-human-review-absent-decision",
+    "dashboard-needs-human-review-empty-decision",
+    "dashboard-needs-human-review-uncorrelated-evidence",
+    "dashboard-needs-human-review-invalid-persisted-status",
+    "dashboard-needs-human-review-persisted-status-forbidden",
     "learned-secret-content",
     "metrics-exact",
     "metrics-estimated",
@@ -110,11 +124,24 @@ REQUIRED_SUPPLEMENTAL = {
     "silence-running-not-aborted",
     "silence-unsupported-recorded",
     "no-cost-budget-or-auto-stop",
-    "reject-state-v1",
-    "reject-result-v1",
+    "reject-command-identity-v1",
+    "reject-execution-input-v1",
+    "reject-state-v2",
+    "reject-result-v2",
+    "reject-consistency-v1",
+    "audit-frequency-default-phase",
+    "audit-frequency-explicit-task",
+    "audit-frequency-explicit-plan",
+    "audit-frequency-alias-rejected",
+    "audit-checkpoint-current",
+    "audit-checkpoint-writer-is-auditor",
+    "audit-correction-incremental-replay",
+    "audit-correction-full-replay",
+    "planos-root-is-not-plan-directory",
 }
 
 TASK_STATUSES = {"pending", "passed", "unresolved", "skipped-dependency", "cancelled"}
+PERSISTED_EXECUTION_STATUSES = {"running", "completed", "completed-with-limitations", "pending-human-validation", "partial", "failed", "cancelled"}
 TERMINAL_SUCCESS = {"completed", "completed-with-limitations", "pending-human-validation"}
 REQUIRED_MANUAL_FIELDS = {
     "evidence_or_acceptance_criterion_ref",
@@ -137,6 +164,12 @@ METRICS_ID_RE = re.compile(r"^execution-metrics-v1:[0-9a-f]{64}$")
 TYPED_ID_RE = re.compile(r"^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._-]*$")
 UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
 SPAN_KINDS = {"run", "phase", "task", "handoff", "validator", "gate", "audit", "reconciliation"}
+AUDIT_FREQUENCIES = {"task", "phase", "plan"}
+RUN_ID_V2_RE = re.compile(r"^loki-run-v2:[0-9a-f]{64}$")
+EXECUTION_ID_V2_RE = re.compile(r"^loki-execution-v2:[0-9a-f]{64}$")
+AUDIT_ID_V1_RE = re.compile(r"^execution-audit-v1:[0-9a-f]{64}$")
+AUTHORITATIVE_PATH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+AUTHORITATIVE_FRAGMENT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@-]*$")
 
 
 class ContractError(ValueError):
@@ -159,6 +192,109 @@ def reject(code: str, condition: bool) -> None:
 def require(code: str, condition: bool) -> None:
     if not condition:
         raise ContractError(code)
+
+
+def canonical_bytes(value: Any) -> bytes:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+
+
+def canonical_digest(value: Any) -> str:
+    return f"sha256:{hashlib.sha256(canonical_bytes(value)).hexdigest()}"
+
+
+def bytes_digest(value: bytes) -> str:
+    return f"sha256:{hashlib.sha256(value).hexdigest()}"
+
+
+def closed_mapping(code: str, value: Any, keys: set[str]) -> dict[str, Any]:
+    require(code, isinstance(value, dict) and set(value) == keys)
+    return value
+
+
+def validate_audit_configuration(value: Any) -> dict[str, Any]:
+    config = closed_mapping(
+        "AUDIT_CONFIGURATION_SHAPE_INVALID",
+        value,
+        {"schema_version", "frequency", "source", "policy_digest"},
+    )
+    require(
+        "AUDIT_CONFIGURATION_SCHEMA_INVALID",
+        type(config["schema_version"]) is int and config["schema_version"] == 1,
+    )
+    require("AUDIT_FREQUENCY_TYPE_INVALID", isinstance(config["frequency"], str))
+    require("AUDIT_FREQUENCY_INVALID", config["frequency"] in AUDIT_FREQUENCIES)
+    require(
+        "AUDIT_FREQUENCY_SOURCE_TYPE_INVALID",
+        isinstance(config["source"], str),
+    )
+    require("AUDIT_FREQUENCY_SOURCE_INVALID", config["source"] in {"default", "explicit"})
+    require(
+        "AUDIT_FREQUENCY_DEFAULT_INVALID",
+        config["source"] != "default" or config["frequency"] == "phase",
+    )
+    expected = canonical_digest({key: config[key] for key in ("schema_version", "frequency", "source")})
+    require("AUDIT_POLICY_DIGEST_INVALID", config["policy_digest"] == expected)
+    return config
+
+
+def validate_command_identity(value: Any) -> dict[str, Any]:
+    identity = closed_mapping(
+        "COMMAND_IDENTITY_SHAPE_INVALID",
+        value,
+        {
+            "schema_version",
+            "command",
+            "demand_digest",
+            "analysis_digest",
+            "plan_directory",
+            "retry_limit",
+            "audit_configuration",
+        },
+    )
+    require("COMMAND_IDENTITY_SCHEMA_SUPERSEDED", identity["schema_version"] == 2)
+    require("COMMAND_IDENTITY_COMMAND_INVALID", identity["command"] == "loki-implement-feature")
+    require("COMMAND_IDENTITY_DEMAND_DIGEST_INVALID", SHA256_RE.fullmatch(identity["demand_digest"]) is not None)
+    require("COMMAND_IDENTITY_ANALYSIS_DIGEST_INVALID", SHA256_RE.fullmatch(identity["analysis_digest"]) is not None)
+    require("COMMAND_IDENTITY_PLAN_INVALID", safe_plan_path(identity["plan_directory"]))
+    require("COMMAND_IDENTITY_RETRY_INVALID", type(identity["retry_limit"]) is int and identity["retry_limit"] >= 0)
+    validate_audit_configuration(identity["audit_configuration"])
+    return identity
+
+
+def derive_typed_id(prefix: str, value: Any) -> str:
+    return f"{prefix}:{hashlib.sha256(canonical_bytes(value)).hexdigest()}"
+
+
+def validate_execution_input(value: Any) -> dict[str, Any]:
+    execution_input = closed_mapping(
+        "EXECUTION_INPUT_SHAPE_INVALID",
+        value,
+        {
+            "schema_version",
+            "command_identity",
+            "run_id",
+            "execution_id",
+            "demand_ref",
+            "analysis_ref",
+            "state_ref",
+            "result_ref",
+            "dashboard_ref",
+            "consistency_packet_ref",
+        },
+    )
+    require("EXECUTION_INPUT_SCHEMA_SUPERSEDED", execution_input["schema_version"] == 2)
+    identity = validate_command_identity(execution_input["command_identity"])
+    require("RUN_IDENTITY_INVALID", execution_input["run_id"] == derive_typed_id("loki-run-v2", identity))
+    execution_identity = {"run_id": execution_input["run_id"], "command_identity": identity}
+    require(
+        "EXECUTION_IDENTITY_INVALID",
+        execution_input["execution_id"] == derive_typed_id("loki-execution-v2", execution_identity),
+    )
+    require("RUN_ID_V2_INVALID", RUN_ID_V2_RE.fullmatch(execution_input["run_id"]) is not None)
+    require("EXECUTION_ID_V2_INVALID", EXECUTION_ID_V2_RE.fullmatch(execution_input["execution_id"]) is not None)
+    for key in ("demand_ref", "analysis_ref", "state_ref", "result_ref", "dashboard_ref", "consistency_packet_ref"):
+        require("EXECUTION_INPUT_REF_INVALID", safe_relative_path(execution_input[key]))
+    return execution_input
 
 
 def rule_demand(p: dict[str, Any]) -> None:
@@ -200,7 +336,25 @@ def safe_plan_path(value: Any) -> bool:
     if any(segment in {"", ".", ".."} for segment in value.split("/")):
         return False
     path = PurePosixPath(value)
-    return path.parts[:1] == ("planos",)
+    return len(path.parts) > 1 and path.parts[:1] == ("planos",)
+
+
+def safe_relative_path(value: Any) -> bool:
+    if not isinstance(value, str) or not value or "\\" in value or value.startswith("/"):
+        return False
+    return all(segment not in {"", ".", ".."} for segment in value.split("/"))
+
+
+def safe_authoritative_locator(value: Any) -> bool:
+    if not isinstance(value, str) or value.count("#") != 1:
+        return False
+    path, fragment = value.split("#", 1)
+    return (
+        safe_relative_path(path)
+        and PurePosixPath(path).suffix != ""
+        and AUTHORITATIVE_PATH_RE.fullmatch(path) is not None
+        and AUTHORITATIVE_FRAGMENT_RE.fullmatch(fragment) is not None
+    )
 
 
 def rule_plan_path(p: dict[str, Any]) -> None:
@@ -223,9 +377,9 @@ def rule_plan_directory(p: dict[str, Any]) -> None:
 
 
 def rule_resume(p: dict[str, Any]) -> None:
-    require("STATE_SCHEMA_SUPERSEDED", p.get("state_schema_version") == 2)
-    require("STATE_CORRUPT", p.get("schema_valid") is True and p.get("state_digest_valid") is True)
-    require("RESUME_IDENTITY_MISMATCH", p.get("identity_matches") is True)
+    require("RESUME_SELF_ATTESTATION_FORBIDDEN", not ({"schema_valid", "state_digest_valid", "identity_matches", "canonical_contained"} & set(p)))
+    require("STATE_SCHEMA_SUPERSEDED", p.get("state_schema_version") == 3)
+    require("RESUME_SOURCE_INVALID", p.get("source") == "persisted-files")
     require("RESUME_DUPLICATE_WRITE", p.get("duplicate_production_writes", 0) == 0)
     require("RESUME_DUPLICATE_PREFLIGHT", p.get("duplicate_preflights", 0) == 0)
     require("RESUME_DUPLICATE_CYCLE", p.get("duplicate_cycles", 0) == 0)
@@ -353,9 +507,38 @@ def rule_execution_state(p: dict[str, Any]) -> None:
         require("FULL_SUITE_FALSE_SUCCESS", p.get("task_green") is True and p.get("full_suite") == "failed" and p.get("terminal_status") not in TERMINAL_SUCCESS)
 
 
+def validate_response_status_projection(p: dict[str, Any]) -> None:
+    status = p.get("status")
+    require("DASHBOARD_STATUS_INVALID", status in PERSISTED_EXECUTION_STATUSES)
+    response_status = p.get("response_status", status)
+    require("RESPONSE_STATUS_INVALID", response_status in PERSISTED_EXECUTION_STATUSES | {"needs-human-review"})
+    if response_status == "needs-human-review":
+        require("RESPONSE_NORMATIVE_CONFLICT_STATUS_INVALID", status in {"partial", "failed"})
+        conflict = p.get("normative_conflict")
+        require("RESPONSE_NORMATIVE_CONFLICT_SHAPE_INVALID", isinstance(conflict, dict))
+        require("RESPONSE_NORMATIVE_CONFLICT_SCHEMA_INVALID", type(conflict.get("schema_version")) is int and conflict["schema_version"] == 1)
+        sources = conflict.get("authoritative_source_locators")
+        require("RESPONSE_NORMATIVE_CONFLICT_LOCATOR_COUNT_INVALID", isinstance(sources, list) and len(sources) == 2)
+        require("RESPONSE_NORMATIVE_CONFLICT_LOCATOR_ROW_INVALID", all(isinstance(row, dict) and set(row) == {"type", "locator"} and row.get("type") == "authoritative-source" for row in sources))
+        locators = [row["locator"] for row in sources]
+        require("RESPONSE_NORMATIVE_CONFLICT_LOCATOR_INVALID", all(safe_authoritative_locator(locator) for locator in locators))
+        require("RESPONSE_NORMATIVE_CONFLICT_LOCATOR_DUPLICATE", len(set(locators)) == 2)
+        require("RESPONSE_NORMATIVE_CONFLICT_DECISION_MISSING", nonempty(conflict.get("minimum_priority_decision")))
+        require("RESPONSE_NORMATIVE_CONFLICT_SHAPE_INVALID", set(conflict) == {"schema_version", "authoritative_source_locators", "minimum_priority_decision"})
+        evidence = p.get("evidence")
+        require("RESPONSE_NORMATIVE_CONFLICT_EVIDENCE_UNCORRELATED", isinstance(evidence, list) and all(locator in evidence for locator in locators))
+    else:
+        require("RESPONSE_STATUS_DIVERGENCE", response_status == status)
+        require("RESPONSE_NORMATIVE_CONFLICT_UNEXPECTED", "normative_conflict" not in p)
+
+
+def rule_response_normative_conflict(p: dict[str, Any]) -> None:
+    validate_response_status_projection(p)
+
+
 def rule_dashboard(p: dict[str, Any]) -> None:
     status = p.get("status")
-    require("DASHBOARD_STATUS_INVALID", status in {"completed", "completed-with-limitations", "pending-human-validation", "partial", "blocked", "failed", "cancelled", "needs-human-review"})
+    validate_response_status_projection(p)
     required = {"summary", "units", "changed_files", "acceptance_criteria", "validators", "validation_cycles", "deviations", "inferred_targets", "learned_records", "decisions", "manual_test", "evidence", "risks", "resume", "execution_metrics_ref", "execution_metrics_digest", "execution_metrics_status", "execution_metrics_degradation_reason", "cost_resources"}
     require("DASHBOARD_CATEGORY_MISSING", required <= set(p))
     require("DASHBOARD_METRICS_STATUS_INVALID", p.get("execution_metrics_status") in {"complete", "partial", "unavailable"})
@@ -372,12 +555,8 @@ def rule_dashboard(p: dict[str, Any]) -> None:
     validator_failed = any(v.get("required") and v.get("result") != "passed" for v in p.get("validators", []))
     require("TERMINAL_FALSE_SUCCESS", not (status in TERMINAL_SUCCESS and (failures or validator_failed)))
     task_rows = [row for row in p.get("units", []) if row.get("kind") == "task"]
-    require("TASK_BLOCKED_ROW_FORBIDDEN", all(row.get("status") != "blocked" for row in task_rows))
-    blocked_rows = [row for row in p.get("units", []) if row.get("status") == "blocked"]
-    if status == "blocked":
-        require("BLOCKED_SCOPE_ROW_INVALID", len(blocked_rows) == 1 and str(blocked_rows[0].get("unit", "")).startswith("blocked-scope:") and nonempty(blocked_rows[0].get("state_ref")) and list_nonempty(blocked_rows[0].get("blockers")) and nonempty(blocked_rows[0].get("next_action")))
-    else:
-        require("BLOCKED_SCOPE_ROW_UNEXPECTED", not blocked_rows)
+    require("DASHBOARD_UNIT_STATUS_INVALID", all(row.get("status") in {"pending", "completed", "unresolved", "skipped-dependency", "cancelled"} for row in task_rows))
+    require("DASHBOARD_SYNTHETIC_SCOPE_FORBIDDEN", all(row.get("kind") == "task" for row in p.get("units", [])))
 
 
 def rule_manual(p: dict[str, Any]) -> None:
@@ -395,9 +574,167 @@ def rule_manual(p: dict[str, Any]) -> None:
 
 def rule_current_schema(p: dict[str, Any]) -> None:
     artifact = p.get("artifact")
-    require("CURRENT_SCHEMA_ARTIFACT_INVALID", artifact in {"state", "result"})
-    expected = 2
+    expected_versions = {
+        "command-identity": 2,
+        "execution-input": 2,
+        "state": 3,
+        "result": 3,
+        "consistency": 2,
+    }
+    require("CURRENT_SCHEMA_ARTIFACT_INVALID", artifact in expected_versions)
+    expected = expected_versions[artifact]
     require(f"{artifact.upper()}_SCHEMA_SUPERSEDED", p.get("schema_version") == expected)
+
+
+def rule_audit_configuration(p: dict[str, Any]) -> None:
+    validate_audit_configuration(p)
+
+
+AUDIT_CHECKPOINT_KEYS = {
+    "schema_version",
+    "audit_id",
+    "run_id",
+    "execution_id",
+    "policy_digest",
+    "frequency",
+    "boundary_type",
+    "boundary_ref",
+    "iteration",
+    "predecessor_audit_ref",
+    "replay",
+    "replay_cause",
+    "membership_refs",
+    "coverage_digest",
+    "covered_handoff_refs",
+    "covered_target_digests",
+    "primary_validation_refs",
+    "final_validator_refs",
+    "auditor_identity",
+    "writer_identities",
+    "auditor_run_refs",
+    "finding_refs",
+    "correction_refs",
+    "evidence_refs",
+    "status",
+    "next_action",
+}
+
+
+def audit_identity_material(checkpoint: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: checkpoint[key]
+        for key in (
+            "execution_id",
+            "policy_digest",
+            "boundary_type",
+            "boundary_ref",
+            "iteration",
+            "coverage_digest",
+        )
+    }
+
+
+def validate_audit_checkpoint(checkpoint: Any) -> dict[str, Any]:
+    checkpoint = closed_mapping("AUDIT_CHECKPOINT_SHAPE_INVALID", checkpoint, AUDIT_CHECKPOINT_KEYS)
+    require(
+        "AUDIT_CHECKPOINT_SCHEMA_INVALID",
+        type(checkpoint["schema_version"]) is int
+        and checkpoint["schema_version"] == 1,
+    )
+    require(
+        "AUDIT_CHECKPOINT_RUN_ID_INVALID",
+        isinstance(checkpoint["run_id"], str)
+        and RUN_ID_V2_RE.fullmatch(checkpoint["run_id"]) is not None,
+    )
+    require(
+        "AUDIT_CHECKPOINT_EXECUTION_ID_INVALID",
+        isinstance(checkpoint["execution_id"], str)
+        and EXECUTION_ID_V2_RE.fullmatch(checkpoint["execution_id"]) is not None,
+    )
+    require(
+        "AUDIT_CHECKPOINT_POLICY_DIGEST_INVALID",
+        isinstance(checkpoint["policy_digest"], str)
+        and SHA256_RE.fullmatch(checkpoint["policy_digest"]) is not None,
+    )
+    require(
+        "AUDIT_CHECKPOINT_FREQUENCY_INVALID",
+        isinstance(checkpoint["frequency"], str)
+        and checkpoint["frequency"] in AUDIT_FREQUENCIES,
+    )
+    require(
+        "AUDIT_CHECKPOINT_BOUNDARY_INVALID",
+        isinstance(checkpoint["boundary_type"], str)
+        and checkpoint["boundary_type"] in AUDIT_FREQUENCIES
+        and nonempty(checkpoint["boundary_ref"]),
+    )
+    require("AUDIT_CHECKPOINT_ITERATION_INVALID", type(checkpoint["iteration"]) is int and checkpoint["iteration"] >= 0)
+    require("AUDIT_CHECKPOINT_REPLAY_INVALID", type(checkpoint["replay"]) is bool)
+    if checkpoint["replay"]:
+        require("AUDIT_CHECKPOINT_PREDECESSOR_MISSING", nonempty(checkpoint["predecessor_audit_ref"]) and nonempty(checkpoint["replay_cause"]))
+    else:
+        require("AUDIT_CHECKPOINT_REPLAY_FIELDS_UNEXPECTED", checkpoint["predecessor_audit_ref"] is None and checkpoint["replay_cause"] is None)
+    for key in (
+        "membership_refs",
+        "covered_handoff_refs",
+        "covered_target_digests",
+        "primary_validation_refs",
+        "final_validator_refs",
+        "writer_identities",
+        "auditor_run_refs",
+        "finding_refs",
+        "correction_refs",
+        "evidence_refs",
+    ):
+        require(
+            "AUDIT_CHECKPOINT_LIST_INVALID",
+            isinstance(checkpoint[key], list)
+            and all(nonempty(item) for item in checkpoint[key])
+            and len(checkpoint[key]) == len(set(checkpoint[key])),
+        )
+    require("AUDIT_CHECKPOINT_MEMBERSHIP_MISSING", bool(checkpoint["membership_refs"]))
+    require(
+        "AUDIT_CHECKPOINT_COVERAGE_INVALID",
+        isinstance(checkpoint["coverage_digest"], str)
+        and SHA256_RE.fullmatch(checkpoint["coverage_digest"]) is not None,
+    )
+    require("AUDIT_CHECKPOINT_AUDITOR_INVALID", nonempty(checkpoint["auditor_identity"]))
+    require("AUDIT_CHECKPOINT_WRITER_MISSING", bool(checkpoint["writer_identities"]))
+    require("AUDIT_CHECKPOINT_NOT_INDEPENDENT", checkpoint["auditor_identity"] not in checkpoint["writer_identities"])
+    require(
+        "AUDIT_CHECKPOINT_STATUS_INVALID",
+        isinstance(checkpoint["status"], str)
+        and checkpoint["status"]
+        in {
+            "approved",
+            "finding",
+            "inconclusive",
+            "failed",
+            "unavailable",
+            "not-applicable",
+            "cancelled",
+        },
+    )
+    require("AUDIT_CHECKPOINT_NEXT_ACTION_MISSING", nonempty(checkpoint["next_action"]))
+    expected_id = derive_typed_id("execution-audit-v1", audit_identity_material(checkpoint))
+    require(
+        "AUDIT_CHECKPOINT_ID_INVALID",
+        isinstance(checkpoint["audit_id"], str)
+        and checkpoint["audit_id"] == expected_id
+        and AUDIT_ID_V1_RE.fullmatch(checkpoint["audit_id"]) is not None,
+    )
+    return checkpoint
+
+
+def rule_audit_checkpoint(p: dict[str, Any]) -> None:
+    validate_audit_checkpoint(p)
+
+
+def rule_audit_replay(p: dict[str, Any]) -> None:
+    require("AUDIT_CORRECTION_REPLAY_REQUIRED", not p.get("correction_refs") or p.get("replay") is True)
+    if p.get("replay"):
+        require("AUDIT_REPLAY_PREDECESSOR_MISSING", nonempty(p.get("predecessor_audit_ref")) and nonempty(p.get("replay_cause")))
+        require("AUDIT_INCREMENTAL_REPLAY_FORBIDDEN", p.get("membership_refs") == p.get("required_membership_refs") and p.get("coverage_digest") == p.get("required_coverage_digest"))
+        require("AUDIT_REPLAY_EVIDENCE_DUPLICATED", len(p.get("evidence_refs", [])) == len(set(p.get("evidence_refs", []))))
 
 
 def validate_usage(usage: Any) -> None:
@@ -648,12 +985,16 @@ def validate_metrics_projection(p: dict[str, Any], prefix: str) -> None:
 
 
 def validate_consistency_packet(p: dict[str, Any]) -> None:
-    required = {"schema_version", "state", "tasks", "terminal_evidence", "validations", "result", "dashboard", "metrics"}
-    require("CONSISTENCY_PACKET_SHAPE_INVALID", set(p) == required and p.get("schema_version") == 1)
+    required = {"schema_version", "audit_configuration", "state", "tasks", "terminal_evidence", "validations", "audits", "result", "dashboard", "metrics"}
+    require("CONSISTENCY_PACKET_SHAPE_INVALID", set(p) == required and p.get("schema_version") == 2)
+    audit_configuration = validate_audit_configuration(p["audit_configuration"])
     state, result, dashboard, metrics = (p[name] for name in ("state", "result", "dashboard", "metrics"))
-    require("CONSISTENCY_STATE_SCHEMA_SUPERSEDED", state.get("schema_version") == 2)
-    require("CONSISTENCY_RESULT_SCHEMA_SUPERSEDED", result.get("schema_version") == 2)
+    require("CONSISTENCY_STATE_SCHEMA_SUPERSEDED", state.get("schema_version") == 3)
+    require("CONSISTENCY_RESULT_SCHEMA_SUPERSEDED", result.get("schema_version") == 3)
     require("CONSISTENCY_METRICS_SCHEMA_INVALID", metrics.get("schema_version") == 1)
+    require("CONSISTENCY_AUDIT_CONFIGURATION_DIVERGENCE", state.get("audit_configuration") == result.get("audit_configuration") == dashboard.get("audit_configuration") == audit_configuration)
+    require("CONSISTENCY_AUDITS_INVALID", isinstance(p["audits"], dict) and p["audits"].get("frequency") == audit_configuration["frequency"] and isinstance(p["audits"].get("checkpoint_refs"), list))
+    require("CONSISTENCY_AUDIT_REFS_DIVERGENCE", state.get("audit_checkpoint_refs") == result.get("audit_checkpoint_refs") == dashboard.get("audit_checkpoint_refs") == p["audits"].get("checkpoint_refs"))
     require("CONSISTENCY_STATE_DIGEST_DIVERGENCE", result.get("state_digest") == state.get("state_digest"))
     statuses = [state.get("status"), p["terminal_evidence"].get("status"), p["validations"].get("status"), result.get("status"), dashboard.get("status")]
     require("CONSISTENCY_STATUS_DIVERGENCE", len(set(statuses)) == 1)
@@ -684,6 +1025,1056 @@ def rule_consistency(p: dict[str, Any]) -> None:
     validate_consistency_packet(p)
 
 
+class RealRunReader:
+    """Read run evidence from one real project root without trusting caller flags."""
+
+    def __init__(self, project_root: Path) -> None:
+        require("PROJECT_ROOT_INVALID", project_root.exists() and project_root.is_dir() and not project_root.is_symlink())
+        self.root = project_root.resolve(strict=True)
+        self._bytes: dict[str, bytes] = {}
+
+    def normalize(self, value: str | Path) -> str:
+        path = Path(value)
+        if path.is_absolute():
+            try:
+                relative = path.relative_to(self.root)
+            except ValueError as exc:
+                raise ContractError("REF_OUTSIDE_PROJECT_ROOT") from exc
+            value = relative.as_posix()
+        else:
+            value = path.as_posix()
+        require("REF_PATH_UNSAFE", safe_relative_path(value))
+        return value
+
+    def read_bytes(self, value: str | Path) -> bytes:
+        ref = self.normalize(value)
+        if ref in self._bytes:
+            return self._bytes[ref]
+        current = self.root
+        for part in PurePosixPath(ref).parts:
+            current = current / part
+            require("REF_SYMLINK_FORBIDDEN", not current.is_symlink())
+        try:
+            resolved = current.resolve(strict=True)
+        except OSError as exc:
+            raise ContractError(f"REF_MISSING:{ref}") from exc
+        require("REF_OUTSIDE_PROJECT_ROOT", resolved.is_relative_to(self.root))
+        require("REF_NOT_REGULAR_FILE", resolved.is_file())
+        data = resolved.read_bytes()
+        require("REF_EMPTY", bool(data))
+        self._bytes[ref] = data
+        return data
+
+    def read_json(self, value: str | Path) -> dict[str, Any]:
+        ref = self.normalize(value)
+        try:
+            document = json.loads(self.read_bytes(ref).decode("utf-8"))
+        except (UnicodeError, json.JSONDecodeError) as exc:
+            raise ContractError(f"JSON_REF_INVALID:{ref}") from exc
+        require("JSON_ROOT_INVALID", isinstance(document, dict))
+        return document
+
+    def read_markdown_json(self, value: str | Path) -> dict[str, Any]:
+        ref = self.normalize(value)
+        try:
+            text = self.read_bytes(ref).decode("utf-8")
+        except UnicodeError as exc:
+            raise ContractError(f"MARKDOWN_UTF8_INVALID:{ref}") from exc
+        blocks = re.findall(r"```json\s*\n(.*?)\n```", text, flags=re.DOTALL)
+        require("MARKDOWN_CONTRACT_BLOCK_INVALID", len(blocks) == 1)
+        try:
+            document = json.loads(blocks[0])
+        except json.JSONDecodeError as exc:
+            raise ContractError(f"MARKDOWN_CONTRACT_JSON_INVALID:{ref}") from exc
+        require("MARKDOWN_CONTRACT_ROOT_INVALID", isinstance(document, dict))
+        return document
+
+
+STATE_V3_KEYS = {
+    "schema_version",
+    "run_id",
+    "execution_id",
+    "command_identity_digest",
+    "execution_input_digest",
+    "audit_configuration",
+    "status",
+    "task_refs",
+    "audit_checkpoint_refs",
+    "result_ref",
+    "dashboard_ref",
+    "consistency_packet_ref",
+    "terminal_evidence_refs",
+    "execution_metrics_ref",
+    "execution_metrics_digest",
+    "execution_metrics_status",
+    "execution_metrics_degradation_reason",
+    "next_action",
+    "state_digest",
+}
+TASK_CONTRACT_KEYS = {
+    "schema_version",
+    "task_id",
+    "phase",
+    "status",
+    "dependencies",
+    "target_files",
+    "writer_identity",
+    "handoff_refs",
+    "gate_refs",
+    "audit_checkpoint_refs",
+    "task_validation",
+}
+TASK_VALIDATION_KEYS = {"schema_version", "acceptance_criteria", "primary_route", "evidence_refs", "status"}
+VALIDATOR_RECORD_KEYS = {"schema_version", "validator_id", "identity", "task_ref", "acceptance_criterion_refs", "evidence_refs", "result"}
+HANDOFF_RECORD_KEYS = {"schema_version", "handoff_id", "task_ref", "writer_identity", "target_digests", "evidence_refs"}
+GATE_RECORD_KEYS = {"schema_version", "gate_id", "task_ref", "status", "evidence_refs"}
+RESULT_V3_KEYS = {
+    "schema_version",
+    "run_id",
+    "execution_id",
+    "status",
+    "state_digest",
+    "audit_configuration",
+    "audit_checkpoint_refs",
+    "task_results",
+    "final_validator_refs",
+    "terminal_evidence_refs",
+    "execution_metrics_ref",
+    "execution_metrics_digest",
+    "execution_metrics_status",
+    "execution_metrics_degradation_reason",
+    "next_action",
+    "result_digest",
+}
+DASHBOARD_V3_KEYS = {
+    "schema_version",
+    "run_id",
+    "execution_id",
+    "status",
+    "audit_configuration",
+    "audit_checkpoint_refs",
+    "tasks",
+    "final_validator_refs",
+    "terminal_evidence_refs",
+    "execution_metrics_ref",
+    "execution_metrics_digest",
+    "execution_metrics_status",
+    "execution_metrics_degradation_reason",
+    "next_action",
+    "dashboard_digest",
+}
+TERMINAL_EVIDENCE_KEYS = {"schema_version", "run_id", "execution_id", "status", "task_statuses", "acceptance_criterion_refs", "validator_refs", "gate_refs", "audit_checkpoint_refs", "evidence_refs"}
+CONSISTENCY_V2_KEYS = {
+    "schema_version",
+    "run_id",
+    "execution_id",
+    "status",
+    "audit_configuration",
+    "state_digest",
+    "tasks_md_digest",
+    "result_ref",
+    "result_digest",
+    "dashboard_ref",
+    "dashboard_digest",
+    "metrics_ref",
+    "metrics_digest",
+    "audit_checkpoint_refs",
+    "audit_checkpoint_digests",
+    "terminal_evidence_refs",
+    "terminal_evidence_digests",
+    "validator_digest",
+}
+
+
+def digest_without(record: dict[str, Any], key: str) -> str:
+    return canonical_digest({name: value for name, value in record.items() if name != key})
+
+
+def register_locator(index: dict[str, tuple[str, str]], ref: str, kind: str, identity: str) -> None:
+    prior = index.get(ref)
+    require("LOCATOR_IDENTITY_CONFLICT", prior is None or prior == (kind, identity))
+    index[ref] = (kind, identity)
+
+
+def validate_record_evidence(reader: RealRunReader, refs: Any) -> list[str]:
+    require("EVIDENCE_REFS_INVALID", isinstance(refs, list) and len(refs) == len(set(refs)) and all(safe_relative_path(item) for item in refs))
+    for ref in refs:
+        reader.read_bytes(ref)
+    return refs
+
+
+def validate_real_run(project_root: Path, tasks_md: str | Path, invocation_input: str | Path) -> dict[str, Any]:
+    reader = RealRunReader(project_root)
+    tasks_ref = reader.normalize(tasks_md)
+    invocation_ref = reader.normalize(invocation_input)
+    require("TASKS_MD_PATH_INVALID", tasks_ref.endswith("/tasks.md") and safe_plan_path(str(PurePosixPath(tasks_ref).parent)))
+    invocation = validate_execution_input(reader.read_json(invocation_ref))
+    identity = invocation["command_identity"]
+    require("PLAN_DIRECTORY_MISMATCH", identity["plan_directory"] == str(PurePosixPath(tasks_ref).parent))
+    require("STATE_REF_MISMATCH", invocation["state_ref"] == tasks_ref)
+    demand_bytes = reader.read_bytes(invocation["demand_ref"])
+    analysis_bytes = reader.read_bytes(invocation["analysis_ref"])
+    require("DEMAND_DIGEST_MISMATCH", identity["demand_digest"] == bytes_digest(demand_bytes))
+    require("ANALYSIS_DIGEST_MISMATCH", identity["analysis_digest"] == bytes_digest(analysis_bytes))
+    require("ANALYSIS_NOT_MARKDOWN", invocation["analysis_ref"].endswith(".md"))
+
+    tasks_document = reader.read_markdown_json(tasks_ref)
+    require("TASKS_MD_SHAPE_INVALID", set(tasks_document) == {"loki_run_plan", "loki_run_state"})
+    plan = closed_mapping("RUN_PLAN_SHAPE_INVALID", tasks_document["loki_run_plan"], {"schema_version", "task_refs", "final_validator_refs"})
+    require("RUN_PLAN_SCHEMA_INVALID", plan["schema_version"] == 1)
+    task_refs = plan["task_refs"]
+    require(
+        "RUN_PLAN_TASK_REFS_INVALID",
+        isinstance(task_refs, list)
+        and bool(task_refs)
+        and len(task_refs) == len(set(task_refs))
+        and all(
+            safe_plan_path(ref)
+            and ref.endswith(".md")
+            and str(PurePosixPath(ref).parent) == identity["plan_directory"]
+            for ref in task_refs
+        ),
+    )
+    final_validator_refs = plan["final_validator_refs"]
+    require("RUN_PLAN_FINAL_VALIDATORS_INVALID", isinstance(final_validator_refs, list) and bool(final_validator_refs) and len(final_validator_refs) == len(set(final_validator_refs)))
+
+    state = closed_mapping("STATE_V3_SHAPE_INVALID", tasks_document["loki_run_state"], STATE_V3_KEYS)
+    require("STATE_SCHEMA_SUPERSEDED", state["schema_version"] == 3)
+    require("STATE_RUN_ID_MISMATCH", state["run_id"] == invocation["run_id"])
+    require("STATE_EXECUTION_ID_MISMATCH", state["execution_id"] == invocation["execution_id"])
+    require("STATE_COMMAND_IDENTITY_DIGEST_MISMATCH", state["command_identity_digest"] == canonical_digest(identity))
+    require("STATE_EXECUTION_INPUT_DIGEST_MISMATCH", state["execution_input_digest"] == bytes_digest(reader.read_bytes(invocation_ref)))
+    state_audit_configuration = validate_audit_configuration(state["audit_configuration"])
+    require(
+        "STATE_AUDIT_CONFIGURATION_MISMATCH",
+        state_audit_configuration == identity["audit_configuration"],
+    )
+    require("STATE_TASK_REFS_MISMATCH", state["task_refs"] == task_refs)
+    require("STATE_RESULT_REF_MISMATCH", state["result_ref"] == invocation["result_ref"])
+    require("STATE_DASHBOARD_REF_MISMATCH", state["dashboard_ref"] == invocation["dashboard_ref"])
+    require("STATE_CONSISTENCY_REF_MISMATCH", state["consistency_packet_ref"] == invocation["consistency_packet_ref"])
+    require("STATE_DIGEST_MISMATCH", state["state_digest"] == digest_without(state, "state_digest"))
+    require("STATE_STATUS_INVALID", state["status"] in {"running", "completed", "completed-with-limitations", "pending-human-validation", "partial", "failed", "cancelled"})
+    require("STATE_NEXT_ACTION_MISSING", nonempty(state["next_action"]))
+
+    task_contracts: dict[str, dict[str, Any]] = {}
+    task_ids: dict[str, str] = {}
+    target_owner: dict[str, str] = {}
+    locator_index: dict[str, tuple[str, str]] = {}
+    validator_records: dict[str, dict[str, Any]] = {}
+    handoff_records: dict[str, dict[str, Any]] = {}
+    gate_records: dict[str, dict[str, Any]] = {}
+    all_primary_validator_refs: list[str] = []
+    all_handoff_refs: list[str] = []
+    all_gate_refs: list[str] = []
+
+    for task_ref in task_refs:
+        task_document = reader.read_markdown_json(task_ref)
+        require("TASK_DOCUMENT_SHAPE_INVALID", set(task_document) == {"task_contract"})
+        task = closed_mapping("TASK_CONTRACT_SHAPE_INVALID", task_document["task_contract"], TASK_CONTRACT_KEYS)
+        require("TASK_CONTRACT_SCHEMA_INVALID", task["schema_version"] == 1)
+        require("TASK_ID_INVALID", nonempty(task["task_id"]) and task["task_id"] not in task_ids)
+        task_ids[task["task_id"]] = task_ref
+        require("TASK_PHASE_INVALID", nonempty(task["phase"]))
+        require("TASK_STATUS_INVALID", task["status"] in TASK_STATUSES)
+        require("TASK_DEPENDENCIES_INVALID", isinstance(task["dependencies"], list) and len(task["dependencies"]) == len(set(task["dependencies"])) and all(nonempty(item) for item in task["dependencies"]))
+        require("TASK_TARGETS_INVALID", isinstance(task["target_files"], list) and bool(task["target_files"]) and len(task["target_files"]) == len(set(task["target_files"])) and all(safe_relative_path(item) for item in task["target_files"]))
+        require("TASK_WRITER_IDENTITY_INVALID", nonempty(task["writer_identity"]))
+        for target in task["target_files"]:
+            require("TARGET_OWNER_CONFLICT", target not in target_owner)
+            target_owner[target] = task_ref
+        validation = closed_mapping("TASK_VALIDATION_SHAPE_INVALID", task["task_validation"], TASK_VALIDATION_KEYS)
+        require("TASK_VALIDATION_SCHEMA_INVALID", validation["schema_version"] == 1)
+        criteria = validation["acceptance_criteria"]
+        require("TASK_AC_INVALID", isinstance(criteria, list) and bool(criteria) and all(isinstance(ac, dict) and set(ac) == {"id", "statement", "required"} and nonempty(ac["id"]) and nonempty(ac["statement"]) and type(ac["required"]) is bool for ac in criteria))
+        ac_ids = [ac["id"] for ac in criteria]
+        require("TASK_AC_DUPLICATE", len(ac_ids) == len(set(ac_ids)))
+        route = closed_mapping("TASK_PRIMARY_ROUTE_INVALID", validation["primary_route"], {"type", "validator_ref"})
+        require("TASK_PRIMARY_ROUTE_TYPE_INVALID", route["type"] in {"deterministic", "write_test_agent"})
+        validator_ref = route["validator_ref"]
+        validator = closed_mapping("VALIDATOR_RECORD_SHAPE_INVALID", reader.read_json(validator_ref), VALIDATOR_RECORD_KEYS)
+        require("VALIDATOR_RECORD_SCHEMA_INVALID", validator["schema_version"] == 1)
+        require("VALIDATOR_RECORD_TASK_MISMATCH", validator["task_ref"] == task_ref)
+        require("VALIDATOR_RECORD_AC_MISMATCH", set(validator["acceptance_criterion_refs"]) == set(ac_ids))
+        require("VALIDATOR_RECORD_RESULT_INVALID", validator["result"] in {"passed", "failed", "unavailable"})
+        require("VALIDATOR_RECORD_IDENTITY_INVALID", nonempty(validator["validator_id"]) and nonempty(validator["identity"]))
+        validate_record_evidence(reader, validator["evidence_refs"])
+        register_locator(locator_index, validator_ref, "validator", validator["validator_id"])
+        validator_records[validator_ref] = validator
+        all_primary_validator_refs.append(validator_ref)
+        validate_record_evidence(reader, validation["evidence_refs"])
+        require("TASK_VALIDATION_STATUS_INVALID", validation["status"] in TASK_STATUSES)
+
+        require("TASK_HANDOFF_REFS_INVALID", isinstance(task["handoff_refs"], list) and bool(task["handoff_refs"]) and len(task["handoff_refs"]) == len(set(task["handoff_refs"])))
+        handoff_targets: set[str] = set()
+        for handoff_ref in task["handoff_refs"]:
+            handoff = closed_mapping("HANDOFF_RECORD_SHAPE_INVALID", reader.read_json(handoff_ref), HANDOFF_RECORD_KEYS)
+            require("HANDOFF_RECORD_SCHEMA_INVALID", handoff["schema_version"] == 1)
+            require("HANDOFF_TASK_MISMATCH", handoff["task_ref"] == task_ref)
+            require("HANDOFF_WRITER_MISMATCH", handoff["writer_identity"] == task["writer_identity"])
+            require("HANDOFF_ID_INVALID", nonempty(handoff["handoff_id"]))
+            target_rows = handoff["target_digests"]
+            require("HANDOFF_TARGET_DIGESTS_INVALID", isinstance(target_rows, list) and bool(target_rows) and all(isinstance(row, dict) and set(row) == {"path", "digest"} for row in target_rows))
+            for row in target_rows:
+                require("HANDOFF_TARGET_DUPLICATE", row["path"] not in handoff_targets)
+                handoff_targets.add(row["path"])
+                require("HANDOFF_TARGET_DIGEST_MISMATCH", row["digest"] == bytes_digest(reader.read_bytes(row["path"])))
+            validate_record_evidence(reader, handoff["evidence_refs"])
+            register_locator(locator_index, handoff_ref, "handoff", handoff["handoff_id"])
+            handoff_records[handoff_ref] = handoff
+            all_handoff_refs.append(handoff_ref)
+        require("HANDOFF_TARGET_COVERAGE_INVALID", handoff_targets == set(task["target_files"]))
+
+        require("TASK_GATE_REFS_INVALID", isinstance(task["gate_refs"], list) and len(task["gate_refs"]) == len(set(task["gate_refs"])))
+        for gate_ref in task["gate_refs"]:
+            gate = closed_mapping("GATE_RECORD_SHAPE_INVALID", reader.read_json(gate_ref), GATE_RECORD_KEYS)
+            require("GATE_RECORD_SCHEMA_INVALID", gate["schema_version"] == 1)
+            require("GATE_TASK_MISMATCH", gate["task_ref"] == task_ref)
+            require("GATE_ID_INVALID", nonempty(gate["gate_id"]))
+            require("GATE_STATUS_INVALID", gate["status"] in {"passed", "failed", "pending"})
+            validate_record_evidence(reader, gate["evidence_refs"])
+            register_locator(locator_index, gate_ref, "gate", gate["gate_id"])
+            gate_records[gate_ref] = gate
+            all_gate_refs.append(gate_ref)
+        task_contracts[task_ref] = task
+
+    require("TASK_DEPENDENCY_MISSING", all(dependency in task_ids for task in task_contracts.values() for dependency in task["dependencies"]))
+    visiting: set[str] = set()
+    visited: set[str] = set()
+    def visit(task_id: str) -> None:
+        require("TASK_DAG_CYCLE", task_id not in visiting)
+        if task_id in visited:
+            return
+        visiting.add(task_id)
+        for dependency in task_contracts[task_ids[task_id]]["dependencies"]:
+            visit(dependency)
+        visiting.remove(task_id)
+        visited.add(task_id)
+    for task_id in task_ids:
+        visit(task_id)
+
+    final_records: dict[str, dict[str, Any]] = {}
+    for validator_ref in final_validator_refs:
+        validator = closed_mapping("FINAL_VALIDATOR_SHAPE_INVALID", reader.read_json(validator_ref), VALIDATOR_RECORD_KEYS)
+        require("FINAL_VALIDATOR_SCHEMA_INVALID", validator["schema_version"] == 1)
+        require("FINAL_VALIDATOR_TASK_REF_INVALID", validator["task_ref"] is None)
+        require("FINAL_VALIDATOR_IDENTITY_INVALID", nonempty(validator["validator_id"]) and nonempty(validator["identity"]))
+        require("FINAL_VALIDATOR_RESULT_INVALID", validator["result"] in {"passed", "failed", "unavailable"})
+        validate_record_evidence(reader, validator["evidence_refs"])
+        register_locator(locator_index, validator_ref, "validator", validator["validator_id"])
+        final_records[validator_ref] = validator
+
+    frequency = identity["audit_configuration"]["frequency"]
+    if frequency == "task":
+        boundaries = [("task", ref, [ref]) for ref in task_refs]
+    elif frequency == "phase":
+        phase_names = list(dict.fromkeys(task_contracts[ref]["phase"] for ref in task_refs))
+        boundaries = [("phase", f"phase:{phase}", [ref for ref in task_refs if task_contracts[ref]["phase"] == phase]) for phase in phase_names]
+    else:
+        boundaries = [("plan", identity["plan_directory"], list(task_refs))]
+    checkpoint_refs = state["audit_checkpoint_refs"]
+    require("STATE_AUDIT_REFS_INVALID", isinstance(checkpoint_refs, list) and len(checkpoint_refs) == len(set(checkpoint_refs)))
+    task_checkpoint_union = list(dict.fromkeys(ref for task in task_contracts.values() for ref in task["audit_checkpoint_refs"]))
+    require("TASK_AUDIT_REFS_DIVERGENCE", set(task_checkpoint_union) == set(checkpoint_refs))
+    require("AUDIT_BOUNDARY_COUNT_MISMATCH", len(checkpoint_refs) == len(boundaries))
+    checkpoint_records: dict[str, dict[str, Any]] = {}
+    primary_identities = {record["identity"] for record in validator_records.values()}
+    for checkpoint_ref, (boundary_type, boundary_ref, membership) in zip(checkpoint_refs, boundaries):
+        checkpoint = validate_audit_checkpoint(reader.read_json(checkpoint_ref))
+        require("AUDIT_RUN_ID_MISMATCH", checkpoint["run_id"] == invocation["run_id"])
+        require("AUDIT_EXECUTION_ID_MISMATCH", checkpoint["execution_id"] == invocation["execution_id"])
+        require("AUDIT_POLICY_MISMATCH", checkpoint["policy_digest"] == identity["audit_configuration"]["policy_digest"] and checkpoint["frequency"] == frequency)
+        require("AUDIT_BOUNDARY_MISMATCH", checkpoint["boundary_type"] == boundary_type and checkpoint["boundary_ref"] == boundary_ref)
+        require("AUDIT_MEMBERSHIP_MISMATCH", checkpoint["membership_refs"] == membership)
+        expected_handoffs = [ref for task_ref in membership for ref in task_contracts[task_ref]["handoff_refs"]]
+        expected_targets = [f"{row['path']}={row['digest']}" for ref in expected_handoffs for row in handoff_records[ref]["target_digests"]]
+        expected_primary = [task_contracts[task_ref]["task_validation"]["primary_route"]["validator_ref"] for task_ref in membership]
+        coverage = {
+            "membership_refs": membership,
+            "covered_handoff_refs": expected_handoffs,
+            "covered_target_digests": expected_targets,
+            "primary_validation_refs": expected_primary,
+            "final_validator_refs": final_validator_refs,
+        }
+        require("AUDIT_COVERAGE_DIGEST_MISMATCH", checkpoint["coverage_digest"] == canonical_digest(coverage))
+        require("AUDIT_HANDOFF_COVERAGE_MISMATCH", checkpoint["covered_handoff_refs"] == expected_handoffs)
+        require("AUDIT_TARGET_COVERAGE_MISMATCH", checkpoint["covered_target_digests"] == expected_targets)
+        require("AUDIT_PRIMARY_VALIDATION_COVERAGE_MISMATCH", checkpoint["primary_validation_refs"] == expected_primary)
+        require("AUDIT_FINAL_VALIDATOR_COVERAGE_MISMATCH", checkpoint["final_validator_refs"] == final_validator_refs)
+        expected_writers = list(dict.fromkeys(task_contracts[ref]["writer_identity"] for ref in membership))
+        require("AUDIT_WRITER_COVERAGE_MISMATCH", checkpoint["writer_identities"] == expected_writers)
+        require("AUDIT_PRIMARY_VALIDATOR_NOT_INDEPENDENT", checkpoint["auditor_identity"] not in primary_identities)
+        validate_record_evidence(reader, checkpoint["auditor_run_refs"])
+        validate_record_evidence(reader, checkpoint["finding_refs"])
+        validate_record_evidence(reader, checkpoint["correction_refs"])
+        validate_record_evidence(reader, checkpoint["evidence_refs"])
+        require("AUDIT_INCREMENTAL_REPLAY_FORBIDDEN", not checkpoint["correction_refs"] or (checkpoint["replay"] and checkpoint["membership_refs"] == membership and checkpoint["coverage_digest"] == canonical_digest(coverage)))
+        register_locator(locator_index, checkpoint_ref, "audit", checkpoint["audit_id"])
+        checkpoint_records[checkpoint_ref] = checkpoint
+
+    metrics = reader.read_json(state["execution_metrics_ref"])
+    rule_metrics(metrics)
+    require("METRICS_RUN_ID_MISMATCH", metrics["run_id"] == invocation["run_id"])
+    require("METRICS_EXECUTION_ID_MISMATCH", metrics["execution_id"] == invocation["execution_id"])
+    metrics_digest = bytes_digest(reader.read_bytes(state["execution_metrics_ref"]))
+    require("STATE_METRICS_DIGEST_MISMATCH", state["execution_metrics_digest"] == metrics_digest)
+    require("STATE_METRICS_STATUS_MISMATCH", state["execution_metrics_status"] == metrics["status"])
+    require("STATE_METRICS_REASON_MISMATCH", state["execution_metrics_degradation_reason"] == metrics["degradation_reason"])
+
+    terminal_records: dict[str, dict[str, Any]] = {}
+    require("TERMINAL_EVIDENCE_REFS_INVALID", isinstance(state["terminal_evidence_refs"], list) and bool(state["terminal_evidence_refs"]) and len(state["terminal_evidence_refs"]) == len(set(state["terminal_evidence_refs"])))
+    for evidence_ref in state["terminal_evidence_refs"]:
+        evidence = closed_mapping("TERMINAL_EVIDENCE_SHAPE_INVALID", reader.read_json(evidence_ref), TERMINAL_EVIDENCE_KEYS)
+        require("TERMINAL_EVIDENCE_SCHEMA_INVALID", evidence["schema_version"] == 1)
+        require("TERMINAL_EVIDENCE_IDENTITY_MISMATCH", evidence["run_id"] == invocation["run_id"] and evidence["execution_id"] == invocation["execution_id"])
+        require("TERMINAL_TASK_STATUS_MISMATCH", evidence["task_statuses"] == [{"task_ref": ref, "status": task_contracts[ref]["status"]} for ref in task_refs])
+        expected_ac_refs = [f"{ref}#{ac['id']}" for ref in task_refs for ac in task_contracts[ref]["task_validation"]["acceptance_criteria"]]
+        require("TERMINAL_AC_COVERAGE_MISMATCH", evidence["acceptance_criterion_refs"] == expected_ac_refs)
+        require("TERMINAL_VALIDATOR_COVERAGE_MISMATCH", evidence["validator_refs"] == all_primary_validator_refs + final_validator_refs)
+        require("TERMINAL_GATE_COVERAGE_MISMATCH", evidence["gate_refs"] == all_gate_refs)
+        require("TERMINAL_AUDIT_COVERAGE_MISMATCH", evidence["audit_checkpoint_refs"] == checkpoint_refs)
+        validate_record_evidence(reader, evidence["evidence_refs"])
+        terminal_records[evidence_ref] = evidence
+
+    result = closed_mapping("RESULT_V3_SHAPE_INVALID", reader.read_json(state["result_ref"]), RESULT_V3_KEYS)
+    require("RESULT_SCHEMA_SUPERSEDED", result["schema_version"] == 3)
+    require("RESULT_DIGEST_MISMATCH", result["result_digest"] == digest_without(result, "result_digest"))
+    dashboard = closed_mapping("DASHBOARD_V3_SHAPE_INVALID", reader.read_json(state["dashboard_ref"]), DASHBOARD_V3_KEYS)
+    require("DASHBOARD_SCHEMA_INVALID", dashboard["schema_version"] == 3)
+    require("DASHBOARD_DIGEST_MISMATCH", dashboard["dashboard_digest"] == digest_without(dashboard, "dashboard_digest"))
+    expected_task_results = [{"task_ref": ref, "status": task_contracts[ref]["status"], "evidence_refs": task_contracts[ref]["task_validation"]["evidence_refs"]} for ref in task_refs]
+    expected_dashboard_tasks = [{"task_ref": ref, "status": task_contracts[ref]["status"]} for ref in task_refs]
+    for projection, projection_name in ((result, "RESULT"), (dashboard, "DASHBOARD")):
+        require(f"{projection_name}_RUN_ID_MISMATCH", projection["run_id"] == invocation["run_id"])
+        require(f"{projection_name}_EXECUTION_ID_MISMATCH", projection["execution_id"] == invocation["execution_id"])
+        require(f"{projection_name}_STATUS_MISMATCH", projection["status"] == state["status"])
+        require(
+            f"{projection_name}_AUDIT_CONFIGURATION_MISMATCH",
+            projection["audit_configuration"]
+            == state_audit_configuration
+            == identity["audit_configuration"],
+        )
+        require(f"{projection_name}_AUDIT_REFS_MISMATCH", projection["audit_checkpoint_refs"] == checkpoint_refs)
+        require(f"{projection_name}_FINAL_VALIDATORS_MISMATCH", projection["final_validator_refs"] == final_validator_refs)
+        require(f"{projection_name}_TERMINAL_EVIDENCE_MISMATCH", projection["terminal_evidence_refs"] == state["terminal_evidence_refs"])
+        require(f"{projection_name}_METRICS_REF_MISMATCH", projection["execution_metrics_ref"] == state["execution_metrics_ref"])
+        require(f"{projection_name}_METRICS_DIGEST_MISMATCH", projection["execution_metrics_digest"] == metrics_digest)
+        require(f"{projection_name}_METRICS_STATUS_MISMATCH", projection["execution_metrics_status"] == metrics["status"])
+        require(f"{projection_name}_METRICS_REASON_MISMATCH", projection["execution_metrics_degradation_reason"] == metrics["degradation_reason"])
+        require(f"{projection_name}_NEXT_ACTION_MISMATCH", projection["next_action"] == state["next_action"])
+    require("RESULT_STATE_DIGEST_MISMATCH", result["state_digest"] == state["state_digest"])
+    require("RESULT_TASKS_MISMATCH", result["task_results"] == expected_task_results)
+    require("DASHBOARD_TASKS_MISMATCH", dashboard["tasks"] == expected_dashboard_tasks)
+
+    packet = closed_mapping("CONSISTENCY_V2_SHAPE_INVALID", reader.read_json(invocation["consistency_packet_ref"]), CONSISTENCY_V2_KEYS)
+    require("CONSISTENCY_SCHEMA_SUPERSEDED", packet["schema_version"] == 2)
+    require("CONSISTENCY_IDENTITY_MISMATCH", packet["run_id"] == invocation["run_id"] and packet["execution_id"] == invocation["execution_id"])
+    require("CONSISTENCY_STATUS_MISMATCH", packet["status"] == state["status"] == result["status"] == dashboard["status"])
+    require(
+        "CONSISTENCY_AUDIT_CONFIGURATION_MISMATCH",
+        packet["audit_configuration"]
+        == state_audit_configuration
+        == identity["audit_configuration"],
+    )
+    require("CONSISTENCY_STATE_DIGEST_MISMATCH", packet["state_digest"] == state["state_digest"])
+    require("CONSISTENCY_TASKS_MD_DIGEST_MISMATCH", packet["tasks_md_digest"] == bytes_digest(reader.read_bytes(tasks_ref)))
+    require("CONSISTENCY_RESULT_MISMATCH", packet["result_ref"] == state["result_ref"] and packet["result_digest"] == bytes_digest(reader.read_bytes(state["result_ref"])))
+    require("CONSISTENCY_DASHBOARD_MISMATCH", packet["dashboard_ref"] == state["dashboard_ref"] and packet["dashboard_digest"] == bytes_digest(reader.read_bytes(state["dashboard_ref"])))
+    require("CONSISTENCY_METRICS_MISMATCH", packet["metrics_ref"] == state["execution_metrics_ref"] and packet["metrics_digest"] == metrics_digest)
+    require("CONSISTENCY_AUDIT_REFS_MISMATCH", packet["audit_checkpoint_refs"] == checkpoint_refs)
+    require("CONSISTENCY_AUDIT_DIGESTS_MISMATCH", packet["audit_checkpoint_digests"] == [bytes_digest(reader.read_bytes(ref)) for ref in checkpoint_refs])
+    require("CONSISTENCY_TERMINAL_REFS_MISMATCH", packet["terminal_evidence_refs"] == state["terminal_evidence_refs"])
+    require("CONSISTENCY_TERMINAL_DIGESTS_MISMATCH", packet["terminal_evidence_digests"] == [bytes_digest(reader.read_bytes(ref)) for ref in state["terminal_evidence_refs"]])
+    validator_digest = canonical_digest({ref: bytes_digest(reader.read_bytes(ref)) for ref in all_primary_validator_refs + final_validator_refs})
+    require("CONSISTENCY_VALIDATOR_DIGEST_MISMATCH", packet["validator_digest"] == validator_digest)
+    require("TERMINAL_EVIDENCE_STATUS_MISMATCH", all(record["status"] == state["status"] for record in terminal_records.values()))
+
+    if state["status"] in TERMINAL_SUCCESS:
+        require("TERMINAL_TASK_INCOMPLETE", all(task["status"] == "passed" and task["task_validation"]["status"] == "passed" for task in task_contracts.values()))
+        require("TERMINAL_VALIDATOR_INCOMPLETE", all(record["result"] == "passed" for record in list(validator_records.values()) + list(final_records.values())))
+        require("TERMINAL_GATE_INCOMPLETE", all(record["status"] == "passed" for record in gate_records.values()))
+        require("TERMINAL_AUDIT_INCOMPLETE", all(record["status"] in {"approved", "not-applicable"} for record in checkpoint_records.values()))
+
+    return {
+        "status": "passed",
+        "schema_version": 1,
+        "run_id": invocation["run_id"],
+        "execution_id": invocation["execution_id"],
+        "tasks": len(task_refs),
+        "audit_boundaries": len(checkpoint_refs),
+        "files_read": len(reader._bytes),
+    }
+
+
+def fixture_json_bytes(value: Any) -> bytes:
+    return (json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+
+
+def fixture_write_json(root: Path, ref: str, value: Any) -> None:
+    path = root / ref
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(fixture_json_bytes(value))
+
+
+def fixture_write_markdown_json(root: Path, ref: str, heading: str, value: Any) -> None:
+    path = root / ref
+    path.parent.mkdir(parents=True, exist_ok=True)
+    encoded = json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False)
+    path.write_text(f"# {heading}\n\n```json\n{encoded}\n```\n", encoding="utf-8")
+
+
+def fixture_audit_configuration(frequency: str, source: str) -> dict[str, Any]:
+    configuration = {
+        "schema_version": 1,
+        "frequency": frequency,
+        "source": source,
+        "policy_digest": "",
+    }
+    configuration["policy_digest"] = canonical_digest(
+        {
+            key: configuration[key]
+            for key in ("schema_version", "frequency", "source")
+        }
+    )
+    return configuration
+
+
+def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "default") -> tuple[str, str]:
+    plan_dir = "planos/real-run"
+    tasks_ref = f"{plan_dir}/tasks.md"
+    invocation_ref = f"{plan_dir}/execution-input.json"
+    demand_ref = f"{plan_dir}/demanda.md"
+    analysis_ref = f"{plan_dir}/analise.md"
+    task_ref = f"{plan_dir}/task-1.md"
+    target_ref = "src/feature.txt"
+    validator_ref = f"{plan_dir}/evidence/task-1-validator.json"
+    final_validator_ref = f"{plan_dir}/evidence/final-validator.json"
+    handoff_ref = f"{plan_dir}/evidence/task-1-handoff.json"
+    gate_ref = f"{plan_dir}/evidence/task-1-gate.json"
+    checkpoint_ref = f"{plan_dir}/evidence/phase-audit.json"
+    terminal_ref = f"{plan_dir}/evidence/terminal.json"
+    metrics_ref = f"{plan_dir}/evidence/execution-metrics.json"
+    result_ref = f"{plan_dir}/result.json"
+    dashboard_ref = f"{plan_dir}/dashboard.json"
+    consistency_ref = f"{plan_dir}/consistency.json"
+    evidence_ref = f"{plan_dir}/evidence/observed.log"
+    audit_run_ref = f"{plan_dir}/evidence/auditor-run.log"
+
+    (root / demand_ref).parent.mkdir(parents=True, exist_ok=True)
+    (root / demand_ref).write_text("Implement the validated fixture.\n", encoding="utf-8")
+    (root / analysis_ref).write_text("# Analysis\n\nDecision-complete fixture.\n", encoding="utf-8")
+    (root / target_ref).parent.mkdir(parents=True, exist_ok=True)
+    (root / target_ref).write_text("validated output\n", encoding="utf-8")
+    (root / evidence_ref).parent.mkdir(parents=True, exist_ok=True)
+    (root / evidence_ref).write_text("validator and acceptance evidence\n", encoding="utf-8")
+    (root / audit_run_ref).write_text("independent audit observation\n", encoding="utf-8")
+
+    audit_config = fixture_audit_configuration(frequency, source)
+    identity = {
+        "schema_version": 2,
+        "command": "loki-implement-feature",
+        "demand_digest": bytes_digest((root / demand_ref).read_bytes()),
+        "analysis_digest": bytes_digest((root / analysis_ref).read_bytes()),
+        "plan_directory": plan_dir,
+        "retry_limit": 3,
+        "audit_configuration": audit_config,
+    }
+    run_id = derive_typed_id("loki-run-v2", identity)
+    execution_id = derive_typed_id("loki-execution-v2", {"run_id": run_id, "command_identity": identity})
+    invocation = {
+        "schema_version": 2,
+        "command_identity": identity,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "demand_ref": demand_ref,
+        "analysis_ref": analysis_ref,
+        "state_ref": tasks_ref,
+        "result_ref": result_ref,
+        "dashboard_ref": dashboard_ref,
+        "consistency_packet_ref": consistency_ref,
+    }
+    fixture_write_json(root, invocation_ref, invocation)
+
+    validator = {
+        "schema_version": 1,
+        "validator_id": "validator-v1:task-1",
+        "identity": "deterministic-validator:task-1",
+        "task_ref": task_ref,
+        "acceptance_criterion_refs": ["AC-1"],
+        "evidence_refs": [evidence_ref],
+        "result": "passed",
+    }
+    final_validator = {
+        "schema_version": 1,
+        "validator_id": "validator-v1:final",
+        "identity": "deterministic-validator:final",
+        "task_ref": None,
+        "acceptance_criterion_refs": [f"{task_ref}#AC-1"],
+        "evidence_refs": [evidence_ref],
+        "result": "passed",
+    }
+    handoff = {
+        "schema_version": 1,
+        "handoff_id": "handoff-v1:task-1",
+        "task_ref": task_ref,
+        "writer_identity": "writer:task-1",
+        "target_digests": [{"path": target_ref, "digest": bytes_digest((root / target_ref).read_bytes())}],
+        "evidence_refs": [evidence_ref],
+    }
+    gate = {
+        "schema_version": 1,
+        "gate_id": "gate-v1:approval",
+        "task_ref": task_ref,
+        "status": "passed",
+        "evidence_refs": [evidence_ref],
+    }
+    fixture_write_json(root, validator_ref, validator)
+    fixture_write_json(root, final_validator_ref, final_validator)
+    fixture_write_json(root, handoff_ref, handoff)
+    fixture_write_json(root, gate_ref, gate)
+
+    if frequency == "task":
+        boundary_type, boundary_ref, membership = "task", task_ref, [task_ref]
+    elif frequency == "phase":
+        boundary_type, boundary_ref, membership = "phase", "phase:fase1", [task_ref]
+    else:
+        boundary_type, boundary_ref, membership = "plan", plan_dir, [task_ref]
+    target_digest_rows = [f"{target_ref}={handoff['target_digests'][0]['digest']}"]
+    coverage = {
+        "membership_refs": membership,
+        "covered_handoff_refs": [handoff_ref],
+        "covered_target_digests": target_digest_rows,
+        "primary_validation_refs": [validator_ref],
+        "final_validator_refs": [final_validator_ref],
+    }
+    checkpoint = {
+        "schema_version": 1,
+        "audit_id": "",
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "policy_digest": audit_config["policy_digest"],
+        "frequency": frequency,
+        "boundary_type": boundary_type,
+        "boundary_ref": boundary_ref,
+        "iteration": 0,
+        "predecessor_audit_ref": None,
+        "replay": False,
+        "replay_cause": None,
+        "membership_refs": membership,
+        "coverage_digest": canonical_digest(coverage),
+        "covered_handoff_refs": [handoff_ref],
+        "covered_target_digests": target_digest_rows,
+        "primary_validation_refs": [validator_ref],
+        "final_validator_refs": [final_validator_ref],
+        "auditor_identity": "auditor:independent",
+        "writer_identities": ["writer:task-1"],
+        "auditor_run_refs": [audit_run_ref],
+        "finding_refs": [],
+        "correction_refs": [],
+        "evidence_refs": [evidence_ref],
+        "status": "approved",
+        "next_action": "reconcile terminal state",
+    }
+    checkpoint["audit_id"] = derive_typed_id("execution-audit-v1", audit_identity_material(checkpoint))
+    fixture_write_json(root, checkpoint_ref, checkpoint)
+
+    task_contract = {
+        "schema_version": 1,
+        "task_id": "task-1",
+        "phase": "fase1",
+        "status": "passed",
+        "dependencies": [],
+        "target_files": [target_ref],
+        "writer_identity": "writer:task-1",
+        "handoff_refs": [handoff_ref],
+        "gate_refs": [gate_ref],
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "task_validation": {
+            "schema_version": 1,
+            "acceptance_criteria": [{"id": "AC-1", "statement": "Real bytes are validated.", "required": True}],
+            "primary_route": {"type": "deterministic", "validator_ref": validator_ref},
+            "evidence_refs": [evidence_ref],
+            "status": "passed",
+        },
+    }
+    fixture_write_markdown_json(root, task_ref, "task-1", {"task_contract": task_contract})
+
+    metrics_cases, _ = load_fixtures()
+    metrics = deepcopy(next(case["payload"] for case in metrics_cases if case["id"] == "metrics-exact"))
+    metrics["run_id"] = run_id
+    metrics["execution_id"] = execution_id
+    digest_hex = metrics_hash(metrics)
+    metrics["metrics_id"] = f"execution-metrics-v1:{digest_hex}"
+    metrics["metrics_digest"] = f"sha256:{digest_hex}"
+    fixture_write_json(root, metrics_ref, metrics)
+    metrics_bytes_digest = bytes_digest((root / metrics_ref).read_bytes())
+
+    terminal = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "status": "completed",
+        "task_statuses": [{"task_ref": task_ref, "status": "passed"}],
+        "acceptance_criterion_refs": [f"{task_ref}#AC-1"],
+        "validator_refs": [validator_ref, final_validator_ref],
+        "gate_refs": [gate_ref],
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "evidence_refs": [evidence_ref],
+    }
+    fixture_write_json(root, terminal_ref, terminal)
+
+    state = {
+        "schema_version": 3,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "command_identity_digest": canonical_digest(identity),
+        "execution_input_digest": bytes_digest((root / invocation_ref).read_bytes()),
+        "audit_configuration": deepcopy(audit_config),
+        "status": "completed",
+        "task_refs": [task_ref],
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "result_ref": result_ref,
+        "dashboard_ref": dashboard_ref,
+        "consistency_packet_ref": consistency_ref,
+        "terminal_evidence_refs": [terminal_ref],
+        "execution_metrics_ref": metrics_ref,
+        "execution_metrics_digest": metrics_bytes_digest,
+        "execution_metrics_status": metrics["status"],
+        "execution_metrics_degradation_reason": metrics["degradation_reason"],
+        "next_action": "none",
+        "state_digest": "",
+    }
+    state["state_digest"] = digest_without(state, "state_digest")
+    result = {
+        "schema_version": 3,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "status": "completed",
+        "state_digest": state["state_digest"],
+        "audit_configuration": audit_config,
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "task_results": [{"task_ref": task_ref, "status": "passed", "evidence_refs": [evidence_ref]}],
+        "final_validator_refs": [final_validator_ref],
+        "terminal_evidence_refs": [terminal_ref],
+        "execution_metrics_ref": metrics_ref,
+        "execution_metrics_digest": metrics_bytes_digest,
+        "execution_metrics_status": metrics["status"],
+        "execution_metrics_degradation_reason": metrics["degradation_reason"],
+        "next_action": "none",
+        "result_digest": "",
+    }
+    result["result_digest"] = digest_without(result, "result_digest")
+    dashboard = {
+        "schema_version": 3,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "status": "completed",
+        "audit_configuration": audit_config,
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "tasks": [{"task_ref": task_ref, "status": "passed"}],
+        "final_validator_refs": [final_validator_ref],
+        "terminal_evidence_refs": [terminal_ref],
+        "execution_metrics_ref": metrics_ref,
+        "execution_metrics_digest": metrics_bytes_digest,
+        "execution_metrics_status": metrics["status"],
+        "execution_metrics_degradation_reason": metrics["degradation_reason"],
+        "next_action": "none",
+        "dashboard_digest": "",
+    }
+    dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
+    fixture_write_json(root, result_ref, result)
+    fixture_write_json(root, dashboard_ref, dashboard)
+    fixture_write_markdown_json(root, tasks_ref, "Run plan", {"loki_run_plan": {"schema_version": 1, "task_refs": [task_ref], "final_validator_refs": [final_validator_ref]}, "loki_run_state": state})
+
+    consistency = {
+        "schema_version": 2,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "status": "completed",
+        "audit_configuration": audit_config,
+        "state_digest": state["state_digest"],
+        "tasks_md_digest": bytes_digest((root / tasks_ref).read_bytes()),
+        "result_ref": result_ref,
+        "result_digest": bytes_digest((root / result_ref).read_bytes()),
+        "dashboard_ref": dashboard_ref,
+        "dashboard_digest": bytes_digest((root / dashboard_ref).read_bytes()),
+        "metrics_ref": metrics_ref,
+        "metrics_digest": metrics_bytes_digest,
+        "audit_checkpoint_refs": [checkpoint_ref],
+        "audit_checkpoint_digests": [bytes_digest((root / checkpoint_ref).read_bytes())],
+        "terminal_evidence_refs": [terminal_ref],
+        "terminal_evidence_digests": [bytes_digest((root / terminal_ref).read_bytes())],
+        "validator_digest": canonical_digest({ref: bytes_digest((root / ref).read_bytes()) for ref in [validator_ref, final_validator_ref]}),
+    }
+    fixture_write_json(root, consistency_ref, consistency)
+    return tasks_ref, invocation_ref
+
+
+def mutate_fixture_json(root: Path, ref: str, mutation: Callable[[dict[str, Any]], None]) -> None:
+    document = json.loads((root / ref).read_text(encoding="utf-8"))
+    mutation(document)
+    fixture_write_json(root, ref, document)
+
+
+def mutate_fixture_markdown(root: Path, ref: str, mutation: Callable[[dict[str, Any]], None]) -> None:
+    reader = RealRunReader(root)
+    document = reader.read_markdown_json(ref)
+    mutation(document)
+    fixture_write_markdown_json(root, ref, "Mutated contract", document)
+
+
+def mutate_fixture_state(
+    root: Path,
+    mutation: Callable[[dict[str, Any]], None],
+) -> None:
+    tasks_ref = "planos/real-run/tasks.md"
+    document = RealRunReader(root).read_markdown_json(tasks_ref)
+    state = document["loki_run_state"]
+    mutation(state)
+    if "state_digest" in state:
+        state["state_digest"] = digest_without(state, "state_digest")
+    fixture_write_markdown_json(root, tasks_ref, "Mutated contract", document)
+
+
+def mutate_state_audit_configuration_field(
+    root: Path,
+    field: str,
+    value: Any,
+) -> None:
+    mutate_fixture_state(
+        root,
+        lambda state: state["audit_configuration"].update(
+            {field: deepcopy(value)}
+        ),
+    )
+
+
+def mutate_state_audit_configuration_schema_version(
+    root: Path,
+    value: Any,
+) -> None:
+    def mutation(state: dict[str, Any]) -> None:
+        configuration = state["audit_configuration"]
+        configuration["schema_version"] = deepcopy(value)
+        configuration["policy_digest"] = canonical_digest(
+            {
+                key: configuration[key]
+                for key in ("schema_version", "frequency", "source")
+            }
+        )
+
+    mutate_fixture_state(root, mutation)
+
+
+def mutate_audit_checkpoint_field(
+    root: Path,
+    field: str,
+    value: Any,
+) -> None:
+    mutate_fixture_json(
+        root,
+        "planos/real-run/evidence/phase-audit.json",
+        lambda checkpoint: checkpoint.update({field: deepcopy(value)}),
+    )
+
+
+def mutate_terminal_audit_finding(root: Path) -> None:
+    checkpoint_ref = "planos/real-run/evidence/phase-audit.json"
+    mutate_fixture_json(root, checkpoint_ref, lambda doc: doc.update(status="finding"))
+    mutate_fixture_json(
+        root,
+        "planos/real-run/consistency.json",
+        lambda doc: doc.update(audit_checkpoint_digests=[bytes_digest((root / checkpoint_ref).read_bytes())]),
+    )
+
+
+def mutate_non_success_terminal_evidence_mismatch(root: Path) -> None:
+    tasks_ref = "planos/real-run/tasks.md"
+    result_ref = "planos/real-run/result.json"
+    dashboard_ref = "planos/real-run/dashboard.json"
+    consistency_ref = "planos/real-run/consistency.json"
+
+    tasks_document = RealRunReader(root).read_markdown_json(tasks_ref)
+    state = tasks_document["loki_run_state"]
+    state["status"] = "failed"
+    state["state_digest"] = digest_without(state, "state_digest")
+    fixture_write_markdown_json(root, tasks_ref, "Mutated contract", tasks_document)
+
+    result = json.loads((root / result_ref).read_text(encoding="utf-8"))
+    result["status"] = "failed"
+    result["state_digest"] = state["state_digest"]
+    result["result_digest"] = digest_without(result, "result_digest")
+    fixture_write_json(root, result_ref, result)
+
+    dashboard = json.loads((root / dashboard_ref).read_text(encoding="utf-8"))
+    dashboard["status"] = "failed"
+    dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
+    fixture_write_json(root, dashboard_ref, dashboard)
+
+    consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
+    consistency["status"] = "failed"
+    consistency["state_digest"] = state["state_digest"]
+    consistency["tasks_md_digest"] = bytes_digest((root / tasks_ref).read_bytes())
+    consistency["result_digest"] = bytes_digest((root / result_ref).read_bytes())
+    consistency["dashboard_digest"] = bytes_digest((root / dashboard_ref).read_bytes())
+    fixture_write_json(root, consistency_ref, consistency)
+
+
+def real_run_self_test() -> list[dict[str, str]]:
+    results: list[dict[str, str]] = []
+    with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
+        root = Path(temp)
+        tasks_ref, invocation_ref = build_real_run_fixture(root)
+        validate_real_run(root, tasks_ref, invocation_ref)
+        results.append({"id": "real-run-positive", "result": "accepted"})
+    for frequency in ("task", "plan"):
+        with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
+            root = Path(temp)
+            tasks_ref, invocation_ref = build_real_run_fixture(root, frequency=frequency, source="explicit")
+            validate_real_run(root, tasks_ref, invocation_ref)
+            results.append({"id": f"real-run-{frequency}-boundary", "result": "accepted"})
+
+    mutations: list[tuple[str, str, Callable[[Path], None]]] = [
+        ("real-run-target-bytes", "HANDOFF_TARGET_DIGEST_MISMATCH", lambda root: (root / "src/feature.txt").write_text("mutated bytes\n", encoding="utf-8")),
+        ("real-run-self-attested-flag", "EXECUTION_INPUT_SHAPE_INVALID", lambda root: mutate_fixture_json(root, "planos/real-run/execution-input.json", lambda doc: doc.update(schema_valid=True))),
+        ("real-run-state-digest", "STATE_DIGEST_MISMATCH", lambda root: mutate_fixture_markdown(root, "planos/real-run/tasks.md", lambda doc: doc["loki_run_state"].update(state_digest="sha256:" + "0" * 64))),
+        ("real-run-state-audit-configuration-missing", "STATE_V3_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state.pop("audit_configuration"))),
+        ("real-run-state-extra-field", "STATE_V3_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state.update(unexpected_state_field=True))),
+        ("real-run-state-audit-configuration-extra-field", "AUDIT_CONFIGURATION_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state["audit_configuration"].update(unexpected_configuration_field=True))),
+        ("real-run-state-audit-frequency-divergence", "STATE_AUDIT_CONFIGURATION_MISMATCH", lambda root: mutate_fixture_state(root, lambda state: state.update(audit_configuration=fixture_audit_configuration("task", "explicit")))),
+        ("real-run-state-audit-source-divergence", "STATE_AUDIT_CONFIGURATION_MISMATCH", lambda root: mutate_fixture_state(root, lambda state: state.update(audit_configuration=fixture_audit_configuration("phase", "explicit")))),
+        ("real-run-state-audit-policy-digest-divergence", "AUDIT_POLICY_DIGEST_INVALID", lambda root: mutate_fixture_state(root, lambda state: state["audit_configuration"].update(policy_digest="sha256:" + "0" * 64))),
+        ("real-run-state-audit-schema-version-boolean", "AUDIT_CONFIGURATION_SCHEMA_INVALID", lambda root: mutate_state_audit_configuration_schema_version(root, True)),
+        ("real-run-demand-bytes", "DEMAND_DIGEST_MISMATCH", lambda root: (root / "planos/real-run/demanda.md").write_text("mutated demand\n", encoding="utf-8")),
+        ("real-run-audit-membership", "AUDIT_MEMBERSHIP_MISMATCH", lambda root: mutate_fixture_json(root, "planos/real-run/evidence/phase-audit.json", lambda doc: doc.update(membership_refs=["planos/real-run/task-1.md", "planos/real-run/task-x.md"]))),
+        ("real-run-writer-auditor", "AUDIT_CHECKPOINT_NOT_INDEPENDENT", lambda root: mutate_fixture_json(root, "planos/real-run/evidence/phase-audit.json", lambda doc: doc.update(auditor_identity="writer:task-1"))),
+        ("real-run-dag-ref", "TASK_DEPENDENCY_MISSING", lambda root: mutate_fixture_markdown(root, "planos/real-run/task-1.md", lambda doc: doc["task_contract"].update(dependencies=["task-missing"]))),
+        ("real-run-terminal-audit", "TERMINAL_AUDIT_INCOMPLETE", mutate_terminal_audit_finding),
+        ("real-run-result-status", "RESULT_STATUS_MISMATCH", lambda root: mutate_fixture_json(root, "planos/real-run/result.json", lambda doc: (doc.update(status="failed"), doc.update(result_digest=digest_without(doc, "result_digest"))))),
+        ("real-run-non-success-terminal-evidence", "TERMINAL_EVIDENCE_STATUS_MISMATCH", mutate_non_success_terminal_evidence_mismatch),
+    ]
+    malformed_audit_scalars: tuple[tuple[str, Any], ...] = (
+        ("array", ["phase"]),
+        ("object", {"value": "phase"}),
+        ("number", 1),
+        ("boolean", True),
+        ("null", None),
+    )
+    for field, expected in (
+        ("frequency", "AUDIT_FREQUENCY_TYPE_INVALID"),
+        ("source", "AUDIT_FREQUENCY_SOURCE_TYPE_INVALID"),
+    ):
+        for type_name, value in malformed_audit_scalars:
+            mutations.append(
+                (
+                    f"real-run-state-audit-{field}-{type_name}",
+                    expected,
+                    lambda root, field=field, value=value: (
+                        mutate_state_audit_configuration_field(root, field, value)
+                    ),
+                )
+            )
+    malformed_checkpoint_fields: tuple[tuple[str, str, Any, str], ...] = (
+        (
+            "schema-version-boolean",
+            "schema_version",
+            True,
+            "AUDIT_CHECKPOINT_SCHEMA_INVALID",
+        ),
+        (
+            "run-id-array",
+            "run_id",
+            ["loki-run-v2:invalid"],
+            "AUDIT_CHECKPOINT_RUN_ID_INVALID",
+        ),
+        (
+            "execution-id-array",
+            "execution_id",
+            ["loki-execution-v2:invalid"],
+            "AUDIT_CHECKPOINT_EXECUTION_ID_INVALID",
+        ),
+        (
+            "policy-digest-array",
+            "policy_digest",
+            ["sha256:invalid"],
+            "AUDIT_CHECKPOINT_POLICY_DIGEST_INVALID",
+        ),
+        (
+            "frequency-array",
+            "frequency",
+            ["phase"],
+            "AUDIT_CHECKPOINT_FREQUENCY_INVALID",
+        ),
+        (
+            "boundary-type-array",
+            "boundary_type",
+            ["phase"],
+            "AUDIT_CHECKPOINT_BOUNDARY_INVALID",
+        ),
+        (
+            "coverage-digest-array",
+            "coverage_digest",
+            ["sha256:invalid"],
+            "AUDIT_CHECKPOINT_COVERAGE_INVALID",
+        ),
+        (
+            "status-array",
+            "status",
+            ["approved"],
+            "AUDIT_CHECKPOINT_STATUS_INVALID",
+        ),
+        (
+            "membership-object-item",
+            "membership_refs",
+            [{"value": "planos/real-run/task-1.md"}],
+            "AUDIT_CHECKPOINT_LIST_INVALID",
+        ),
+        (
+            "covered-target-digest-object-item",
+            "covered_target_digests",
+            [{"value": "src/feature.txt=sha256:invalid"}],
+            "AUDIT_CHECKPOINT_LIST_INVALID",
+        ),
+    )
+    for case_suffix, field, value, expected in malformed_checkpoint_fields:
+        mutations.append(
+            (
+                f"real-run-checkpoint-{case_suffix}",
+                expected,
+                lambda root, field=field, value=value: (
+                    mutate_audit_checkpoint_field(root, field, value)
+                ),
+            )
+        )
+    for case_id, expected, mutation in mutations:
+        with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
+            root = Path(temp)
+            tasks_ref, invocation_ref = build_real_run_fixture(root)
+            mutation(root)
+            try:
+                validate_real_run(root, tasks_ref, invocation_ref)
+            except ContractError as exc:
+                require("REAL_RUN_MUTATION_ERROR_MISMATCH", str(exc) == expected)
+            else:
+                raise ContractError(f"REAL_RUN_MUTATION_ACCEPTED:{case_id}")
+            results.append({"id": case_id, "result": "expected-rejection"})
+    with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
+        root = Path(temp)
+        tasks_ref, invocation_ref = build_real_run_fixture(root)
+        target = root / "src/feature.txt"
+        real_target = root / "src/real-feature.txt"
+        target.rename(real_target)
+        target.symlink_to(real_target)
+        try:
+            validate_real_run(root, tasks_ref, invocation_ref)
+        except ContractError as exc:
+            require("REAL_RUN_SYMLINK_ERROR_MISMATCH", str(exc) == "REF_SYMLINK_FORBIDDEN")
+        else:
+            raise ContractError("REAL_RUN_SYMLINK_ACCEPTED")
+        results.append({"id": "real-run-symlink", "result": "expected-rejection"})
+    return results
+
+
 RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "demand": rule_demand,
     "analysis": rule_analysis,
@@ -703,6 +2094,7 @@ RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "classification": rule_classification,
     "execution-state": rule_execution_state,
     "dashboard": rule_dashboard,
+    "response-normative-conflict": rule_response_normative_conflict,
     "manual": rule_manual,
     "current-schema": rule_current_schema,
     "metrics": rule_metrics,
@@ -710,6 +2102,9 @@ RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "liveness": rule_liveness,
     "materiality-gate": rule_materiality_gate,
     "cost-policy": rule_cost_policy,
+    "audit-configuration": rule_audit_configuration,
+    "audit-checkpoint": rule_audit_checkpoint,
+    "audit-replay": rule_audit_replay,
     "consistency": rule_consistency,
 }
 
@@ -738,7 +2133,10 @@ def validate_coverage(cases: list[dict[str, Any]], exclusions: list[dict[str, An
     exclusion_names = [item.get("scenario") for item in exclusions]
     require("MATRIX_EXCLUSION_DUPLICATE", len(exclusion_names) == len(set(exclusion_names)))
     require("MATRIX_EXCLUSION_INVALID", set(exclusion_names) == INSTALLER_EXCLUSIONS)
-    require("MATRIX_EXCLUSION_ROUTE_INVALID", all(item.get("routed_to") == "task-3.2" and nonempty(item.get("reason")) for item in exclusions))
+    require(
+        "MATRIX_EXCLUSION_ROUTE_INVALID",
+        all(item.get("routed_to") == "scripts/validate-install-loki-upgrade.py" and nonempty(item.get("reason")) for item in exclusions),
+    )
     require("MATRIX_COVERAGE_INCOMPLETE", set(implemented) == matrix - INSTALLER_EXCLUSIONS)
     supplements = {case.get("id") for case in cases if case.get("matrix") is False}
     require("SUPPLEMENTAL_COVERAGE_INCOMPLETE", REQUIRED_SUPPLEMENTAL <= supplements)
@@ -774,6 +2172,8 @@ def self_test() -> dict[str, Any]:
         seen_ids.add(case["id"])
         accepted, code = validate_case(case)
         results.append({"id": case["id"], "result": "accepted" if accepted else "expected-rejection", "error": code})
+    real_results = real_run_self_test()
+    results.extend(real_results)
     return {
         "status": "passed",
         "schema_version": 1,
@@ -782,9 +2182,10 @@ def self_test() -> dict[str, Any]:
         "matrix_implemented": len(MATRIX_SCENARIOS) - len(INSTALLER_EXCLUSIONS),
         "matrix_excluded": len(INSTALLER_EXCLUSIONS),
         "excluded_scenarios": sorted(INSTALLER_EXCLUSIONS),
-        "exclusion_destination": "task-3.2",
+        "exclusion_destination": "scripts/validate-install-loki-upgrade.py",
         "supplemental_required": sorted(REQUIRED_SUPPLEMENTAL),
         "cases_executed": len(results),
+        "real_run_cases": len(real_results),
         "results": results,
     }
 
@@ -793,17 +2194,25 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true", help="run every current contract fixture")
     parser.add_argument("--consistency-packet", metavar="PATH", help="validate one executable cross-surface consistency packet")
+    parser.add_argument("--project-root", metavar="PATH", help="project root containing one persisted run")
+    parser.add_argument("--tasks-md", metavar="PATH", help="strict planos descendant tasks.md path")
+    parser.add_argument("--invocation-input", metavar="PATH", help="normalized execution input v2 JSON path")
     args = parser.parse_args()
-    if args.self_test == bool(args.consistency_packet):
-        parser.error("select exactly one of --self-test or --consistency-packet PATH")
+    real_mode = any((args.project_root, args.tasks_md, args.invocation_input))
+    if sum((args.self_test, bool(args.consistency_packet), real_mode)) != 1:
+        parser.error("select exactly one mode: --self-test, --consistency-packet PATH, or the three real-run arguments")
+    if real_mode and not all((args.project_root, args.tasks_md, args.invocation_input)):
+        parser.error("real-run mode requires --project-root, --tasks-md, and --invocation-input")
     try:
         if args.self_test:
             result = self_test()
-        else:
+        elif args.consistency_packet:
             document = json.loads(Path(args.consistency_packet).read_text(encoding="utf-8"))
             require("CONSISTENCY_WRAPPER_INVALID", set(document) == {"consistency_packet"} and isinstance(document["consistency_packet"], dict))
             validate_consistency_packet(document["consistency_packet"])
-            result = {"status": "passed", "schema_version": 1, "packet": args.consistency_packet}
+            result = {"status": "passed", "schema_version": 2, "packet": args.consistency_packet}
+        else:
+            result = validate_real_run(Path(args.project_root), args.tasks_md, args.invocation_input)
         print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
     except (ContractError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         print(json.dumps({"status": "failed", "error": str(exc)}, sort_keys=True), file=sys.stderr)

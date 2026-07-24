@@ -4,7 +4,7 @@ description: Create or review executable Loki action plans from a validated dema
 doc_id: "lf-action-plan-authoring"
 version: "1.0.0"
 status: active
-last_updated: "2026-07-23"
+last_updated: "2026-07-24"
 scope: "Current action-plan materialization inside unified feature execution"
 not_scope: "Public input routing, production writes or compatibility planning"
 authority: "Approved decisions and current lf-implement-feature-execution contracts"
@@ -62,9 +62,10 @@ an unresolved material conflict instead of inventing precedence.
 ## Procedure
 
 1. Confirm the validated input supplied by `loki-implement-feature`: non-empty
-   demand, readable Markdown analysis, typed run/execution identities, digests,
-   inherited restrictions, normalized plan directory, retry limit, and any
-   `loki-human-decision-preflight` decision record.
+   demand, readable Markdown analysis, complete command identity v2, complete
+   execution input v2, direct audit configuration v1, typed run/execution
+   identities, digests, inherited restrictions, normalized plan directory,
+   retry limit, and any `loki-human-decision-preflight` decision record.
 2. Read only the sources required to plan safely. Use `lf-index-navigator`
    when durable consumer documentation in `/docs` is relevant.
 3. Build the phase model before writing files:
@@ -89,9 +90,13 @@ an unresolved material conflict instead of inventing precedence.
    invent a second directory approval.
 5. Generate `tasks.md`, one `task-N.M.md` per task, phase subfolders under
    `interaction/`, `builds/`, and `retrospetivas/`, and the current plan-level
-   DAG, target-decision ledger and `loki_run_state`. Add `preflights/` before
-   agent dispatch and create `execution-knowledge/entries/` only when optional
-   non-blocking capture applies.
+   DAG, target-decision ledger and exact `loki_run_state` v3. Persist the
+   command identity v2, execution input v2, complete direct audit configuration
+   v1, active audit checkpoint refs, result v3 locator, dashboard locator and
+   consistency packet v2 locator without compatibility fields. Add
+   `preflights/` before agent dispatch and create
+   `execution-knowledge/entries/` only when optional non-blocking capture
+   applies.
 6. Give every task at least one atomic AC, exactly one primary validation route,
    an evidence destination, and local locators for immutable validation cycles.
 7. Run the structural checks from
@@ -127,7 +132,9 @@ Use these package-root templates when writing artifacts:
 ## Output Standard
 
 The final plan must let `loki-implement-feature` resume from verified disk state
-without conversation memory. Include typed input identity, DAG, target
-decisions, next action, blockers, human validation, owners, target files, ACs,
-exactly one validation route per task, evidence/cycle locators and the current
-state digest in the files themselves.
+without conversation memory. Include command identity v2, execution input v2,
+direct audit configuration v1, typed identities, DAG, target decisions, next
+action, human validation, owners, target files, ACs, exactly one validation
+route per task, audit checkpoint/evidence/cycle locators, result v3 and
+consistency v2 locators, and the current state digest in the files themselves.
+Preserve Metrics v1 and task_validation v1 unchanged.

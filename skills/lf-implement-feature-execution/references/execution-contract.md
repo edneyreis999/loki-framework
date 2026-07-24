@@ -1,9 +1,9 @@
 ---
 doc_id: "lf-implement-feature-execution-execution-contract"
-version: "2.0.0"
+version: "3.0.0"
 status: active
-last_updated: "2026-07-22"
-scope: "Current unified execution state, hierarchical execution metrics, plan artifacts, target decisions, DAG scheduling, ownership, liveness, cancellation, resume, and terminal projection"
+last_updated: "2026-07-24"
+scope: "Current unified execution identity/input, audit-boundary scheduling, state, hierarchical execution metrics, plan artifacts, target decisions, ownership, liveness, cancellation, resume, and terminal projection"
 not_scope: "Public command inputs, session-preflight record internals, validation-cycle record internals, installation, or superseded execution contracts"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
 canonical_source: "skills/lf-implement-feature-execution/references/execution-contract.md"
@@ -22,10 +22,10 @@ replaced_by: null
 # Unified Feature Execution Contract
 
 <summary>
-Define the only current LokiRunState v2, execution_metrics v1,
-implement_feature_execution_result v2, managed artifact layout,
-target-decision provenance, DAG/owner scheduler, liveness/cancellation/resume
-protocol, and truthful terminal projection for unified feature execution.
+Define the only current command identity v2, execution input v2, audit
+configuration v1, LokiRunState v3, execution_audit_checkpoint v1,
+execution_metrics v1, implement_feature_execution_result v3, consistency packet
+v2, managed layout, DAG/boundary schedulers, and terminal projection.
 </summary>
 
 ## Authority, Trust, And Current-Only Gate
@@ -61,6 +61,7 @@ write and report both locators plus the minimum decision.
 |   |   +-- cycle-<N>-writer-response.yaml
 |   +-- learned/learned-<finding-id>.md
 |-- builds/faseN/
+|-- builds/audits/<boundary_type>/<boundary_path_id>/checkpoint-v1-<iteration>.yaml
 |-- builds/metrics/execution-metrics.json
 |-- retrospetivas/faseN/
 +-- execution-knowledge/entries/
@@ -74,27 +75,62 @@ execution-knowledge trees are optional and separately owned.
 
 ## Execution Input And Target Decisions
 
-`EXEC-INPUT-01` — Before state creation require:
+`EXEC-INPUT-01` — Before state creation require exactly this closed schema:
 
 ```yaml
 execution_input:
-  schema_version: 1
-  invoking_command: "loki-implement-feature"
-  run_id: "<typed non-empty opaque run ID>"
-  execution_id: "<typed non-empty stable execution ID>"
+  schema_version: 2
+  command_identity:
+    schema_version: 2
+    command: "loki-implement-feature"
+    demand_digest: "sha256:<64 lowercase hex>"
+    analysis_digest: "sha256:<64 lowercase hex>"
+    plan_directory: "<normalized project-relative POSIX path below planos/>"
+    retry_limit: 3
+    audit_configuration:
+      schema_version: 1
+      frequency: "task | phase | plan"
+      source: "default | explicit"
+      policy_digest: "sha256:<64 lowercase hex>"
+  run_id: "loki-run-v2:<64 lowercase hex>"
+  execution_id: "loki-execution-v2:<64 lowercase hex>"
   demand_ref: "<readable locator>"
-  demand_digest: "sha256:<64 lowercase hex>"
   analysis_ref: "<readable non-empty Markdown locator>"
-  analysis_digest: "sha256:<64 lowercase hex>"
-  plan_directory: "<normalized project-relative POSIX path below planos/>"
-  inherited_restrictions: []
-  retry_limit: 3
+  state_ref: "<normalized tasks.md locator>"
+  result_ref: "<normalized result v3 locator>"
+  dashboard_ref: "<normalized dashboard locator>"
+  consistency_packet_ref: "<normalized consistency v2 locator>"
 ```
 
-All keys are required. `retry_limit` is a non-negative integer. Normalize input
-bytes before hashing only when the calling input contract defines that
-normalization; otherwise hash the exact inspected bytes. `run_id` and
-`execution_id` are different types even if their values happen to match.
+All keys at both levels are required and extra keys fail closed. `retry_limit`
+is a non-negative JSON integer. Demand and analysis digests hash the exact bytes
+defined by the public Input contract. Every locator is a safe normalized
+project-relative path and must resolve with its expected current type.
+
+`EXEC-IDENTITY-01` — Serialize the complete `command_identity` mapping as
+canonical UTF-8 JSON with keys sorted lexicographically, arrays in normalized
+order, RFC 8259 escaping, non-ASCII encoded directly, no insignificant
+whitespace, and no trailing newline. Require:
+
+```text
+run_id = "loki-run-v2:" + sha256(canonical_json(command_identity))
+execution_id = "loki-execution-v2:" + sha256(canonical_json({"command_identity": command_identity, "run_id": run_id}))
+```
+
+The choice is computed before plan allocation or managed write. A read-only
+default-plan candidate that changes after collision requires a complete identity
+recomputation before another exclusive-create attempt. `run_id` and
+`execution_id` are distinct types and neither may be derived from the other's
+suffix. Reject every operational command identity or execution input that does
+not have these exact current versions and fields; no reader or fallback exists.
+
+`EXEC-AUDIT-CONFIG-01` — `audit_configuration` is the closed four-field mapping
+shown above. Omitted public input normalizes only to `phase/default`; explicit
+exact `task`, `phase`, or `plan` normalizes to that value with `source:
+explicit`. Explicit null, empty, aliases, translations, case variants, and
+unknown values fail. `policy_digest` is SHA-256 of canonical UTF-8 JSON over
+exactly `{schema_version, frequency, source}`. The configuration is immutable;
+its complete mapping participates in command identity before allocation.
 
 `EXEC-TARGET-01` — Every production target has exactly one validated decision
 before write:
@@ -118,6 +154,143 @@ any field, absent from the validated plan, contradicting an inherited
 restriction, or outside its owner's envelope is rejected before bytes change.
 Replanning may add a target only by persisting and validating a new decision
 before its write.
+
+## One Audit Boundary Scheduler And Checkpoint v1
+
+`EXEC-AUDIT-SCHEDULE-01` — Use exactly one conceptual function:
+`next_due_audit_boundary(audit_frequency, validated_dag_state)`. It derives the
+ordered expected boundaries from the validated plan rather than caller or
+Auditor choice:
+
+- `task`: one `task` boundary per normalized `task_ref`, with that one task as
+  membership; due after its Writer handoffs and required deterministic/primary
+  checks are persisted;
+- `phase`: one `phase` boundary per phase in first-occurrence order of the
+  normalized task list, with every task in that phase as membership; due after
+  every member is terminal and its required checks are persisted;
+- `plan`: one `plan` boundary whose ref is the normalized plan directory and
+  whose membership is the full normalized task list; due after the DAG and
+  required checks are terminal and before terminal reconciliation.
+
+At each persisted DAG transition, return the earliest expected due boundary
+whose latest active checkpoint is absent, invalidated, or not terminally valid;
+otherwise return none. Return at most one boundary per call. A frequency never
+creates a boundary of another type, and partially complete membership is not
+due. Membership order is the normalized plan task order and is immutable for an
+active boundary attempt.
+
+`EXEC-AUDIT-COVERAGE-01` — Derive these normalized arrays from disk and the DAG:
+
+```yaml
+audit_coverage:
+  membership_refs: []
+  covered_handoff_refs: []
+  covered_target_digests: ["<normalized path>=sha256:<64 lowercase hex>"]
+  primary_validation_refs: []
+  final_validator_refs: []
+```
+
+Every member appears exactly once. Handoffs, target digests, primary validation
+records, and applicable final validator records are complete and ordered by
+membership then their persisted normalized order. Deduplicate only when the
+owning contract identifies the same typed record. `coverage_digest` is SHA-256
+of canonical UTF-8 JSON of exactly this five-key mapping. The Auditor receives
+the derived coverage as data and cannot select, omit, or reorder membership.
+
+`EXEC-AUDIT-MATERIALITY-01` — A due boundary with no material Writer target
+bytes in its derived coverage creates a checkpoint with `status:
+not-applicable`, `auditor_identity: not-applicable:no-material-write`, empty
+Auditor/finding/correction refs, and a next action derived from the scheduler.
+It dispatches nobody and grants no approval. A due boundary with material
+Writer output is applicable: only then resolve required independent Auditor
+capabilities, validate their session preflights, and dispatch the full coverage.
+Missing required capacity at that moment creates an `unavailable` checkpoint
+that keeps the boundary unresolved. Input and earlier eligible writes remain
+valid.
+
+`EXEC-AUDIT-PATH-01` — Derive `boundary_path_id` as `boundary-` plus the first
+32 lowercase hexadecimal characters of SHA-256 over canonical UTF-8 JSON of
+exactly `{execution_id, audit_policy_digest, boundary_type, boundary_ref}`.
+Here `audit_policy_digest` is the exact configuration `policy_digest`. The only
+managed checkpoint path is:
+
+```text
+<plan_directory>/builds/audits/<boundary_type>/<boundary_path_id>/checkpoint-v1-<iteration>.yaml
+```
+
+`iteration` is a base-10 integer starting at `0` and increasing by exactly one
+for the same boundary. Publish deterministic bytes create-exclusively and
+immutably after rechecking every ancestor for containment and symlinks. On
+collision, reuse only byte-identical content for the same typed identity;
+different bytes block. Never overwrite, renumber to evade a conflict, or edit a
+published checkpoint.
+
+`EXEC-AUDIT-CHECKPOINT-01` — Every checkpoint is a closed mapping with exactly:
+
+```yaml
+execution_audit_checkpoint:
+  schema_version: 1
+  audit_id: "execution-audit-v1:<64 lowercase hex>"
+  run_id: "loki-run-v2:<64 lowercase hex>"
+  execution_id: "loki-execution-v2:<64 lowercase hex>"
+  policy_digest: "sha256:<64 lowercase hex>"
+  frequency: "task | phase | plan"
+  boundary_type: "task | phase | plan"
+  boundary_ref: "<derived task, phase, or plan locator>"
+  iteration: 0
+  predecessor_audit_ref: null
+  replay: false
+  replay_cause: null
+  membership_refs: []
+  coverage_digest: "sha256:<64 lowercase hex>"
+  covered_handoff_refs: []
+  covered_target_digests: []
+  primary_validation_refs: []
+  final_validator_refs: []
+  auditor_identity: "<independent identity or not-applicable:no-material-write>"
+  writer_identities: []
+  auditor_run_refs: []
+  finding_refs: []
+  correction_refs: []
+  evidence_refs: []
+  status: "approved | finding | inconclusive | failed | unavailable | not-applicable | cancelled"
+  next_action: "<non-empty>"
+```
+
+Arrays are explicit, normalized, duplicate-free, and contain only non-empty
+resolvable refs/identities except where the no-material rule requires an empty
+Auditor result. `writer_identities` is derived in first-membership occurrence
+order and is non-empty. `frequency`, `boundary_type`, policy, boundary, and
+coverage equal the scheduler/configuration derivation. Compute `audit_id` as
+`execution-audit-v1:` plus SHA-256 of canonical UTF-8 JSON of exactly
+`{execution_id, policy_digest, boundary_type, boundary_ref, iteration,
+coverage_digest}`.
+
+For a material attempt, `auditor_identity` differs from every
+`writer_identity` and from every identity in the referenced primary-validation
+records. Each `auditor_run_ref` resolves sanitized evidence/preflight whose
+agent/run/handoff lineage belongs to that Auditor and differs from all covered
+Writer and primary-validator run/handoff lineages. Identity inequality without
+lineage evidence is insufficient. `approved` requires at least one valid
+Auditor run/evidence ref and no unresolved finding. `finding`, `inconclusive`,
+`failed`, `unavailable`, and `cancelled` leave the boundary unresolved.
+
+`EXEC-AUDIT-REPLAY-01` — A corrected target invalidates every latest active
+checkpoint whose `covered_target_digests` contains that target, including
+task/phase/plan checkpoints that overlap it. Preserve old bytes, mark them
+inactive by the new state projection, and schedule the same complete boundary.
+Before replay, rerun every affected deterministic/primary check and every
+applicable final validator. The successor uses the next iteration, exact
+`predecessor_audit_ref`, `replay: true`, non-empty `replay_cause`, complete
+membership and freshly derived full coverage, plus all finding/correction refs.
+Auditing only changed bytes, retaining a prior pass for unchanged members, or
+reusing an earlier coverage result is forbidden.
+
+`EXEC-AUDIT-TERM-01` — State and result list only the latest active checkpoint
+for each expected boundary, in scheduler order. Terminal success requires the
+expected boundary set to be exact and each latest checkpoint to be `approved`
+or `not-applicable`. Missing, extra, duplicated, stale, finding, inconclusive,
+failed, unavailable, or cancelled checkpoints prohibit completion.
 
 ## Execution Metrics v1
 
@@ -220,6 +393,16 @@ only; it never changes `execution_mode` or claims avoided execution. Aggregate
 counts distinguish validators executed, referenced, and repeated. Retries,
 replays, gates, reconciliations, agents, handoffs, elapsed/active time and the
 span-graph critical path are explicit or unavailable with typed reasons.
+
+Every material audit attempt has exactly one Metrics v1 span with `kind:
+audit`. Its `correlation_refs` include the boundary ref, checkpoint ref,
+`audit_id`, policy digest, coverage digest, and Auditor run refs. The initial
+attempt uses `iteration: 0`, `replay: false`, and null replay fields. A replay
+uses the checkpoint iteration, `replay: true`, the same non-empty replay cause,
+and `cause_span_id` resolving the invalidated prior audit span. Resume reuses a
+validated span identity and never duplicates its duration, usage, evidence, or
+aggregate contribution. This audit use does not change execution_metrics
+schema version `1`.
 `critical_path_span_ids` is the complete deterministic maximal root-to-leaf
 chain across timed spans. Enumerate complete root-to-leaf chains whose every
 `monotonic_duration_ms` is observed, choose the greatest summed duration, and
@@ -257,100 +440,71 @@ threshold. The dashboard reports resources and cost only from these proven
 categories; monetary cost is unavailable unless a separately proven pricing
 source and scope exist.
 
-## LokiRunState v2
+## LokiRunState v3
 
 `EXEC-STATE-01` — Persist exactly one plan-level current state with every key:
 
 ```yaml
 loki_run_state:
-  schema_version: 2
-  run_id: "<typed run ID>"
-  execution_id: "<typed execution ID>"
-  demand_digest: "sha256:<64 lowercase hex>"
-  analysis_digest: "sha256:<64 lowercase hex>"
-  plan_directory: "<normalized plan directory>"
-  plan_directory_preflight_result:
+  schema_version: 3
+  run_id: "loki-run-v2:<64 lowercase hex>"
+  execution_id: "loki-execution-v2:<64 lowercase hex>"
+  command_identity_digest: "sha256:<64 lowercase hex>"
+  execution_input_digest: "sha256:<64 lowercase hex>"
+  audit_configuration:
     schema_version: 1
-    classification: "source-only-cold-start | bootstrap-input-only-cold-start | managed-resume | blocked"
-    plan_directory: "<same normalized plan directory>"
-    demand_ref: "<same normalized readable locator as execution_input>"
-    run_id: "<same typed run ID>"
-    execution_id: "<same typed execution ID>"
-    demand_digest: "sha256:<same 64 lowercase hex>"
-    analysis_digest: "sha256:<same 64 lowercase hex>"
-    bootstrap_record_ref: "<exact inline bootstrap locator or null>"
-    state_ref: "<this tasks.md state locator for managed-resume or null>"
-    validation_refs: []
-    result: "ready | blocked"
-    blockers: []
-    minimum_next_input: "<one input or none>"
-  current_phase: "<phase ID or null>"
-  current_task: "<task ID or null>"
-  status: "planning | running | cancelling | completed | completed-with-limitations | pending-human-validation | partial | blocked | failed | cancelled"
-  dag_ref: "<resolvable locator>"
-  target_decision_refs: []
-  owner_envelope_refs: []
-  preflight_refs: []
-  completion_evidence_refs: []
-  validation_cycle_refs: []
-  learned_refs: []
-  validator_refs: []
-  retry_refs: []
-  failed_task_refs: []
-  skipped_dependency_refs: []
-  final_human_validation_refs: []
-  cancellation_ref: null
-  dashboard_ref: null
+    frequency: "task | phase | plan"
+    source: "default | explicit"
+    policy_digest: "sha256:<64 lowercase hex>"
+  status: "running | completed | completed-with-limitations | pending-human-validation | partial | failed | cancelled"
+  task_refs: []
+  audit_checkpoint_refs: []
+  result_ref: "<result v3 locator>"
+  dashboard_ref: "<dashboard locator>"
+  consistency_packet_ref: "<consistency v2 locator>"
+  terminal_evidence_refs: []
   execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
   execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
   execution_metrics_status: "complete | partial | unavailable"
   execution_metrics_degradation_reason: "<reason for partial/unavailable, otherwise null>"
-  blockers: []
-  risks: []
   next_action: "<non-empty>"
   state_digest: "sha256:<64 lowercase hex>"
 ```
 
-Lists are explicit even when empty. Locators and digests are stored instead of
-payloads. Serialize the mapping excluding `state_digest` as canonical UTF-8 JSON
-with keys sorted lexicographically, array order preserved as normalized by its
-field contract, no insignificant whitespace, and no omitted keys. Set
-`state_digest` to SHA-256 of those bytes. A state update publishes a new atomic
-checkpoint after referenced records exist; it never rewrites immutable cycle or
-preflight records.
+Lists are explicit, normalized, duplicate-free, and ordered by their owning
+contract. `command_identity_digest` is SHA-256 of canonical UTF-8 JSON of the
+complete command identity v2. `audit_configuration` is the complete closed v1
+mapping persisted directly in state and equals byte-for-byte the mapping in
+that command identity and execution input v2. It is not optional, inferred from
+a digest, or reconstructed through fallback.
+`execution_input_digest` is SHA-256 of the exact canonical execution input v2
+bytes. Re-read the referenced input and require both digests and typed IDs to
+match before resume.
 
-`plan_directory_preflight_result` is the exact complete mapping defined by
-`PREFLIGHT-COLLISION-OUTPUT-01` in
-[session-preflight-contract.md](session-preflight-contract.md), embedded rather
-than copied to a separate file. Its stable field locator is exactly
-`<tasks.md state locator>#loki_run_state.plan_directory_preflight_result`. The
-complete nested mapping is part of the canonical bytes covered by
-`state_digest`; no independent nested checksum, omitted field, prose rendering,
-or bootstrap sidecar may substitute for that outer checksum relationship.
+Serialize the mapping excluding `state_digest` as canonical UTF-8 JSON with
+keys sorted lexicographically, normalized array order, no insignificant
+whitespace, and no omitted keys. Set `state_digest` to SHA-256 of those bytes.
+A state update atomically replaces only the current state checkpoint after every
+referenced immutable record exists; it never rewrites a preflight, validation
+cycle, terminal evidence, or audit checkpoint.
 
-On the first state publication, `source-only-cold-start` and
-`bootstrap-input-only-cold-start` store `state_ref: null` because no prior state
-was accepted by the classification. A later or concurrent matching-state
-acceptance derives `managed-resume`, stores the exact containing `tasks.md`
-locator in nested `state_ref`, and atomically publishes the resulting current
-state with a recomputed `state_digest` before dispatch. This same-file locator
-is not an external record dependency and does not enter the digest as a digest
-of itself.
+`EXEC-STATE-02` — Before any resume or dispatch, validate the state
+`audit_configuration` as the exact closed four-field v1 mapping, recompute its
+policy digest, and require exact equality with command identity v2/execution
+input v2, result v3, dashboard v3, and consistency packet v2. An absent or
+extra state field, missing/extra/malformed configuration field, or divergent
+frequency, source, or policy digest blocks. Transitive-only acceptance through
+`command_identity_digest` is forbidden.
 
-`EXEC-STATE-02` — A state identity matches only when `schema_version`, typed
-`run_id`, typed `execution_id`, plan directory, demand digest, and analysis
-digest all match the validated invocation. The embedded
-`plan_directory_preflight_result` must also have the exact current schema and
-keys; repeat those same typed identities, plan path, demand locator and digests;
-obey the classification-specific null/ref rules; and be covered by the verified
-outer `state_digest`. For inline demand, re-read the exact
-`bootstrap_record_ref` when present and require its canonical bytes and identity
-correlations to match. For path demand, require `bootstrap_record_ref: null`.
-A mismatch, missing nested result, unknown classification, or checksum failure
-blocks before production write. Chat reconstruction cannot repair state.
-
-State schema `1` is superseded and rejected before interpretation. There is no
-reader, migration, fallback, converter, or conditional compatibility path.
+`task_refs` equals the complete plan task order.
+`audit_checkpoint_refs` equals exactly the latest active checkpoint for each
+expected audit boundary already due, in scheduler order; an invalidated
+predecessor is retained on disk but removed from this active projection.
+`result_ref`, `dashboard_ref`, and `consistency_packet_ref` equal execution input
+v2. Terminal evidence and metrics refs/digests resolve and correlate. Any
+missing/extra field, non-current schema, identity/digest mismatch, unsafe ref,
+or audit projection divergence blocks before dispatch. Chat reconstruction
+cannot repair state, and no compatibility reader exists.
 
 ## DAG, Eligibility, Ownership, And Fairness
 
@@ -376,6 +530,7 @@ global stop unless it invalidates the overall result or state integrity.
 | Cycle finding/retest record | independent primary Write Test Agent |
 | Cycle writer response | applicable Write Agent |
 | Optional resolved learned record | applicable Write Agent |
+| Audit checkpoint content/result | applicable independent Auditor; orchestrator publishes the derived immutable envelope/path |
 | Execution-knowledge entry | execution-knowledge-cataloger |
 
 Serialize tasks whose target sets overlap. Disjoint writes may execute
@@ -436,40 +591,45 @@ authority cannot create this record or stop dispatch.
 
 `EXEC-RESUME-01` — Resume exclusively from disk:
 
-1. Revalidate input identity, path safety, current schemas, state digest, source
-   digests, the exact embedded plan-directory preflight result and its
-   classification-specific refs, DAG, target decisions, owner envelopes, and
-   all referenced records.
+1. Revalidate command identity v2, execution input v2, path safety, state v3
+   digest, the complete direct state `audit_configuration` and its exact parity
+   with identity/input/result/dashboard/consistency, source digests,
+   plan-directory classification evidence, DAG, target decisions, owner
+   envelopes, expected audit boundaries, active checkpoint refs, and all
+   referenced records. Missing, extra, malformed, or divergent state audit
+   configuration blocks without fallback.
 2. Treat published completion evidence, immutable preflight/cycle records, and
    current target digests as authority for already completed work.
-3. Do not duplicate a production write, preflight, finding, response, retry
-   debit, learned file, execution-knowledge entry, or metrics span whose exact
-   identity and digest already validate. An interrupted/resumed span retains its
-   identity and iteration; continuation cannot double-count usage or duration.
-4. Requeue only eligible non-terminal work. A missing or contradictory record
+3. Recompute every covered target digest. If current bytes differ from any
+   active checkpoint coverage, invalidate every overlapping checkpoint and
+   requeue the full same-boundary checks/audit under `EXEC-AUDIT-REPLAY-01`.
+4. Do not duplicate a production write, preflight, finding, response, retry
+   debit, learned file, execution-knowledge entry, audit checkpoint, or metrics
+   span whose exact identity and digest already validate. An interrupted/resumed
+   span retains its identity and iteration; continuation cannot double-count
+   usage or duration.
+5. Requeue only eligible non-terminal work. A missing or contradictory record
    blocks or narrows to a truthful `partial`; it never triggers chat recovery.
 
 ## Final Reconciliation And Terminal Truth
 
 `EXEC-TERM-01` — Apply terminal precedence: correlated `cancelled`;
-unrecoverable `failed`; `partial` versus `blocked` based on retained trustworthy
-progress; `pending-human-validation` only at final reconciliation; then
-completion.
+unrecoverable `failed`; `partial` when trustworthy resumable progress remains;
+`pending-human-validation` only at final reconciliation; then completion.
 
 | Status | Required meaning |
 | --- | --- |
-| `completed` | Every required task/AC and final validator passed; no material limitation remains. |
-| `completed-with-limitations` | Every required AC passed; only optional soft failures or proven non-worsened pre-existing failures remain. |
-| `pending-human-validation` | DAG and automatic validation are terminal and passing; only analysis-prescribed final human validation remains. |
+| `completed` | Every required task/AC/final validator passed and every expected audit boundary is approved or not-applicable; no material limitation remains. |
+| `completed-with-limitations` | Every required AC/audit boundary passed; only optional soft failures or proven non-worsened pre-existing failures remain. |
+| `pending-human-validation` | DAG, automatic validation, and due audits are terminal and passing; only analysis-prescribed final human validation remains. |
 | `partial` | Useful validated units remain trustworthy and resumable, but required scope is unresolved. |
-| `blocked` | No safe next write exists because a material prerequisite is absent and no useful completed unit supports a stronger result. |
 | `failed` | No useful result remains trustworthy, the failure invalidates the whole result, or state/evidence integrity is unrecoverable. |
 | `cancelled` | Explicit cancellation was correlated, reconciled, and checkpointed. |
 
-An unmet required AC or validator cannot map to completion. Human validation
-requested earlier is accumulated in `final_human_validation_refs`; it does not
-interrupt runnable DAG work and becomes `pending-human-validation` only when it
-is the sole remaining condition.
+An unmet required AC, validator, or due audit boundary cannot map to completion.
+Human-validation evidence requested earlier is accumulated in terminal evidence;
+it does not interrupt runnable DAG work and becomes
+`pending-human-validation` only when it is the sole remaining condition.
 
 ## Exact Execution Result And Dashboard
 
@@ -477,64 +637,76 @@ is the sole remaining condition.
 
 ```yaml
 implement_feature_execution_result:
-  schema_version: 2
-  run_id: "<typed run ID>"
-  execution_id: "<typed execution ID>"
-  status: "completed | completed-with-limitations | pending-human-validation | partial | blocked | failed | cancelled | needs-human-review"
-  state_ref: "<tasks.md state locator>"
+  schema_version: 3
+  run_id: "loki-run-v2:<64 lowercase hex>"
+  execution_id: "loki-execution-v2:<64 lowercase hex>"
+  status: "running | completed | completed-with-limitations | pending-human-validation | partial | failed | cancelled"
   state_digest: "sha256:<64 lowercase hex>"
+  audit_configuration:
+    schema_version: 1
+    frequency: "task | phase | plan"
+    source: "default | explicit"
+    policy_digest: "sha256:<64 lowercase hex>"
+  audit_checkpoint_refs: []
+  task_results:
+    - task_ref: "<task locator>"
+      status: "pending | passed | unresolved | skipped-dependency | cancelled"
+      evidence_refs: []
+  final_validator_refs: []
+  terminal_evidence_refs: []
   execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
   execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
   execution_metrics_status: "complete | partial | unavailable"
   execution_metrics_degradation_reason: "<reason for partial/unavailable, otherwise null>"
-  aggregate_metrics_summary:
-    exact_usage: {input_tokens: null, cached_input_tokens: null, output_tokens: null, reasoning_output_tokens: null, total_tokens: null}
-    estimated_usage: {estimated_tokens: null, lower_bound_tokens: null, upper_bound_tokens: null, observable_payload_bytes: null, confidence: "low | unavailable"}
-    non_agent_observations: []
-    counts: {agents: null, handoffs: null, validators_executed: null, validators_referenced: null, validators_repeated: null, retries: null, replays: null, gates: null, reconciliations: null}
-    durations: {elapsed_ms: null, active_ms: null, critical_path_ms: null}
-    critical_path_span_ids: []
-    unavailable_reasons: []
-    provenance: "<state and execution-metrics locators/digests>"
-  executive_summary: "<sanitized concise summary>"
-  unit_statuses: []
-  changed_surfaces: []
-  acceptance_evidence: []
-  validator_results: []
-  validation_cycle_refs: []
-  retry_summary: []
-  failed_task_refs: []
-  skipped_dependency_refs: []
-  regression_refs: []
-  limitation_refs: []
-  pre_existing_refs: []
-  unknown_refs: []
-  inferred_target_decision_refs: []
-  learned_refs: []
-  skipped_learned_refs: []
-  assumptions: []
-  decisions: []
-  risks: []
-  human_validation_refs: []
-  manual_steps: []
-  blockers: []
-  minimum_next_input: "<one input or none>"
-  resume: "<exact next action or none>"
+  next_action: "<non-empty>"
+  result_digest: "sha256:<64 lowercase hex>"
 ```
 
-Result schema `1` is superseded and rejected before interpretation. The result
-summary is a projection of the exact correlated metrics ref/digest/status; it
-cannot repair metrics, combine exact and estimated totals, or turn unavailable
-into zero. Telemetry degradation does not alter the functional `status`.
+All keys are required and extra keys fail. `task_results` is the exact task
+order and each row is derivable from task_validation v1. Audit configuration is
+byte-equivalent to command identity v2; checkpoint refs are the exact latest
+active expected-boundary refs from state v3. Compute `result_digest` as SHA-256
+of canonical UTF-8 JSON of the complete mapping excluding `result_digest`.
+Metrics are an exact projection and cannot be repaired, combined, or converted
+to zero. Telemetry degradation does not alter functional `status`. No reader
+for a prior result shape exists.
 
 `EXEC-CONSISTENCY-01` — Before terminal response, execute the consistency-packet
-validator over plan state, every local task status, terminal completion/evidence,
-validator/gate results, result, dashboard, and execution metrics. Require exact
-agreement for run/execution identities, state/result schema `2`, functional
-status, metrics ref/digest/status/degradation, and `next_action`; require task
-and validator projections to be derivable without relabelling. Any divergence
-blocks response rendering and identifies the conflicting locators. The packet
-is validation data and grants no write or status authority.
+validator over this exact closed schema:
+
+```yaml
+implement_feature_consistency_packet:
+  schema_version: 2
+  run_id: "loki-run-v2:<64 lowercase hex>"
+  execution_id: "loki-execution-v2:<64 lowercase hex>"
+  status: "running | completed | completed-with-limitations | pending-human-validation | partial | failed | cancelled"
+  audit_configuration: "<complete audit_configuration v1 mapping>"
+  state_digest: "sha256:<64 lowercase hex>"
+  tasks_md_digest: "sha256:<64 lowercase hex>"
+  result_ref: "<result v3 locator>"
+  result_digest: "sha256:<exact result file bytes>"
+  dashboard_ref: "<dashboard locator>"
+  dashboard_digest: "sha256:<exact dashboard file bytes>"
+  metrics_ref: "<metrics locator or null only for total publication failure>"
+  metrics_digest: "<sha256 of exact metrics file bytes or null only for total publication failure>"
+  audit_checkpoint_refs: []
+  audit_checkpoint_digests: []
+  terminal_evidence_refs: []
+  terminal_evidence_digests: []
+  validator_digest: "sha256:<64 lowercase hex>"
+```
+
+All keys are required and extra keys fail. Recompute every referenced file
+digest from exact bytes. `validator_digest` is SHA-256 of canonical UTF-8 JSON
+mapping each normalized primary then final validator ref to its exact file-byte
+digest. Require exact equality across execution input v2, state v3, tasks,
+result v3, dashboard, metrics v1, terminal evidence, expected boundary order,
+latest checkpoint refs/digests, audit configuration, typed identities,
+functional status, validator/gate outcomes, metrics status/degradation, and
+`next_action`. Every terminal-success audit checkpoint is `approved` or
+`not-applicable`. Any divergence blocks response rendering and names conflicting
+locators. The packet is validation data, grants no write/status authority, and
+has no compatibility reader.
 
 The dashboard is this deterministic projection of persisted state/evidence.
 For each AC use only `passed`, `failed`, `not-demonstrated`, or
@@ -542,9 +714,10 @@ For each AC use only `passed`, `failed`, `not-demonstrated`, or
 proves only an AC that explicitly requires the file.
 
 `needs-human-review` is a response-only stop for unresolved normative conflict;
-persist the run as `blocked` with both conflict locators and the minimum human
-decision. It is not an additional LokiRunState status and cannot be used as
-conditional approval.
+persist `failed` when no result remains trustworthy or `partial` when validated
+progress remains, with both conflict locators in terminal evidence and the
+minimum human decision in `next_action`. It is not an additional LokiRunState or
+result status and cannot be used as conditional approval.
 
 Each manual step has all keys:
 

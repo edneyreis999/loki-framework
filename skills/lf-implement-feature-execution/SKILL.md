@@ -2,9 +2,9 @@
 name: lf-implement-feature-execution
 description: Execute the provider-neutral, current-only implementation contract used by loki-implement-feature when a validated demand and Markdown analysis must become a persisted plan, DAG-driven scoped writes, per-task acceptance validation, resumable evidence, and a truthful terminal dashboard.
 doc_id: "lf-implement-feature-execution"
-version: "2.0.0"
+version: "3.0.0"
 status: active
-last_updated: "2026-07-23"
+last_updated: "2026-07-24"
 scope: "Reusable execution authority for unified Loki feature implementation"
 not_scope: "Public command routing, plan approval, installation, consumer-specific technology rules, or compatibility with superseded execution schemas"
 authority: "Approved Loki package policy and the invoking command's exact validated permissions"
@@ -21,8 +21,8 @@ known_conflicts: []
 replaced_by: null
 when_to_use:
   - "Use inside loki-implement-feature after its demand, Markdown analysis, plan directory, inherited restrictions, and retry limit have been validated."
-  - "Use when creating or resuming LokiRunState v2, publishing execution metrics, scheduling a validated task DAG, enforcing single-file ownership, or deriving the terminal dashboard from disk evidence."
-  - "Use when a task requires deterministic or independent Write Test Agent acceptance validation, correction cycles, cancellation, or dependency-aware continuation."
+  - "Use when creating or resuming LokiRunState v3, publishing execution metrics v1, scheduling a validated task DAG and its configured audit boundaries, enforcing single-file ownership, or deriving result v3 from disk evidence."
+  - "Use when a task requires deterministic or independent Write Test Agent primary acceptance validation, or when a due material task/phase/plan boundary requires a separate independent Auditor, correction replay, cancellation, or dependency-aware continuation."
 argument-hint: "[validated execution input and plan directory]"
 arguments:
   required:
@@ -85,11 +85,13 @@ execution semantics it must apply.
 
 ## Required Inputs
 
-`execution_input` must contain non-empty typed identities for run and execution,
-validated demand and analysis locators plus SHA-256 digests, normalized inherited
-restrictions, a normalized plan directory below the project plan root, and a
-non-negative `retry_limit` whose default is `3`. It must also identify the
-invoking command and the exact current schema versions it expects.
+`execution_input` must be the closed schema v2 defined by the execution
+contract. Its command identity v2 contains the invoking command, demand and
+analysis SHA-256 digests, normalized plan directory below the project plan root,
+non-negative `retry_limit`, and immutable audit configuration v1. It also
+contains non-empty typed `loki-run-v2` and `loki-execution-v2` identities,
+validated demand/analysis locators, and the exact state/result/dashboard/
+consistency locators. Recompute all identities and digests before use.
 
 `plan_directory` must be the same normalized directory recorded in
 `execution_input`. Missing, contradictory, unreadable, unsafe, or uncorrelated
@@ -114,11 +116,20 @@ identity and authority correlate to the active run.
 5. Create or resume state only from validated files on disk. Dispatch eligible
    tasks topologically, serialize overlapping writes, and keep independent work
    moving after task failure or a yielded correction cycle.
-6. Maintain hierarchical spans and atomically publish the orchestrator-owned
+6. After each persisted DAG transition, use the single
+   `next_due_audit_boundary` scheduler from the execution contract. Publish a
+   no-dispatch immutable `not-applicable` checkpoint for a due boundary with no
+   material Writer output. Resolve and preflight independent Auditors only for
+   a due material boundary; missing required capacity is unresolved only then.
+7. On any correction, invalidate every active overlapping audit checkpoint,
+   rerun affected deterministic checks and applicable final validators, then
+   replay the complete same boundary audit without incremental reuse.
+8. Maintain hierarchical spans and atomically publish the orchestrator-owned
    `builds/metrics/execution-metrics.json`. Keep exact, estimated, unavailable,
    cumulative, and account-window observations separate; metrics never create a
-   budget or automatic functional stop.
-7. Persist sanitized completion/evidence locators before optional non-blocking
+   budget or automatic functional stop. Use Metrics v1 `audit` spans and
+   correlation refs for each attempt and replay.
+9. Persist sanitized completion/evidence locators before optional non-blocking
    execution-knowledge capture. Reconcile every required acceptance criterion,
    final validator, cancellation request, and prescribed human validation before
    deriving the terminal result and dashboard.
@@ -129,7 +140,8 @@ Return one `implement_feature_execution_result` matching the exact schema in
 the execution contract. It references persisted state and evidence; it never
 embeds raw payloads, private reasoning, or an unredacted transcript.
 
-- `success`: terminal state is `completed`, `completed-with-limitations`, or
+- `success`: result v3 terminal state is `completed`,
+  `completed-with-limitations`, or
   `pending-human-validation`, and every state/evidence invariant for that status
   passes.
 - `partial`: terminal state is `partial` or `cancelled`, useful evidence remains
@@ -148,7 +160,13 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
 - Do not let optional learned or execution-knowledge capture block or upgrade a
   task result.
 - Do not claim completion when a required criterion, validator, evidence
-  locator, or final reconciliation is unresolved.
+  locator, due material audit boundary, or final reconciliation is unresolved.
+- Do not resolve, preflight, dispatch, or require an Auditor while validating
+  Input. Do not dispatch an Auditor for a no-material-write boundary.
+- Do not accept a due material checkpoint when Auditor identity or lineage
+  equals a covered Writer or primary-validator identity or lineage.
+- Do not reuse a prior checkpoint after an overlapping correction or audit only
+  the correction delta.
 - Do not let telemetry failure change functional task/run status. Record
   metrics `partial` or `unavailable` plus reason and continue functional work.
   Total publication failure uses null metrics ref/digest only with status
@@ -165,10 +183,12 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
 
 - Validate the entrypoint frontmatter, folder/name match, and all three relative
   links.
-- Validate the current schemas, current-only rejection, path safety, digest
-  correlation, DAG behavior, owner uniqueness, preflight, AC route, retry,
-  learned, liveness, metrics, cancellation, resume, cross-surface consistency,
-  dashboard, and terminal-truth invariants.
+- Validate command identity v2, execution input v2, audit configuration v1,
+  LokiRunState v3, execution audit checkpoint v1, result v3, consistency v2,
+  current-only rejection, path safety, digest correlation, DAG/boundary
+  scheduling, owner/Auditor independence, preflight, AC route v1, retry, full
+  replay, learned, liveness, metrics v1, cancellation, resume, dashboard
+  projection, and terminal truth.
 - Classify this entrypoint and all three references as LLM-facing artifacts and
   route their profiles plus mechanical evidence to an independent Auditor. The
   Writer must not emit `llm_consumption_quality` or approve its own artifact.

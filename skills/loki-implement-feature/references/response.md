@@ -1,15 +1,15 @@
 ---
 doc_id: "loki-implement-feature-response"
-version: "2.0.0"
+version: "3.0.0"
 status: active
-last_updated: "2026-07-22"
+last_updated: "2026-07-24"
 scope: "Both-consumer terminal dashboard and manual-test projection for unified feature execution"
 not_scope: "Execution, state repair, production writes, validator substitution, or status override"
 authority: "Validated persisted implement_feature_execution_result and this current response reference"
 canonical_source: "skills/loki-implement-feature/references/response.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted LokiRunState v2, implement_feature_execution_result v2, and execution_metrics v1"
+  - "validated persisted command identity v2, execution input v2, LokiRunState v3, implement_feature_execution_result v3, dashboard v3, consistency packet v2, execution_audit_checkpoint v1, and execution_metrics v1"
   - "task, validator, cycle, completion, and evidence records referenced by that state"
   - "this response contract and its template"
   - "response prose, user formatting preferences, and non-normative examples"
@@ -63,21 +63,51 @@ or terminal status.
 `RESPONSE-CURRENT-01` — Accept only the current result and template versions.
 Reject unknown, missing, malformed, or superseded response schemas before
 rendering. Do not translate, alias, wrap, convert, migrate, or fall back.
-State/result schema `1` is rejected before interpretation.
+State/result schema `1` or `2` and consistency schema `1` are rejected before
+interpretation.
 
 ## Terminal Status
 
-Use exactly the helper-derived status:
+Persisted LokiRunState v3, result v3, dashboard v3, terminal evidence, and
+consistency v2 use exactly one of:
 
+- `running`
 - `completed`
 - `completed-with-limitations`
 - `pending-human-validation`
 - `partial`
-- `blocked`
 - `failed`
 - `cancelled`
-- `needs-human-review` only as the response projection of a persisted blocked
-  normative conflict with both locators and the minimum human decision
+
+The response normally projects that persisted status unchanged.
+`needs-human-review` is response-only and is permitted solely when the
+persisted status is `partial` or `failed` because of an unresolved normative
+conflict. It is never accepted or persisted as a state, result, dashboard,
+terminal-evidence, or consistency status.
+
+For this response-only projection, require exactly this closed typed record:
+
+```yaml
+normative_conflict:
+  schema_version: 1
+  authoritative_source_locators:
+    - type: "authoritative-source"
+      locator: "<safe-project-relative-path>#<non-empty-fragment>"
+    - type: "authoritative-source"
+      locator: "<different-safe-project-relative-path>#<non-empty-fragment>"
+  minimum_priority_decision: "<one non-empty decision needed to resolve precedence>"
+```
+
+Both locator rows are required, distinct, closed, and ordered as presented in
+terminal evidence. A safe locator has one normalized project-relative POSIX
+file path, one `#`, and one non-empty fragment; absolute paths, traversal,
+backslashes, whitespace/control characters, missing file suffixes, empty
+fragments, extra fields, arbitrary prose, and aliases fail closed. Both exact
+locator strings must also occur in the response `evidence` list. Missing or
+empty decision, absent/extra/duplicate/invalid locator, uncorrelated evidence,
+or persisted status other than `partial | failed` rejects the response-only
+projection. When response status is not `needs-human-review`, this record must
+be absent.
 
 Never emit completion while a required AC, task/final validator, evidence
 locator, gate, final regression, or reconciliation remains unresolved. Human
@@ -90,8 +120,20 @@ The response must make every category recoverable, using `none` only after an
 explicit applicability check:
 
 - actual status and terminal reason;
+- complete direct audit configuration v1 (`schema_version`, exact frequency,
+  source and policy digest), equal across command identity v2, execution input
+  v2, state v3, result v3, dashboard v3 and consistency v2;
+- every expected boundary with type/ref, due state, immutable membership,
+  materiality, latest active checkpoint or unresolved reason, without
+  duplicating the scheduler algorithm;
+- active audit checkpoint refs in scheduler order, with status, Auditor/Writer
+  independence evidence, covered handoffs/targets/validators, findings,
+  corrections, evidence and next action;
+- each invalidated checkpoint and replacement full replay, including
+  predecessor ref, replay cause, complete same-boundary coverage and replayed
+  deterministic/final-validator evidence; delta-only reuse is forbidden;
 - executive implementation summary;
-- completed, skipped, blocked, unresolved, cancelled, and pending units;
+- completed, skipped-dependency, unresolved, cancelled, and pending units;
 - changed files and surfaces;
 - every AC with `passed`, `failed`, `not-demonstrated`, or `not-applicable`, plus
   its evidence locator;
@@ -128,20 +170,34 @@ A passed AC always has evidence. File existence proves only an AC that literally
 requires an artifact. Summary prose may compress wording but must not omit a
 material category or contradict the structured status.
 
+`RESPONSE-AUDIT-01` — Render only scheduler-derived expected boundaries and
+persisted checkpoint evidence. A boundary that is not due is visibly `not-due`
+and causes no dispatch. A due no-material boundary is `not-applicable`, has no
+Auditor dispatch, and grants no approval. A due material boundary without a
+terminally valid independent checkpoint keeps terminal success unavailable.
+After any covered correction, show the predecessor as invalidated and the new
+checkpoint as a complete replay of the same boundary; never summarize it as an
+incremental review.
+
+`RESPONSE-TRUTH-01` — Project result v3 and dashboard v3 terminal truth without
+adding a state. Status, audit configuration, active checkpoint refs, terminal
+evidence refs, Metrics v1 projection and `next_action` must equal state v3 and
+consistency v2. `completed`, `completed-with-limitations`, or
+`pending-human-validation` requires every due boundary to be `approved` or
+`not-applicable`; findings, unavailable audit capacity, invalidated coverage or
+an incomplete replay prevent those statuses.
+
+The response may relabel a persisted `partial` or `failed` normative conflict
+as `needs-human-review` only at presentation time when the exact
+`normative_conflict` record above passes. This does not change the persisted
+status or create another execution state.
+
 `RESPONSE-UNIT-01` — Preserve the exact unit mapping from
 [execution.md](execution.md): task `pending`, `passed`, `unresolved`,
 `skipped-dependency`, and `cancelled` render respectively as `pending`,
-`completed`, `unresolved`, `skipped-dependency`, and `cancelled`. No persisted
-task status renders as `blocked`.
-
-Render `blocked` exactly once only for the distinct
-`blocked-scope:<scope-ref>` row derived from a validated LokiRunState whose
-status is `blocked`. Use `current_task`, otherwise `current_phase`, otherwise
-`plan_directory` for `scope-ref`, and include the state locator/digest,
-non-empty blockers, and non-empty next action. Keep any selected current task's
-ordinary task row and persisted status separate. Any other blocked-row source,
-missing mapping evidence, or attempt to relabel a task is a response validation
-failure.
+`completed`, `unresolved`, `skipped-dependency`, and `cancelled`. Every unit row
+comes from a persisted task_validation v1 record. Do not synthesize a scope row,
+derive a unit from absent state fields, or invent another task/unit status.
 
 ## Manual Test Contract
 
@@ -196,8 +252,10 @@ locators and one required priority decision.
 
 Before returning, execute the consistency-packet validator and validate
 template completeness, status/state equality,
-AC/evidence relations, exact task and blocked-scope unit mapping,
-validator/gate truth, metrics ref/digest/status and aggregate provenance,
+AC/evidence relations, exact task unit mapping,
+validator/gate truth, audit-configuration equality, due-boundary coverage,
+active checkpoint order, Auditor independence, findings/corrections/full
+replays, terminal truth, metrics ref/digest/status and aggregate provenance,
 category coverage, inferred-target provenance, learned
 status, manual-step fields, sanitization, handoffs, and exact resume guidance.
 Revisit this unit whenever the helper result, dashboard, status, or manual-test

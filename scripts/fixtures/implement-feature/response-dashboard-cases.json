@@ -274,66 +274,18 @@
       }
     },
     {
-      "id": "blocked-row-mapping",
+      "id": "dashboard-partial-unresolved",
       "matrix": false,
-      "scenario": "Task rows cannot be relabeled as blocked",
-      "rule": "dashboard",
-      "expect": "reject",
-      "error": "TASK_BLOCKED_ROW_FORBIDDEN",
-      "payload": {
-        "status": "blocked",
-        "summary": "Invalid blocked mapping.",
-        "execution_metrics_ref": "builds/metrics/execution-metrics.json",
-        "execution_metrics_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "execution_metrics_status": "unavailable",
-        "execution_metrics_degradation_reason": "blocked before telemetry",
-        "cost_resources": {
-          "token_budget": null,
-          "cost_budget": null,
-          "automatic_cost_stop": false
-        },
-        "units": [
-          {
-            "kind": "task",
-            "unit": "task-1",
-            "status": "blocked"
-          }
-        ],
-        "changed_files": [],
-        "acceptance_criteria": [],
-        "validators": [],
-        "validation_cycles": [],
-        "deviations": [],
-        "inferred_targets": [],
-        "learned_records": [],
-        "decisions": [],
-        "manual_test": {
-          "status": "none",
-          "reason": "blocked pre-write",
-          "steps": []
-        },
-        "evidence": [],
-        "risks": [
-          "blocked"
-        ],
-        "resume": {
-          "status": "blocked"
-        }
-      }
-    },
-    {
-      "id": "valid-blocked-scope-row",
-      "matrix": false,
-      "scenario": "Blocked state emits exactly one distinct scope row",
+      "scenario": "Partial persisted status preserves unresolved work",
       "rule": "dashboard",
       "expect": "accept",
       "payload": {
-        "status": "blocked",
-        "summary": "Waiting for the required validator.",
+        "status": "partial",
+        "summary": "Validated progress remains, but one required validator is unavailable.",
         "execution_metrics_ref": "builds/metrics/execution-metrics.json",
         "execution_metrics_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
         "execution_metrics_status": "partial",
-        "execution_metrics_degradation_reason": "blocked before all spans completed",
+        "execution_metrics_degradation_reason": "execution ended before all spans completed",
         "cost_resources": {
           "token_budget": null,
           "cost_budget": null,
@@ -343,41 +295,308 @@
           {
             "kind": "task",
             "unit": "task-1",
-            "status": "pending"
-          },
-          {
-            "kind": "scope",
-            "unit": "blocked-scope:task-1",
-            "status": "blocked",
-            "state_ref": "tasks.md#loki_run_state@sha256:state",
-            "blockers": [
-              "validator unavailable"
-            ],
-            "next_action": "restore validator"
+            "status": "unresolved"
           }
         ],
+        "changed_files": ["src/validated.py"],
+        "acceptance_criteria": [
+          {"id": "AC-1", "state": "not-demonstrated", "evidence": "builds/validator-unavailable.json"}
+        ],
+        "validators": [
+          {"id": "suite", "required": true, "result": "unavailable"}
+        ],
+        "validation_cycles": [],
+        "deviations": [],
+        "inferred_targets": [],
+        "learned_records": [],
+        "decisions": ["analysis.md#validator-required"],
+        "manual_test": {
+          "status": "none",
+          "reason": "the unresolved validator has no substitute human check",
+          "steps": []
+        },
+        "evidence": ["builds/validator-unavailable.json"],
+        "risks": ["required validation remains unavailable"],
+        "resume": {"status": "unresolved"}
+      }
+    },
+    {
+      "id": "dashboard-failed",
+      "matrix": false,
+      "scenario": "Failed persisted status reports no trustworthy result",
+      "rule": "dashboard",
+      "expect": "accept",
+      "payload": {
+        "status": "failed",
+        "summary": "State and evidence integrity failed; no useful result remains trustworthy.",
+        "execution_metrics_ref": "builds/metrics/execution-metrics.json",
+        "execution_metrics_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "execution_metrics_status": "unavailable",
+        "execution_metrics_degradation_reason": "execution failed before complete telemetry",
+        "cost_resources": {
+          "token_budget": null,
+          "cost_budget": null,
+          "automatic_cost_stop": false
+        },
+        "units": [
+          {"kind": "task", "unit": "task-1", "status": "unresolved"}
+        ],
         "changed_files": [],
-        "acceptance_criteria": [],
+        "acceptance_criteria": [
+          {"id": "AC-1", "state": "failed", "evidence": "builds/integrity-failure.json"}
+        ],
+        "validators": [
+          {"id": "integrity", "required": true, "result": "failed"}
+        ],
+        "validation_cycles": [],
+        "deviations": [],
+        "inferred_targets": [],
+        "learned_records": [],
+        "decisions": ["tasks.md#state-integrity"],
+        "manual_test": {
+          "status": "none",
+          "reason": "integrity failure prevents a meaningful manual check",
+          "steps": []
+        },
+        "evidence": ["builds/integrity-failure.json"],
+        "risks": ["no trustworthy functional result remains"],
+        "resume": {"status": "failed"}
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-response-only",
+      "matrix": false,
+      "scenario": "Needs-human-review is response-only over persisted partial conflict",
+      "rule": "dashboard",
+      "expect": "accept",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose which policy has priority before resume"
+        },
+        "summary": "Validated progress remains, but authoritative sources conflict.",
+        "execution_metrics_ref": "builds/metrics/execution-metrics.json",
+        "execution_metrics_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "execution_metrics_status": "partial",
+        "execution_metrics_degradation_reason": "execution paused at normative conflict",
+        "cost_resources": {
+          "token_budget": null,
+          "cost_budget": null,
+          "automatic_cost_stop": false
+        },
+        "units": [
+          {"kind": "task", "unit": "task-1", "status": "unresolved"}
+        ],
+        "changed_files": ["src/validated.py"],
+        "acceptance_criteria": [
+          {"id": "AC-1", "state": "not-demonstrated", "evidence": "builds/normative-conflict.json"}
+        ],
         "validators": [],
         "validation_cycles": [],
         "deviations": [],
         "inferred_targets": [],
         "learned_records": [],
-        "decisions": [],
+        "decisions": ["analysis.md#conflict-routing"],
         "manual_test": {
           "status": "none",
-          "reason": "blocked before a testable surface changed",
+          "reason": "human priority decision is required before validation can continue",
           "steps": []
         },
-        "evidence": [
-          "tasks.md#loki_run_state"
-        ],
-        "risks": [
-          "validator unavailable"
-        ],
-        "resume": {
-          "status": "blocked"
-        }
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"],
+        "risks": ["unresolved normative conflict"],
+        "resume": {"status": "partial"}
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-failed-response-only",
+      "matrix": false,
+      "scenario": "Needs-human-review is response-only over persisted failed conflict",
+      "rule": "response-normative-conflict",
+      "expect": "accept",
+      "payload": {
+        "status": "failed",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose which policy has priority before retry"
+        },
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-invalid-locator",
+      "matrix": false,
+      "scenario": "Arbitrary source prose is not an authoritative locator",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_LOCATOR_INVALID",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "arbitrary source prose"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["arbitrary source prose", "docs/source-beta.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-duplicate-locator",
+      "matrix": false,
+      "scenario": "Duplicate authoritative locators do not prove a conflict",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_LOCATOR_DUPLICATE",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["docs/source-alpha.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-absent-locator",
+      "matrix": false,
+      "scenario": "Both authoritative locators are mandatory",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_LOCATOR_COUNT_INVALID",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["docs/source-alpha.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-absent-decision",
+      "matrix": false,
+      "scenario": "The minimum priority decision field is mandatory",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_DECISION_MISSING",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ]
+        },
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-empty-decision",
+      "matrix": false,
+      "scenario": "An empty minimum priority decision is invalid",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_DECISION_MISSING",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": ""
+        },
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-uncorrelated-evidence",
+      "matrix": false,
+      "scenario": "Both authoritative locators must correlate with evidence",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_EVIDENCE_UNCORRELATED",
+      "payload": {
+        "status": "partial",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["docs/source-alpha.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-invalid-persisted-status",
+      "matrix": false,
+      "scenario": "Needs-human-review cannot project from persisted completion",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "RESPONSE_NORMATIVE_CONFLICT_STATUS_INVALID",
+      "payload": {
+        "status": "completed",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"]
+      }
+    },
+    {
+      "id": "dashboard-needs-human-review-persisted-status-forbidden",
+      "matrix": false,
+      "scenario": "Needs-human-review is not a persisted dashboard status",
+      "rule": "response-normative-conflict",
+      "expect": "reject",
+      "error": "DASHBOARD_STATUS_INVALID",
+      "payload": {
+        "status": "needs-human-review",
+        "response_status": "needs-human-review",
+        "normative_conflict": {
+          "schema_version": 1,
+          "authoritative_source_locators": [
+            {"type": "authoritative-source", "locator": "docs/source-alpha.md#policy"},
+            {"type": "authoritative-source", "locator": "docs/source-beta.md#policy"}
+          ],
+          "minimum_priority_decision": "Choose policy priority"
+        },
+        "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"]
       }
     },
     {
@@ -475,13 +694,13 @@
   "matrix_exclusions": [
     {
       "scenario": "Installed upgrade",
-      "routed_to": "task-3.2",
-      "reason": "Requires the installer transaction and managed-symlink topology owned by task-3.2."
+      "routed_to": "scripts/validate-install-loki-upgrade.py",
+      "reason": "Requires the installer transaction and managed-symlink topology validated by scripts/validate-install-loki-upgrade.py."
     },
     {
       "scenario": "Upgrade fault after link mutation, before manifest publication",
-      "routed_to": "task-3.2",
-      "reason": "Requires transactional fault injection, manifest authority and topology restoration owned by task-3.2."
+      "routed_to": "scripts/validate-install-loki-upgrade.py",
+      "reason": "Requires transactional fault injection, manifest authority and topology restoration validated by scripts/validate-install-loki-upgrade.py."
     }
   ]
 }

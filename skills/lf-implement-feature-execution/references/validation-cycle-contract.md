@@ -1,10 +1,10 @@
 ---
 doc_id: "lf-implement-feature-execution-validation-cycle-contract"
-version: "1.0.0"
+version: "2.0.0"
 status: active
-last_updated: "2026-07-23"
-scope: "Per-task acceptance routes, immutable validation conversation, attribution, correction budget, retest, learned record, dependency continuation, and final validation"
-not_scope: "Plan-path safety, session-preflight internals, production ownership outside a cycle, or optional execution-knowledge promotion"
+last_updated: "2026-07-24"
+scope: "Per-task primary acceptance routes v1, immutable validation conversation, attribution, correction budget, retest, learned record, dependency continuation, and final validation"
+not_scope: "Plan-path safety, session-preflight internals, execution audit checkpoint ownership/approval, audit-frequency scheduling, production ownership outside a cycle, or optional execution-knowledge promotion"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
 canonical_source: "skills/lf-implement-feature-execution/references/validation-cycle-contract.md"
 intended_llm_task: "validation"
@@ -22,9 +22,10 @@ replaced_by: null
 # Task Validation Cycle Contract
 
 <summary>
-Define the only current task-validation v1, immutable independent-validator and
+Define the only current task-validation v1, immutable primary-validator and
 Writer records, severity-aware correction policy, optional learned handoff, and
-final reconciliation semantics for unified feature execution.
+final-validation semantics without substituting for separate due-boundary
+independent audit.
 </summary>
 
 ## Authority, Data Boundary, And Current-Only Gate
@@ -82,6 +83,30 @@ unresolved when no safe retry remains, skips only transitive dependents, and
 allows independent tasks to continue. An optional validator may be non-blocking
 only when optionality was explicit before execution; its failure is a soft-fail
 and can yield at most `completed-with-limitations`.
+
+## Boundary Audit Is Separate From Primary Validation
+
+`VALID-AUDIT-SEPARATION-01` — `task_validation` v1 and its one primary route
+remain the task acceptance authority. They never serve as an execution audit
+checkpoint, never choose `audit_frequency`, and never dispatch or approve the
+independent boundary audit. Public Input validation likewise performs none of
+those actions.
+
+After primary validation persists, the execution contract's single scheduler
+may derive a due `task`, `phase`, or `plan` boundary. A boundary with no material
+Writer output is `not-applicable` without dispatch. A due material boundary
+requires a separately applicable Auditor whose identity and agent/run/handoff
+lineage differ from every covered Writer and every primary validator. The same
+person, agent, run, handoff, or validation record cannot satisfy both roles.
+Missing required Auditor capacity is unresolved only when that material boundary
+is due; it does not rewrite the task's primary result or retroactively block
+Input.
+
+`VALID-AUDIT-SEPARATION-02` — Boundary findings reference every affected task
+and AC plus exact allowed correction scopes. The task cycle continues to own
+primary finding/Writer-response/retest records; the execution audit checkpoint
+remains separately owned and immutable. Neither result upgrades the other by
+prose or identity coincidence.
 
 ## Immutable Disk-First Cycle
 
@@ -207,6 +232,16 @@ self-approval, or exception to independent Auditor review. If any condition is
 absent, ambiguous, or fails, preserve the normal finding, Writer response,
 retest, handoff, and approval routes.
 
+`VALID-AUDIT-REPLAY-01` — After any correction changes target bytes, derive the
+changed paths from persisted Writer response/handoff digests and invalidate
+every latest active audit checkpoint whose coverage overlaps one of them. A
+passing primary retest does not reactivate an invalidated audit. Rerun every
+affected deterministic/primary check, every applicable final validator, and the
+complete same-boundary independent audit with the next checkpoint iteration,
+predecessor ref, replay cause, full membership, and freshly derived full
+coverage. Reusing unaffected member results inside that boundary, reviewing
+only the delta, or retaining the prior checkpoint as active is forbidden.
+
 ## Optional Learned Record After Approved Retest
 
 `VALID-LEARNED-01` — Only an approved retest of a medium/major introduced or
@@ -254,7 +289,9 @@ learned file exist per resolved finding.
 validators, reconcile every AC/evidence relation, inspect expected contracts
 and artifacts, and run applicable smoke checks. A final regression re-enters
 the same attribution, severity, correction, budget, retest, dependency, and
-terminal-state policy; final prose cannot waive it.
+terminal-state policy; final prose cannot waive it. Final validators are also
+covered by every applicable due audit boundary and are replayed when an
+overlapping correction invalidates that boundary.
 
 `VALID-HUMAN-01` — Accumulate human validation prescribed by the input analysis
 without interrupting runnable tasks. Expose `pending-human-validation` only
@@ -264,8 +301,9 @@ and human validation is the sole remaining condition.
 `VALID-STATUS-01` — Task `passed` requires all required ACs to pass the primary
 route with evidence. `unresolved`, `skipped-dependency`, or `cancelled` remains
 non-passing. Final completion semantics and dashboard projection are owned by
-[execution-contract.md](execution-contract.md); no task result may contradict
-that state.
+[execution-contract.md](execution-contract.md); task pass is necessary but does
+not substitute for the latest `approved` or `not-applicable` checkpoint at every
+expected due boundary. No task result may contradict that state.
 
 `VALID-OUTPUT-01` — Return every key:
 
@@ -299,6 +337,6 @@ The examples are non-normative and grant no correction authority.
 Validate every `VALID-*` invariant, schema, AC cardinality, primary route,
 owner, immutable path, classification/severity combination, retry debit,
 retest, learned cardinality/evidence, dependency continuation, final regression,
-human-validation timing, and task/final status relation. Revisit this unit
-whenever acceptance, validator, retry, learned, or final-validation policy
-changes.
+human-validation timing, primary/audit separation, full correction replay, and
+task/final status relation. Revisit this unit whenever acceptance, validator,
+retry, learned, audit-replay, or final-validation policy changes.

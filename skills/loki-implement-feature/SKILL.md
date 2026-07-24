@@ -2,9 +2,9 @@
 name: loki-implement-feature
 description: Plan and implement a software or game feature from a non-empty demand and a readable Markdown technical analysis in one resumable invocation, with validated targets, DAG execution, hierarchical measurement, per-task acceptance evidence, and a truthful terminal dashboard with manual tests.
 doc_id: "loki-implement-feature"
-version: "1.0.0"
+version: "2.0.0"
 status: active
-last_updated: "2026-07-22"
+last_updated: "2026-07-24"
 scope: "Public provider-neutral unified feature planning and implementation command"
 not_scope: "Technical-analysis authoring, package installation, consumer-specific technology rules, or compatibility with superseded commands or schemas"
 authority: "Approved Loki package policy, inherited validated restrictions, and this current command bundle"
@@ -23,7 +23,7 @@ replaced_by: null
 when_to_use:
   - "Use when a non-empty demand and a decision-complete Markdown analysis should be planned and implemented in one autonomous, persisted workflow."
   - "Use when execution needs exact target provenance, task acceptance criteria, deterministic or independent validation, hierarchical execution metrics, retry, resume, and a manual-test dashboard."
-argument-hint: "[demand, analysis_file, optional plan_directory, optional retry_limit]"
+argument-hint: "[demand, analysis_file, optional plan_directory, optional retry_limit, optional audit_frequency]"
 arguments:
   required:
     - demand
@@ -31,6 +31,7 @@ arguments:
   optional:
     - plan_directory
     - retry_limit
+    - audit_frequency
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: []
@@ -96,6 +97,12 @@ parameters:
     requirement: optional
     default: 3
     description: "Maximum consuming correction cycles per task, validator, and medium/major failure signature."
+  - key: audit_frequency
+    input_type: enum
+    requirement: optional
+    default: phase
+    accepted: [task, phase, plan]
+    description: "Frequency for independent audit of Writer output."
 ```
 
 Require `demand` and `analysis_file`. If either is absent, request only the
@@ -123,6 +130,21 @@ it and compute `demand_digest` from the original exact bytes. Require
 `.md`, and normalize its validated locator as a project-relative POSIX path.
 Compute lowercase SHA-256 digests from the exact inspected bytes. Require
 `retry_limit` to be a non-negative integer; absence normalizes to `3`.
+
+`INPUT-AUDIT-FREQUENCY-01` — Treat omission of `audit_frequency` as the exact
+immutable configuration `{frequency: phase, source: default}`. Treat an
+explicit exact string `task`, `phase`, or `plan` as
+`{frequency: <value>, source: explicit}`. Reject explicit `null`, an empty
+string, whitespace variants, case variants, translations such as `fase` or
+`plano`, and every other alias or value. Compute `policy_digest` only after
+normalization under the current `audit_configuration` v1 algorithm in the
+Execution reference.
+
+`INPUT-AUDIT-FREQUENCY-02` — Input validates, normalizes, hashes, and persists
+the choice only. It never resolves an Auditor, checks Auditor availability,
+creates an Auditor preflight, dispatches an audit, or blocks because an Auditor
+may be unavailable. Auditor applicability and availability are evaluated only
+when the validated execution scheduler reports a due material boundary.
 
 Preserve three separate authorization layers:
 
@@ -161,14 +183,17 @@ mismatch, unknown schema, unsafe/incomplete record, extra entry, or ambiguous
 identity blocks without merge or overwrite. After matching state exists, normal
 `managed-resume` rules apply. A path demand receives no bootstrap exception.
 
-Before plan allocation or any managed write, derive the typed `run_id` and
-`execution_id` with `COMMAND-IDENTITY-01` in the Execution reference from the
-already normalized immutable Input. Missing or unconstructable identity blocks.
+Before plan allocation or any managed write, derive command identity v2 and the
+typed `loki-run-v2` and `loki-execution-v2` identities with
+`COMMAND-IDENTITY-01` in the Execution reference from the already normalized
+immutable Input, including the complete frequency and source configuration.
+Missing or unconstructable identity blocks. A different normalized frequency
+or source produces a different identity and is never a resume of the prior run.
 Normalize objective, typed input identities, digests, plan path, inherited
 restrictions, retry limit, demand kind, path locator or exact inline UTF-8 bytes,
-gaps, and minimum next input for Execution. For inline demand, Input does not
-invent a file locator: Execution must publish the durable demand record before
-initializing the execution helper.
+audit configuration, gaps, and minimum next input for Execution. For inline
+demand, Input does not invent a file locator: Execution must publish the durable
+demand record before initializing the execution helper.
 
 Input only collects, validates, hashes, and normalizes. During Input do not plan,
 implement, create managed files, invoke an agent, write production targets, or

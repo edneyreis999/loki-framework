@@ -170,6 +170,15 @@
       "expect": "reject",
       "error": "DEMAND_KIND_AMBIGUOUS",
       "payload": {"kind": "path", "valid_utf8": true, "content": "looks/like/a/path.md", "readable_regular_file": true, "classification_source": "filesystem-guess"}
+    },
+    {
+      "id": "planos-root-is-not-plan-directory",
+      "matrix": false,
+      "scenario": "The planos container itself is not a plan directory",
+      "rule": "plan-path",
+      "expect": "reject",
+      "error": "PLAN_PATH_UNSAFE",
+      "payload": {"path": "planos", "symlink_ancestor": false, "destination_symlink": false, "canonical_contained": true, "base_usable": true}
     }
   ]
 }
