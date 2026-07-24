@@ -108,14 +108,15 @@ parameters:
 Require `demand` and `analysis_file`. If either is absent, request only the
 missing required parameter and stop Input. Classify demand kind before content
 validation. `INPUT-DEMAND-KIND-01` — An explicit caller- or adapter-supplied
-text kind means `inline`; an explicit file/path kind means `path`. A plain
-string, path-looking spelling, filesystem existence check, suffix, or
-readability alone never establishes caller intent. When the invocation supplies
-neither explicit kind, stop before hashing, identity derivation, allocation, or
-write and request only `demand_kind: inline | path`; use that answer solely to
-classify the existing `demand` value. Conflicting kind signals are likewise
-ambiguous and request only that same clarification rather than applying
-precedence.
+text kind means `inline`; an explicit file/path kind means `path`. When the
+invocation supplies neither explicit kind, resolve the existing `demand` value
+using the applicable command path rules. If it resolves to a readable regular
+file, classify it as `path` before hashing, identity derivation, allocation, or
+write; otherwise classify it as `inline`. This automatic-path rule applies even
+when the same text could otherwise be interpreted as inline. Do not request a
+clarification solely because inline text and a readable file are both possible.
+Conflicting explicit kind signals are ambiguous and request only
+`demand_kind: inline | path` rather than applying precedence.
 
 For inline demand, require a non-empty valid UTF-8 string and retain in memory
 the exact UTF-8 bytes without trimming or Unicode normalization; compute
