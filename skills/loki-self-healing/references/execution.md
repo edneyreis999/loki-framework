@@ -42,6 +42,10 @@ como knowledge skill.
 
 ## Scope Resolution And Global Context
 
+Exija o `destination_scope: package` normalizado pelo Input antes de resolver
+qualquer write. Ausência, divergência ou tentativa de usar consumer root,
+runtime ou destino instalado bloqueia sem fallback.
+
 Resolva arquivo, diretório, workflow ou staged. Encontre o package root por
 `manifest.yaml`, `skills/`, `agents/` e `docs/`. Para workflow, mapeie bundle, helper skills,
 references, assets, templates, docs, manifest, inventory, routers e installer.
@@ -105,7 +109,7 @@ validator/gate estiver ausente, pendente ou falhar.
 
 ## Stop Conditions
 
-Pare sem escopo/staged; fora do root; com única correção proibida; dependência
+Pare sem escopo/staged ou sem `destination_scope: package`; fora do root; com única correção proibida; dependência
 de pesquisa externa/decisão ausente; conflito interno sem desempate; install
 scope ausente; handoff sem destino; conflito de writers; validator falho; ou
 correção que exija ampliar o envelope. Não declare conclusão com condição ativa.

@@ -5,7 +5,7 @@ status: draft
 created: 2026-06-24
 doc_id: loki-framework-local-readme
 version: 1.0.0
-last_updated: 2026-07-23
+last_updated: 2026-07-27
 scope: local-project-package
 not_scope: consumer project policy, package installation approval, or runtime validation
 authority: Approved Loki package policy and this package source
@@ -191,8 +191,8 @@ copiaria artefatos `internal-only`.
 
 Dry-run manual recomendado antes de aplicar: gere e revise a lista exata a
 partir de `install-scopes.json`, confirme que cada destino ainda não existe e
-registre essa lista para rollback. Para `consumer`, a lista esperada contém 53
-skills, 23 agents e 23 projecoes Codex; `templates/` e compartilhado por todos
+registre essa lista para rollback. Para `consumer`, a lista esperada contém 58
+skills, 25 agents e 25 projecoes Codex; `templates/` e compartilhado por todos
 os perfis.
 
 ```bash
@@ -213,9 +213,14 @@ cp "$PACKAGE_ROOT"/templates/*.md .claude/templates/loki/
 ```
 
 Depois da cópia filtrada, confirme que `loki-self-healing`,
-`loki-knowledge-extraction-analysis` e demais skills `internal-only` estão
-ausentes no consumer. Não sobrescreva destino existente; conflito exige
-intervenção manual e novo dry-run.
+`loki-knowledge-extraction-analysis`, `lf-internal-command-workflows` e os dois
+agentes de artefatos do framework foram registrados com escopo `both`. Essa
+disponibilidade não concede permissão para alterar o projeto consumidor: os
+agentes e qualquer mutação de artefato consolidado do pacote continuam
+limitados a um package root e a um envelope `destination_scope: package`.
+Relatórios transitórios permitidos pelo contrato de análise preservam seus
+próprios targets e nunca autorizam essa mutação. Não sobrescreva destino
+existente; conflito exige intervenção manual e novo dry-run.
 
 Gate: escrever em `.claude/**` exige approval humano posterior. Este README nao autoriza a copia por si so.
 

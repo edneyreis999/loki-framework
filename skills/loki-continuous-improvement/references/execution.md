@@ -130,14 +130,15 @@ de `consumer-context`, runtime, engine ou backlog; nesses destinos, preserve o
 writer e auditor de domínio já aplicáveis.
 
 Antes de selecionar essa ramificação, faça preflight do contexto ativo de
-manutenção do pacote: confirme que os dois contratos internal-only estão
-localmente disponíveis. O command `both` não depende deles para
+manutenção do pacote: confirme que os dois agentes com escopo `both` estão
+localmente disponíveis. A instalação desses agentes não concede autoridade em
 `consumer-context`, runtime ou backlog. Se um candidato `package` for executado
-sem essa disponibilidade, não use fallback genérico nem declare conclusão:
+sem essa disponibilidade ou sem package root e envelope package válidos, não
+use fallback genérico nem declare conclusão:
 responda `blocked` com agentes ausentes, motivo e próximo destino
-`orchestrator` para um contexto em que os artefatos internos de manutenção
-estejam disponíveis ou para reclassificar o candidato; preserve os gates e não
-converta o destino em consumidor por conveniência.
+`orchestrator` para um contexto em que os artefatos de manutenção estejam
+disponíveis ou para reclassificar o candidato; preserve os gates e não converta
+o destino em consumidor por conveniência.
 
 Antes de invocar subagente, entregue objetivo/motivo, unidade, fatos, decisões,
 restrições, fontes/paths, dependências, escopo, allowed/forbidden writes, owner,

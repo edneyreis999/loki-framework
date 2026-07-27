@@ -63,9 +63,12 @@ parameters:
 Valide que o escopo resolve dentro do package root; para `staged`, valide que o
 índice contém candidatos mas nunca o altere. Valide tipos, paths e conflito com
 `out_of_scope`. Solicite todo obrigatório ausente e não invente escopo, regra,
-install scope, approval ou correção. Normalize objetivo, escopo, candidatos,
-limites, gates, fontes e lacunas. Durante Input não analise artefatos, corrija,
-execute validator, faça stage/commit nem declare sucesso.
+install scope, approval ou correção. Derive e registre
+`destination_scope: package` como identidade fixa deste command; rejeite outro
+destino e nunca trate a instalação no consumer como permissão. Normalize
+objetivo, package root, destination scope, escopo, candidatos, limites, gates,
+fontes e lacunas. Durante Input não analise artefatos, corrija, execute
+validator, faça stage/commit nem declare sucesso.
 
 ## Execution
 

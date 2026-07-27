@@ -1,9 +1,9 @@
 ---
 name: lf-internal-command-workflows
-description: Route internal-only Loki package command bundles in Codex. Use inside the Loki Framework package for `loki-knowledge-extraction-analysis` or `loki-self-healing`, resolving the primary bundle directly.
+description: Route Loki package-maintenance command bundles from either installation profile. Use for `loki-knowledge-extraction-analysis` or `loki-self-healing`, resolving the primary bundle directly while preserving package-only write boundaries.
 when_to_use:
-  - "Use inside the Loki package for internal knowledge extraction or self-healing."
-  - "Use as an internal catalog; the matching loki-* bundle remains authoritative."
+  - "Use for Loki package knowledge extraction or self-healing when the matching bundle is available."
+  - "Use as a maintenance catalog; the matching loki-* bundle remains authoritative."
 argument-hint: "[internal loki-* identity, arguments]"
 arguments:
   required: []
@@ -34,8 +34,9 @@ used_by: [loki-knowledge-extraction-analysis, loki-self-healing]
 
 ## Purpose
 
-Catalog the two internal-only package command bundles without duplicating their
-contracts. This router is not installed by the consumer profile.
+Catalog the two package-maintenance command bundles without duplicating their
+contracts. The router is installed in both profiles, but availability never
+authorizes writes against consumer docs, runtime, configuration, data or assets.
 
 ## Routing
 
@@ -48,4 +49,11 @@ dependencies.
 - Never read legacy command-contract locations or compatibility projections.
 - Do not route public consumer workflows here.
 - Do not treat a command bundle as a knowledge skill.
-- Keep writes inside the approved package maintenance scope.
+- Require package root, `destination_scope: package`, exact targets, owner,
+  validators and gates before mutating any consolidated package artifact.
+- A transient analysis report may use only the exact destination allowed by
+  its primary bundle and never grants package mutation or consumer/runtime
+  authority.
+- Without a valid package envelope, return proposal or `blocked` for package
+  mutation; any transient report remains governed exclusively by the exact
+  write envelope of its primary bundle.

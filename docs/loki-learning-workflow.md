@@ -86,8 +86,9 @@ formal ou auditoria interna de conformidade do pacote.
     exatos. Score indica elegibilidade, nunca autoridade.
 17. Para docs duradouros do consumidor, preserve `catalogador`; para outros
     destinos de runtime, preserve o writer e auditor de dominio aplicaveis. Os
-    agentes de artefatos do pacote nao sao instalados nem recebem permissao
-    nesses destinos.
+    agentes de artefatos do pacote podem estar instalados com escopo `both`,
+    mas nao recebem permissao nesses destinos; eles permanecem inativos sem
+    package root e envelope `destination_scope: package` validos.
 18. A promocao termina com diff, validacao e registro do risco residual.
 
 ## Inferencias Analiticas no Aprendizado
@@ -160,7 +161,7 @@ parcial silencioso.
 | `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
 | `lf-execution-knowledge-capture` | Define o contrato de captura transitoria que CI pode consumir, mas nunca promove por conta propria. |
 | `lf-analytic-inference` | Define lookup seletivo, schemas, replay idempotente, snapshot, score e elegibilidade de manutencao sem mutacao automatica. |
-| `lf-internal-command-workflows` | Roteia workflows internos de manutencao do pacote, incluindo melhoria continua, extracao de conhecimento e self-healing. |
+| `lf-internal-command-workflows` | Roteia os dois workflows especializados de manutencao do pacote: extracao de conhecimento e self-healing; melhoria continua permanece no router geral. |
 | `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
 | `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
 | `lf-skill-creator` | Ajuda quando o aprendizado deve virar procedimento reutilizavel com trigger e progressive disclosure. |

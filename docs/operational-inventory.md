@@ -6,7 +6,7 @@ type: operational-inventory
 self_contained: true
 doc_id: loki-operational-inventory
 version: 1.0.0
-last_updated: 2026-07-24
+last_updated: 2026-07-27
 scope: Current package commands, skills, agents, templates, docs, validators, and reference-only backlog
 not_scope: Consumer project inventory, installed destination state, or compatibility with superseded package contracts
 authority: Approved Loki package policy and the versioned package source
@@ -96,10 +96,15 @@ approval vincula diretorio canonico, target exato, basename/versao,
 before-state/snapshot e um create exclusivo. Colisao posterior invalida a
 approval, bloqueia sem retry e exige nova resolucao e nova approval.
 
-O pacote possui 19 command bundles `loki-*` ativos. O router publico
-`lf-command-workflows` expoe 17 deles; os dois bundles `internal-only`,
-`loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados
-exclusivamente por `lf-internal-command-workflows`.
+O pacote possui 19 command bundles `loki-*` ativos, todos com escopo de
+instalacao `both`. O router geral `lf-command-workflows` expoe 17 workflows de
+uso geral; os dois workflows de manutencao do pacote,
+`loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados por
+`lf-internal-command-workflows`. Instalar esses workflows em um consumidor nao
+autoriza mutar artefatos consolidados do pacote ou superficies do consumidor:
+mutacao do pacote continua exigindo package root e envelope
+`destination_scope: package`; relatorios transitorios preservam os limites do
+contrato de analise.
 
 A matriz caller/mode do `catalogador` e fechada: `loki-init` usa
 `init-bootstrap-cataloger`, `init-publication-batch` e
@@ -146,8 +151,8 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki publicos disponiveis no perfil instalado. |
-| `lf-internal-command-workflows` | `mvp` | Skill internal-only para rotear apenas extracao de conhecimento e self-healing; melhoria continua permanece `both` no router publico. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki de uso geral disponiveis no perfil instalado. |
+| `lf-internal-command-workflows` | `mvp` | Skill `both` especializada em rotear extracao de conhecimento e self-healing; a disponibilidade no consumidor nao amplia os limites package-only desses workflows. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
 | `lf-implement-feature-execution` | `mvp` | Autoridade current-only para command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, métricas v1, target decisions, DAG, preflights, AC/validators, liveness, retry, resume e terminal truth. |
 | `lf-execution-knowledge-capture` | `mvp` | Separar evidence de knowledge, avaliar materialidade, despachar entry exclusiva sem bloquear e reconciliar estados degradados em checkpoint. |
@@ -178,8 +183,8 @@ bundles.
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
-| `framework-artifact-writer` | `draft-scoped-writer` | Writer interno do pacote: emite profile, executa checks e precheck mecânico de materialidade/perfil, e entrega apenas packets ready ao Auditor; não autoaprova nem atua em consumidor/runtime. |
-| `framework-artifact-quality-auditor` | `draft-write-test` | Auditor interno read-only e independente: valida perfil, rubrica v2, fixtures, revisao isolada e bias controls sobre o patch real; emite o parecer LLM-facing, bloqueia findings/incertezas e nunca corrige producao. |
+| `framework-artifact-writer` | `draft-scoped-writer` | Agente `both` para escrita interna do pacote: emite profile, executa checks e precheck mecanico de materialidade/perfil, e entrega apenas packets ready ao Auditor; a instalacao no consumidor nao autoriza escrita em consumer/runtime. |
+| `framework-artifact-quality-auditor` | `draft-write-test` | Agente `both`, read-only e independente, para auditar patches do pacote: valida profile, rubric v2, fixtures, revisao isolada e bias controls; bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only da demanda, `analysis_file`, state, task, docs e fontes locais para `loki-implement-feature` sem escrever. |
 | `source-researcher` | `mvp` | Mapear fatos, lacunas e conflitos em pesquisa multi-fonte antes de analise, plano, feedback, enriquecimento ou promocao. |
 | `session-evidence-auditor` | `mvp` | Auditar em modo read-only manifests de evidencia de sessao ja validados, sem inventar identidade, transcritos, uso de tokens ou raciocinio privado. |

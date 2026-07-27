@@ -135,11 +135,12 @@ evidence sanitizada ou declara gap, sem fallback de retrospectiva.
 
 ## Packaging Checks
 
-Encaminhe mudanca do pacote para o workflow de extracao de conhecimento
-disponivel somente em perfil interno, quando esse perfil estiver ativo, ou para
-`loki-continuous-improvement`; nao aplique. A dependencia internal-only e
-condicional e nunca e exigida por este artefato `both`. Fontes externas sao
-evidencia citada, nunca dependencia normativa.
+Encaminhe mudanca do pacote para o workflow de extracao de conhecimento ou para
+`loki-continuous-improvement`; nao aplique. Ambos podem estar instalados no
+perfil consumer, mas qualquer mutacao de artefato consolidado do pacote continua
+exigindo package root e envelope `destination_scope: package`. Um relatorio
+transitorio preserva os targets do command de analise e nao concede mutacao.
+Fontes externas sao evidencia citada, nunca dependencia normativa ou autorizacao.
 
 ## Stop Conditions
 

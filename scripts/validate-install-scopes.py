@@ -34,7 +34,6 @@ SUSPICIOUS_BOTH_TERMS = (
     "workspace do loki",
     "projeto consumidor sem",
     "package authoring",
-    "self-healing",
     "branch guardada",
     "prefer these sources",
     "if this skill",
@@ -62,12 +61,14 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_LOKI_COMMAND_COUNT = 17
+FINAL_CONSUMER_INSTALLABLE_LOKI_COMMAND_COUNT = 19
+FINAL_GENERAL_LOKI_COMMAND_COUNT = 17
+FINAL_PACKAGE_MAINTENANCE_LOKI_COMMAND_COUNT = 2
 RETIRED_SOURCE_ONLY_SKILLS = frozenset(
     {f"loki-{stem}" for stem in ("generate-action-plan", "run-plan")}
     | {"lf-" + "run-plan-execution"}
 )
-REQUIRED_PUBLIC_LOKI_COMMANDS = frozenset(
+REQUIRED_GENERAL_LOKI_COMMANDS = frozenset(
     {
         "loki-abrir-pr",
         "loki-agentic-development",
@@ -87,6 +88,15 @@ REQUIRED_PUBLIC_LOKI_COMMANDS = frozenset(
         "loki-retrospectiva-tecnica",
         "loki-tech-analysis",
     }
+)
+REQUIRED_PACKAGE_MAINTENANCE_LOKI_COMMANDS = frozenset(
+    {
+        "loki-knowledge-extraction-analysis",
+        "loki-self-healing",
+    }
+)
+REQUIRED_CONSUMER_INSTALLABLE_LOKI_COMMANDS = (
+    REQUIRED_GENERAL_LOKI_COMMANDS | REQUIRED_PACKAGE_MAINTENANCE_LOKI_COMMANDS
 )
 FINAL_BUNDLE_RESOURCES = (
     "references/execution.md",
@@ -1723,18 +1733,20 @@ def frontmatter_text(path: Path) -> str:
     return parts[1]
 
 
-def validate_public_loki_command_inventory(
-    public_loki_names: set[str] | list[str],
+def validate_consumer_installable_loki_command_inventory(
+    consumer_loki_names: set[str] | list[str],
     location: str,
 ) -> None:
-    actual = set(public_loki_names)
-    if len(actual) != FINAL_LOKI_COMMAND_COUNT:
+    actual = set(consumer_loki_names)
+    if len(actual) != FINAL_CONSUMER_INSTALLABLE_LOKI_COMMAND_COUNT:
         raise ValueError(
-            f"{location} must declare {FINAL_LOKI_COMMAND_COUNT} public Loki command bundles; "
+            f"{location} must declare "
+            f"{FINAL_CONSUMER_INSTALLABLE_LOKI_COMMAND_COUNT} "
+            "consumer-installable Loki command bundles; "
             f"found {len(actual)}"
         )
-    missing = sorted(REQUIRED_PUBLIC_LOKI_COMMANDS - actual)
-    extra = sorted(actual - REQUIRED_PUBLIC_LOKI_COMMANDS)
+    missing = sorted(REQUIRED_CONSUMER_INSTALLABLE_LOKI_COMMANDS - actual)
+    extra = sorted(actual - REQUIRED_CONSUMER_INSTALLABLE_LOKI_COMMANDS)
     if missing or extra:
         details: list[str] = []
         if missing:
@@ -1742,8 +1754,63 @@ def validate_public_loki_command_inventory(
         if extra:
             details.append("unexpected: " + ", ".join(extra))
         raise ValueError(
-            f"{location} public Loki command identity mismatch; "
+            f"{location} consumer-installable Loki command identity mismatch; "
             + "; ".join(details)
+        )
+
+
+def validate_loki_command_router_partition(package_root: Path) -> None:
+    router_contracts = (
+        (
+            package_root / "skills" / "lf-command-workflows" / "SKILL.md",
+            REQUIRED_GENERAL_LOKI_COMMANDS,
+            FINAL_GENERAL_LOKI_COMMAND_COUNT,
+            "general-purpose",
+        ),
+        (
+            package_root / "skills" / "lf-internal-command-workflows" / "SKILL.md",
+            REQUIRED_PACKAGE_MAINTENANCE_LOKI_COMMANDS,
+            FINAL_PACKAGE_MAINTENANCE_LOKI_COMMAND_COUNT,
+            "package-maintenance",
+        ),
+    )
+    failures: list[str] = []
+    for router_path, expected, expected_count, label in router_contracts:
+        routed = set(parse_frontmatter_list(router_path, "used_by"))
+        if len(routed) != expected_count:
+            failures.append(
+                f"{router_path}: expected {expected_count} {label} workflows; "
+                f"found {len(routed)}"
+            )
+        missing = sorted(expected - routed)
+        extra = sorted(routed - expected)
+        if missing:
+            failures.append(f"{router_path}: missing {label}: " + ", ".join(missing))
+        if extra:
+            failures.append(f"{router_path}: unexpected {label}: " + ", ".join(extra))
+    if failures:
+        raise ValueError("Loki command router partition failures:\n- " + "\n- ".join(failures))
+
+
+def validate_package_maintenance_write_boundaries(package_root: Path) -> None:
+    required_gate = "destination_scope: package"
+    self_healing_paths = (
+        package_root / "skills" / "loki-self-healing" / "SKILL.md",
+        package_root
+        / "skills"
+        / "loki-self-healing"
+        / "references"
+        / "execution.md",
+    )
+    missing = [
+        str(path)
+        for path in self_healing_paths
+        if required_gate not in path.read_text(encoding="utf-8")
+    ]
+    if missing:
+        raise ValueError(
+            "package-maintenance write boundary missing "
+            f"'{required_gate}' in: " + ", ".join(missing)
         )
 
 
@@ -1754,12 +1821,12 @@ def validate_final_loki_bundles(
 ) -> None:
     skill_scopes = artifact_scopes(data, "skills")
     loki_names = sorted(name for name in skill_scopes if name.startswith("loki-"))
-    public_loki_names = sorted(
+    consumer_loki_names = sorted(
         name for name in loki_names if skill_scopes[name] != "internal-only"
     )
     if require_full_inventory:
-        validate_public_loki_command_inventory(
-            public_loki_names,
+        validate_consumer_installable_loki_command_inventory(
+            consumer_loki_names,
             "schema 2",
         )
 
@@ -1944,14 +2011,14 @@ def validate_final_manifest(package_root: Path, data: dict) -> None:
     catalog = parse_manifest_skill_catalog(package_root)
     loki_entries = {name: metadata for name, metadata in catalog.items() if name.startswith("loki-")}
     skill_scopes = artifact_scopes(data, "skills")
-    public_loki_entries = {
+    consumer_loki_entries = {
         name: metadata
         for name, metadata in loki_entries.items()
         if skill_scopes.get(name) != "internal-only"
     }
     try:
-        validate_public_loki_command_inventory(
-            set(public_loki_entries),
+        validate_consumer_installable_loki_command_inventory(
+            set(consumer_loki_entries),
             "manifest",
         )
     except ValueError as exc:
@@ -1992,6 +2059,9 @@ def main(argv: list[str] | None = None) -> int:
             data,
             require_full_inventory=not args.scope_contract_only,
         )
+        if not args.scope_contract_only:
+            validate_loki_command_router_partition(package_root)
+            validate_package_maintenance_write_boundaries(package_root)
         validate_final_command_dependencies(package_root, data)
 
         if args.scope_contract_only:

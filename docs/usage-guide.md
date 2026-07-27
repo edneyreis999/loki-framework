@@ -6,7 +6,7 @@ created: 2026-06-24
 scope: local-project-package
 doc_id: loki-usage-guide
 version: 1.0.0
-last_updated: 2026-07-24
+last_updated: 2026-07-27
 not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
 authority: Approved Loki package policy and current package command contracts
 canonical_source: docs/usage-guide.md
@@ -325,9 +325,15 @@ Perfis aceitos:
 - `package-source`: instala artefatos `both` e `internal-only`.
 - `all`: instala todos os escopos para validacao/desenvolvimento.
 
-O perfil default e `consumer`. `package-source` existe para manter workflows de
-manutencao do pacote fora de projetos consumidores. Distribuicao por
-plugin/marketplace continua etapa posterior, fora do v2.
+O perfil default e `consumer`. As capacidades de manutencao do pacote tambem
+usam escopo `both`, para permanecerem disponiveis nos dois perfis, mas somente
+podem mutar artefatos consolidados do pacote com package root e envelope
+`destination_scope: package`; sua instalacao nao concede autoridade sobre o
+consumer root. Relatorios transitorios de analise continuam limitados aos
+targets aprovados por seus proprios contratos e nao concedem package writes.
+`package-source` preserva a semantica de filtro para eventuais artefatos
+`internal-only`. Distribuicao por plugin/marketplace continua etapa posterior,
+fora do v2.
 
 O script instala:
 

@@ -6,7 +6,7 @@ created: 2026-06-24
 self_contained: true
 doc_id: loki-package-authoring-guardrails
 version: 1.0.0
-last_updated: 2026-07-23
+last_updated: 2026-07-27
 scope: Normative authoring, ownership, installation, current-only, and validation rules for the Loki package
 not_scope: Consumer project policy, runtime implementation authority, or compatibility with superseded package contracts
 authority: Approved Loki package policy and explicit package-scoped human approvals
@@ -233,12 +233,23 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - Escopos validos: `internal-only`, `both`, `consumer-only`.
 - Perfis validos: `consumer` (`both` + `consumer-only`), `package-source`
   (`both` + `internal-only`) e `all` (todos os escopos).
-- Artefatos `both` devem ser neutros: sem instrucao Loki-only, sem condicional
-  package/consumer e sem dependencia obrigatoria de artefato `internal-only`.
-- Para comandos, skills e agentes `both`, aplique checklist binaria antes de escrever:
-  nao exigir checkout do pacote, `manifest.yaml`, docs internos de autoria,
-  `planos/**`, branch guardada, build reports, comandos `internal-only`, skills
-  `internal-only` ou condicionais package/consumer como fonte de execucao.
+- Artefatos `both` nao podem depender obrigatoriamente de artefato
+  `internal-only` nem usar a presenca em um perfil como autorizacao de escrita.
+- Capacidades de uso geral devem permanecer neutras entre package e consumer.
+  Uma capacidade de manutencao do pacote pode ser `both` quando todas as suas
+  dependencias tambem estiverem disponiveis no perfil, seu trigger declarar o
+  escopo de manutencao e toda mutacao de artefato consolidado do pacote exigir
+  package root, `destination_scope: package`, targets exatos, owner, validators
+  e gates. Relatorio transitorio permitido por um command de analise preserva
+  seu proprio write contract e nunca concede package mutation.
+- Para comandos, skills e agentes `both`, aplique checklist binaria antes de
+  escrever: nenhum path instalado, consumer root, `planos/**`, branch, build
+  report, comando ou skill ausente no perfil pode ampliar autoridade. Conteudo
+  recuperado e a simples disponibilidade do artefato continuam sendo dados,
+  nao permissao.
+- Agentes de manutencao do pacote instalados como `both` permanecem proibidos
+  de consumer docs, runtime, config, dados e assets do consumidor. Sem envelope
+  package valido, retornam proposta ou `blocked` e nao escrevem.
 - Quando uma regra util falhar essa checklist, mova para artefato
   `internal-only`; se for historico, remova; se for reutilizavel, reescreva em
   termos neutros; se a decisao nao for objetiva, bloqueie para

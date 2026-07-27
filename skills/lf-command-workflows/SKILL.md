@@ -1,9 +1,9 @@
 ---
 name: lf-command-workflows
-description: Route shared Loki command bundles from Codex. Trigger when the user invokes a public `loki-*` workflow; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
+description: Route general-purpose Loki command bundles from Codex. Trigger when the user invokes one of the 17 general `loki-*` workflows; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
 when_to_use:
-  - "Use when routing one of the 17 current public Loki command bundles available to consumer and package profiles."
-  - "Use when a caller needs a catalog of public loki-* identities, not a duplicate command contract."
+  - "Use when routing one of the 17 current general-purpose Loki command bundles available to consumer and package profiles."
+  - "Use when a caller needs the catalog of 17 general loki-* identities, not a duplicate command contract."
 argument-hint: "[loki-* command name, arguments]"
 arguments:
   required: []
@@ -34,7 +34,7 @@ used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-a
 
 ## Purpose
 
-Catalog public Loki command identities without duplicating their execution
+Catalog general-purpose Loki command identities without duplicating their execution
 contracts. The command bundle is always the primary authority.
 
 ## Routing
@@ -48,7 +48,9 @@ and response references, and response asset. Load its `required_skills` and
 
 - Never read legacy command-contract locations or compatibility projections.
 - Never reinterpret a `type: command` bundle as a knowledge skill.
-- Do not route internal-only workflows from this router.
+- Route package-maintenance workflows through
+  `lf-internal-command-workflows`, even though both routers are installable in
+  consumer and package profiles.
 - Do not edit installed mirrors during ordinary execution.
 - Route ordinary demand-plus-analysis implementation directly to
   `loki-implement-feature`. Never route it through `loki-agentic-development`,
