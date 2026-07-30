@@ -57,6 +57,33 @@ When a list includes branching or scoped outcomes, report
 Visible behavior remains `runtime_pending` until a runtime or Playtest gate
 confirms the intended flow.
 
+## Semantic Targeting For Stateful Event Validators
+
+Derive each validator target from the approved task semantics, not from a
+fixed array position. Build the target identity from the applicable surface,
+event, page conditions and trigger, command signature, and expected state or
+transition. Consumer-specific IDs, names, states and selectors belong only in
+the validator materialized under the active plan; keep them out of this
+reusable contract.
+
+- For a singular target, fail closed when semantic discovery finds zero or
+  more than one match.
+- For intentional repeated targets, declare the expected cardinality and
+  validate every occurrence independently.
+- Validate guarded mutations inside the true branch by correlating `111`,
+  optional `411`, matching `412`, the indent ladder and command order. Mere
+  presence of the expected commands is insufficient.
+- Validate relative order between the semantically discovered operations.
+  Require a fixed adjacency or page index only when an explicit acceptance
+  criterion requires that layout.
+
+The validator suite must include negative fixtures for a duplicate target, a
+target in the wrong branch and a page whose semantics do not match the target.
+It must also include a positive metamorphic fixture that reindexes an otherwise
+equivalent page while preserving its semantic identity. These static fixtures
+validate targeting and structure only; they do not replace runtime or Playtest
+validation of stateful behavior.
+
 ## Choice Path Enumeration
 
 For maps or Common Events with nested choices, do not infer complete routes from
