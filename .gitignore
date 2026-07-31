@@ -8,3 +8,4 @@ __pycache__/
 # AgentOps session artifacts
 .agents/
 frameworks-de-referencia
+.env
