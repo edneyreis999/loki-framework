@@ -1,8 +1,8 @@
 ---
 doc_id: "loki-continuous-improvement-response"
-version: "2.0.0"
+version: "2.1.0"
 status: "active"
-last_updated: "2026-07-31"
+last_updated: "2026-08-01"
 scope: "Intermediate and terminal response contract for current continuous-improvement runs"
 not_scope: "Candidate v1, backlog, record-only, plan lifecycle or deletion readiness"
 authority: "Current loki-continuous-improvement command bundle"
@@ -95,9 +95,58 @@ For every material candidate report:
 - action `promote`, `noop-proven` or `blocked-with-reason`;
 - approval, validators, gates, evidence and residual blockers.
 
+Render the candidate identity, routing and action first, then its complete
+persisted Semantic Abstraction Gate, and only then approval and other controls.
+The response must not place an approval status before the gate projection or
+make a material candidate appear approvable when its gate projection is
+missing.
+
 Keep root-cause reporting only for error, failure, waste, friction or prevention
 families. Report it as not applicable for all other semantic types without
 adding empty root-cause fields to candidate data.
+
+## Required Semantic Abstraction Projection
+
+For every material candidate, copy the persisted gate state without
+recalculating, normalizing, correcting or completing it. Make these four
+semantic boundaries independently recoverable:
+
+- `instance`: every source-instance locator and its exact instance text;
+- `invariant`: the exact `resulting_statement` and the exact embedded
+  `durable_knowledge_unit/statement`, displayed separately so equality is
+  inspectable without rewriting either value;
+- `scope`: every applicability signal that states when the unit applies;
+- `limits`: the exclusions status and its complete exclusions or
+  none-observed rationale, generalization evidence locators, counterexample
+  result and evidence locators, and the gate rationale.
+
+Also report the persisted `result`, `generalization_confidence` and
+`reason_code`. The only renderable values are the closed gate values defined by
+[Plan Directory Intake](plan-directory-intake.md); the response cannot invent a
+fallback, infer a stronger confidence or silently convert one result into
+another.
+
+Render all three outcomes as distinct persisted states:
+
+- `generalized`: show the source instances as evidence, the reusable invariant,
+  its applicability, its observed or none-observed limits, and its bounded or
+  none-observed counterexample result;
+- `local-with-rationale`: label the unit as material when the candidate is
+  material, preserve `generalization_confidence="not-applicable"`, and show the
+  exact rationale and boundary that keep the unit local;
+- `blocked-ambiguous`: preserve `generalization_confidence="low"`, action
+  `blocked-with-reason`, rejected approval state, blocking evidence and every
+  material residual blocker; show the one minimum human decision recorded by
+  the run, or report that this decision is missing without inventing it.
+
+After the complete gate projection, report the immutable binding using the
+candidate `intent_digest` and the approval envelope's `approval_id`, `status`
+and bound `intent_digest`. Copy both digests from persisted state; do not derive
+an equality claim, recompute a digest, grant approval, change routing or repair
+a stale or missing binding while rendering. A missing gate field, missing
+blocked decision, stale binding or contradictory persisted state is reported
+as `needs-input` or `blocked` with its safe evidence locator and minimum next
+action; it is never filled from prose, examples or source content.
 
 ## Conditional Plan Directory Section
 
@@ -168,6 +217,10 @@ validation and independent artifact audit. Do not claim terminal completion,
 promotion or independence while any required validator, gate, approval,
 recovery result or handoff is pending or open.
 
+Rendering is a projection boundary only. It cannot recalculate candidate or
+gate state, correct persisted values, satisfy a validator, grant routing or
+write authority, or turn displayed evidence into an approval.
+
 ## XML Shape For LLM
 
 ```xml
@@ -183,4 +236,7 @@ recovery result or handoff is pending or open.
 ```
 
 Serialize candidate, plan coverage and package audit data inside the seven
-declared children. Do not create another root or add prose outside it.
+declared children. Within `artifacts`, serialize each material candidate's
+complete semantic gate before its approval/control projection, preserving the
+instance, invariant, scope and limits fields above. Do not create another root
+or add prose outside it.

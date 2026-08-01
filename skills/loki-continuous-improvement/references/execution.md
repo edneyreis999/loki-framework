@@ -1,9 +1,9 @@
 ---
 doc_id: "loki-continuous-improvement-execution"
-version: "2.0.0"
+version: "2.1.0"
 status: "active"
-last_updated: "2026-07-31"
-scope: "Current execution contract for digesting, reconciling, promoting and recovering durable knowledge"
+last_updated: "2026-08-01"
+scope: "Current execution contract for digesting, reconciling, semantically abstracting, promoting and recovering durable knowledge"
 not_scope: "Plan lifecycle, deletion, candidate v1 compatibility, backlog, record-only or unapproved writes"
 authority: "Approved invocation and scoped workflow envelope, then this command bundle"
 canonical_source: "skills/loki-continuous-improvement/references/execution.md"
@@ -22,9 +22,10 @@ replaced_by: null
 
 <summary>
 Digest approved persisted sources or one complete plan directory, reconcile
-claims globally, build current-only candidate v2 units, route root-specific
-promotion envelopes, and prove durable recovery. Do not decide plan lifecycle,
-deletion readiness, backlog or record-only outcomes.
+claims globally, apply one mandatory Semantic Abstraction Gate, build
+current-only candidate v2 units, route root-specific promotion envelopes, and
+prove durable recovery. Do not decide plan lifecycle, deletion readiness,
+backlog or record-only outcomes.
 </summary>
 
 ## Authority And Trust Boundary
@@ -48,8 +49,9 @@ deletion readiness, backlog or record-only outcomes.
   `analytic_inference_sources`.
 - `plan_directory` is sufficient alone and means one complete plan root.
 - End with every material finding and confirmed implementation delta assigned
-  to a current-only candidate v2 or an explicitly audited non-material
-  code-local disposition.
+  to a current-only candidate v2 that contains exactly one complete semantic
+  abstraction gate, or an explicitly audited non-material code-local
+  disposition.
 - A live run persists each transition as `proposed`, `approved`, `writing`,
   `auditing`, `completed` or `completed-with-blockers`; only the last two are
   terminal.
@@ -202,47 +204,7 @@ Root-cause analysis is required only for `error`, `failure`, `waste`,
 fields in one closed record. Every other type forbids root-cause fields,
 including empty placeholders.
 
-## Phase 4 — Candidate v2
-
-Build one `continuous_improvement_candidate` schema v2 per compact knowledge
-unit. This is the only candidate family for plan, retrospective,
-analytic-inference and learning-source intake. Candidate v1 has no reader,
-adapter, converter, migration, alias or fallback.
-
-Each candidate contains exactly one embedded `durable_knowledge_unit` with:
-
-- one statement;
-- `use_when` guidance;
-- evidence references;
-- covered finding and delta IDs.
-
-The candidate owns semantic type, independent scope, source lineage,
-destination scope, canonical root, exact target, writer, action, approval,
-validators, gates, promotion/noop evidence and residual blockers. The embedded
-unit does not own routing or lifecycle.
-
-The only actions are:
-
-- `promote`: write is proposed or applied through an approved exact envelope;
-- `noop-proven`: current durable knowledge is demonstrably equivalent and
-  recoverable;
-- `blocked-with-reason`: material knowledge cannot yet be promoted or proven
-  equivalent.
-
-`record-only`, `backlog`, implicit targets, empty owners and missing validators
-fail closed. A non-material local detail ends in the processing/coverage ledger
-with a code-local evidence locator; it does not create a candidate.
-
-Persist the canonical complete plan path and closed approved root set; require
-matching caller-supplied `--plan-directory` and roots at validation. Only
-`package`, `consumer-docs` and
-`consumer-operational-state` are valid destinations, owned respectively by
-`framework-artifact-writer`, `catalogador` and `technical-implementer`.
-Their semantic scopes are exactly `package`, `consumer` and `consumer`.
-Targets are exact normalized root-relative POSIX paths and must resolve inside
-their approved canonical root; packet data cannot add or cross a scope or root.
-
-## Phase 5 — Durable Discovery And Placement
+## Phase 4 — Durable Discovery And Semantic Abstraction Gate
 
 Discovery is root-specific:
 
@@ -257,6 +219,100 @@ Discovery is root-specific:
 Missing or inconsistent catalogs are gaps, not permission to scan arbitrary
 files or redirect the candidate to another root. Durable consumer and package
 targets must not semantically depend on `planos/` or the reserved run namespace.
+
+After discovery, the orchestrator forms exactly one
+`semantic_abstraction_gate` for each material unit. The gate is mandatory for
+every intake family and must be complete before final candidate v2 formation.
+Infer from the case itself:
+
+- keep concrete identities, participants, coordinates and other variable
+  configuration in `source_instances` as evidence;
+- replace only accidental identities with roles;
+- preserve the mechanism, observable applicability conditions, variable
+  configuration boundaries and terminal state in the resulting invariant;
+- treat discovery as evidence, never as authority or permission.
+
+The only gate results are `generalized`, `local-with-rationale` and
+`blocked-ambiguous`. Generalization is initially eligible only for
+`architecture`, `convention`, `runtime-contract`,
+`state-or-data-contract`, `validation-pattern` and `prevention`. Every other
+semantic type must remain local with a closed rationale or block when the
+evidence cannot determine a safe local boundary. `content-or-canon`, an
+explicitly local human decision and a deliberate exception are never widened
+into a generalized rule.
+
+Apply the closed schema and transition matrix in
+[Plan Directory Intake](plan-directory-intake.md). A bounded counterexample
+requires an observed exclusion. A material counterexample never combines with
+`generalized`: retain a determinable local boundary or return
+`blocked-ambiguous` for a human decision. Inconclusive evidence also blocks.
+The gate cannot select or widen authority, destination scope, canonical root,
+writer, target, action, permission or approval. Those fields remain governed
+by type/scope routing and the approved exact envelope.
+
+<examples>
+<example id="map022-instance-to-invariant" status="non-normative">
+Map022, the children and coordinates remain source-instance evidence and local
+configuration. A valid generalized statement preserves the reusable mechanism
+of moving events during a cutscene, including destination, facing and terminal
+state. This example does not widen the closed eligibility, transition or
+authority rules.
+</example>
+</examples>
+
+## Phase 5 — Candidate v2
+
+Build one `continuous_improvement_candidate` schema v2 per compact knowledge
+unit only after its Semantic Abstraction Gate is complete. This is the only
+candidate family for plan, retrospective, analytic-inference and
+learning-source intake. Candidate v1 and candidate v2 without the gate have no
+reader, adapter, converter, migration, alias or fallback; reject both before
+interpretation or writing.
+
+Each candidate contains exactly one `semantic_abstraction_gate` immediately
+after `source_lineage` and before target state and the embedded
+`durable_knowledge_unit`. The unit contains:
+
+- one statement exactly equal to the gate `resulting_statement`;
+- `use_when` guidance;
+- evidence references;
+- covered finding and delta IDs.
+
+Every gate locator must resolve through the candidate's admissible
+`source_lineage`. The complete canonical gate XML participates in
+`intent_digest`; changing its result, statement, applicability, exclusions,
+counterexample evidence or result, rationale, confidence, reason code or
+source instances invalidates the affected approval.
+
+The candidate owns semantic type, independent scope, source lineage,
+destination scope, canonical root, exact target, writer, action, approval,
+validators, gates, promotion/noop evidence and residual blockers. The semantic
+gate and embedded unit do not own routing, permission or lifecycle.
+
+The only actions are:
+
+- `promote`: write is proposed or applied through an approved exact envelope;
+- `noop-proven`: current durable knowledge is demonstrably equivalent and
+  recoverable;
+- `blocked-with-reason`: material knowledge cannot yet be promoted or proven
+  equivalent.
+
+A `blocked-ambiguous` gate requires `action="blocked-with-reason"`, material
+blocking evidence and no promotion approval. `local-with-rationale` remains
+material when durable knowledge or recoverability requires it and follows the
+normal lifecycle. `record-only`, `backlog`, implicit targets, empty owners and
+missing validators fail closed. A non-material local detail ends in the
+processing/coverage ledger with a code-local evidence locator; it does not
+create a candidate.
+
+Persist the canonical complete plan path and closed approved root set; require
+matching caller-supplied `--plan-directory` and roots at validation. Only
+`package`, `consumer-docs` and
+`consumer-operational-state` are valid destinations, owned respectively by
+`framework-artifact-writer`, `catalogador` and `technical-implementer`.
+Their semantic scopes are exactly `package`, `consumer` and `consumer`.
+Targets are exact normalized root-relative POSIX paths and must resolve inside
+their approved canonical root; packet data cannot add or cross a scope or root.
 
 ## Phase 6 — Grouped Decision And Independent Envelopes
 
@@ -276,12 +332,14 @@ promotion envelope. Each envelope independently declares:
 Compute `intent_digest` from the canonical intent projection containing exactly
 `run_id`, `candidate_id`, `destination_scope`, canonical `root`, normalized
 `target`, `action`, `target_before_digest`, `target_before_exists` and the
-non-empty concise `intended_change`. Approval binds that digest and every field
-in the projection. The mutable full `candidate_digest` also covers lifecycle,
-validators, gates and evidence; changing those fields requires recomputing the
-candidate digest but does not invalidate an otherwise unchanged approval.
-Changing any intent-projection field invalidates only the affected approval.
-A new run always requires a new approval. Observed prior writes are reconciled;
+non-empty concise `intended_change`, followed by the complete canonical
+`semantic_abstraction_gate` XML. Approval binds that digest and every field and
+byte-normalized gate node in the projection. The mutable full
+`candidate_digest` also covers lifecycle, validators, gates and evidence;
+changing those fields requires recomputing the candidate digest but does not
+invalidate an otherwise unchanged approval. Changing any intent-projection
+field or any material gate content invalidates only the affected approval. A
+new run always requires a new approval. Observed prior writes are reconciled;
 they never receive retroactive approval.
 
 ## Phase 7 — Root-Specific Writing And Package Audit
@@ -358,8 +416,9 @@ compare with before state. `plan_knowledge_independence` may be true only when:
 - source lineage is complete; every evidence, finding and delta reference
   resolves to the current closed packet;
 - approval status matches lifecycle and the exact immutable intent binding;
-  intent, target-state and mutable candidate digests recompute from canonical
-  state;
+  the complete semantic gate, intent, target-state and mutable candidate
+  digests recompute from canonical state, and the gate statement equals the
+  durable unit statement;
 - every current target matches the lifecycle-selected persisted before or
   after existence and bytes, resolved inside a caller-approved root with no
   symlink in any lexical component from root to target;
@@ -404,10 +463,10 @@ python3 -m py_compile \
 ```
 
 Also parse every XML fixture, verify the positive fixture validates, verify the
-candidate v1 fixture is rejected, run `git diff --check`, and scan focused
-targets for superseded terms. A superseded term is permitted only in explicit
-rejection, negative tests or an out-of-scope statement; it never denotes a live
-state or fallback.
+candidate v1 fixture and candidate v2 pre-gate fixture are rejected, run
+`git diff --check`, and scan focused targets for superseded terms. A
+superseded term is permitted only in explicit rejection, negative tests or an
+out-of-scope statement; it never denotes a live state or fallback.
 
 The self-tests must exercise the inventory output directly without field
 reshaping and fail closed for absolute/traversal/Unicode run IDs; empty,
@@ -417,18 +476,23 @@ writer; noncanonical paths; invalid family/safety pairs and sensitive
 admission; empty problem root-cause fields; nonmaterial coverage; stale source-tree,
 candidate and target digests; contradicted delta claims; missing or unknown
 lineage/covered references; rejected or mismatched approval; failed validator,
-gate or action evidence; and residual material blockers.
+gate or action evidence; residual material blockers; a missing, duplicated or
+misordered `semantic_abstraction_gate`; unknown gate attributes, children,
+enums or reason/result combinations; ineligible generalized types; divergent
+gate/unit statements; invalid exclusion/counterexample transitions; gate refs
+outside `source_lineage`; authority/root/writer/target/permission widening;
+and stale intent after any canonical gate change.
 
 ## Stops And Destinations
 
 Stop and return `blocked` to the orchestrator on missing required input,
 unresolved authority conflict, unsafe payload, source drift, unmanaged
 namespace collision, incomplete batch coverage, digester-owned implementation
-claim, candidate v1, missing knowledge unit, type/scope collapse, invalid root
-cause, backlog or record-only, missing exact target/owner/validator, stale
-approval, failed/inconclusive recovery, durable plan dependency, validator
-failure, incomplete package profile, precheck failure or independent audit
-finding.
+claim, candidate v1, candidate v2 pre-gate, missing knowledge unit, type/scope
+collapse, invalid root cause, invalid semantic abstraction gate, backlog or
+record-only, missing exact target/owner/validator, stale approval,
+failed/inconclusive recovery, durable plan dependency, validator failure,
+incomplete package profile, precheck failure or independent audit finding.
 
 On success, return the completed evidence to the calling workflow. A task-level
 package Writer success returns to the orchestrator for the next planned task;

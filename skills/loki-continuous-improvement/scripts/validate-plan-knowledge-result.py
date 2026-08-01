@@ -8,6 +8,7 @@ import base64
 import copy
 import hashlib
 import importlib.util
+import json
 import os
 import re
 import shutil
@@ -21,6 +22,15 @@ SHA256_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
 RUN_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 PROBLEM_TYPES = {"error", "failure", "waste", "friction", "prevention"}
 SEMANTIC_TYPES = {"architecture", "convention", "implemented-capability", "runtime-contract", "state-or-data-contract", "content-or-canon", "validation-pattern", "human-decision", *PROBLEM_TYPES}
+GENERALIZABLE_TYPES = {"architecture", "convention", "runtime-contract", "state-or-data-contract", "validation-pattern", "prevention"}
+ABSTRACTION_RESULTS = {"generalized", "local-with-rationale", "blocked-ambiguous"}
+GENERALIZATION_CONFIDENCES = {"not-applicable", "low", "medium", "high"}
+COUNTEREXAMPLE_RESULTS = {"none-observed", "bounded", "material-observed", "inconclusive"}
+ABSTRACTION_REASON_CODES = {
+    "generalized": {"reusable-invariant"},
+    "local-with-rationale": {"content-or-canon", "explicitly-local-human-decision", "deliberate-exception", "material-counterexample", "no-reusable-invariant"},
+    "blocked-ambiguous": {"insufficient-evidence", "conflicting-scope", "material-counterexample-needs-human"},
+}
 ACTIONS = {"promote", "noop-proven", "blocked-with-reason"}
 RUN_STATES = {"proposed", "approved", "writing", "auditing", "completed", "completed-with-blockers"}
 CANDIDATE_STATES = {"proposed", "approved", "writing", "auditing", "promoted", "noop-proven", "blocked-with-reason"}
@@ -38,7 +48,7 @@ CANONICAL_FILES = {
     "approvals.xml": "approvals", "coverage.xml": "plan_knowledge_coverage",
 }
 ALL_CANONICAL_FILES = {"run-state.xml", *CANONICAL_FILES}
-TEXT_ELEMENTS = {"intended_change", "statement", "use_when", "question_text", "expected_claim", "comparison_evidence"}
+TEXT_ELEMENTS = {"intended_change", "source_instance", "resulting_statement", "applicability_signal", "exclusion", "none_observed_rationale", "rationale", "statement", "use_when", "question_text", "expected_claim", "comparison_evidence"}
 BASE64_ELEMENTS = {"target_before_state", "target_after_state"}
 
 
@@ -125,7 +135,110 @@ def _intent_digest(candidate: ET.Element, run_id: str) -> str:
         "target_before_exists": candidate.get("target_before_exists", ""),
     })
     ET.SubElement(projection, "intended_change").text = change
+    gate = candidate.find("semantic_abstraction_gate")
+    if gate is None or len(candidate.findall("semantic_abstraction_gate")) != 1: _fail("candidate v2 requires one semantic abstraction gate")
+    projection.append(copy.deepcopy(gate))
     return _digest(_canonical_bytes(projection).rstrip(b"\n"))
+
+
+def _lineage_locator(locator: str, lineage: set[str]) -> bool:
+    if locator in lineage:
+        return True
+    return any(locator.startswith(path + "#") and locator[len(path) + 1:].strip() == locator[len(path) + 1:] and locator[len(path) + 1:] for path in lineage)
+
+
+def _validate_semantic_abstraction_gate(candidate: ET.Element, lineage: set[str]) -> str:
+    gates = candidate.findall("semantic_abstraction_gate")
+    if len(gates) != 1: _fail("candidate v2 requires one semantic abstraction gate")
+    gate = gates[0]
+    children = list(candidate)
+    lineage_element = candidate.find("source_lineage")
+    unit = candidate.find("durable_knowledge_unit")
+    if lineage_element is None or unit is None: _fail("semantic abstraction gate requires source lineage and durable knowledge unit")
+    if children.index(gate) != children.index(lineage_element) + 1 or children.index(gate) > children.index(unit):
+        _fail("semantic abstraction gate must immediately follow source lineage and precede target state and knowledge unit")
+    for state_tag in ("target_before_state", "target_after_state"):
+        state = candidate.find(state_tag)
+        if state is not None and children.index(gate) > children.index(state):
+            _fail("semantic abstraction gate must precede target state and knowledge unit")
+
+    _attrs(gate, {"result", "generalization_confidence", "reason_code"})
+    _closed_children(gate, {"source_instances", "resulting_statement", "applicability_signals", "exclusions", "generalization_evidence", "counterexample_check", "rationale"})
+    expected_order = ["source_instances", "resulting_statement", "applicability_signals", "exclusions", "generalization_evidence", "counterexample_check", "rationale"]
+    if [child.tag for child in gate] != expected_order: _fail("semantic abstraction gate child order or cardinality invalid")
+
+    result = gate.get("result", "")
+    confidence = gate.get("generalization_confidence", "")
+    reason = gate.get("reason_code", "")
+    if result not in ABSTRACTION_RESULTS or confidence not in GENERALIZATION_CONFIDENCES or reason not in ABSTRACTION_REASON_CODES.get(result, set()):
+        _fail("semantic abstraction gate result, confidence or reason code invalid")
+
+    instances = gate.find("source_instances"); statement = gate.find("resulting_statement"); signals = gate.find("applicability_signals")
+    exclusions = gate.find("exclusions"); evidence = gate.find("generalization_evidence"); counterexample = gate.find("counterexample_check"); rationale = gate.find("rationale")
+    assert None not in {instances, statement, signals, exclusions, evidence, counterexample, rationale}
+    assert instances is not None and statement is not None and signals is not None and exclusions is not None and evidence is not None and counterexample is not None and rationale is not None
+
+    _attrs(instances, set()); _closed_children(instances, {"source_instance"}); source_instances = instances.findall("source_instance")
+    if not source_instances: _fail("semantic abstraction gate requires source instances")
+    _unique([item.get("locator") for item in source_instances], "semantic abstraction source instance locators")
+    for item in source_instances:
+        _attrs(item, {"locator"})
+        if not _lineage_locator(item.get("locator", ""), lineage): _fail("semantic abstraction source instance is outside source lineage")
+
+    _attrs(statement, set())
+    _attrs(signals, set()); _closed_children(signals, {"applicability_signal"}); applicability = signals.findall("applicability_signal")
+    if not applicability: _fail("semantic abstraction gate requires applicability signals")
+    for item in applicability: _attrs(item, set())
+
+    _attrs(exclusions, {"status"})
+    exclusion_status = exclusions.get("status")
+    if exclusion_status == "observed":
+        _closed_children(exclusions, {"exclusion"})
+        if not exclusions.findall("exclusion"): _fail("observed exclusions require one or more exclusions")
+        for item in exclusions.findall("exclusion"): _attrs(item, set())
+    elif exclusion_status == "none-observed":
+        _closed_children(exclusions, {"none_observed_rationale"})
+        if len(exclusions.findall("none_observed_rationale")) != 1: _fail("none-observed exclusions require exactly one rationale")
+        _attrs(exclusions.find("none_observed_rationale"), set())
+    else:
+        _fail("semantic abstraction exclusions status invalid")
+
+    def validate_gate_refs(container: ET.Element, locator: str) -> None:
+        refs = container.findall("evidence_ref")
+        if not refs: _fail(f"{locator} requires evidence refs")
+        _unique([item.get("locator") for item in refs], f"{locator} evidence refs")
+        for item in refs:
+            _attrs(item, {"locator"}); _closed_children(item, set())
+            if not _lineage_locator(item.get("locator", ""), lineage): _fail(f"{locator} evidence is outside source lineage")
+
+    _attrs(evidence, set()); _closed_children(evidence, {"evidence_ref"}); validate_gate_refs(evidence, "semantic abstraction generalization")
+    _attrs(counterexample, {"result"}); _closed_children(counterexample, {"evidence_ref"}); validate_gate_refs(counterexample, "semantic abstraction counterexample")
+    counterexample_result = counterexample.get("result", "")
+    if counterexample_result not in COUNTEREXAMPLE_RESULTS: _fail("semantic abstraction counterexample result invalid")
+    _attrs(rationale, set())
+
+    knowledge_statement = unit.find("statement")
+    if knowledge_statement is None or len(unit.findall("statement")) != 1 or (statement.text or "") != (knowledge_statement.text or ""):
+        _fail("semantic abstraction resulting statement must exactly equal knowledge unit statement")
+    if any(locator in (statement.text or "") for locator in lineage): _fail("lineage locators are forbidden in semantic statements")
+
+    if result == "generalized":
+        if candidate.get("type") not in GENERALIZABLE_TYPES: _fail("semantic abstraction generalized result requires eligible semantic type")
+        if confidence not in {"medium", "high"} or counterexample_result not in {"none-observed", "bounded"}:
+            _fail("semantic abstraction generalized transition invalid")
+    elif result == "local-with-rationale":
+        if confidence != "not-applicable" or counterexample_result not in {"none-observed", "bounded", "material-observed"}:
+            _fail("semantic abstraction local transition invalid")
+        if (reason == "material-counterexample") != (counterexample_result == "material-observed"):
+            _fail("semantic abstraction local material counterexample binding invalid")
+    else:
+        if confidence != "low" or counterexample_result not in {"inconclusive", "material-observed"} or candidate.get("action") != "blocked-with-reason":
+            _fail("semantic abstraction blocked transition invalid")
+        if (reason == "material-counterexample-needs-human") != (counterexample_result == "material-observed"):
+            _fail("semantic abstraction blocked counterexample reason invalid")
+    if counterexample_result == "bounded" and exclusion_status != "observed": _fail("bounded counterexample requires observed exclusions")
+    if counterexample_result == "inconclusive" and result != "blocked-ambiguous": _fail("inconclusive counterexample requires blocked ambiguity")
+    return result
 
 
 def _manifest_digest(files: list[ET.Element]) -> str:
@@ -367,15 +480,9 @@ def validate_document(root: ET.Element, authoritative_roots: dict[str, Path] | N
         croot = _canonical_root(candidate.get("root", ""), f"candidate[{cid}].root", verify_current_filesystem)
         if croot != roots[scope]: _fail("candidate root is not approved")
         _normalized_relative(candidate.get("target", ""), "candidate.target")
-        _closed_children(candidate, {"intended_change", "source_lineage", "target_before_state", "target_after_state", "durable_knowledge_unit", "root_cause", "approval", "validators", "gates", "promotion_evidence", "noop_evidence", "blocked_evidence", "residual_blockers"})
+        _closed_children(candidate, {"intended_change", "source_lineage", "semantic_abstraction_gate", "target_before_state", "target_after_state", "durable_knowledge_unit", "root_cause", "approval", "validators", "gates", "promotion_evidence", "noop_evidence", "blocked_evidence", "residual_blockers"})
         if len(candidate.findall("intended_change")) != 1: _fail("candidate requires one intended_change")
         _attrs(candidate.find("intended_change"), set())
-        _sha(candidate.get("intent_digest"), "intent_digest")
-        if candidate.get("intent_digest") != _intent_digest(candidate, root.get("run_id", "")): _fail("candidate intent digest is stale")
-        before = _decode_state(candidate, "before")
-        after = _decode_state(candidate, "after") if action == "promote" else None
-        if action != "promote" and candidate.find("target_after_state") is not None: _fail("non-promote candidate forbids target after state")
-        if verify_current_filesystem: _validate_current_target(candidate, roots[scope], before, after)
         lineage = candidate.find("source_lineage")
         if lineage is None or len(candidate.findall("source_lineage")) != 1: _fail("candidate requires source lineage")
         _attrs(lineage, set()); _closed_children(lineage, {"evidence_ref"}); refs = lineage.findall("evidence_ref"); _unique([x.get("locator") for x in refs], "lineage refs")
@@ -383,6 +490,13 @@ def validate_document(root: ET.Element, authoritative_roots: dict[str, Path] | N
         for ref in refs: _attrs(ref, {"locator"})
         unit = candidate.find("durable_knowledge_unit")
         if unit is None or len(candidate.findall("durable_knowledge_unit")) != 1: _fail("candidate requires one durable knowledge unit")
+        abstraction_result = _validate_semantic_abstraction_gate(candidate, {ref.get("locator", "") for ref in refs})
+        _sha(candidate.get("intent_digest"), "intent_digest")
+        if candidate.get("intent_digest") != _intent_digest(candidate, root.get("run_id", "")): _fail("candidate intent digest is stale")
+        before = _decode_state(candidate, "before")
+        after = _decode_state(candidate, "after") if action == "promote" else None
+        if action != "promote" and candidate.find("target_after_state") is not None: _fail("non-promote candidate forbids target after state")
+        if verify_current_filesystem: _validate_current_target(candidate, roots[scope], before, after)
         _attrs(unit, set()); _closed_children(unit, {"statement", "use_when", "evidence_refs", "covered_refs"})
         if len(unit.findall("statement")) != 1 or len(unit.findall("use_when")) != 1: _fail("knowledge unit text cardinality invalid")
         _attrs(unit.find("statement"), set()); _attrs(unit.find("use_when"), set())
@@ -418,6 +532,8 @@ def validate_document(root: ET.Element, authoritative_roots: dict[str, Path] | N
         _unique([x.get("id") for x in validators.findall("validator")], "validator ids"); _unique([x.get("id") for x in gates.findall("gate")], "gate ids")
         material_residual = False
         for blocker in residual.findall("blocker"): _attrs(blocker, {"material", "reason"}); material_residual |= _bool(blocker.get("material"), "residual blocker")
+        if abstraction_result == "blocked-ambiguous" and (not material_residual or candidate.find("blocked_evidence") is None):
+            _fail("blocked semantic abstraction requires blocking evidence and a material residual blocker")
         expected_approval = "pending" if action == "promote" and lifecycle == "proposed" else "approved" if action == "promote" else "not-required" if action == "noop-proven" else "rejected"
         if approval.get("status") != expected_approval: _fail("candidate approval status disagrees with lifecycle/action")
         evidence_tags = [tag for tag in ("promotion_evidence", "noop_evidence", "blocked_evidence") if candidate.find(tag) is not None]
@@ -550,6 +666,74 @@ def _refresh_canonical_digests(root: ET.Element) -> None:
         ref.set("sha256", _digest(_canonical_bytes(section)))
 
 
+def _refresh_candidate_bindings(root: ET.Element, candidate: ET.Element) -> None:
+    intent = _intent_digest(candidate, root.get("run_id", ""))
+    candidate.set("intent_digest", intent)
+    envelope = root.find(f"./approvals/envelope[@candidate_id='{candidate.get('candidate_id')}']")
+    if envelope is not None:
+        envelope.set("intent_digest", intent)
+        envelope.set("action", candidate.get("action", ""))
+        approval = candidate.find("approval")
+        if approval is not None: envelope.set("status", approval.get("status", ""))
+    candidate.set("candidate_digest", _candidate_digest(candidate))
+    _refresh_canonical_digests(root)
+
+
+def _terminal_package(root: ET.Element) -> ET.Element:
+    candidate = root.find("./candidates/continuous_improvement_candidate[@candidate_id='candidate-package']")
+    assert candidate is not None
+    return candidate
+
+
+def _blocked_abstraction_case(terminal: ET.Element, reason: str, counterexample_result: str) -> ET.Element:
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); assert gate is not None
+    candidate.set("action", "blocked-with-reason"); candidate.set("lifecycle", "blocked-with-reason")
+    candidate.attrib.pop("target_after_digest"); candidate.attrib.pop("target_after_exists"); candidate.remove(candidate.find("target_after_state"))
+    gate.set("result", "blocked-ambiguous"); gate.set("generalization_confidence", "low"); gate.set("reason_code", reason)
+    counterexample = gate.find("counterexample_check"); assert counterexample is not None; counterexample.set("result", counterexample_result)
+    approval = candidate.find("approval"); assert approval is not None; approval.set("status", "rejected")
+    promotion = candidate.find("promotion_evidence"); assert promotion is not None
+    blocked = ET.Element("blocked_evidence", {"mode": "semantic-abstraction-gate", "status": "passed"}); candidate.insert(list(candidate).index(promotion), blocked); candidate.remove(promotion)
+    residual = candidate.find("residual_blockers"); assert residual is not None; ET.SubElement(residual, "blocker", {"material": "true", "reason": "semantic-abstraction-needs-human"})
+    run = case.find("run_state"); coverage = case.find("plan_knowledge_coverage"); assert run is not None and coverage is not None
+    run.set("status", "completed-with-blockers"); coverage.set("status", "completed-with-blockers"); coverage.set("plan_knowledge_independence", "false")
+    candidate_coverage = coverage.find("candidate_coverage"); assert candidate_coverage is not None; candidate_coverage.set("applied_or_noop", "1"); candidate_coverage.set("blocked", "1")
+    _refresh_candidate_bindings(case, candidate)
+    return case
+
+
+def _apply_abstraction_scenario(candidate: ET.Element, scenario: dict[str, object]) -> None:
+    candidate.set("type", str(scenario["semantic_type"]))
+    gate = candidate.find("semantic_abstraction_gate"); unit = candidate.find("durable_knowledge_unit"); assert gate is not None and unit is not None
+    gate.set("result", str(scenario["result"])); gate.set("generalization_confidence", str(scenario["confidence"])); gate.set("reason_code", str(scenario["reason_code"]))
+    source_instance = gate.find("source_instances/source_instance"); resulting_statement = gate.find("resulting_statement"); applicability = gate.find("applicability_signals/applicability_signal")
+    evidence = gate.find("generalization_evidence/evidence_ref"); counterexample = gate.find("counterexample_check"); counterexample_evidence = gate.find("counterexample_check/evidence_ref"); rationale = gate.find("rationale"); statement = unit.find("statement")
+    assert None not in {source_instance, resulting_statement, applicability, evidence, counterexample, counterexample_evidence, rationale, statement}
+    assert source_instance is not None and resulting_statement is not None and applicability is not None and evidence is not None and counterexample is not None and counterexample_evidence is not None and rationale is not None and statement is not None
+    source_instance.set("locator", str(scenario["source_locator"])); source_instance.text = str(scenario["source_instance"])
+    resulting_statement.text = str(scenario["statement"]); statement.text = str(scenario["statement"]); applicability.text = str(scenario["applicability"])
+    evidence.set("locator", str(scenario["evidence_locator"])); counterexample.set("result", str(scenario["counterexample_result"])); counterexample_evidence.set("locator", str(scenario["counterexample_locator"])); rationale.text = str(scenario["rationale"])
+    exclusions = gate.find("exclusions"); assert exclusions is not None; exclusions.clear()
+    observed_exclusions = list(scenario.get("exclusions", []))
+    if observed_exclusions:
+        exclusions.set("status", "observed")
+        for value in observed_exclusions: ET.SubElement(exclusions, "exclusion").text = str(value)
+    else:
+        exclusions.set("status", "none-observed")
+        ET.SubElement(exclusions, "none_observed_rationale").text = str(scenario["none_observed_rationale"])
+
+
+def _scenario_input_summary(scenario: dict[str, object]) -> str:
+    exclusions = scenario.get("exclusions") or [scenario.get("none_observed_rationale")]
+    return "; ".join((
+        f"type={scenario['semantic_type']}", f"gate={scenario['result']}/{scenario['confidence']}/{scenario['reason_code']}",
+        f"source_instance={scenario['source_instance']}", f"statement={scenario['statement']}",
+        f"applicability={scenario['applicability']}", f"exclusions={' | '.join(str(value) for value in exclusions)}",
+        f"evidence={scenario['evidence_locator']}", f"counterexample={scenario['counterexample_result']}@{scenario['counterexample_locator']}",
+        f"rationale={scenario['rationale']}",
+    ))
+
+
 def _expect_invalid(root: ET.Element, expected: str) -> None:
     try: validate_document(root, verify_current_filesystem=False)
     except ValidationError as error:
@@ -562,6 +746,87 @@ def self_test() -> None:
     terminal = ET.parse(fixture_dir / "valid-plan-knowledge-run.xml").getroot(); proposed = ET.parse(fixture_dir / "valid-proposed-plan-knowledge-run.xml").getroot()
     validate_document(_clone(terminal), verify_current_filesystem=False); validate_document(_clone(proposed), verify_current_filesystem=False)
     _expect_invalid(ET.parse(fixture_dir / "invalid-candidate-v1.xml").getroot(), "candidate v1")
+
+    scenario_rows: list[dict[str, object]] = []
+
+    def observe_valid(scenario: dict[str, object], document: ET.Element) -> None:
+        validate_document(document, verify_current_filesystem=False)
+        candidate = document.find("./candidates/continuous_improvement_candidate"); assert candidate is not None
+        observed = candidate.find("semantic_abstraction_gate").get("result")
+        expected = str(scenario["result"]); status = "pass" if observed == expected else "material-false-positive"
+        scenario_rows.append({"scenario_id": scenario["scenario_id"], "isolated_input_summary": _scenario_input_summary(scenario), "expected_result": expected, "observed_result": observed, "status": status, "evidence_ref": f"validator-self-test#scenario:{scenario['scenario_id']}"})
+        if status != "pass": raise AssertionError(f"scenario {scenario['scenario_id']} expected {expected}, observed {observed}")
+
+    def observe_invalid(scenario: dict[str, object], document: ET.Element, expected_error: str) -> None:
+        try: validate_document(document, verify_current_filesystem=False)
+        except ValidationError as error:
+            observed = "rejected" if expected_error in str(error) else f"unexpected-rejection:{error}"
+        else: observed = "accepted"
+        status = "pass" if observed == "rejected" else "material-false-positive"
+        scenario_rows.append({"scenario_id": scenario["scenario_id"], "isolated_input_summary": _scenario_input_summary(scenario), "expected_result": "rejected", "observed_result": observed, "status": status, "evidence_ref": f"validator-self-test#scenario:{scenario['scenario_id']}"})
+        if status != "pass": raise AssertionError(f"scenario {scenario['scenario_id']} expected rejection, observed {observed}")
+
+    generalized_definitions = (
+        ("generalized-architecture", "architecture", "The current workflow forms candidates before validating semantic abstraction.", "Candidate formation must validate semantic abstraction after lineage and before target state.", "A workflow materializes a candidate from reconciled evidence.", "Runtime implementation details remain outside the orchestration boundary."),
+        ("generalized-convention", "convention", "Map022 names and coordinates were embedded in a reusable statement.", "Reusable candidate statements retain concrete identities only in source instances.", "A candidate statement mixes a reusable rule with concrete identifiers.", "Canon and explicit local decisions remain local."),
+        ("generalized-runtime-contract-map022", "runtime-contract", "Map022 child events move from exact coordinates during a cutscene.", "Cutscene event movement must preserve destination, facing, and terminal state.", "A cutscene moves configured events to observable destinations.", "Map identity, participant identity, and coordinates remain configuration."),
+        ("generalized-state-or-data-contract", "state-or-data-contract", "One approved candidate changed its semantic gate after approval.", "Candidate intent identity must include the complete canonical semantic abstraction gate.", "A candidate approval binds an immutable intent digest.", "Mutable candidate digest and validation evidence remain separate bindings."),
+        ("generalized-validation-pattern", "validation-pattern", "A validator accepted one structurally incomplete semantic gate.", "Semantic gate validation must reject unknown shape, stale binding, and invalid transitions.", "A candidate v2 contains a semantic abstraction gate.", "Semantic truth and perceptible runtime behavior remain human-validated."),
+        ("generalized-prevention", "prevention", "Instance-bound candidates repeatedly lost their reusable invariant.", "Require semantic abstraction before candidate formation to prevent instance-bound promotion.", "Reconciled evidence contains both concrete configuration and a reusable mechanism.", "Cases without sufficient evidence remain local or blocked."),
+    )
+    for scenario_id, semantic_type, source_instance, statement, applicability, exclusion in generalized_definitions:
+        scenario = {"scenario_id": scenario_id, "semantic_type": semantic_type, "result": "generalized", "confidence": "high", "reason_code": "reusable-invariant", "source_locator": f"analysis.md#{scenario_id}-source", "source_instance": source_instance, "statement": statement, "applicability": applicability, "exclusions": [exclusion], "evidence_locator": f"analysis.md#{scenario_id}-evidence", "counterexample_result": "bounded", "counterexample_locator": f"analysis.md#{scenario_id}-counterexample", "rationale": "The reusable statement preserves the observed boundary without widening root, writer, target, action, or authority."}
+        case = _clone(terminal); candidate = _terminal_package(case); _apply_abstraction_scenario(candidate, scenario)
+        if semantic_type == "prevention":
+            unit = candidate.find("durable_knowledge_unit"); assert unit is not None
+            candidate.insert(list(candidate).index(unit) + 1, ET.Element("root_cause", {"problem": "instance-bound promotion", "cause": "missing abstraction gate", "prevention": "validate abstraction before candidate formation"}))
+        _refresh_candidate_bindings(case, candidate); observe_valid(scenario, case)
+
+    proposed_scenario = {"scenario_id": "generalized-medium-bounded-proposed", "semantic_type": "validation-pattern", "result": "generalized", "confidence": "medium", "reason_code": "reusable-invariant", "source_locator": "analysis.md#candidate-case", "source_instance": "The concrete case validates one package capability at an exact target.", "statement": "Validate reusable package capabilities through their current command contracts.", "applicability": "A package capability has a current command contract and deterministic validator.", "exclusions": ["Target paths and capability identities remain candidate-specific configuration."], "evidence_locator": "analysis.md#candidate-case", "counterexample_result": "bounded", "counterexample_locator": "analysis.md#candidate-boundary", "rationale": "The reusable validation rule preserves target-specific evidence without widening the approved package envelope."}
+    observe_valid(proposed_scenario, _clone(proposed))
+
+    variation_definitions = (
+        ("generalized-identity-variation", "Map031 participants move from different coordinates while the cutscene contract remains unchanged.", "Cutscene event movement must preserve destination, facing, and terminal state.", "A cutscene moves configured events to observable destinations."),
+        ("generalized-condition-variation", "Map022 events move during a scripted sequence.", "Cutscene event movement must preserve destination, facing, and terminal state.", "A scripted sequence moves configured events and retains its terminal contract."),
+        ("generalized-mechanism-variation", "A scripted event route moves configured participants without changing their terminal contract.", "Scripted event movement must preserve destination, facing, and terminal state.", "A scripted sequence moves configured events to observable destinations."),
+    )
+    for scenario_id, source_instance, statement, applicability in variation_definitions:
+        scenario = {"scenario_id": scenario_id, "semantic_type": "runtime-contract", "result": "generalized", "confidence": "high", "reason_code": "reusable-invariant", "source_locator": f"analysis.md#{scenario_id}-source", "source_instance": source_instance, "statement": statement, "applicability": applicability, "exclusions": ["Concrete identities and coordinates remain source configuration."], "evidence_locator": f"analysis.md#{scenario_id}-evidence", "counterexample_result": "bounded", "counterexample_locator": f"analysis.md#{scenario_id}-counterexample", "rationale": "The changed dimension preserves the reusable mechanism and its authority boundary."}
+        case = _clone(terminal); candidate = _terminal_package(case); _apply_abstraction_scenario(candidate, scenario); _refresh_candidate_bindings(case, candidate); observe_valid(scenario, case)
+
+    local_scenarios = (
+        {"scenario_id": "local-content-or-canon", "semantic_type": "content-or-canon", "result": "local-with-rationale", "confidence": "not-applicable", "reason_code": "content-or-canon", "source_instance": "Map022 uses a canonically fixed mural coordinate in this scene.", "statement": "Map022 keeps the canonically fixed mural coordinate for this scene.", "applicability": "The authored scene is Map022 and the coordinate is part of approved canon.", "exclusions": ["Other maps and non-canonical coordinates are outside this local statement."], "counterexample_result": "none-observed", "rationale": "The canonical identity is material evidence and cannot become a cross-map rule."},
+        {"scenario_id": "local-explicit-human-decision", "semantic_type": "human-decision", "result": "local-with-rationale", "confidence": "not-applicable", "reason_code": "explicitly-local-human-decision", "source_instance": "The approver explicitly limited the timing rule to the Map022 cutscene.", "statement": "Apply the approved timing rule only to the Map022 cutscene.", "applicability": "The current target implements the explicitly scoped Map022 decision.", "exclusions": ["Other cutscenes require a separate human decision."], "counterexample_result": "none-observed", "rationale": "The explicit human scope is authoritative and cannot be inferred more broadly."},
+        {"scenario_id": "local-deliberate-exception", "semantic_type": "convention", "result": "local-with-rationale", "confidence": "not-applicable", "reason_code": "deliberate-exception", "source_instance": "Map022 deliberately reverses the normal facing rule for a reveal shot.", "statement": "Map022 preserves the deliberate reversed-facing reveal shot.", "applicability": "The event is the approved Map022 reveal shot.", "exclusions": ["Normal cutscene movement continues to use the standard facing rule."], "counterexample_result": "bounded", "rationale": "The intentional exception remains local instead of weakening the general convention."},
+        {"scenario_id": "local-no-reusable-invariant", "semantic_type": "implemented-capability", "result": "local-with-rationale", "confidence": "not-applicable", "reason_code": "no-reusable-invariant", "source_instance": "One scene contains a unique one-time staging note with no repeated mechanism.", "statement": "Preserve the one-time staging note for this scene.", "applicability": "The exact scene is maintained or reviewed.", "exclusions": [], "none_observed_rationale": "The bounded evidence contains no second case from which to derive a reusable invariant.", "counterexample_result": "none-observed", "rationale": "The material local record remains recoverable without inventing a reusable rule."},
+        {"scenario_id": "local-material-counterexample", "semantic_type": "validation-pattern", "result": "local-with-rationale", "confidence": "not-applicable", "reason_code": "material-counterexample", "source_instance": "The candidate rule works for map events but fails for picture-layer participants.", "statement": "Validate destination, facing, and terminal state for map-event cutscene movement.", "applicability": "The moved participant is a map event rather than a picture-layer participant.", "exclusions": ["Picture-layer participants use a different movement and terminal-state contract."], "counterexample_result": "material-observed", "rationale": "The material counterexample determines a safe local boundary and prevents broader generalization."},
+    )
+    for raw in local_scenarios:
+        scenario = {**raw, "source_locator": f"analysis.md#{raw['scenario_id']}-source", "evidence_locator": f"analysis.md#{raw['scenario_id']}-evidence", "counterexample_locator": f"analysis.md#{raw['scenario_id']}-counterexample"}
+        case = _clone(terminal); candidate = _terminal_package(case); _apply_abstraction_scenario(candidate, scenario); _refresh_candidate_bindings(case, candidate); observe_valid(scenario, case)
+
+    blocking_scenarios = (
+        {"scenario_id": "blocked-insufficient-evidence", "reason_code": "insufficient-evidence", "counterexample_result": "inconclusive", "source_instance": "The record names Map022 but omits the movement mechanism and terminal condition.", "statement": "Determine whether the Map022 movement evidence supports a reusable contract.", "applicability": "A human reviews missing mechanism and terminal-state evidence.", "exclusions": [], "none_observed_rationale": "The evidence boundary is too incomplete to establish exclusions.", "rationale": "The missing mechanism prevents safe abstraction and requires blocking evidence."},
+        {"scenario_id": "blocked-conflicting-scope", "reason_code": "conflicting-scope", "counterexample_result": "inconclusive", "source_instance": "Two approved records assign the same movement rule to incompatible participant scopes.", "statement": "Resolve the conflicting participant scope before forming a reusable movement contract.", "applicability": "Authoritative evidence assigns incompatible scopes to the same candidate rule.", "exclusions": ["Neither conflicting scope may be discarded to save generalization."], "rationale": "Conflicting scope remains visible and requires a specific human decision."},
+        {"scenario_id": "blocked-material-counterexample", "reason_code": "material-counterexample-needs-human", "counterexample_result": "material-observed", "source_instance": "A picture-layer counterexample conflicts with the proposed cross-participant movement rule.", "statement": "Resolve whether picture-layer movement belongs to the proposed participant contract.", "applicability": "The candidate evidence includes both map-event and picture-layer movement.", "exclusions": ["The picture-layer counterexample cannot be classified without human scope authority."], "rationale": "The material counterexample is preserved and blocks promotion until scope is decided."},
+    )
+    for raw in blocking_scenarios:
+        scenario = {**raw, "semantic_type": "validation-pattern", "result": "blocked-ambiguous", "confidence": "low", "source_locator": f"analysis.md#{raw['scenario_id']}-source", "evidence_locator": f"analysis.md#{raw['scenario_id']}-evidence", "counterexample_locator": f"analysis.md#{raw['scenario_id']}-counterexample"}
+        case = _blocked_abstraction_case(terminal, str(scenario["reason_code"]), str(scenario["counterexample_result"])); candidate = _terminal_package(case); _apply_abstraction_scenario(candidate, scenario); _refresh_candidate_bindings(case, candidate); observe_valid(scenario, case)
+
+    local_by_id = {str(item["scenario_id"]): item for item in local_scenarios}
+    for scenario_id, local_id, expected_error, preserve_reason in (
+        ("reject-generalized-canon", "local-content-or-canon", "requires eligible semantic type", False),
+        ("reject-generalized-explicit-local-decision", "local-explicit-human-decision", "requires eligible semantic type", False),
+        ("reject-generalized-deliberate-exception", "local-deliberate-exception", "result, confidence or reason code invalid", True),
+    ):
+        raw = local_by_id[local_id]; scenario = {**raw, "scenario_id": scenario_id, "source_locator": f"analysis.md#{scenario_id}-source", "evidence_locator": f"analysis.md#{scenario_id}-evidence", "counterexample_locator": f"analysis.md#{scenario_id}-counterexample"}
+        case = _clone(terminal); candidate = _terminal_package(case); _apply_abstraction_scenario(candidate, scenario); gate = candidate.find("semantic_abstraction_gate"); assert gate is not None
+        gate.set("result", "generalized"); gate.set("generalization_confidence", "high")
+        if not preserve_reason: gate.set("reason_code", "reusable-invariant")
+        scenario["result"] = "generalized"; scenario["confidence"] = "high"; scenario["reason_code"] = gate.get("reason_code")
+        _refresh_candidate_bindings(case, candidate); observe_invalid(scenario, case, expected_error)
+
     cases: list[tuple[ET.Element, str]] = []
     case = _clone(terminal); case.find("run_state").set("status", "proposed"); cases.append((case, "coverage lifecycle"))
     case = _clone(terminal); case.find("./candidates/continuous_improvement_candidate").set("intent_digest", "sha256:" + "0" * 64); cases.append((case, "intent digest"))
@@ -592,6 +857,32 @@ def self_test() -> None:
         case = _clone(terminal); case.find(locator).set("unknown", "forbidden"); cases.append((case, "unknown attributes"))
     case = _clone(terminal); recovery = case.find("./plan_knowledge_coverage/recoverability"); recovery.append(copy.deepcopy(recovery.findall("question")[0])); cases.append((case, "question ids"))
     case = _clone(terminal); q = case.find("./plan_knowledge_coverage/recoverability/question"); q.append(copy.deepcopy(q.find("candidate_ref"))); cases.append((case, "question candidate refs"))
+
+    # Current-only gate shape, transition, lineage and immutable-intent negatives.
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.remove(candidate.find("semantic_abstraction_gate")); cases.append((case, "requires one semantic abstraction gate"))
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); candidate.remove(gate); candidate.insert(0, gate); cases.append((case, "must immediately follow source lineage"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.insert(list(candidate).index(candidate.find("semantic_abstraction_gate")) + 1, copy.deepcopy(candidate.find("semantic_abstraction_gate"))); cases.append((case, "requires one semantic abstraction gate"))
+    for attribute, value in (("result", "unknown"), ("generalization_confidence", "certain"), ("reason_code", "unknown")):
+        case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate").set(attribute, value); _refresh_candidate_bindings(case, candidate); cases.append((case, "result, confidence or reason code invalid"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.set("type", "implemented-capability"); _refresh_candidate_bindings(case, candidate); cases.append((case, "requires eligible semantic type"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/source_instances/source_instance").set("locator", "copy.md#other"); _refresh_candidate_bindings(case, candidate); cases.append((case, "source instance is outside source lineage"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/generalization_evidence/evidence_ref").set("locator", "copy.md"); _refresh_candidate_bindings(case, candidate); cases.append((case, "generalization evidence is outside source lineage"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/counterexample_check/evidence_ref").set("locator", "copy.md"); _refresh_candidate_bindings(case, candidate); cases.append((case, "counterexample evidence is outside source lineage"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/resulting_statement").text = "A different invariant."; _refresh_candidate_bindings(case, candidate); cases.append((case, "must exactly equal knowledge unit statement"))
+    case = _clone(terminal); candidate = _terminal_package(case); statement = "analysis.md is not a valid reusable statement."; candidate.find("semantic_abstraction_gate/resulting_statement").text = statement; candidate.find("durable_knowledge_unit/statement").text = statement; _refresh_candidate_bindings(case, candidate); cases.append((case, "lineage locators are forbidden"))
+    case = _clone(terminal); candidate = _terminal_package(case); exclusions = candidate.find("semantic_abstraction_gate/exclusions"); exclusions.clear(); exclusions.set("status", "observed"); _refresh_candidate_bindings(case, candidate); cases.append((case, "observed exclusions require"))
+    case = _clone(terminal); candidate = _terminal_package(case); exclusions = candidate.find("semantic_abstraction_gate/exclusions"); exclusions.set("status", "none-observed"); exclusions.clear(); exclusions.set("status", "none-observed"); ET.SubElement(exclusions, "none_observed_rationale").text = "No exclusion appeared in the reviewed boundary."; _refresh_candidate_bindings(case, candidate); cases.append((case, "bounded counterexample requires observed exclusions"))
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); gate.set("result", "local-with-rationale"); gate.set("generalization_confidence", "not-applicable"); gate.set("reason_code", "content-or-canon"); gate.find("counterexample_check").set("result", "material-observed"); _refresh_candidate_bindings(case, candidate); cases.append((case, "local material counterexample binding invalid"))
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); gate.set("result", "blocked-ambiguous"); gate.set("generalization_confidence", "low"); gate.set("reason_code", "insufficient-evidence"); gate.find("counterexample_check").set("result", "inconclusive"); _refresh_candidate_bindings(case, candidate); cases.append((case, "blocked transition invalid"))
+    case = _blocked_abstraction_case(terminal, "material-counterexample-needs-human", "inconclusive"); cases.append((case, "blocked counterexample reason invalid"))
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); ET.SubElement(gate, "unknown"); _refresh_candidate_bindings(case, candidate); cases.append((case, "unknown elements"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate").set("target", "outside.md"); _refresh_candidate_bindings(case, candidate); cases.append((case, "unknown attributes"))
+    case = _clone(terminal); candidate = _terminal_package(case); exclusions = candidate.find("semantic_abstraction_gate/exclusions"); ET.SubElement(exclusions, "none_observed_rationale").text = "This mixed form is forbidden."; _refresh_candidate_bindings(case, candidate); cases.append((case, "unknown elements"))
+    case = _clone(terminal); candidate = _terminal_package(case); gate = candidate.find("semantic_abstraction_gate"); counterexample = gate.find("counterexample_check"); rationale = gate.find("rationale"); gate.remove(counterexample); gate.remove(rationale); gate.append(rationale); gate.append(counterexample); _refresh_candidate_bindings(case, candidate); cases.append((case, "child order or cardinality invalid"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/rationale").append(ET.Element("child")); _refresh_candidate_bindings(case, candidate); cases.append((case, "explicit text"))
+    case = _blocked_abstraction_case(terminal, "insufficient-evidence", "inconclusive"); candidate = _terminal_package(case); candidate.find("residual_blockers").clear(); _refresh_candidate_bindings(case, candidate); cases.append((case, "requires blocking evidence and a material residual blocker"))
+    case = _blocked_abstraction_case(terminal, "insufficient-evidence", "inconclusive"); candidate = _terminal_package(case); candidate.remove(candidate.find("blocked_evidence")); _refresh_candidate_bindings(case, candidate); cases.append((case, "requires blocking evidence and a material residual blocker"))
+    case = _clone(terminal); candidate = _terminal_package(case); candidate.find("semantic_abstraction_gate/rationale").text = "Changed after approval without rebinding."; candidate.set("candidate_digest", _candidate_digest(candidate)); _refresh_canonical_digests(case); cases.append((case, "intent digest is stale"))
     for document, expected in cases:
         _refresh_canonical_digests(document)
         _expect_invalid(document, expected)
@@ -651,6 +942,11 @@ def self_test() -> None:
         try: _validate_current_target(candidate, roots["package"], _decode_state(candidate, "before"), _decode_state(candidate, "after"))
         except ValidationError as error: assert "symlink component" in str(error)
         else: raise AssertionError("parent symlink must fail")
+    scenario_ids = [str(row["scenario_id"]) for row in scenario_rows]
+    if len(scenario_rows) != 21 or len(set(scenario_ids)) != len(scenario_ids): raise AssertionError("semantic scenario matrix identity or cardinality invalid")
+    material_false_positives = sum(row["status"] != "pass" for row in scenario_rows)
+    matrix = {"semantic_abstraction_scenario_matrix": {"schema_version": 1, "scenario_count": len(scenario_rows), "material_false_positives": material_false_positives, "rows": scenario_rows}}
+    print(json.dumps(matrix, sort_keys=True, separators=(",", ":")))
     print("validate-plan-knowledge-result self-test: pass")
 
 

@@ -6,7 +6,7 @@ type: operational-inventory
 self_contained: true
 doc_id: loki-operational-inventory
 version: 1.0.0
-last_updated: 2026-07-27
+last_updated: 2026-08-01
 scope: Current package commands, skills, agents, templates, docs, validators, and reference-only backlog
 not_scope: Consumer project inventory, installed destination state, or compatibility with superseded package contracts
 authority: Approved Loki package policy and the versioned package source
@@ -64,7 +64,7 @@ não existe projection ou command físico separado.
 | `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e métricas v1, DAG, retry e terminal truth. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Aceitar fontes aprovadas ou um `plan_directory` completo; inventariar e retomar estado XML, reconciliar claims globalmente, produzir candidate v2 current-only, promover por envelopes root-bound e provar recuperação de todo conhecimento material. |
+| `loki-continuous-improvement` | `mvp` | Aceitar fontes aprovadas ou um `plan_directory` completo; inventariar e retomar estado XML, reconciliar claims globalmente, aplicar o Semantic Abstraction Gate antes do candidate v2 current-only, promover por envelopes root-bound e provar recuperação de todo conhecimento material. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
 | `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
@@ -111,6 +111,25 @@ A matriz caller/mode do `catalogador` e fechada: `loki-init` usa
 `init-final-reconciliation`; `loki-continuous-improvement` e
 `loki-implement-feature` usam `task_scoped_writer`; `loki-catalogar-docs` usa `task_scoped_writer` ou
 `proposal-only`. Combinacoes ausentes ou cruzadas bloqueiam antes da escrita.
+
+### Capacidade de abstração semântica
+
+Após a reconciliação e a descoberta root-specific, toda unidade material passa
+por um gate que separa instância/configuração de invariante e registra
+aplicabilidade, exclusões, contraexemplo, rationale e confiança. Os resultados
+fechados são `generalized`, `local-with-rationale` e `blocked-ambiguous`.
+Somente `architecture`, `convention`, `runtime-contract`,
+`state-or-data-contract`, `validation-pattern` e `prevention` podem ser
+generalizados; canon/conteúdo, decisão explicitamente local, exceção deliberada
+e contraexemplo material permanecem locais ou bloqueiam.
+
+O gate pertence ao orquestrador e não concede routing, authority, root, writer,
+target, permission ou approval. Seu XML canônico completo participa do
+`intent_digest`, portanto a approval da intenção exata fica stale após qualquer
+mudança material no gate. Como exemplo não normativo, Map022, nomes e
+coordenadas continuam evidência/configuração, enquanto o invariante preserva o
+mecanismo de movimentar eventos durante cutscene, incluindo destino, facing e
+estado terminal.
 
 ### Estado operacional de inferencias do consumidor
 

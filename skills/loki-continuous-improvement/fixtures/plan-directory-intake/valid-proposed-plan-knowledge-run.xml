@@ -7,8 +7,8 @@
       <file path="file-processing-ledger.xml" sha256="sha256:0da190a04f5bf7b1c6796257f7340bdca7f25673b871a519601b032ceeb520e5" />
       <file path="integrity-diagnostics.xml" sha256="sha256:9164aea681d32be70d6ca0153bd6e26c6e82d9c6d3a3f9ea64d2ca4b772ef5c2" />
       <file path="knowledge-digest.xml" sha256="sha256:0d25055271a293f041cfefa360cd03257f572e6fd016ef0803eddc1d68c1b515" />
-      <file path="candidates.xml" sha256="sha256:3bcb6aa0ad3db24e5678b073e135efbe218862a589f9d8605ecfd75d9c1a628f" />
-      <file path="approvals.xml" sha256="sha256:2b27af4afddde919f092dd3792161fc954d3da3ea1b5aaec8bd909df86bf2842" />
+      <file path="candidates.xml" sha256="sha256:e06c55a089f34f3936b49d18329897f733b5768dc7276f67373e626ea1cd9af7" />
+      <file path="approvals.xml" sha256="sha256:2186c3299736c0da1799a68a2175fd9e8f5e262a86a2cb88502d00d07ff89843" />
       <file path="coverage.xml" sha256="sha256:a75a39e99b3d6aa696ac395b5b13f17efd3c17d79c51f1c88a2954a3123a953d" />
     </canonical_files>
   </run_state>
@@ -34,13 +34,22 @@
     <material_findings><material_finding finding_id="finding-1" type="validation-pattern" scope="package" source_ref="analysis.md" /></material_findings>
   </knowledge_digest>
   <candidates schema_version="1">
-    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-proposed" candidate_digest="sha256:c02e79708f81f04cb206730d75d7ee71700e0ada033779ac14850c9f45545595" intent_digest="sha256:c836d3c78830e52022673df1ae052ad56d9f5412969299c6bb488c89af680627" lifecycle="proposed" target_before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" target_before_exists="true" target_after_digest="sha256:24ec78d7a6c09fb9f6ab901158e5e327110c95dc539c003ed0e149e9f7792ad6" target_after_exists="true" material="true" type="validation-pattern" scope="package" destination_scope="package" root="/package" target="skills/example/SKILL.md" writer="framework-artifact-writer" action="promote">
+    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-proposed" candidate_digest="sha256:fbe9d9ff68f431bc50d3d9def0fd47ca10974432fc011cb89d3458f8054310ab" intent_digest="sha256:a33da132b356441367a40469b0edbb47fcb8733222b8f0275682c3a1db8095cb" lifecycle="proposed" target_before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" target_before_exists="true" target_after_digest="sha256:24ec78d7a6c09fb9f6ab901158e5e327110c95dc539c003ed0e149e9f7792ad6" target_after_exists="true" material="true" type="validation-pattern" scope="package" destination_scope="package" root="/package" target="skills/example/SKILL.md" writer="framework-artifact-writer" action="promote">
       <intended_change>Replace the package target after explicit approval.</intended_change>
       <source_lineage><evidence_ref locator="analysis.md" /></source_lineage>
+      <semantic_abstraction_gate result="generalized" generalization_confidence="medium" reason_code="reusable-invariant">
+        <source_instances><source_instance locator="analysis.md#candidate-case">The concrete case validates one package capability at an exact target.</source_instance></source_instances>
+        <resulting_statement>Validate reusable package capabilities through their current command contracts.</resulting_statement>
+        <applicability_signals><applicability_signal>A package capability has a current command contract and deterministic validator.</applicability_signal></applicability_signals>
+        <exclusions status="observed"><exclusion>Target paths and capability identities remain candidate-specific configuration.</exclusion></exclusions>
+        <generalization_evidence><evidence_ref locator="analysis.md#candidate-case" /></generalization_evidence>
+        <counterexample_check result="bounded"><evidence_ref locator="analysis.md#candidate-boundary" /></counterexample_check>
+        <rationale>The reusable validation rule preserves target-specific evidence without widening the approved package envelope.</rationale>
+      </semantic_abstraction_gate>
       <target_before_state encoding="base64">cHJpb3IgcGFja2FnZSBieXRlcw==</target_before_state>
       <target_after_state encoding="base64">YWZ0ZXIgcGFja2FnZSBieXRlcw==</target_after_state>
       <durable_knowledge_unit>
-        <statement>Validate the package capability through its current command contract.</statement>
+        <statement>Validate reusable package capabilities through their current command contracts.</statement>
         <use_when>When routing or validating the package capability.</use_when>
         <evidence_refs><evidence_ref locator="analysis.md" /></evidence_refs>
         <covered_refs><delta_ref id="delta-1" /><finding_ref id="finding-1" /></covered_refs>
@@ -52,7 +61,7 @@
     </continuous_improvement_candidate>
   </candidates>
   <approvals schema_version="1" interaction_id="interaction-proposed">
-    <envelope approval_id="approval-proposed" run_id="run-proposed" candidate_id="candidate-proposed" intent_digest="sha256:c836d3c78830e52022673df1ae052ad56d9f5412969299c6bb488c89af680627" destination_scope="package" root="/package" target="skills/example/SKILL.md" before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" before_exists="true" action="promote" status="pending" />
+    <envelope approval_id="approval-proposed" run_id="run-proposed" candidate_id="candidate-proposed" intent_digest="sha256:a33da132b356441367a40469b0edbb47fcb8733222b8f0275682c3a1db8095cb" destination_scope="package" root="/package" target="skills/example/SKILL.md" before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" before_exists="true" action="promote" status="pending" />
   </approvals>
   <plan_knowledge_coverage schema_version="1" status="proposed" plan_knowledge_independence="false" lifecycle_validated="false" deletion_readiness_claimed="false">
     <source_coverage manifest_files="3" ledger_files="3" accounted="true" integrity="pass" material_unread="0" />

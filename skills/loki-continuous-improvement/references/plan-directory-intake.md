@@ -1,9 +1,9 @@
 ---
 doc_id: "loki-continuous-improvement-plan-directory-intake"
-version: "1.0.0"
+version: "1.1.0"
 status: "active"
-last_updated: "2026-07-31"
-scope: "Current-only intake, resumable XML state, candidate v2, coverage and recovery for one complete plan directory"
+last_updated: "2026-08-01"
+scope: "Current-only intake, resumable XML state, Semantic Abstraction Gate, candidate v2, coverage and recovery for one complete plan directory"
 not_scope: "Plan lifecycle, deletion readiness, subtree intake, candidate v1 compatibility, backlog or record-only disposition"
 authority: "Approved invocation and scoped workflow envelope, then this command contract"
 canonical_source: "skills/loki-continuous-improvement/references/plan-directory-intake.md"
@@ -23,9 +23,10 @@ replaced_by: null
 <summary>
 Treat one explicitly supplied complete plan directory as sufficient read-only
 evidence, inventory it without exposing unsafe payloads, and persist only
-current canonical XML under its reserved run namespace. The terminal result
-proves knowledge coverage and independence, never plan lifecycle or deletion
-readiness.
+current canonical XML under its reserved run namespace. Every material unit
+passes one closed Semantic Abstraction Gate before final candidate v2
+formation. The terminal result proves knowledge coverage and independence,
+never plan lifecycle or deletion readiness.
 </summary>
 
 ## Authority And Data Boundary
@@ -165,9 +166,11 @@ All document roots declare `schema_version="1"` except each
 `continuous_improvement_candidate`, whose schema version is exactly `2`.
 Unknown elements or attributes fail closed. Non-whitespace text or tails are
 forbidden except in the explicit textual elements `intended_change`,
-`statement`, `use_when`, `question_text`, `expected_claim` and
-`comparison_evidence`. Lists are explicit containers; identifiers, questions,
-claims and references are non-empty and unique within their applicable family.
+`source_instance`, `resulting_statement`, `applicability_signal`, `exclusion`,
+`none_observed_rationale`, `rationale`, `statement`, `use_when`,
+`question_text`, `expected_claim` and `comparison_evidence`. Lists are explicit
+containers; identifiers, questions, claims and references are non-empty and
+unique within their applicable family.
 
 ### Source Manifest
 
@@ -229,21 +232,29 @@ approved value recorded in the run contract.
 ### Continuous Improvement Candidate v2
 
 `candidates` contains only `continuous_improvement_candidate` elements with
-`schema_version="2"`. Candidate v1 is rejected for every intake family; no
-reader, converter, migration, alias or fallback exists.
+`schema_version="2"`. Candidate v1 and candidate v2 without a
+`semantic_abstraction_gate` are rejected for every intake family before
+interpretation or writing; no reader, converter, migration, alias or fallback
+exists.
 
-Each candidate contains exactly one embedded `durable_knowledge_unit`. The unit
-contains one non-empty `statement`, `use_when`, evidence references and covered
-finding/delta references. The candidate, not the embedded unit, owns routing,
-disposition, approvals, validators and gates.
+Each candidate contains exactly one complete `semantic_abstraction_gate`
+immediately after its complete `source_lineage` and before
+`target_before_state`, `target_after_state` when applicable, and the embedded
+`durable_knowledge_unit`. Missing, duplicated or misordered gates fail closed.
+The unit contains one non-empty `statement` exactly equal to the gate
+`resulting_statement`, `use_when`, evidence references and covered
+finding/delta references. References belong to `source_lineage`; the candidate,
+not the gate or embedded unit, owns routing, disposition, approvals, validators
+and lifecycle gates.
 
 Required candidate fields are: stable `candidate_id`, mutable
 `candidate_digest`, immutable `intent_digest`, `lifecycle`,
 `target_before_digest`, `target_before_exists`, `material`, `type`, independent `scope`, complete
 source/evidence lineage, destination scope, canonical root, exact target,
 writer, action, one concise `intended_change`, one base64
-`target_before_state`, one knowledge unit, approvals, validators, gates,
-action evidence when the lifecycle requires it and residual blockers.
+`target_before_state`, one semantic abstraction gate, one knowledge unit,
+approvals, validators, lifecycle gates, action evidence when the lifecycle
+requires it and residual blockers.
 `promote` also persists exact `target_after_digest`, `target_after_exists` and
 one base64 `target_after_state`; noop and blocked actions prohibit after state.
 The only actions are `promote`, `noop-proven` and `blocked-with-reason`.
@@ -254,19 +265,122 @@ or `prevention`. A problem candidate has exactly one closed `root_cause` with
 non-empty `problem`, `cause` and `prevention` attributes and no children. All
 other types prohibit root-cause fields, including empty placeholders.
 
+#### Semantic Abstraction Gate
+
+The gate has exactly this child order and no unknown attributes, children,
+non-whitespace tails or empty textual values:
+
+```xml
+<semantic_abstraction_gate
+  result="generalized"
+  generalization_confidence="high"
+  reason_code="reusable-invariant">
+  <source_instances>
+    <source_instance locator="analysis.md#local-case">
+      The concrete source instance retained as evidence.
+    </source_instance>
+  </source_instances>
+  <resulting_statement>
+    The reusable invariant written into durable_knowledge_unit/statement.
+  </resulting_statement>
+  <applicability_signals>
+    <applicability_signal>An observable condition that makes the rule applicable.</applicability_signal>
+  </applicability_signals>
+  <exclusions status="observed">
+    <exclusion>An observed condition outside the invariant.</exclusion>
+  </exclusions>
+  <generalization_evidence>
+    <evidence_ref locator="analysis.md" />
+  </generalization_evidence>
+  <counterexample_check result="none-observed">
+    <evidence_ref locator="analysis.md" />
+  </counterexample_check>
+  <rationale>Why the result preserves evidence without widening authority.</rationale>
+</semantic_abstraction_gate>
+```
+
+The XML block above is the normative shape, not write authority or permission.
+Cardinality and attribute rules are:
+
+- `semantic_abstraction_gate` has exactly the attributes `result`,
+  `generalization_confidence` and `reason_code`;
+- `source_instances` contains one or more `source_instance`; each has exactly
+  one admissible non-empty `locator` and non-empty text;
+- `resulting_statement` occurs once and equals
+  `durable_knowledge_unit/statement` by exact decoded Unicode string equality,
+  without trimming or normalization; lineage locators never appear in either
+  statement;
+- `applicability_signals` contains one or more non-empty
+  `applicability_signal`;
+- `exclusions` has exactly one `status`: `observed` contains one or more
+  non-empty `exclusion`, while `none-observed` contains exactly one non-empty
+  `none_observed_rationale`; empty, mixed or crossed forms fail;
+- `generalization_evidence` contains one or more empty `evidence_ref` elements,
+  each with exactly one admissible non-empty `locator`;
+- `counterexample_check` has exactly one `result` and one or more empty
+  `evidence_ref` elements with exactly one admissible non-empty `locator` each;
+- `rationale` occurs once and states why the result preserves the evidence and
+  authority boundary.
+
+Every `source_instance` and `evidence_ref` locator resolves to admissible
+evidence represented by the same candidate's `source_lineage`. A locator
+outside lineage, blocked/unsupported/generated-noise provenance or a
+byte-identical duplicate chain without an eligible digested leader fails.
+
+The closed enums are:
+
+- `result`: `generalized`, `local-with-rationale`, `blocked-ambiguous`;
+- `generalization_confidence`: `not-applicable`, `low`, `medium`, `high`;
+- `counterexample_check.result`: `none-observed`, `bounded`,
+  `material-observed`, `inconclusive`;
+- `reason_code` for `generalized`: `reusable-invariant`;
+- `reason_code` for `local-with-rationale`: `content-or-canon`,
+  `explicitly-local-human-decision`, `deliberate-exception`,
+  `material-counterexample`, `no-reusable-invariant`;
+- `reason_code` for `blocked-ambiguous`: `insufficient-evidence`,
+  `conflicting-scope`, `material-counterexample-needs-human`.
+
+Apply these result transitions without fallback:
+
+| Result | Confidence | Counterexample | Required consequence |
+| --- | --- | --- | --- |
+| `generalized` | `medium` or `high` | `none-observed` or `bounded` | The candidate may continue to `promote`, `noop-proven` or a later blocked control. |
+| `local-with-rationale` | `not-applicable` | `none-observed`, `bounded` or `material-observed` | The local unit remains material when applicable and follows the normal lifecycle. |
+| `blocked-ambiguous` | `low` | `inconclusive` or `material-observed` | Require `action="blocked-with-reason"`, blocking evidence, a material residual blocker and no promotion approval. |
+
+`bounded` requires `exclusions status="observed"` and at least one exclusion
+that bounds the counterexample. `material-observed` never combines with
+`generalized`: use `local-with-rationale/material-counterexample` when the
+evidence determines a safe local boundary, or
+`blocked-ambiguous/material-counterexample-needs-human` when a human must
+resolve scope. `inconclusive` combines only with `blocked-ambiguous`.
+`content-or-canon`, an explicitly local human decision and a deliberate
+exception retain their corresponding local reason and never generalize.
+
+Only candidates typed `architecture`, `convention`, `runtime-contract`,
+`state-or-data-contract`, `validation-pattern` or `prevention` may use
+`result="generalized"`. Every other semantic type uses a valid local or
+blocking result. The gate may transform instance wording into a reusable
+invariant, but it cannot grant or widen authority, destination scope, canonical
+root, writer, target, action, permission, validator, approval or lifecycle.
+
 Calculate `target_before_digest` from the decoded bytes of
 `target_before_state`; copied digest strings are not evidence. Calculate
 `target_after_digest` from decoded `target_after_state` when present. Calculate
 `intent_digest` from canonical XML containing exactly `run_id`, `candidate_id`,
 `destination_scope`, `root`, `target`, `action`, `target_before_digest`,
-`target_before_exists` and the normalized non-empty `intended_change`. Calculate
-`candidate_digest` as SHA-256 over canonical XML for the complete candidate
-after removing only its `candidate_digest` attribute. The validator recomputes
-all digests. Every lineage, claim, finding and evidence locator must resolve to
-an eligible `digested` source or a byte-identical duplicate chain whose leader
-resolves to an eligible digested source; generated-noise, unsupported and
-blocked sources are inadmissible provenance. Every covered reference must
-resolve to a current finding or delta.
+`target_before_exists`, the normalized non-empty `intended_change` and the
+complete canonical `semantic_abstraction_gate` XML in that order. Any change
+to gate result, confidence, reason, source instance, statement, applicability,
+exclusion, evidence, counterexample or rationale recomputes `intent_digest` and
+invalidates the affected approval. Calculate `candidate_digest` as SHA-256 over
+canonical XML for the complete candidate after removing only its
+`candidate_digest` attribute. The validator recomputes all digests. Every
+lineage, claim, finding and evidence locator must resolve to an eligible
+`digested` source or a byte-identical duplicate chain whose leader resolves to
+an eligible digested source; generated-noise, unsupported and blocked sources
+are inadmissible provenance. Every covered reference must resolve to a current
+finding or delta.
 
 `approved_roots` contains only `package`, `consumer-docs` and
 `consumer-operational-state`, each at most once and only when approved. Their
@@ -281,8 +395,10 @@ contained below it.
 
 Each approval binds one run ID, candidate ID, immutable intent digest,
 destination scope, canonical root, exact target, action, before digest and
-before existence. It does not bind mutable candidate digest, validator, gate or
-evidence results. A proposed promote candidate uses `pending`; its approved,
+before existence. Through the immutable intent digest it also binds the
+complete canonical `semantic_abstraction_gate`; a material gate change makes
+the approval stale. It does not bind mutable candidate digest, validator,
+lifecycle gate or evidence results. A proposed promote candidate uses `pending`; its approved,
 writing, auditing or promoted lifecycle uses `approved`. `noop-proven` uses
 `not-required`; `blocked-with-reason` uses `rejected`. The nested candidate
 record and its one envelope agree exactly. Any intent binding change
@@ -352,8 +468,10 @@ terminal independence rules below. Terminal status is exactly `completed` or
 - every applicable validator, gate and promotion/noop action evidence has
   `status="passed"`;
 - every implementation delta references a `confirmed` claim, all lineage and
-  covered references resolve, candidate/target/source-tree digests recompute,
-  and no residual material blocker remains;
+  covered references resolve, every semantic gate is complete and transition
+  valid, gate/unit statements are exactly equal,
+  candidate/intent/target/source-tree digests recompute, and no residual
+  material blocker remains;
 - every material candidate has passing recovery coverage;
 - no durable consumer or package target semantically depends on `planos/` or
   the reserved run namespace.
@@ -380,6 +498,9 @@ deletion readiness, `safe-to-delete` or plan disposal.
 Stop the affected intake before semantic digestion or promotion on unsafe
 payload, path escape, unmanaged namespace collision, source drift, incomplete
 or overlapping batches, schema mismatch, candidate v1, unauthorized action or
-destination, stale approval, missing material coverage, failed/inconclusive
-recovery, durable plan dependency or inconsistent terminal truth. Preserve
-safe locators and reasons and route the minimum correction to the orchestrator.
+destination, candidate v2 pre-gate, invalid gate enum/cardinality/transition,
+gate/unit statement divergence, ineligible generalization, gate-derived
+authority widening, stale intent or approval, missing material coverage,
+failed/inconclusive recovery, durable plan dependency or inconsistent terminal
+truth. Preserve safe locators and reasons and route the minimum correction to
+the orchestrator.

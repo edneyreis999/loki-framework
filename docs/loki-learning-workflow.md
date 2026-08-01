@@ -3,8 +3,22 @@ title: Workflow de Aprendizado do Loki
 type: learning-workflow
 status: draft
 created: 2026-06-25
-last_updated: 2026-07-31
+last_updated: 2026-08-01
 self_contained: true
+doc_id: loki-learning-workflow
+version: 1.1.0
+scope: Current-only intake, reconciliation, semantic abstraction, candidate v2, promotion and recoverability in loki-continuous-improvement
+not_scope: Consumer runtime behavior, plan lifecycle, write authorization, or compatibility with pre-gate candidates
+authority: Current loki-continuous-improvement contracts and approved Loki package policy
+canonical_source: docs/loki-learning-workflow.md
+intended_llm_task: context-hydration
+source_priority:
+  - current loki-continuous-improvement execution and intake contracts
+  - approved package policy
+  - this explanatory workflow
+  - non-normative examples and persisted evidence
+known_conflicts: []
+replaced_by: null
 ---
 
 # Workflow de Aprendizado do Loki
@@ -46,23 +60,74 @@ decide se o plano terminou. Todos os arquivos originais permanecem read-only.
    deltas.
 6. Tipo semântico e scope são classificados separadamente. Root-cause é exigida
    somente para erro, falha, desperdício, atrito ou prevenção.
-7. Todo intake usa um único `continuous_improvement_candidate` schema v2,
-   current-only, com exatamente uma `durable_knowledge_unit`. Candidate v1 não
-   possui reader, conversor, migração ou fallback.
-8. Cada candidato material termina como `promote`, `noop-proven` ou
-   `blocked-with-reason`. Este command não usa backlog nem record-only.
-9. A descoberta é root-specific. Consumer docs começam em `docs/index.xml` com
+7. A descoberta é root-specific. Consumer docs começam em `docs/index.xml` com
    `bibliotecario`; package começa em `manifest.yaml` com
    `framework-knowledge-librarian`.
-10. Uma interação humana agrupa a decisão, mas cada root recebe envelope
+8. Depois da descoberta, o orquestrador aplica exatamente um Semantic
+   Abstraction Gate a cada unidade material. O gate separa instância e
+   configuração do invariante, registra aplicabilidade, exclusões,
+   contraexemplo, rationale e confiança, e termina somente como `generalized`,
+   `local-with-rationale` ou `blocked-ambiguous`.
+9. Todo intake usa um único `continuous_improvement_candidate` schema v2,
+   current-only, com exatamente um gate completo e uma
+   `durable_knowledge_unit`. O gate fica depois de `source_lineage` e antes dos
+   target states e da unidade. Candidate v1 e candidate v2 sem gate não possuem
+   reader, conversor, migração ou fallback.
+10. Cada candidato material termina como `promote`, `noop-proven` ou
+   `blocked-with-reason`. Este command não usa backlog nem record-only.
+11. Uma interação humana agrupa a decisão, mas cada root recebe envelope
     independente com candidate digests, targets, before-digests, writer,
-    validators e gates.
-11. Consumer docs pertencem ao `catalogador`. Package artifacts e package docs
+    validators e gates. A approval vincula o `intent_digest`, que inclui o XML
+    canônico completo do Semantic Abstraction Gate; qualquer mudança material
+    no gate invalida a approval afetada.
+12. Consumer docs pertencem ao `catalogador`. Package artifacts e package docs
     pertencem ao `framework-artifact-writer` e exigem checks, precheck e
     `framework-artifact-quality-auditor` independente.
-12. Perguntas cold-start cobrem todos os candidatos materiais. O librarian
+13. Perguntas cold-start cobrem todos os candidatos materiais. O librarian
     recebe apenas pergunta e entrypoint aplicável; nunca plano, código ou
     expected claims. `fail` ou `inconclusive` bloqueia o candidato.
+
+## Semantic Abstraction Gate
+
+O gate ocorre depois da reconciliação global e da descoberta root-specific,
+mas antes da forma final do candidate v2. Ele não seleciona nem amplia
+authority, root, destination scope, writer, target, action, permission,
+validator ou approval. O orquestrador forma o gate; digesters apenas extraem
+evidência, librarians apenas pesquisam equivalência, o validator fecha a forma
+e os bindings, e a decisão humana continua aprovando a intenção exata.
+
+O gate infere do próprio caso uma fronteira observável:
+
+- `source_instances` preserva identidades, participantes, coordenadas e outra
+  configuração variável como evidência;
+- `resulting_statement` substitui somente identidades acidentais por papéis e
+  preserva mecanismo, condições de aplicabilidade, limites configuráveis e
+  estado terminal;
+- `applicability_signals`, `exclusions`, evidência de generalização,
+  `counterexample_check` e `rationale` tornam o alcance auditável;
+- o statement da `durable_knowledge_unit` é exatamente igual ao
+  `resulting_statement`.
+
+Os únicos resultados e consequências são:
+
+| Resultado | Uso | Consequência |
+| --- | --- | --- |
+| `generalized` | Somente `architecture`, `convention`, `runtime-contract`, `state-or-data-contract`, `validation-pattern` e `prevention`, com confiança `medium` ou `high`. | Pode seguir pelo lifecycle normal para `promote`, `noop-proven` ou bloqueio posterior. |
+| `local-with-rationale` | Canon/conteúdo, decisão humana explicitamente local, exceção deliberada, caso sem invariante reutilizável ou contraexemplo material com fronteira determinável. | Continua material quando necessário e segue pelo lifecycle normal sem ampliar o alcance. |
+| `blocked-ambiguous` | Evidência insuficiente, scope conflitante ou contraexemplo material que exige decisão humana. | Exige `action="blocked-with-reason"`, blocker material e nenhuma approval de promoção. |
+
+Um contraexemplo `bounded` exige uma exclusão observada. Um contraexemplo
+`material-observed` nunca combina com `generalized`: ele mantém uma fronteira
+local determinável ou bloqueia para decisão humana. Evidência inconclusiva
+também bloqueia.
+
+### Map022 como exemplo não normativo
+
+Map022, os nomes das crianças e as coordenadas concretas permanecem evidência
+da instância e configuração local. O invariante reutilizável é o mecanismo de
+mover eventos durante uma cutscene, preservando destino, facing e estado
+terminal como condições materiais. Este exemplo não cria regra específica de
+RPG Maker, não amplia os seis tipos elegíveis e não substitui as regras do gate.
 
 ## Estado retomável do plano
 
@@ -72,6 +137,7 @@ O estado current-only usa XML canônico e writes atômicos em:
 <plan_directory>/continuous-improvement/runs/<run-id>/
   run-state.xml
   source-manifest.xml
+  approved-roots.xml
   file-processing-ledger.xml
   integrity-diagnostics.xml
   knowledge-digest.xml
@@ -124,8 +190,9 @@ Antes de declarar conclusão, confirme:
 - source set e batches estão completos e sem drift;
 - todo claim possui reconciliação global;
 - todo finding material e delta confirmado possui disposition;
-- cada candidate v2 contém uma única unidade de conhecimento;
-- approvals ainda correspondem ao run, digests, root e targets;
+- cada candidate v2 contém exatamente um gate completo e uma única unidade de
+  conhecimento, com statements idênticos;
+- approvals ainda correspondem ao run, intent digest, gate, root e targets;
 - todos os candidatos materiais possuem recuperação `pass`;
 - nenhum destino duradouro depende de `planos/` ou do run namespace;
 - status e `plan_knowledge_independence` são coerentes.

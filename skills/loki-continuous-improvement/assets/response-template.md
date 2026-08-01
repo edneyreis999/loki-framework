@@ -1,8 +1,8 @@
 ---
 doc_id: "loki-continuous-improvement-response-template"
-version: "2.0.0"
+version: "2.1.0"
 status: "active"
-last_updated: "2026-07-31"
+last_updated: "2026-08-01"
 scope: "Both-consumer terminal projection for loki-continuous-improvement"
 not_scope: "Write authority, approval, candidate v1, backlog, record-only, lifecycle or deletion readiness"
 authority: "skills/loki-continuous-improvement/references/response.md"
@@ -29,9 +29,44 @@ replaced_by: null
 
 ## Candidatos v2
 
-| Candidate ID/digests | Lifecycle | Tipo | Escopo | Intenção/unidade de conhecimento | Findings/deltas | Destino/root/target | Writer | Ação | Controls |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| <id + candidate/intent sha256> | <proposed/approved/writing/auditing/promoted/noop-proven/blocked-with-reason> | <semantic type> | <independent scope> | <concise intended_change + one compact unit> | <refs> | <exact routing> | <owner> | <promote/noop-proven/blocked-with-reason> | <approval/validators/gates/evidence pending/passed/failed> |
+| Candidate ID/digests | Lifecycle | Tipo | Escopo | Intenção | Findings/deltas | Destino/root/target | Writer | Ação |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| <id + persisted candidate/intent sha256> | <proposed/approved/writing/auditing/promoted/noop-proven/blocked-with-reason> | <semantic type> | <independent scope> | <concise persisted intended_change> | <refs> | <exact persisted routing> | <owner> | <promote/noop-proven/blocked-with-reason> |
+
+## Abstração semântica por candidato
+
+<repeat this complete block for every material candidate; copy persisted state
+exactly, do not recalculate, normalize, correct or infer missing values>
+
+### Candidate <candidate-id> — Semantic Abstraction Gate
+
+- Result/confidence/reason: <generalized | local-with-rationale | blocked-ambiguous> / <not-applicable | low | medium | high> / <persisted closed reason_code>
+- Instance — source instances: <every locator + exact source_instance text>
+- Invariant — resulting statement: <exact persisted resulting_statement>
+- Invariant — durable unit statement: <exact persisted durable_knowledge_unit/statement, shown separately>
+- Scope — applicability signals: <every exact applicability_signal>
+- Limits — exclusions: <observed + every exclusion | none-observed + exact none_observed_rationale>
+- Limits — generalization evidence: <every evidence_ref locator>
+- Limits — counterexample: <none-observed | bounded | material-observed | inconclusive> + <every evidence_ref locator>
+- Limits — rationale: <exact persisted rationale>
+- Local materiality: <material=true/false from candidate; for local-with-rationale, preserve material=true when applicable and never interpret local as non-material>
+- Blocked residual state: <for blocked-ambiguous, blocking evidence + every material residual blocker + one persisted minimum human decision; otherwise not-applicable>
+
+<render generalized, local-with-rationale and blocked-ambiguous only when that
+exact result exists in persisted state; never invent a sample or fallback state>
+
+## Controls e binding por candidato
+
+<this section comes after the complete semantic gate projection>
+
+| Candidate | Candidate intent digest | Approval ID/status | Approval-bound intent digest | Validators/gates/evidence | Residual blockers |
+| --- | --- | --- | --- | --- | --- |
+| <candidate-id> | <persisted sha256> | <persisted approval_id + pending/approved/not-required/rejected> | <persisted sha256> | <pending/passed/failed + refs> | <exact blockers | none> |
+
+<copy both intent digests and approval state from persisted evidence; do not
+recompute equality, repair stale state, grant approval or change routing while
+rendering. If a gate field, blocked decision or binding is missing/stale, report
+needs-input or blocked with the safe locator and minimum next action>
 
 ## Causa raiz e atrito
 

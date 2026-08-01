@@ -1,8 +1,8 @@
 ---
 name: loki-continuous-improvement
 doc_id: "loki-continuous-improvement-command"
-version: "2.0.0"
-description: Run the Loki `loki-continuous-improvement` command bundle in Codex. Digest approved persisted learning sources or one complete plan directory, reconcile claims globally, build current-only candidate v2 units, promote them through root-specific writers, and prove durable retrieval without deciding plan lifecycle or deletion.
+version: "2.1.0"
+description: Run the Loki `loki-continuous-improvement` command bundle in Codex. Digest approved persisted learning sources or one complete plan directory, reconcile claims globally, pass every material unit through the current-only Semantic Abstraction Gate, build candidate v2 units, promote them through root-specific writers, and prove durable retrieval without deciding plan lifecycle or deletion.
 when_to_use:
   - "Use when approved persisted evidence or a complete plan directory may contain material knowledge that belongs in durable consumer or Loki package surfaces."
   - "Use when candidate v2, exact promotion envelopes, resumable XML state, root-specific catalogs, and recoverability checks are required."
@@ -56,8 +56,8 @@ required_skills:
   - lf-documentation-writing
 required_commands: []
 status: draft
-last_updated: "2026-07-31"
-scope: "Current continuous-improvement intake, reconciliation, candidate v2 promotion and recoverability"
+last_updated: "2026-08-01"
+scope: "Current continuous-improvement intake, reconciliation, semantic abstraction, candidate v2 promotion and recoverability"
 not_scope: "Plan lifecycle, deletion, candidate v1 compatibility, backlog or record-only"
 authority: "Approved invocation and this current command bundle"
 canonical_source: "skills/loki-continuous-improvement/SKILL.md"
@@ -151,6 +151,17 @@ lifecycle metadata to decide whether a supplied complete plan is eligible.
 Every intake family produces the same current-only
 `continuous_improvement_candidate` schema v2. Reject candidate v1, backlog and
 record-only; do not provide a reader, converter, migration, alias or fallback.
+Before final candidate v2 formation, require exactly one
+`semantic_abstraction_gate` after `source_lineage` and before target state and
+the `durable_knowledge_unit`. The gate result is exactly `generalized`,
+`local-with-rationale` or `blocked-ambiguous`; only `architecture`,
+`convention`, `runtime-contract`, `state-or-data-contract`,
+`validation-pattern` and `prevention` may be generalized. The gate's
+`resulting_statement` must equal the durable unit `statement` exactly, and its
+complete canonical XML participates in `intent_digest`. Any gate change
+invalidates the affected approval. Reject candidate v2 without the gate before
+interpretation or writing; do not provide compatibility behavior for the
+pre-gate form.
 
 When `plan_directory` is present, read
 [Plan Directory Intake](references/plan-directory-intake.md) completely during

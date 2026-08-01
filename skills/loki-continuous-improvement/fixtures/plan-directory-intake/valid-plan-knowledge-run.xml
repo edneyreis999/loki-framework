@@ -7,8 +7,8 @@
       <file path="file-processing-ledger.xml" sha256="sha256:0da190a04f5bf7b1c6796257f7340bdca7f25673b871a519601b032ceeb520e5" />
       <file path="integrity-diagnostics.xml" sha256="sha256:9164aea681d32be70d6ca0153bd6e26c6e82d9c6d3a3f9ea64d2ca4b772ef5c2" />
       <file path="knowledge-digest.xml" sha256="sha256:e54795b805fb6345e9788360077b42117a49d386990f5bb08f36cc2f9095b603" />
-      <file path="candidates.xml" sha256="sha256:e7adde1b85fb1af87e64688c851a9e25dc0904d1d8782cefa7a27f81e0e5ed4e" />
-      <file path="approvals.xml" sha256="sha256:8dad5c30c15163d39129cee453d8f1817bb77090bf2b005804f514d76dd6832e" />
+      <file path="candidates.xml" sha256="sha256:8f469ad3ffa4f4c52c15f46ef87c30806778a24740299b835c801f0754ed16fa" />
+      <file path="approvals.xml" sha256="sha256:39843f8e63b4c65e964322e216823091d3d42f18501fed5e70bad14022d40ca7" />
       <file path="coverage.xml" sha256="sha256:38e70234d3dff66fbfc6e3d8d1d0bf3d15e44b767d7ed880a36b53f1b4492beb" />
     </canonical_files>
   </run_state>
@@ -46,13 +46,22 @@
     </material_findings>
   </knowledge_digest>
   <candidates schema_version="1">
-    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-package" candidate_digest="sha256:38c5be7ce79962e9adab01c84306838623cabe174b767f0109c2b7127dec4809" intent_digest="sha256:dfd41de910dcfdc12ea2596afadeaddf90ff05db248c2a09fe631e56b6fe4372" lifecycle="promoted" target_before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" target_before_exists="true" target_after_digest="sha256:24ec78d7a6c09fb9f6ab901158e5e327110c95dc539c003ed0e149e9f7792ad6" target_after_exists="true" material="true" type="implemented-capability" scope="package" destination_scope="package" root="/package" target="skills/example/SKILL.md" writer="framework-artifact-writer" action="promote">
+    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-package" candidate_digest="sha256:d95d94dcad8170c212a0c877ff6e4fc7b561b4561164a56846cb1b3925ef999c" intent_digest="sha256:3a89cb8cb29ff0b5216b253deb22897336f3e456b0481e5152ed57b9d010bb6f" lifecycle="promoted" target_before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" target_before_exists="true" target_after_digest="sha256:24ec78d7a6c09fb9f6ab901158e5e327110c95dc539c003ed0e149e9f7792ad6" target_after_exists="true" material="true" type="validation-pattern" scope="package" destination_scope="package" root="/package" target="skills/example/SKILL.md" writer="framework-artifact-writer" action="promote">
       <intended_change>Replace the package target with the validated capability contract.</intended_change>
       <source_lineage><evidence_ref locator="analysis.md" /></source_lineage>
+      <semantic_abstraction_gate result="generalized" generalization_confidence="high" reason_code="reusable-invariant">
+        <source_instances><source_instance locator="analysis.md#map022">Map022 child events move from exact coordinates during a cutscene and finish with configured facing and terminal state.</source_instance></source_instances>
+        <resulting_statement>During a cutscene, movable events must preserve configured destination, facing, and terminal state.</resulting_statement>
+        <applicability_signals><applicability_signal>A cutscene moves one or more events to configured destinations.</applicability_signal></applicability_signals>
+        <exclusions status="observed"><exclusion>Map identity, participant identity, and coordinates remain source-instance configuration.</exclusion></exclusions>
+        <generalization_evidence><evidence_ref locator="analysis.md#map022" /></generalization_evidence>
+        <counterexample_check result="bounded"><evidence_ref locator="analysis.md#map022-exclusions" /></counterexample_check>
+        <rationale>The invariant preserves the observed destination, facing, and terminal state without widening routing, authority, or target scope.</rationale>
+      </semantic_abstraction_gate>
       <target_before_state encoding="base64">cHJpb3IgcGFja2FnZSBieXRlcw==</target_before_state>
       <target_after_state encoding="base64">YWZ0ZXIgcGFja2FnZSBieXRlcw==</target_after_state>
       <durable_knowledge_unit>
-        <statement>Validate the package capability through its current command contract.</statement>
+        <statement>During a cutscene, movable events must preserve configured destination, facing, and terminal state.</statement>
         <use_when>When routing or validating the package capability.</use_when>
         <evidence_refs><evidence_ref locator="analysis.md" /></evidence_refs>
         <covered_refs><delta_ref id="delta-1" /><delta_ref id="delta-2" /></covered_refs>
@@ -63,9 +72,18 @@
       <promotion_evidence mode="observed-existing-applied" status="passed" />
       <residual_blockers />
     </continuous_improvement_candidate>
-    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-consumer" candidate_digest="sha256:15de2adc2b6a3e1545b4276a9796931656638d74918f14d3ccb0125629db0482" intent_digest="sha256:7088866df5e6420aa0483babaebc6093cb5902235ed5ac49f49d1dac912092e9" lifecycle="noop-proven" target_before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" target_before_exists="true" material="true" type="human-decision" scope="consumer" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" writer="catalogador" action="noop-proven">
+    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-consumer" candidate_digest="sha256:54396ac848ac14df6c7d8e13e1bbd44fbc375c63e88a487f68838c844ff750c7" intent_digest="sha256:67e90aa01cf6135d81f89f5478bbd0e9d3329b68f07d465e9631a0f091a33c2e" lifecycle="noop-proven" target_before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" target_before_exists="true" material="true" type="human-decision" scope="consumer" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" writer="catalogador" action="noop-proven">
       <intended_change>Keep the equivalent consumer decision without changing the target.</intended_change>
       <source_lineage><evidence_ref locator="analysis.md" /></source_lineage>
+      <semantic_abstraction_gate result="local-with-rationale" generalization_confidence="not-applicable" reason_code="explicitly-local-human-decision">
+        <source_instances><source_instance locator="analysis.md#consumer-decision">The approved decision is explicitly scoped to this consumer documentation target.</source_instance></source_instances>
+        <resulting_statement>Preserve the approved decision in the consumer documentation catalog.</resulting_statement>
+        <applicability_signals><applicability_signal>A future task depends on this explicitly local approved decision.</applicability_signal></applicability_signals>
+        <exclusions status="none-observed"><none_observed_rationale>The reviewed lineage contains no exception to preserving this local decision.</none_observed_rationale></exclusions>
+        <generalization_evidence><evidence_ref locator="analysis.md#consumer-decision" /></generalization_evidence>
+        <counterexample_check result="none-observed"><evidence_ref locator="analysis.md#consumer-decision-review" /></counterexample_check>
+        <rationale>The decision remains material and local; the gate grants no broader consumer or package authority.</rationale>
+      </semantic_abstraction_gate>
       <target_before_state encoding="base64">cHJpb3IgY29uc3VtZXIgYnl0ZXM=</target_before_state>
       <durable_knowledge_unit>
         <statement>Preserve the approved decision in the consumer documentation catalog.</statement>
@@ -81,8 +99,8 @@
     </continuous_improvement_candidate>
   </candidates>
   <approvals schema_version="1" interaction_id="interaction-grouped">
-    <envelope approval_id="approval-package" run_id="run-valid" candidate_id="candidate-package" intent_digest="sha256:dfd41de910dcfdc12ea2596afadeaddf90ff05db248c2a09fe631e56b6fe4372" destination_scope="package" root="/package" target="skills/example/SKILL.md" before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" before_exists="true" action="promote" status="approved" />
-    <envelope approval_id="approval-consumer" run_id="run-valid" candidate_id="candidate-consumer" intent_digest="sha256:7088866df5e6420aa0483babaebc6093cb5902235ed5ac49f49d1dac912092e9" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" before_exists="true" action="noop-proven" status="not-required" />
+    <envelope approval_id="approval-package" run_id="run-valid" candidate_id="candidate-package" intent_digest="sha256:3a89cb8cb29ff0b5216b253deb22897336f3e456b0481e5152ed57b9d010bb6f" destination_scope="package" root="/package" target="skills/example/SKILL.md" before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" before_exists="true" action="promote" status="approved" />
+    <envelope approval_id="approval-consumer" run_id="run-valid" candidate_id="candidate-consumer" intent_digest="sha256:67e90aa01cf6135d81f89f5478bbd0e9d3329b68f07d465e9631a0f091a33c2e" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" before_exists="true" action="noop-proven" status="not-required" />
   </approvals>
   <plan_knowledge_coverage schema_version="1" status="completed" plan_knowledge_independence="true" lifecycle_validated="false" deletion_readiness_claimed="false">
     <source_coverage manifest_files="3" ledger_files="3" accounted="true" integrity="pass" material_unread="0" />
