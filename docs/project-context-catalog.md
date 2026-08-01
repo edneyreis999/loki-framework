@@ -46,6 +46,13 @@ referencia sem copiar sua estrutura literalmente.
   conta propria.
 - `lf-index-navigator`: procedimento tecnico para navegar no catalogo XML.
 
+Quando `loki-continuous-improvement` recebe um plano completo, somente
+candidatos com `scope: consumer` e destination de consumer docs entram nesta
+integração. A recuperação usa `bibliotecario` a partir de `docs/index.xml`, e a
+escrita continua exclusiva do `catalogador` em envelope
+`task_scoped_writer`. O package usa outro root, outro catálogo e outro
+librarian; nunca cria `docs/index.xml` no pacote.
+
 Investigadores de dominio produzem `loki_init_research_packet` schema v1 com
 fontes, sem escrever docs. O orquestrador valida cobertura, organiza lotes e
 preserva continuacao; o `catalogador` materializa bootstrap, lotes e
@@ -58,10 +65,10 @@ O fluxo completo de captura, retrospectiva, classificacao e promocao esta em
 [Workflow de Aprendizado do Loki](loki-learning-workflow.md). Esta secao cobre
 apenas o destino de contexto duradouro do projeto consumidor.
 
-- Aprendizado `universal` ou `probable-universal` vai para command bundle em
+- Conhecimento classificado para o package vai para command bundle em
   `skills/loki-*/`, skill reutilizavel, `agents/`, `templates/`, `docs/` ou
   validators do pacote Loki.
-- Aprendizado `project-specific` vai para `docs/**/*.md` do consumidor e deve
+- Conhecimento classificado para consumer docs vai para `docs/**/*.md` do consumidor e deve
   atualizar `docs/index.xml`.
 - `AGENTS.md` e `CLAUDE.md` do consumidor recebem apenas o minimo necessario
   para orientar navegacao e comportamento. Eles nao devem duplicar a regra de

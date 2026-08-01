@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan_knowledge_run schema_version="1" run_id="run-valid" plan_directory_class="complete" retrospective_present="false">
+  <run_state schema_version="1" run_id="run-valid" status="completed" resume_mode="resumed" resume_stale="false" source_tree_digest="sha256:f20b7368f022ffe2fb8b7c4ce933737da9453fe04db5897d6150c894137b5f73" plan_directory_class="complete" retrospective_present="false">
+    <canonical_files>
+      <file path="source-manifest.xml" sha256="sha256:60f31a9882705293d7250e4ea4c9861d87e620efd43b74a9fd0055649630b1e4" />
+      <file path="approved-roots.xml" sha256="sha256:db48e8aa34a7376d79e38344c780edc8fd8db5123aa00a2f62a71e6354280ca0" />
+      <file path="file-processing-ledger.xml" sha256="sha256:0da190a04f5bf7b1c6796257f7340bdca7f25673b871a519601b032ceeb520e5" />
+      <file path="integrity-diagnostics.xml" sha256="sha256:9164aea681d32be70d6ca0153bd6e26c6e82d9c6d3a3f9ea64d2ca4b772ef5c2" />
+      <file path="knowledge-digest.xml" sha256="sha256:e54795b805fb6345e9788360077b42117a49d386990f5bb08f36cc2f9095b603" />
+      <file path="candidates.xml" sha256="sha256:e7adde1b85fb1af87e64688c851a9e25dc0904d1d8782cefa7a27f81e0e5ed4e" />
+      <file path="approvals.xml" sha256="sha256:8dad5c30c15163d39129cee453d8f1817bb77090bf2b005804f514d76dd6832e" />
+      <file path="coverage.xml" sha256="sha256:38e70234d3dff66fbfc6e3d8d1d0bf3d15e44b767d7ed880a36b53f1b4492beb" />
+    </canonical_files>
+  </run_state>
+  <source_manifest schema_version="1" run_id="run-valid" plan_path="/fixture/plan" excluded_namespace="continuous-improvement/" source_tree_digest="sha256:f20b7368f022ffe2fb8b7c4ce933737da9453fe04db5897d6150c894137b5f73">
+    <totals discovered_files="3" discovered_bytes="42" />
+    <files>
+      <file path="analysis.md" sha256="sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" size="20" initial_family="recognized-text" safety="eligible" />
+      <file path="copy.md" sha256="sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" size="20" initial_family="recognized-text" safety="eligible" />
+      <file path="generated.txt" sha256="sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" size="2" initial_family="recognized-text" safety="eligible" />
+    </files>
+  </source_manifest>
+  <approved_roots schema_version="1">
+    <approved_root destination_scope="package" scope="package" root="/package" writer="framework-artifact-writer" />
+    <approved_root destination_scope="consumer-docs" scope="consumer" root="/consumer" writer="catalogador" />
+  </approved_roots>
+  <file_processing_ledger schema_version="1">
+    <file_result path="analysis.md" disposition="digested" batch_id="batch-1" result_ref="digest-1" />
+    <file_result path="copy.md" disposition="duplicate" duplicate_of="analysis.md" />
+    <file_result path="generated.txt" disposition="generated-noise" rule_id="generated-empty-shell" reason="no-independent-knowledge" />
+  </file_processing_ledger>
+  <integrity_diagnostics schema_version="1" status="pass" />
+  <knowledge_digest schema_version="1" reconciler="orchestrator-global">
+    <digestion_batches>
+      <batch batch_id="batch-1"><file_ref path="analysis.md" /></batch>
+    </digestion_batches>
+    <claims>
+      <claim claim_id="claim-1" reconciliation="confirmed" source_ref="analysis.md" />
+    </claims>
+    <implementation_deltas>
+      <implementation_delta delta_id="delta-1" claim_id="claim-1" target="skills/example/SKILL.md" />
+      <implementation_delta delta_id="delta-2" claim_id="claim-1" target="skills/example/validator.py" />
+    </implementation_deltas>
+    <material_findings>
+      <material_finding finding_id="finding-1" type="human-decision" scope="consumer" source_ref="analysis.md" />
+    </material_findings>
+  </knowledge_digest>
+  <candidates schema_version="1">
+    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-package" candidate_digest="sha256:38c5be7ce79962e9adab01c84306838623cabe174b767f0109c2b7127dec4809" intent_digest="sha256:dfd41de910dcfdc12ea2596afadeaddf90ff05db248c2a09fe631e56b6fe4372" lifecycle="promoted" target_before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" target_before_exists="true" target_after_digest="sha256:24ec78d7a6c09fb9f6ab901158e5e327110c95dc539c003ed0e149e9f7792ad6" target_after_exists="true" material="true" type="implemented-capability" scope="package" destination_scope="package" root="/package" target="skills/example/SKILL.md" writer="framework-artifact-writer" action="promote">
+      <intended_change>Replace the package target with the validated capability contract.</intended_change>
+      <source_lineage><evidence_ref locator="analysis.md" /></source_lineage>
+      <target_before_state encoding="base64">cHJpb3IgcGFja2FnZSBieXRlcw==</target_before_state>
+      <target_after_state encoding="base64">YWZ0ZXIgcGFja2FnZSBieXRlcw==</target_after_state>
+      <durable_knowledge_unit>
+        <statement>Validate the package capability through its current command contract.</statement>
+        <use_when>When routing or validating the package capability.</use_when>
+        <evidence_refs><evidence_ref locator="analysis.md" /></evidence_refs>
+        <covered_refs><delta_ref id="delta-1" /><delta_ref id="delta-2" /></covered_refs>
+      </durable_knowledge_unit>
+      <approval status="approved" approval_id="approval-package" />
+      <validators><validator id="package-self-test" status="passed" /></validators>
+      <gates><gate id="package-audit" status="passed" /></gates>
+      <promotion_evidence mode="observed-existing-applied" status="passed" />
+      <residual_blockers />
+    </continuous_improvement_candidate>
+    <continuous_improvement_candidate schema_version="2" candidate_id="candidate-consumer" candidate_digest="sha256:15de2adc2b6a3e1545b4276a9796931656638d74918f14d3ccb0125629db0482" intent_digest="sha256:7088866df5e6420aa0483babaebc6093cb5902235ed5ac49f49d1dac912092e9" lifecycle="noop-proven" target_before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" target_before_exists="true" material="true" type="human-decision" scope="consumer" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" writer="catalogador" action="noop-proven">
+      <intended_change>Keep the equivalent consumer decision without changing the target.</intended_change>
+      <source_lineage><evidence_ref locator="analysis.md" /></source_lineage>
+      <target_before_state encoding="base64">cHJpb3IgY29uc3VtZXIgYnl0ZXM=</target_before_state>
+      <durable_knowledge_unit>
+        <statement>Preserve the approved decision in the consumer documentation catalog.</statement>
+        <use_when>When a future task depends on the approved decision.</use_when>
+        <evidence_refs><evidence_ref locator="analysis.md" /></evidence_refs>
+        <covered_refs><finding_ref id="finding-1" /></covered_refs>
+      </durable_knowledge_unit>
+      <approval status="not-required" approval_id="approval-consumer" />
+      <validators><validator id="consumer-catalog-validation" status="passed" /></validators>
+      <gates><gate id="noop-equivalence" status="passed" /></gates>
+      <noop_evidence mode="catalog-merge-equivalence" status="passed" />
+      <residual_blockers />
+    </continuous_improvement_candidate>
+  </candidates>
+  <approvals schema_version="1" interaction_id="interaction-grouped">
+    <envelope approval_id="approval-package" run_id="run-valid" candidate_id="candidate-package" intent_digest="sha256:dfd41de910dcfdc12ea2596afadeaddf90ff05db248c2a09fe631e56b6fe4372" destination_scope="package" root="/package" target="skills/example/SKILL.md" before_digest="sha256:6be4910ae5369f3905ae63d61e08defe14c69bd8037484cf82e8c25624a7d6e4" before_exists="true" action="promote" status="approved" />
+    <envelope approval_id="approval-consumer" run_id="run-valid" candidate_id="candidate-consumer" intent_digest="sha256:7088866df5e6420aa0483babaebc6093cb5902235ed5ac49f49d1dac912092e9" destination_scope="consumer-docs" root="/consumer" target="docs/decision.md" before_digest="sha256:435fb3a149cb944c8c46d0cacadaa869de0772e09a83893fbb32215aba457398" before_exists="true" action="noop-proven" status="not-required" />
+  </approvals>
+  <plan_knowledge_coverage schema_version="1" status="completed" plan_knowledge_independence="true" lifecycle_validated="false" deletion_readiness_claimed="false">
+    <source_coverage manifest_files="3" ledger_files="3" accounted="true" integrity="pass" material_unread="0" />
+    <knowledge_coverage material_findings="1" covered_findings="1" claims="1" reconciled_claims="1" deltas="2" disposed_deltas="2" />
+    <candidate_coverage material_candidates="2" applied_or_noop="2" blocked="0" />
+    <recoverability>
+      <question question_id="recovery-package" librarian="framework-knowledge-librarian" entrypoint="manifest.yaml" result="pass">
+        <question_text>How is the package capability validated?</question_text>
+        <candidate_ref id="candidate-package" />
+        <expected_claim>Recover the package capability and validator contract.</expected_claim>
+        <comparison_evidence status="pass" evidence_ref="recovery-package-observation">The recovered answer contains the required contract.</comparison_evidence>
+      </question>
+      <question question_id="recovery-consumer" librarian="bibliotecario" entrypoint="docs/index.xml" result="pass">
+        <question_text>What approved consumer decision must remain durable?</question_text>
+        <candidate_ref id="candidate-consumer" />
+        <expected_claim>Recover the approved consumer decision.</expected_claim>
+        <comparison_evidence status="pass" evidence_ref="recovery-consumer-observation">The recovered answer contains the approved decision.</comparison_evidence>
+      </question>
+    </recoverability>
+    <durable_dependency plan_refs="0" run_namespace_refs="0" />
+    <blockers />
+  </plan_knowledge_coverage>
+</plan_knowledge_run>

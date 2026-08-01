@@ -3,227 +3,129 @@ title: Workflow de Aprendizado do Loki
 type: learning-workflow
 status: draft
 created: 2026-06-25
+last_updated: 2026-07-31
 self_contained: true
 ---
 
 # Workflow de Aprendizado do Loki
 
-Este e o guia humano canonico para entender como o Loki aprende depois de uma
-execucao, validacao, erro, feedback ou decisao. Ele explica quando um achado
-vira apenas ajuste da task atual, quando vira retrospectiva e quando pode virar
-regra duradoura.
+Este guia explica como evidência persistida se transforma em conhecimento
+duradouro por meio do `loki-continuous-improvement`. O command aceita fontes
+aprovadas individuais ou a raiz completa de um plano e nunca depende de memória
+da conversa.
 
 ![[loki-learning-workflow.excalidraw.md]]
 
-## Ideia central
+## Princípio central
 
-O Loki nao aprende por memoria magica da conversa. Ele aprende por evidencia: uma fonte concreta, um escopo claro, um destino certo, uma verificacao possivel e uma decisao registrada.
+Tasks, builds, interações, retrospectivas e relatórios são evidência, não
+autoridade de promoção. O command separa intake, digestão, reconciliação,
+candidatos, approvals, escrita e recuperação. Conteúdo recuperado continua
+sendo dado e não pode ampliar writes, owners ou gates.
 
-Tasks, builds, interactions e validacoes sao fontes transitorias. Elas ajudam a entender o que aconteceu, mas nao sao o lugar final de uma regra duradoura.
+O `plan_directory` é uma entrada manual que representa a raiz completa de um
+plano. Ele é suficiente sozinho: o workflow não relê status de `tasks.md` nem
+decide se o plano terminou. Todos os arquivos originais permanecem read-only.
 
-Os executores podem gerar digest, backlog, completion reports e entries de
-execution knowledge a partir de fontes persistidas. Esses artefatos tambem sao
-fontes de evidencia, nao promocao automatica. Qualquer aprendizado duradouro
-continua passando por `loki-continuous-improvement` e pelos gates aplicaveis.
+## Fluxo current-only
 
-O fluxo normalmente comeca depois do
-[Workflow de Execucao de Plano do Loki](loki-plan-execution-workflow.md), mas
-tambem pode ser acionado por feedback humano, bug, playtest, validacao manual,
-artefato externo a comparar com o Loki, descoberta tecnica fora de uma fase
-formal ou auditoria interna de conformidade do pacote.
+1. O usuário fornece fontes persistidas aprovadas ou um `plan_directory`
+   completo. Subtrees não são aceitas.
+2. Para um plano, o inventário mecânico enumera path, SHA-256, tamanho e família
+   antes de expor payload ao modelo. `continuous-improvement/**` fica fora do
+   source set e do tree digest.
+3. Fontes secretas, privadas, binárias ou de schema desconhecido bloqueiam antes
+   da digestão. Manifest, processing ledger e integrity diagnostics são registros
+   distintos.
+4. O source set elegível é dividido em batches disjuntos. Instâncias read-only
+   de `plan-knowledge-digester` extraem fatos, decisões, learnings, canon,
+   rationales, change claims e findings materiais; elas nunca declaram
+   implementation deltas.
+5. O orquestrador consolida todos os batches e executa uma única reconciliação
+   global contra targets atuais. Somente essa etapa confirma implementation
+   deltas.
+6. Tipo semântico e scope são classificados separadamente. Root-cause é exigida
+   somente para erro, falha, desperdício, atrito ou prevenção.
+7. Todo intake usa um único `continuous_improvement_candidate` schema v2,
+   current-only, com exatamente uma `durable_knowledge_unit`. Candidate v1 não
+   possui reader, conversor, migração ou fallback.
+8. Cada candidato material termina como `promote`, `noop-proven` ou
+   `blocked-with-reason`. Este command não usa backlog nem record-only.
+9. A descoberta é root-specific. Consumer docs começam em `docs/index.xml` com
+   `bibliotecario`; package começa em `manifest.yaml` com
+   `framework-knowledge-librarian`.
+10. Uma interação humana agrupa a decisão, mas cada root recebe envelope
+    independente com candidate digests, targets, before-digests, writer,
+    validators e gates.
+11. Consumer docs pertencem ao `catalogador`. Package artifacts e package docs
+    pertencem ao `framework-artifact-writer` e exigem checks, precheck e
+    `framework-artifact-quality-auditor` independente.
+12. Perguntas cold-start cobrem todos os candidatos materiais. O librarian
+    recebe apenas pergunta e entrypoint aplicável; nunca plano, código ou
+    expected claims. `fail` ou `inconclusive` bloqueia o candidato.
 
-## Fluxo
+## Estado retomável do plano
 
-1. Um sinal aparece: feedback humano, bug, dificuldade tecnica, decisao de produto, build, validacao, artefato externo, auditoria interna ou repeticao de erro.
-2. Se a fase ainda esta em execucao, use `loki-enrich-tasks` apenas para melhorar o plano atual. O aprendizado fica local: `tasks.md`, `task-N.M.md` ou `interaction/faseN/`.
-3. Primeiro resolva o problema de fato. Nao transforme tentativa promissora em regra.
-4. Quando a fase terminar, pausar claramente, ou a dificuldade real for resolvida, use `loki-retrospectiva-tecnica`.
-5. A retrospectiva registra objetivo, artefatos, validacoes, decisoes humanas, evidencia do que resolveu, riscos e candidatos de melhoria.
-6. Quando o sinal vier de um executor, trate digest, backlog, completion
-   reports e execution-knowledge entries validadas como evidencia de entrada.
-   Deduplicate por lineage/capture ID e nao promova nada so porque foi capturado.
-7. Quando o sinal vier de artefatos externos, use `loki-knowledge-extraction-analysis` para produzir aprendizados rastreaveis antes de qualquer promocao. Ele gera analise para consumo posterior por `loki-continuous-improvement`, sem aplicar mudancas duradouras diretamente.
-8. So depois use `loki-continuous-improvement` para avaliar se algum candidato merece virar contexto duradouro. Quando houver um diretorio ou multiplas retrospectivas, use `retrospective-digester` em modo read-only para digerir cada arquivo antes da consolidacao.
-9. Todo candidato declara `root_cause_learning.required`. Quando for `true`, rode a fase read-only de causa raiz antes de escolher destino, diff ou patch: normalmente `source-researcher` para fonte de verdade/conflitos e `retrospective-digester` para padroes em retros. Pesquisa externa continua exigindo consentimento explicito.
-10. O candidato e classificado por escopo: `universal`, `probable-universal`, `project-specific` ou `backlog`.
-11. O destino e escolhido pela superficie que teria evitado a repeticao do problema.
-12. Quando o escopo for auditoria interna de conformidade do pacote, `loki-self-healing` pode analisar artefatos internos e aplicar correcoes claras no working tree, sem stage ou commit. Achados especulativos continuam como `investigar` ou backlog.
-13. Mudancas duradouras usam approvals, validators e human-validation somente
-    quando o contrato concreto os exigir; nao ha um gate generico para essa
-    categoria.
-14. Quando `destination_scope: package`, somente
-    `loki-continuous-improvement` coordena o envelope e approval aplicavel. O
-    `framework-artifact-writer` aplica o patch sob ownership exclusivo, executa
-    os checks e classifica
-    a aplicabilidade LLM-facing independentemente do modo documental e emite o
-    `llm_artifact_profile`. As seis classes positivas sao `agent-facing`,
-    `instruction-bearing`, `routing`, `prompt-assembly`, `context-hydration` e
-    `validation-contract`; human-only usa `not-applicable` justificado. Se
-    aplicavel, o Writer segue a fonte canonica
-    [LLM Artifact Quality Validation Contract](../skills/lf-documentation-writing/references/llm-artifact-quality-validation.md),
-    aplica os requisitos de autoria e entrega perfil, particao dos dez fixture
-    IDs, arquivos e checks ao `framework-artifact-quality-auditor` independente.
-    O Auditor read-only emite `llm_consumption_quality` com `rubric-v2`,
-    `prompt-v2`, revisao isolada e bias controls; o Writer nunca autoaprova.
-    Finding, inconclusao, baixa confianca material, fixture omitido, skip
-    injustificado, bias ou validator falho bloqueiam; conflito normativo retorna
-    `needs-human-review`. Toda correcao invalida o parecer anterior e exige
-    replay completo. Destinos nao-package preservam integralmente seus routing,
-    owners, validators, formatos e permissoes anteriores.
-15. Quando `destination_scope: consumer-operational-state`, resolva e registre
-    o `consumer_root` internamente a partir do `pwd` canonico e derive exclusivamente
-    `<consumer-root>/.loki/analytic-inference/v2/`. O `technical-implementer`
-    recebe envelope `task_scoped_writer`, targets exatos e ownership serial por
-    arquivo. Registry ausente ou vazio permanece read-only e produz zero writes;
-    somente uma mutacao aprovada pode inicializar o estado.
-16. Promocao e reorganizacao nesse state root exigem diff/manifesto, validators
-    e approval root-bound antes do write. A approval vincula `operation_id`,
-    operacao, `consumer_root` canonico, policy ID/digest,
-    `target_manifest_digest_sha256`, targets exatos, `source_locator` e
-    freshness; root, containment, targets e hashes sao revalidados
-    imediatamente antes da escrita. Purge exige dry-run e uma approval JIT
-    propria, posterior, single-use e ligada a root, IDs, paths, hashes e digests
-    exatos. Score indica elegibilidade, nunca autoridade.
-17. Para docs duradouros do consumidor, preserve `catalogador`; para outros
-    destinos de runtime, preserve o writer e auditor de dominio aplicaveis. Os
-    agentes de artefatos do pacote podem estar instalados com escopo `both`,
-    mas nao recebem permissao nesses destinos; eles permanecem inativos sem
-    package root e envelope `destination_scope: package` validos.
-18. A promocao termina com diff, validacao e registro do risco residual.
+O estado current-only usa XML canônico e writes atômicos em:
 
-## Inferencias Analiticas no Aprendizado
+```text
+<plan_directory>/continuous-improvement/runs/<run-id>/
+  run-state.xml
+  source-manifest.xml
+  file-processing-ledger.xml
+  integrity-diagnostics.xml
+  knowledge-digest.xml
+  candidates.xml
+  approvals.xml
+  coverage.xml
+```
 
-`loki-deep-analysis` pode emitir `inference_events` imutaveis e
-`generated_candidates`. A retrospectiva pode emitir candidatos especializados
-para observacoes materiais `inference-good`, `inference-bad` e
-`inference-missing`, sempre com `capture_id`, locator, lineage e provenance.
-Todo candidato nasce com status `unreviewed`; report, captura, evidencia e
-retrospectiva nao promovem conhecimento e nao autorizam mutacao do catalogo.
-O unico destino desse material para avaliacao duradoura e
-`loki-continuous-improvement`.
+Sem `run_id`, o command retoma somente quando existe um único run não terminal
+com o mesmo source tree digest. Nenhum match cria novo run; múltiplos matches
+exigem escolha explícita. Source drift exige novo run e não há migração.
 
-No intake, melhoria continua valida locator, schema, status, capture, lineage,
-provenance e digests. Eventos e candidatos usam identidades estaveis: replay
-com ID e payload canonico identicos e no-op e nao conta novamente; o mesmo ID
-com payload divergente bloqueia. Um reducer deterministico reconstrói snapshot,
-componentes, denominadores, freshness e score. Limites de score determinam
-somente elegibilidade para promocao, reorganizacao ou revisao de purge; nao
-autorizam nenhuma dessas operacoes.
+## Roots, catálogos e owners
 
-Consulta e manutencao catalog-backed resolvem o consumer root exclusivamente do
-`pwd` canonico; o command deve iniciar na raiz do consumidor. Nao aceitam root
-explicito, metadata de adapter, Git, ambiente, source paths, docs ou descoberta
-de `.loki` como override. O pacote
-nao fornece catalogo base nem overlay: `registry.xml`, indices `index.xml`,
-records `rev-N.xml` e events `.xml` vivos existem somente em
-`<consumer-root>/.loki/analytic-inference/v2/`. Estado
-ausente ou vazio retorna `insufficient`, `mutation_applied: false` e zero writes.
+| Root | Entrada de descoberta | Leitor | Writer |
+| --- | --- | --- | --- |
+| Consumer docs | `docs/index.xml` | `bibliotecario` | `catalogador` |
+| Loki package | `manifest.yaml` | `framework-knowledge-librarian` | `framework-artifact-writer` |
+| Consumer operational state | registry XML v2 sob `.loki/analytic-inference/v2` | contrato de analytic inference | `technical-implementer` |
 
-O catalogo ativo e exclusivamente XML v2. JSON nao participa do lookup ativo,
-nao recebe mutacao e nao e uma fonte de catalogo suportada.
-O layout v1 e rejeitado antes de processamento; nao ha conversao automatica.
-JSON de policy, request, approval e output continua sendo control plane, nao
-catalogo persistido.
+O package nunca cria `docs/index.xml`. O librarian do package pode ler
+`docs/operational-inventory.md` somente quando roteado ou necessário para
+interpretar o manifest. Manifest ausente ou insuficiente retorna gap; não
+autoriza free scan nem fallback externo.
 
-Promocao e reorganizacao exigem targets exatos, before/after, lineage,
-validators, approval root-bound e writer aplicavel. A approval preserva
-`operation_id`, operacao, root canonico, policy ID/digest,
-`target_manifest_digest_sha256`, targets, `source_locator` e freshness; esses
-bindings e a integridade dos targets sao revalidados antes da escrita. Purge e
-exclusao fisica e irreversivel apenas de registros nao protegidos elegiveis e
-de todos os seus rastros pertencentes ao catalogo. A elegibilidade ainda e
-insuficiente: primeiro ha dry-run com manifesto canonico completo e, depois,
-approval novo e just-in-time para a operacao, inference IDs, paths,
-target-set digest e policy digest exatos. Relatorios externos, retrospectivas,
-evidencias, approvals e demais artefatos fora do catalogo sao preservados. Uma
-falha ou rastro residual deixa a operacao em estado bloqueado, nunca em sucesso
-parcial silencioso.
+## Coverage e resultado terminal
 
-## Artefatos participantes
+`plan_knowledge_coverage` mede arquivos, integridade, findings materiais,
+claims, deltas, candidatos, promoção e recuperação. O resultado terminal é:
 
-### Command bundles
+- `completed` com `plan_knowledge_independence: true` quando todo conhecimento
+  material foi promovido ou provado equivalente e é recuperável sem o plano;
+- `completed-with-blockers` com `plan_knowledge_independence: false` quando um
+  blocker material permanece, mesmo que todos os arquivos estejam contabilizados.
 
-| Command | Contribuicao no workflow |
-| --- | --- |
-| `loki-enrich-tasks` | Usa aprendizado transitorio para melhorar a fase atual, sem promover regra duradoura. |
-| `loki-deep-analysis` | Emite report, eventos imutaveis e candidatos `unreviewed` para avaliacao posterior, sem mutar o catalogo. |
-| `loki-retrospectiva-tecnica` | Registra evidencia auditavel depois de fase concluida, pausa clara ou dificuldade resolvida de fato. |
-| `loki-continuous-improvement` | Classifica candidatos, escolhe destino duradouro, exige gates e prepara ou aplica patch aprovado. |
-| `loki-agentic-development` | Pode produzir digest, backlog, completion/evidence e refs de execution knowledge para melhoria futura, sem promocao automatica. |
-| `loki-knowledge-extraction-analysis` | Analisa artefatos externos e entrega aprendizados rastreaveis para `loki-continuous-improvement`, sem promover mudanca diretamente. |
-| `loki-self-healing` | Audita artefatos internos do pacote e aplica correcoes escopadas no working tree, sem stage ou commit automatico. |
+Independência de conhecimento não valida lifecycle e não significa que o plano
+pode ser removido. Decisão de retenção ou exclusão permanece externa ao command.
 
-### Knowledge and support skills
+## Integração com outras fontes
 
-| Skill | Contribuicao no workflow |
-| --- | --- |
-| `lf-external-knowledge-extraction` | Extrai aprendizados de artefatos externos sem decidir mudancas no Loki. |
-| `lf-framework-impact-audit` | Audita quais comandos, skills, agents, docs ou templates Loki seriam impactados por um aprendizado externo. |
-| `lf-execution-knowledge-capture` | Define o contrato de captura transitoria que CI pode consumir, mas nunca promove por conta propria. |
-| `lf-analytic-inference` | Define lookup seletivo, schemas, replay idempotente, snapshot, score e elegibilidade de manutencao sem mutacao automatica. |
-| `lf-internal-command-workflows` | Roteia os dois workflows especializados de manutencao do pacote: extracao de conhecimento e self-healing; melhoria continua permanece no router geral. |
-| `lf-command-creator` | Ajuda quando o aprendizado deve virar ou alterar um command com estado, gates e outputs. |
-| `lf-agent-creator` | Ajuda quando o aprendizado pede um papel especialista com julgamento proprio. |
-| `lf-skill-creator` | Ajuda quando o aprendizado deve virar procedimento reutilizavel com trigger e progressive disclosure. |
+Retrospectivas, execution knowledge e analytic inference continuam fontes
+elegíveis quando seus schemas e lineage atuais passam. Todas convergem para o
+mesmo candidate v2 e para os mesmos envelopes, roots e gates. Captura,
+eligibility ou score nunca autorizam mutação.
 
-### Agents
+## Verificação rápida
 
-| Agent | Contribuicao no workflow |
-| --- | --- |
-| `standards-curator` | Classifica escopo como `universal`, `probable-universal`, `project-specific` ou `backlog`. |
-| `retrospective-digester` | Digerir uma retrospectiva ou lote pequeno em paralelo read-only, extraindo aprendizados, atritos, candidatos e evidencias para o orquestrador. |
-| `source-researcher` | Confere evidencia, fonte de verdade, causa raiz, duplicidade, lacunas e conflitos multi-fonte antes de promocao duradoura. |
-| `catalogador` | Promove aprendizado `project-specific` para `/docs` do consumidor e atualiza `docs/index.xml`. |
-| `bibliotecario` | Localiza contexto duradouro existente antes de criar duplicidade. |
-| `runtime-qa` | Fornece evidencia de validacao humana ou checklist quando o aprendizado depende de comportamento perceptivel. |
-| `technical-implementer` | Writer exclusivo de `consumer-operational-state` sob `.loki/analytic-inference/v2/`, sempre com consumer root canonico, targets exatos, validators, gates e ownership serial; fora desse envelope retorna proposta. |
-| `framework-artifact-writer` | Aplica somente promocao `package` em targets exatos, sob envelope, checks e ownership exclusivo; nunca escreve `.loki` nem substitui writers de consumidor/runtime. |
-| `framework-artifact-quality-auditor` | Revisa de forma independente o patch de pacote depois dos checks; nao corrige producao, bloqueia finding/incerteza e nao substitui approvals concretos nem validators. |
-| `execution-knowledge-cataloger` | Produz entry transitoria sanitizada e nao promovida; nao participa da decisao normativa. |
+Antes de declarar conclusão, confirme:
 
-## Destinos corretos
-
-Use esta regra simples:
-
-| Aprendizado | Destino duradouro |
-| --- | --- |
-| Regra de negocio, lore, fluxo funcional ou termo do projeto consumidor | `docs/**/*.md` do consumidor + `docs/index.xml` |
-| Regra project-wide para toda LLM do consumidor | `AGENTS.md` com roteamento minimo |
-| Regra especifica de Claude Code, Codex ou adaptador | `CLAUDE.md` ou equivalente |
-| Procedimento tecnico reutilizavel | `skills/` |
-| Workflow invocavel com estado, outputs e gates | command bundle em `skills/loki-*/` |
-| Papel especialista com julgamento proprio | `agents/` |
-| Formato repetivel | `templates/` |
-| Evidencia insuficiente ou caso isolado | backlog |
-
-## O que nao fazer
-
-- Nao promover aprendizado enquanto o problema ainda esta sendo testado.
-- Nao usar retrospectiva como regra final. Ela e fonte auditavel.
-- Nao promover uma correcao que previne apenas o sintoma quando `root_cause_learning.required` ainda precisa de pesquisa read-only.
-- Nao guardar regra de negocio do consumidor no pacote Loki.
-- Nao duplicar regra longa em `AGENTS.md` ou `CLAUDE.md`; esses arquivos devem rotear para a fonte certa.
-- Nao alterar pacote, instalacao ou contexto duradouro sem gate exigido.
-- Nao aplicar o gate LLM-facing package a destinos consumer, runtime ou
-  backlog, nem permitir que o Writer aprove o proprio artefato.
-
-## Checklist rapido
-
-Antes de promover qualquer aprendizado, confirme:
-
-- Qual fonte prova o aprendizado?
-- O que era esperado e o que aconteceu?
-- O que realmente resolveu?
-- `root_cause_learning.required` e `true` ou `false`? Se for `true`, quais fontes read-only confirmam a causa raiz?
-- O escopo e universal, provavel-universal, especifico do projeto ou backlog?
-- Qual arquivo deveria ter prevenido a repeticao?
-- Qual gate humano falta?
-- Como validar que a nova regra funciona?
-
-Se qualquer resposta estiver incerta, registre como candidato ou backlog, nao como regra aplicada.
-# Evidence-first learning flow
-
-`completion record -> sanitized evidence -> read-only audit -> explicit human
-retrospective -> deduplicated candidate -> gated promotion`. Evidence gaps stay
-gaps. The auditor reads manifests/sanitized snapshots on demand and labels its
-inferences; it never receives private reasoning or directly promotes policy.
+- source set e batches estão completos e sem drift;
+- todo claim possui reconciliação global;
+- todo finding material e delta confirmado possui disposition;
+- cada candidate v2 contém uma única unidade de conhecimento;
+- approvals ainda correspondem ao run, digests, root e targets;
+- todos os candidatos materiais possuem recuperação `pass`;
+- nenhum destino duradouro depende de `planos/` ou do run namespace;
+- status e `plan_knowledge_independence` são coerentes.

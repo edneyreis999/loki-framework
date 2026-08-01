@@ -18,7 +18,8 @@ Este diretorio contem o pacote operacional aprovado do Loki Framework. Ele deve 
 - demais `skills/`: conhecimento core e extensoes especializadas opcionais
   quando o projeto consumidor exigir.
 - `agents/`: agentes operacionais, incluindo `standards-curator`,
-  `source-researcher`, `bibliotecario` e `catalogador`.
+  `source-researcher`, `plan-knowledge-digester`, `bibliotecario`,
+  `framework-knowledge-librarian` e `catalogador`.
 - `templates/`: contratos base para comandos e componentes.
 - `docs/`: guia de uso, workflows canonicos de execucao e aprendizado,
   inventario operacional, limites de fonte e contrato do catalogo XML do

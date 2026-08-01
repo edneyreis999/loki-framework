@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan_knowledge_run schema_version="1" run_id="run-invalid-v1" plan_directory_class="complete" retrospective_present="false">
+  <candidates schema_version="1">
+    <continuous_improvement_candidate schema_version="1" candidate_id="legacy-candidate" />
+  </candidates>
+</plan_knowledge_run>

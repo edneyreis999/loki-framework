@@ -2,6 +2,7 @@
 .serena
 .agents
 .codex
+.claude
 planos
 .DS_Store
 __pycache__/

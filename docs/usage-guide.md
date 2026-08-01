@@ -6,7 +6,7 @@ created: 2026-06-24
 scope: local-project-package
 doc_id: loki-usage-guide
 version: 1.0.0
-last_updated: 2026-07-27
+last_updated: 2026-07-31
 not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
 authority: Approved Loki package policy and current package command contracts
 canonical_source: docs/usage-guide.md
@@ -60,8 +60,8 @@ Use estes documentos como fonte principal do ciclo operacional:
   escrita serializada, AC/validators, dashboard, teste manual e evidencia, alem
   do caminho agentic avancado com um unico handoff ao executor unificado.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
-  resultados, bugs, feedbacks e retrospectivas viram ajuste local, candidato,
-  regra duradoura ou backlog.
+  fontes aprovadas ou um plano completo viram candidate v2, promoção
+  root-specific e conhecimento recuperável.
 - [Model and Effort Guidance for Loki Artifacts](model-effort-guidance.md):
   define como classificar `model_class`, `effort`, escalamento e projecao por
   adaptador para comandos, skills, agentes, templates e docs gerados.
@@ -476,9 +476,16 @@ Para evoluir o pacote, use os criadores certos por tipo de artefato e valide con
 
 ## Quando Registrar Aprendizados
 
-Use [Workflow de Aprendizado do Loki](loki-learning-workflow.md) como unica
-referencia canonica para decidir entre ajuste local, retrospectiva, promocao
-duradoura e backlog.
+Use [Workflow de Aprendizado do Loki](loki-learning-workflow.md) como referência
+canônica para intake, reconciliação, promoção duradoura e recuperação.
+
+`loki-continuous-improvement` aceita manualmente `plan_directory` como raiz
+completa e suficiente. Os arquivos originais ficam read-only; o estado XML
+retomável vive somente em `continuous-improvement/runs/<run-id>/`, namespace
+excluído do source digest. Todo intake converge para candidate v2 current-only
+com uma knowledge unit. O command termina em `completed` ou
+`completed-with-blockers` e informa `plan_knowledge_independence`; nunca valida
+lifecycle ou prontidão de exclusão.
 
 ## Agents
 
@@ -489,8 +496,12 @@ duradoura e backlog.
 - `retrospective-digester`: digere retrospectivas tecnicas em modo read-only,
   com fan-out por arquivo quando `loki-continuous-improvement` recebe multiplas
   retros.
+- `plan-knowledge-digester`: digere batches disjuntos do source manifest sem
+  declarar implementação, promoção ou writes.
 - `bibliotecario`: consulta `docs/index.xml` antes de abrir a documentacao
   duradoura do consumidor.
+- `framework-knowledge-librarian`: consulta package knowledge começando
+  estritamente por `manifest.yaml`, sem free scan ou fallback externo.
 - `catalogador`: unico writer de docs duradouros do consumidor; exige caller,
   mode, fontes e targets explicitos para manter `/docs` e o catalogo XML.
 - `lf-domain-context-preflight`: preflight pessoal antes de cada task; consulta

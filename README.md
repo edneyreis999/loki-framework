@@ -54,8 +54,9 @@ Fluxos principais:
 - `loki-generate-inferences`: prepara, de forma opt-in, um unico artefato
   deterministico de pre-investigacao sob `planos/` do consumidor; nao inicia
   investigacao, dispatch, CI ou outro workflow.
-- `loki-continuous-improvement`: promocao posterior e controlada de
-  aprendizados validados.
+- `loki-continuous-improvement`: recebe fontes aprovadas ou um plano completo,
+  produz candidate v2 current-only, promove por roots independentes e prova
+  recuperação e independência do conhecimento sem decidir lifecycle/exclusão.
 
 Use `loki-demand-text-improver` quando a demanda ainda precisar explicitar
 objetivo, contexto, escopo, requisitos, restricoes, aceite, validators,

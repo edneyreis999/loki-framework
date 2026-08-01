@@ -210,6 +210,14 @@ agentic_agent_metadata:
     risk_tags: ["learning-promotion"]
     parallel_safe: true
     technology_skill_routes: []
+  plan-knowledge-digester:
+    capability_tags: ["plan-knowledge", "batch-digestion", "change-claims", "material-findings"]
+    phase_roles: ["digest", "improvement"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["source-integrity", "batch-coverage", "untrusted-data"]
+    parallel_safe: true
+    technology_skill_routes: []
   runtime-qa:
     capability_tags: ["runtime-validation", "human-validation", "evidence", "init-investigation", "research-packet", "domain-context-preflight"]
     phase_roles: ["validation", "qa"]
@@ -256,6 +264,14 @@ agentic_agent_metadata:
     agentic_modes: ["read-only"]
     write_classes: []
     risk_tags: ["stale-index"]
+    parallel_safe: true
+    technology_skill_routes: []
+  framework-knowledge-librarian:
+    capability_tags: ["package-knowledge", "manifest-routing", "recoverability", "minimum-reading"]
+    phase_roles: ["discovery", "recovery"]
+    agentic_modes: ["read-only"]
+    write_classes: []
+    risk_tags: ["catalog-gap", "free-scan", "package-boundary"]
     parallel_safe: true
     technology_skill_routes: []
   catalogador:
@@ -871,6 +887,11 @@ agents:
     status: draft-read-only
     project_tags:
       - "core"
+  - name: "plan-knowledge-digester"
+    file: "agents/plan-knowledge-digester.md"
+    status: draft-read-only
+    project_tags:
+      - "core"
   - name: "runtime-qa"
     file: "agents/runtime-qa.md"
     status: draft-scoped-writer
@@ -894,6 +915,11 @@ agents:
   - name: "bibliotecario"
     file: "agents/bibliotecario.md"
     status: draft
+    project_tags:
+      - "core"
+  - name: "framework-knowledge-librarian"
+    file: "agents/framework-knowledge-librarian.md"
+    status: draft-read-only
     project_tags:
       - "core"
   - name: "catalogador"
@@ -988,6 +1014,10 @@ codex_agents:
     file: "codex/agents/bibliotecario.toml"
     source_agent: "agents/bibliotecario.md"
     status: draft-derived
+  - name: "framework-knowledge-librarian"
+    file: "codex/agents/framework-knowledge-librarian.toml"
+    source_agent: "agents/framework-knowledge-librarian.md"
+    status: draft-derived
   - name: "catalogador"
     file: "codex/agents/catalogador.toml"
     source_agent: "agents/catalogador.md"
@@ -1003,6 +1033,10 @@ codex_agents:
   - name: "retrospective-digester"
     file: "codex/agents/retrospective-digester.toml"
     source_agent: "agents/retrospective-digester.md"
+    status: draft-derived
+  - name: "plan-knowledge-digester"
+    file: "codex/agents/plan-knowledge-digester.toml"
+    source_agent: "agents/plan-knowledge-digester.md"
     status: draft-derived
   - name: "source-researcher"
     file: "codex/agents/source-researcher.toml"

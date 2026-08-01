@@ -64,7 +64,7 @@ não existe projection ou command físico separado.
 | `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e métricas v1, DAG, retry e terminal truth. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
-| `loki-continuous-improvement` | `mvp` | Promover aprendizados validados para superficies duradouras; no destino package, exige profile, precheck mecânico ready e parecer v2 independente do Auditor sem alterar destinos nao-package. |
+| `loki-continuous-improvement` | `mvp` | Aceitar fontes aprovadas ou um `plan_directory` completo; inventariar e retomar estado XML, reconciliar claims globalmente, produzir candidate v2 current-only, promover por envelopes root-bound e provar recuperação de todo conhecimento material. |
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
 | `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
@@ -182,6 +182,7 @@ bundles.
 | --- | --- | --- |
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
+| `plan-knowledge-digester` | `mvp` | Digerir um batch disjunto do source manifest em fatos, decisões, learnings, canon, rationales, change claims e findings materiais, sem declarar implementation deltas ou escrever. |
 | `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
 | `framework-artifact-writer` | `draft-scoped-writer` | Agente `both` para escrita interna do pacote: emite profile, executa checks e precheck mecanico de materialidade/perfil, e entrega apenas packets ready ao Auditor; a instalacao no consumidor nao autoriza escrita em consumer/runtime. |
 | `framework-artifact-quality-auditor` | `draft-write-test` | Agente `both`, read-only e independente, para auditar patches do pacote: valida profile, rubric v2, fixtures, revisao isolada e bias controls; bloqueia findings/incertezas e nunca corrige producao. |
@@ -191,6 +192,7 @@ bundles.
 | `execution-knowledge-cataloger` | `mvp` | Escrever somente uma entry XML exclusiva a partir de completion/evidence sanitizados persistidos; nunca shared state ou promoção. |
 | `technical-implementer` | `mvp` | Pode aplicar mudancas tecnicas como `scoped-writer` quando a task atribuir target_files; caso contrario, retorna proposta. |
 | `bibliotecario` | `mvp` | Navegar a documentacao duradoura do consumidor via `docs/index.xml`, recomendando a menor leitura suficiente. |
+| `framework-knowledge-librarian` | `mvp` | Navegar conhecimento package-only em modo read-only e low-cost, começando estritamente por `manifest.yaml`, sem free scan ou fallback externo. |
 | `catalogador` | `mvp` | Unico writer de docs duradouros do consumidor; exige caller/mode, fontes e targets explicitos para manter `docs/**/*.md`, `docs/index.xml` e sincronizacao minima aprovada. |
 | `game-product-owner` | `mvp` | Refinar objetivos, valor, prioridade e criterios de aceite para stories de jogo. |
 | `game-business-analyst` | `mvp` | Converter brief de jogo em requisitos, regras e lacunas verificaveis para refinamento. |
@@ -215,6 +217,14 @@ bundles.
 | `codex/agents/*.toml` | `mvp` | Fonte versionada derivada de `agents/*.md` para custom agents Codex em `.codex/agents/`. |
 
 ## Scripts
+
+Scripts e fixtures aninhados dentro de um command bundle são recursos daquele
+bundle e não entram na tabela top-level abaixo. O bundle
+`skills/loki-continuous-improvement/` inclui
+`scripts/inventory-plan-directory.py`,
+`scripts/validate-plan-knowledge-result.py` e as fixtures
+`fixtures/plan-directory-intake/valid-plan-knowledge-run.xml` e
+`fixtures/plan-directory-intake/invalid-candidate-v1.xml`.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
