@@ -65,14 +65,14 @@ MATRIX_SCENARIOS = (
     "Required task validator unavailable",
     "Final regression",
     "Cancellation",
-    "Human validation requested before DAG terminal",
-    "Human validation at final reconciliation",
+    "Manual QA handoff before automatic terminal approval",
+    "Manual QA handoff after automatic validation",
     "Ancillary Write Test Agent observation",
     "Per-task green/full-suite red",
     "Complete dashboard fixture",
     "Completion with failed AC/required validator",
     "Passed AC without evidence locator",
-    "Manual step missing one required field",
+    "Superseded manual-QA handoff v1",
     "Installed upgrade",
     "Upgrade fault after link mutation, before manifest publication",
 )
@@ -141,20 +141,9 @@ REQUIRED_SUPPLEMENTAL = {
 }
 
 TASK_STATUSES = {"pending", "passed", "unresolved", "skipped-dependency", "cancelled"}
-PERSISTED_EXECUTION_STATUSES = {"running", "completed", "completed-with-limitations", "pending-human-validation", "partial", "failed", "cancelled"}
-TERMINAL_SUCCESS = {"completed", "completed-with-limitations", "pending-human-validation"}
-REQUIRED_MANUAL_FIELDS = {
-    "evidence_or_acceptance_criterion_ref",
-    "environment",
-    "prerequisites",
-    "initial_state",
-    "action",
-    "expected_observable_result",
-    "success_signals",
-    "failure_signals",
-    "cleanup_or_restore",
-    "automation_limitation",
-}
+PERSISTED_EXECUTION_STATUSES = {"running", "awaiting-manual-qa", "completed", "completed-with-limitations", "partial", "failed", "cancelled"}
+TERMINAL_SUCCESS = {"awaiting-manual-qa", "completed", "completed-with-limitations"}
+COMPLETED_STATUSES = {"completed", "completed-with-limitations"}
 SECRET_RE = re.compile(r"(?i)(private chain.of.thought|raw transcript|api[_ -]?key|password|secret\s*[:=])")
 AGENT_PATH_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 RUN_PATH_RE = re.compile(r"run-[0-9a-f]{32}")
@@ -484,7 +473,7 @@ def rule_classification(p: dict[str, Any]) -> None:
         require("UNKNOWN_SCOPE_EXPANSION", p.get("scope_expanded") is False)
         require("UNKNOWN_DASHBOARD_INCOMPLETE", all(nonempty(p.get(key)) for key in ("observed", "evidence_gap", "affected_criterion", "investigation_recommendation")))
     if kind == "soft-fail":
-        require("SOFT_FAIL_STATUS_INVALID", p.get("terminal_status") not in {"completed", "pending-human-validation"})
+        require("SOFT_FAIL_STATUS_INVALID", p.get("terminal_status") != "completed")
 
 
 def rule_execution_state(p: dict[str, Any]) -> None:
@@ -497,10 +486,11 @@ def rule_execution_state(p: dict[str, Any]) -> None:
     elif event == "cancellation":
         require("CANCELLATION_INVALID", p.get("dispatch_stopped") is True and p.get("checkpoint_persisted") is True and p.get("terminal_status") == "cancelled")
     elif event == "human-request":
-        if p.get("dag_terminal"):
-            require("HUMAN_FINAL_STATUS_INVALID", p.get("sole_remaining_condition") is True and p.get("terminal_status") == "pending-human-validation")
-        else:
-            require("HUMAN_REQUEST_INTERRUPTED_DAG", p.get("accumulated") is True and p.get("dispatch_interrupted") is False)
+        require("HUMAN_REQUEST_NOT_HANDOFF", p.get("manual_qa_handoff") == "ready-for-manual-qa")
+        require("HUMAN_REQUEST_BEFORE_AUTOMATIC_TERMINAL", p.get("automatic_terminal_approved") is True)
+        require("HUMAN_REQUEST_STATUS_INVALID", p.get("persisted_status") == "awaiting-manual-qa")
+        require("HUMAN_REQUEST_INTERRUPTED_DAG", p.get("dispatch_interrupted") is False)
+        require("MANUAL_QA_TECHNICAL_REWRITE_FORBIDDEN", p.get("technical_projection_rewritten") is False)
     elif event == "ancillary-observation":
         require("ANCILLARY_PROMOTED_TO_TASK_RESULT", p.get("linked_structured_finding") is False and p.get("projected_as") == "dashboard-risk")
     else:
@@ -539,8 +529,10 @@ def rule_response_normative_conflict(p: dict[str, Any]) -> None:
 def rule_dashboard(p: dict[str, Any]) -> None:
     status = p.get("status")
     validate_response_status_projection(p)
-    required = {"summary", "units", "changed_files", "acceptance_criteria", "validators", "validation_cycles", "deviations", "inferred_targets", "learned_records", "decisions", "manual_test", "evidence", "risks", "resume", "execution_metrics_ref", "execution_metrics_digest", "execution_metrics_status", "execution_metrics_degradation_reason", "cost_resources"}
+    required = {"summary", "units", "changed_files", "acceptance_criteria", "validators", "validation_cycles", "deviations", "inferred_targets", "learned_records", "decisions", "manual_qa_handoff", "evidence", "risks", "resume", "execution_metrics_ref", "execution_metrics_digest", "execution_metrics_status", "execution_metrics_degradation_reason", "cost_resources"}
     require("DASHBOARD_CATEGORY_MISSING", required <= set(p))
+    require("DASHBOARD_MANUAL_TEST_SUPERSEDED", "manual_test" not in p)
+    validate_manual_qa_handoff(p["manual_qa_handoff"], None, None, None, None, status)
     require("DASHBOARD_METRICS_STATUS_INVALID", p.get("execution_metrics_status") in {"complete", "partial", "unavailable"})
     validate_metrics_projection(p, "DASHBOARD")
     if p.get("execution_metrics_status") != "complete":
@@ -559,17 +551,70 @@ def rule_dashboard(p: dict[str, Any]) -> None:
     require("DASHBOARD_SYNTHETIC_SCOPE_FORBIDDEN", all(row.get("kind") == "task" for row in p.get("units", [])))
 
 
-def rule_manual(p: dict[str, Any]) -> None:
-    status = p.get("status")
-    require("MANUAL_STATUS_INVALID", status in {"steps", "none"})
-    if status == "none":
-        require("MANUAL_NONE_REASON_MISSING", nonempty(p.get("reason")) and p.get("steps") == [])
-        return
-    require("MANUAL_STEPS_MISSING", isinstance(p.get("steps"), list) and bool(p["steps"]))
-    for step in p["steps"]:
-        require("MANUAL_FIELD_MISSING", REQUIRED_MANUAL_FIELDS <= set(step))
-        require("MANUAL_FIELD_EMPTY", all(nonempty(step[key]) for key in REQUIRED_MANUAL_FIELDS - {"prerequisites", "success_signals", "failure_signals"}))
-        require("MANUAL_SIGNALS_MISSING", list_nonempty(step["success_signals"]) and list_nonempty(step["failure_signals"]) and isinstance(step["prerequisites"], list))
+def validate_manual_qa_handoff(
+    value: Any,
+    run_id: str | None,
+    execution_id: str | None,
+    plan_directory: str | None,
+    terminal_evidence_refs: list[str] | None,
+    execution_status: str | None = None,
+) -> dict[str, Any]:
+    handoff = closed_mapping(
+        "MANUAL_QA_HANDOFF_SHAPE_INVALID",
+        value,
+        {
+            "schema_version",
+            "status",
+            "run_id",
+            "execution_id",
+            "plan_directory",
+            "automatic_evidence_refs",
+            "manual_qa_result_ref",
+            "manual_qa_attestation_ref",
+            "task_refs",
+            "acceptance_criterion_refs",
+            "gate_refs",
+            "changed_target_refs",
+            "reason",
+        },
+    )
+    require("MANUAL_QA_HANDOFF_SCHEMA_INVALID", type(handoff["schema_version"]) is int and handoff["schema_version"] == 2)
+    require("MANUAL_QA_HANDOFF_STATUS_INVALID", handoff["status"] in {"manual-qa-not-evaluated", "ready-for-manual-qa", "manual-qa-not-required"})
+    require("MANUAL_QA_HANDOFF_RUN_INVALID", run_id is None or handoff["run_id"] == run_id)
+    require("MANUAL_QA_HANDOFF_EXECUTION_INVALID", execution_id is None or handoff["execution_id"] == execution_id)
+    require("MANUAL_QA_HANDOFF_PLAN_INVALID", (safe_plan_path(handoff["plan_directory"]) if plan_directory is None else handoff["plan_directory"] == plan_directory))
+    expected_result_ref = f'{handoff["plan_directory"]}/builds/manual-qa/result.json'
+    expected_attestation_ref = f'{handoff["plan_directory"]}/interaction/manual-qa/{handoff["run_id"]}/attestation.json'
+    require("MANUAL_QA_RESULT_REF_INVALID", handoff["manual_qa_result_ref"] == expected_result_ref)
+    require("MANUAL_QA_ATTESTATION_REF_INVALID", handoff["manual_qa_attestation_ref"] == expected_attestation_ref)
+    for key in ("task_refs", "acceptance_criterion_refs", "gate_refs", "changed_target_refs"):
+        require(
+            "MANUAL_QA_SOURCE_REFS_INVALID",
+            isinstance(handoff[key], list)
+            and len(handoff[key]) == len(set(handoff[key]))
+            and all(safe_relative_path(ref) for ref in handoff[key]),
+        )
+    require("MANUAL_QA_HANDOFF_EVIDENCE_INVALID", isinstance(handoff["automatic_evidence_refs"], list) and len(handoff["automatic_evidence_refs"]) == len(set(handoff["automatic_evidence_refs"])) and all(safe_relative_path(ref) for ref in handoff["automatic_evidence_refs"]))
+    require("MANUAL_QA_HANDOFF_EVIDENCE_MISMATCH", terminal_evidence_refs is None or handoff["automatic_evidence_refs"] == terminal_evidence_refs)
+    if handoff["status"] == "ready-for-manual-qa":
+        require("MANUAL_QA_HANDOFF_READY_REASON_INVALID", handoff["reason"] is None)
+    elif handoff["status"] == "manual-qa-not-required":
+        require("MANUAL_QA_HANDOFF_NOT_REQUIRED_REASON_MISSING", nonempty(handoff["reason"]))
+    else:
+        require("MANUAL_QA_HANDOFF_NOT_EVALUATED_REASON_MISSING", nonempty(handoff["reason"]))
+    if handoff["status"] != "manual-qa-not-evaluated":
+        require("MANUAL_QA_HANDOFF_TERMINAL_EVIDENCE_MISSING", bool(handoff["automatic_evidence_refs"]))
+    if execution_status is not None:
+        require("MANUAL_QA_HANDOFF_EXECUTION_STATUS_INVALID", execution_status in PERSISTED_EXECUTION_STATUSES)
+        if execution_status == "awaiting-manual-qa":
+            require("MANUAL_QA_HANDOFF_AWAITING_NOT_READY", handoff["status"] == "ready-for-manual-qa")
+        elif execution_status == "completed":
+            require("MANUAL_QA_HANDOFF_COMPLETED_INVALID", handoff["status"] in {"ready-for-manual-qa", "manual-qa-not-required"})
+        elif execution_status == "completed-with-limitations":
+            require("MANUAL_QA_HANDOFF_LIMITED_INVALID", handoff["status"] == "manual-qa-not-required")
+        else:
+            require("MANUAL_QA_HANDOFF_PREMATURE_TERMINAL_DECISION", handoff["status"] == "manual-qa-not-evaluated")
+    return handoff
 
 
 def rule_current_schema(p: dict[str, Any]) -> None:
@@ -1099,11 +1144,14 @@ STATE_V3_KEYS = {
     "audit_configuration",
     "status",
     "task_refs",
+    "gate_refs",
+    "gate_digests",
     "audit_checkpoint_refs",
     "result_ref",
     "dashboard_ref",
     "consistency_packet_ref",
     "terminal_evidence_refs",
+    "manual_qa_handoff",
     "execution_metrics_ref",
     "execution_metrics_digest",
     "execution_metrics_status",
@@ -1127,7 +1175,7 @@ TASK_CONTRACT_KEYS = {
 TASK_VALIDATION_KEYS = {"schema_version", "acceptance_criteria", "primary_route", "evidence_refs", "status"}
 VALIDATOR_RECORD_KEYS = {"schema_version", "validator_id", "identity", "task_ref", "acceptance_criterion_refs", "evidence_refs", "result"}
 HANDOFF_RECORD_KEYS = {"schema_version", "handoff_id", "task_ref", "writer_identity", "target_digests", "evidence_refs"}
-GATE_RECORD_KEYS = {"schema_version", "gate_id", "task_ref", "status", "evidence_refs"}
+GATE_RECORD_KEYS = {"schema_version", "gate_id", "task_ref", "kind", "statement", "status", "evidence_refs", "attestation_ref", "attestation_digest"}
 RESULT_V3_KEYS = {
     "schema_version",
     "run_id",
@@ -1136,9 +1184,12 @@ RESULT_V3_KEYS = {
     "state_digest",
     "audit_configuration",
     "audit_checkpoint_refs",
+    "gate_refs",
+    "gate_digests",
     "task_results",
     "final_validator_refs",
     "terminal_evidence_refs",
+    "manual_qa_handoff",
     "execution_metrics_ref",
     "execution_metrics_digest",
     "execution_metrics_status",
@@ -1153,9 +1204,12 @@ DASHBOARD_V3_KEYS = {
     "status",
     "audit_configuration",
     "audit_checkpoint_refs",
+    "gate_refs",
+    "gate_digests",
     "tasks",
     "final_validator_refs",
     "terminal_evidence_refs",
+    "manual_qa_handoff",
     "execution_metrics_ref",
     "execution_metrics_digest",
     "execution_metrics_status",
@@ -1178,10 +1232,13 @@ CONSISTENCY_V2_KEYS = {
     "dashboard_digest",
     "metrics_ref",
     "metrics_digest",
+    "gate_refs",
+    "gate_digests",
     "audit_checkpoint_refs",
     "audit_checkpoint_digests",
     "terminal_evidence_refs",
     "terminal_evidence_digests",
+    "manual_qa_handoff",
     "validator_digest",
 }
 
@@ -1254,8 +1311,11 @@ def validate_real_run(project_root: Path, tasks_md: str | Path, invocation_input
     require("STATE_DASHBOARD_REF_MISMATCH", state["dashboard_ref"] == invocation["dashboard_ref"])
     require("STATE_CONSISTENCY_REF_MISMATCH", state["consistency_packet_ref"] == invocation["consistency_packet_ref"])
     require("STATE_DIGEST_MISMATCH", state["state_digest"] == digest_without(state, "state_digest"))
-    require("STATE_STATUS_INVALID", state["status"] in {"running", "completed", "completed-with-limitations", "pending-human-validation", "partial", "failed", "cancelled"})
+    require("STATE_STATUS_INVALID", state["status"] in PERSISTED_EXECUTION_STATUSES)
     require("STATE_NEXT_ACTION_MISSING", nonempty(state["next_action"]))
+    state_manual_qa_handoff = validate_manual_qa_handoff(
+        state["manual_qa_handoff"], state["run_id"], state["execution_id"], identity["plan_directory"], state["terminal_evidence_refs"], state["status"]
+    )
 
     task_contracts: dict[str, dict[str, Any]] = {}
     task_ids: dict[str, str] = {}
@@ -1328,15 +1388,64 @@ def validate_real_run(project_root: Path, tasks_md: str | Path, invocation_input
         require("TASK_GATE_REFS_INVALID", isinstance(task["gate_refs"], list) and len(task["gate_refs"]) == len(set(task["gate_refs"])))
         for gate_ref in task["gate_refs"]:
             gate = closed_mapping("GATE_RECORD_SHAPE_INVALID", reader.read_json(gate_ref), GATE_RECORD_KEYS)
-            require("GATE_RECORD_SCHEMA_INVALID", gate["schema_version"] == 1)
+            require("GATE_RECORD_SCHEMA_INVALID", type(gate["schema_version"]) is int and gate["schema_version"] == 2)
             require("GATE_TASK_MISMATCH", gate["task_ref"] == task_ref)
             require("GATE_ID_INVALID", nonempty(gate["gate_id"]))
+            require("GATE_KIND_INVALID", gate["kind"] in {"automatic", "human-validation"})
+            require("GATE_STATEMENT_INVALID", nonempty(gate["statement"]))
             require("GATE_STATUS_INVALID", gate["status"] in {"passed", "failed", "pending"})
             validate_record_evidence(reader, gate["evidence_refs"])
+            require("GATE_ATTESTATION_PAIR_INVALID", (gate["attestation_ref"] is None) == (gate["attestation_digest"] is None))
+            if gate["kind"] == "automatic":
+                require("AUTOMATIC_GATE_ATTESTATION_FORBIDDEN", gate["attestation_ref"] is None)
+                if gate["status"] == "passed":
+                    require("AUTOMATIC_GATE_EVIDENCE_MISSING", bool(gate["evidence_refs"]))
+            else:
+                require("HUMAN_GATE_STATUS_INVALID", gate["status"] in {"pending", "passed"})
+                if gate["status"] == "pending":
+                    require("PENDING_HUMAN_GATE_ATTESTATION_FORBIDDEN", gate["attestation_ref"] is None)
+                else:
+                    require("PASSED_HUMAN_GATE_ATTESTATION_MISSING", nonempty(gate["attestation_ref"]) and SHA256_RE.fullmatch(gate["attestation_digest"] or "") is not None)
             register_locator(locator_index, gate_ref, "gate", gate["gate_id"])
             gate_records[gate_ref] = gate
             all_gate_refs.append(gate_ref)
         task_contracts[task_ref] = task
+
+    expected_ac_refs = [
+        f"{ref}#{ac['id']}"
+        for ref in task_refs
+        for ac in task_contracts[ref]["task_validation"]["acceptance_criteria"]
+    ]
+    changed_target_refs = list(
+        dict.fromkeys(
+            row["path"]
+            for handoff_ref in all_handoff_refs
+            for row in handoff_records[handoff_ref]["target_digests"]
+        )
+    )
+    require("STATE_GATE_REFS_MISMATCH", state["gate_refs"] == all_gate_refs)
+    expected_gate_digests = [bytes_digest(reader.read_bytes(ref)) for ref in all_gate_refs]
+    require("STATE_GATE_DIGESTS_MISMATCH", state["gate_digests"] == expected_gate_digests)
+    require("MANUAL_QA_TASK_SOURCES_MISMATCH", state_manual_qa_handoff["task_refs"] == task_refs)
+    require("MANUAL_QA_AC_SOURCES_MISMATCH", state_manual_qa_handoff["acceptance_criterion_refs"] == expected_ac_refs)
+    require("MANUAL_QA_GATE_SOURCES_MISMATCH", state_manual_qa_handoff["gate_refs"] == all_gate_refs)
+    require("MANUAL_QA_TARGET_SOURCES_MISMATCH", state_manual_qa_handoff["changed_target_refs"] == changed_target_refs)
+    for gate in gate_records.values():
+        if gate["kind"] == "human-validation" and gate["status"] == "passed":
+            require("HUMAN_GATE_ATTESTATION_REF_MISMATCH", gate["attestation_ref"] == state_manual_qa_handoff["manual_qa_attestation_ref"])
+            attestation_bytes = reader.read_bytes(gate["attestation_ref"])
+            require("HUMAN_GATE_ATTESTATION_DIGEST_MISMATCH", gate["attestation_digest"] == bytes_digest(attestation_bytes))
+            try:
+                attestation = json.loads(attestation_bytes.decode("utf-8"))
+            except (UnicodeError, json.JSONDecodeError) as exc:
+                raise ContractError("HUMAN_GATE_ATTESTATION_INVALID") from exc
+            require(
+                "HUMAN_GATE_ATTESTATION_IDENTITY_MISMATCH",
+                isinstance(attestation, dict)
+                and attestation.get("schema_version") == 1
+                and attestation.get("run_id") == state["run_id"]
+                and attestation.get("execution_id") == state["execution_id"],
+            )
 
     require("TASK_DEPENDENCY_MISSING", all(dependency in task_ids for task in task_contracts.values() for dependency in task["dependencies"]))
     visiting: set[str] = set()
@@ -1455,6 +1564,8 @@ def validate_real_run(project_root: Path, tasks_md: str | Path, invocation_input
             == identity["audit_configuration"],
         )
         require(f"{projection_name}_AUDIT_REFS_MISMATCH", projection["audit_checkpoint_refs"] == checkpoint_refs)
+        require(f"{projection_name}_GATE_REFS_MISMATCH", projection["gate_refs"] == all_gate_refs)
+        require(f"{projection_name}_GATE_DIGESTS_MISMATCH", projection["gate_digests"] == expected_gate_digests)
         require(f"{projection_name}_FINAL_VALIDATORS_MISMATCH", projection["final_validator_refs"] == final_validator_refs)
         require(f"{projection_name}_TERMINAL_EVIDENCE_MISMATCH", projection["terminal_evidence_refs"] == state["terminal_evidence_refs"])
         require(f"{projection_name}_METRICS_REF_MISMATCH", projection["execution_metrics_ref"] == state["execution_metrics_ref"])
@@ -1481,19 +1592,44 @@ def validate_real_run(project_root: Path, tasks_md: str | Path, invocation_input
     require("CONSISTENCY_RESULT_MISMATCH", packet["result_ref"] == state["result_ref"] and packet["result_digest"] == bytes_digest(reader.read_bytes(state["result_ref"])))
     require("CONSISTENCY_DASHBOARD_MISMATCH", packet["dashboard_ref"] == state["dashboard_ref"] and packet["dashboard_digest"] == bytes_digest(reader.read_bytes(state["dashboard_ref"])))
     require("CONSISTENCY_METRICS_MISMATCH", packet["metrics_ref"] == state["execution_metrics_ref"] and packet["metrics_digest"] == metrics_digest)
+    require("CONSISTENCY_GATE_REFS_MISMATCH", packet["gate_refs"] == all_gate_refs)
+    require("CONSISTENCY_GATE_DIGESTS_MISMATCH", packet["gate_digests"] == expected_gate_digests)
     require("CONSISTENCY_AUDIT_REFS_MISMATCH", packet["audit_checkpoint_refs"] == checkpoint_refs)
     require("CONSISTENCY_AUDIT_DIGESTS_MISMATCH", packet["audit_checkpoint_digests"] == [bytes_digest(reader.read_bytes(ref)) for ref in checkpoint_refs])
     require("CONSISTENCY_TERMINAL_REFS_MISMATCH", packet["terminal_evidence_refs"] == state["terminal_evidence_refs"])
     require("CONSISTENCY_TERMINAL_DIGESTS_MISMATCH", packet["terminal_evidence_digests"] == [bytes_digest(reader.read_bytes(ref)) for ref in state["terminal_evidence_refs"]])
     validator_digest = canonical_digest({ref: bytes_digest(reader.read_bytes(ref)) for ref in all_primary_validator_refs + final_validator_refs})
     require("CONSISTENCY_VALIDATOR_DIGEST_MISMATCH", packet["validator_digest"] == validator_digest)
-    require("TERMINAL_EVIDENCE_STATUS_MISMATCH", all(record["status"] == state["status"] for record in terminal_records.values()))
+    expected_terminal_status = (
+        "awaiting-manual-qa"
+        if state["status"] == "completed" and state_manual_qa_handoff["status"] == "ready-for-manual-qa"
+        else state["status"]
+    )
+    require("TERMINAL_EVIDENCE_STATUS_MISMATCH", all(record["status"] == expected_terminal_status for record in terminal_records.values()))
+    for projection, projection_name in ((result, "RESULT"), (dashboard, "DASHBOARD")):
+        require(f"{projection_name}_MANUAL_QA_HANDOFF_MISMATCH", projection["manual_qa_handoff"] == state_manual_qa_handoff)
+    require("CONSISTENCY_MANUAL_QA_HANDOFF_MISMATCH", packet["manual_qa_handoff"] == state_manual_qa_handoff)
 
+    automatic_gates = [record for record in gate_records.values() if record["kind"] == "automatic"]
+    human_gates = [record for record in gate_records.values() if record["kind"] == "human-validation"]
     if state["status"] in TERMINAL_SUCCESS:
         require("TERMINAL_TASK_INCOMPLETE", all(task["status"] == "passed" and task["task_validation"]["status"] == "passed" for task in task_contracts.values()))
         require("TERMINAL_VALIDATOR_INCOMPLETE", all(record["result"] == "passed" for record in list(validator_records.values()) + list(final_records.values())))
-        require("TERMINAL_GATE_INCOMPLETE", all(record["status"] == "passed" for record in gate_records.values()))
+        require("TERMINAL_AUTOMATIC_GATE_INCOMPLETE", all(record["status"] == "passed" for record in automatic_gates))
         require("TERMINAL_AUDIT_INCOMPLETE", all(record["status"] in {"approved", "not-applicable"} for record in checkpoint_records.values()))
+    if state_manual_qa_handoff["status"] == "ready-for-manual-qa":
+        require("MANUAL_QA_HANDOFF_BEFORE_TERMINAL_APPROVAL", state["status"] in {"awaiting-manual-qa", "completed"})
+        require("MANUAL_QA_HANDOFF_TASKS_INCOMPLETE", all(task["status"] == "passed" and task["task_validation"]["status"] == "passed" for task in task_contracts.values()))
+        require("MANUAL_QA_HANDOFF_VALIDATORS_INCOMPLETE", all(record["result"] == "passed" for record in list(validator_records.values()) + list(final_records.values())))
+        require("MANUAL_QA_HANDOFF_AUTOMATIC_GATES_INCOMPLETE", all(record["status"] == "passed" for record in automatic_gates))
+        require("MANUAL_QA_HANDOFF_HUMAN_GATES_MISSING", bool(human_gates))
+        if state["status"] == "awaiting-manual-qa":
+            require("AWAITING_MANUAL_QA_HUMAN_GATE_INVALID", all(record["status"] == "pending" for record in human_gates))
+        else:
+            require("COMPLETED_MANUAL_QA_HUMAN_GATE_INVALID", all(record["status"] == "passed" for record in human_gates))
+        require("MANUAL_QA_HANDOFF_AUDITS_INCOMPLETE", all(record["status"] in {"approved", "not-applicable"} for record in checkpoint_records.values()))
+    elif state_manual_qa_handoff["status"] == "manual-qa-not-required" and state["status"] in COMPLETED_STATUSES:
+        require("MANUAL_QA_NOT_REQUIRED_HAS_HUMAN_GATE", not human_gates)
 
     return {
         "status": "passed",
@@ -1550,7 +1686,8 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
     validator_ref = f"{plan_dir}/evidence/task-1-validator.json"
     final_validator_ref = f"{plan_dir}/evidence/final-validator.json"
     handoff_ref = f"{plan_dir}/evidence/task-1-handoff.json"
-    gate_ref = f"{plan_dir}/evidence/task-1-gate.json"
+    automatic_gate_ref = f"{plan_dir}/evidence/task-1-automatic-gate.json"
+    human_gate_ref = f"{plan_dir}/evidence/task-1-human-gate.json"
     checkpoint_ref = f"{plan_dir}/evidence/phase-audit.json"
     terminal_ref = f"{plan_dir}/evidence/terminal.json"
     metrics_ref = f"{plan_dir}/evidence/execution-metrics.json"
@@ -1621,17 +1758,33 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "target_digests": [{"path": target_ref, "digest": bytes_digest((root / target_ref).read_bytes())}],
         "evidence_refs": [evidence_ref],
     }
-    gate = {
-        "schema_version": 1,
-        "gate_id": "gate-v1:approval",
+    automatic_gate = {
+        "schema_version": 2,
+        "gate_id": "gate-v2:automatic-approval",
         "task_ref": task_ref,
+        "kind": "automatic",
+        "statement": "The automatic acceptance evidence is passing.",
         "status": "passed",
         "evidence_refs": [evidence_ref],
+        "attestation_ref": None,
+        "attestation_digest": None,
+    }
+    human_gate = {
+        "schema_version": 2,
+        "gate_id": "gate-v2:human-validation",
+        "task_ref": task_ref,
+        "kind": "human-validation",
+        "statement": "The changed behavior is manually observable as approved.",
+        "status": "pending",
+        "evidence_refs": [evidence_ref],
+        "attestation_ref": None,
+        "attestation_digest": None,
     }
     fixture_write_json(root, validator_ref, validator)
     fixture_write_json(root, final_validator_ref, final_validator)
     fixture_write_json(root, handoff_ref, handoff)
-    fixture_write_json(root, gate_ref, gate)
+    fixture_write_json(root, automatic_gate_ref, automatic_gate)
+    fixture_write_json(root, human_gate_ref, human_gate)
 
     if frequency == "task":
         boundary_type, boundary_ref, membership = "task", task_ref, [task_ref]
@@ -1687,7 +1840,7 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "target_files": [target_ref],
         "writer_identity": "writer:task-1",
         "handoff_refs": [handoff_ref],
-        "gate_refs": [gate_ref],
+        "gate_refs": [automatic_gate_ref, human_gate_ref],
         "audit_checkpoint_refs": [checkpoint_ref],
         "task_validation": {
             "schema_version": 1,
@@ -1713,15 +1866,34 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "schema_version": 1,
         "run_id": run_id,
         "execution_id": execution_id,
-        "status": "completed",
+        "status": "awaiting-manual-qa",
         "task_statuses": [{"task_ref": task_ref, "status": "passed"}],
         "acceptance_criterion_refs": [f"{task_ref}#AC-1"],
         "validator_refs": [validator_ref, final_validator_ref],
-        "gate_refs": [gate_ref],
+        "gate_refs": [automatic_gate_ref, human_gate_ref],
         "audit_checkpoint_refs": [checkpoint_ref],
         "evidence_refs": [evidence_ref],
     }
     fixture_write_json(root, terminal_ref, terminal)
+
+    manual_qa_handoff = {
+        "schema_version": 2,
+        "status": "ready-for-manual-qa",
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "plan_directory": plan_dir,
+        "automatic_evidence_refs": [terminal_ref],
+        "manual_qa_result_ref": f"{plan_dir}/builds/manual-qa/result.json",
+        "manual_qa_attestation_ref": f"{plan_dir}/interaction/manual-qa/{run_id}/attestation.json",
+        "task_refs": [task_ref],
+        "acceptance_criterion_refs": [f"{task_ref}#AC-1"],
+        "gate_refs": [automatic_gate_ref, human_gate_ref],
+        "changed_target_refs": [target_ref],
+        "reason": None,
+    }
+
+    gate_refs = [automatic_gate_ref, human_gate_ref]
+    gate_digests = [bytes_digest((root / ref).read_bytes()) for ref in gate_refs]
 
     state = {
         "schema_version": 3,
@@ -1730,18 +1902,21 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "command_identity_digest": canonical_digest(identity),
         "execution_input_digest": bytes_digest((root / invocation_ref).read_bytes()),
         "audit_configuration": deepcopy(audit_config),
-        "status": "completed",
+        "status": "awaiting-manual-qa",
         "task_refs": [task_ref],
+        "gate_refs": gate_refs,
+        "gate_digests": gate_digests,
         "audit_checkpoint_refs": [checkpoint_ref],
         "result_ref": result_ref,
         "dashboard_ref": dashboard_ref,
         "consistency_packet_ref": consistency_ref,
         "terminal_evidence_refs": [terminal_ref],
+        "manual_qa_handoff": manual_qa_handoff,
         "execution_metrics_ref": metrics_ref,
         "execution_metrics_digest": metrics_bytes_digest,
         "execution_metrics_status": metrics["status"],
         "execution_metrics_degradation_reason": metrics["degradation_reason"],
-        "next_action": "none",
+        "next_action": "run loki-manual-qa",
         "state_digest": "",
     }
     state["state_digest"] = digest_without(state, "state_digest")
@@ -1749,18 +1924,21 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "schema_version": 3,
         "run_id": run_id,
         "execution_id": execution_id,
-        "status": "completed",
+        "status": "awaiting-manual-qa",
         "state_digest": state["state_digest"],
         "audit_configuration": audit_config,
         "audit_checkpoint_refs": [checkpoint_ref],
+        "gate_refs": gate_refs,
+        "gate_digests": gate_digests,
         "task_results": [{"task_ref": task_ref, "status": "passed", "evidence_refs": [evidence_ref]}],
         "final_validator_refs": [final_validator_ref],
         "terminal_evidence_refs": [terminal_ref],
+        "manual_qa_handoff": manual_qa_handoff,
         "execution_metrics_ref": metrics_ref,
         "execution_metrics_digest": metrics_bytes_digest,
         "execution_metrics_status": metrics["status"],
         "execution_metrics_degradation_reason": metrics["degradation_reason"],
-        "next_action": "none",
+        "next_action": "run loki-manual-qa",
         "result_digest": "",
     }
     result["result_digest"] = digest_without(result, "result_digest")
@@ -1768,17 +1946,20 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "schema_version": 3,
         "run_id": run_id,
         "execution_id": execution_id,
-        "status": "completed",
+        "status": "awaiting-manual-qa",
         "audit_configuration": audit_config,
         "audit_checkpoint_refs": [checkpoint_ref],
+        "gate_refs": gate_refs,
+        "gate_digests": gate_digests,
         "tasks": [{"task_ref": task_ref, "status": "passed"}],
         "final_validator_refs": [final_validator_ref],
         "terminal_evidence_refs": [terminal_ref],
+        "manual_qa_handoff": manual_qa_handoff,
         "execution_metrics_ref": metrics_ref,
         "execution_metrics_digest": metrics_bytes_digest,
         "execution_metrics_status": metrics["status"],
         "execution_metrics_degradation_reason": metrics["degradation_reason"],
-        "next_action": "none",
+        "next_action": "run loki-manual-qa",
         "dashboard_digest": "",
     }
     dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
@@ -1790,7 +1971,7 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "schema_version": 2,
         "run_id": run_id,
         "execution_id": execution_id,
-        "status": "completed",
+        "status": "awaiting-manual-qa",
         "audit_configuration": audit_config,
         "state_digest": state["state_digest"],
         "tasks_md_digest": bytes_digest((root / tasks_ref).read_bytes()),
@@ -1800,10 +1981,13 @@ def build_real_run_fixture(root: Path, frequency: str = "phase", source: str = "
         "dashboard_digest": bytes_digest((root / dashboard_ref).read_bytes()),
         "metrics_ref": metrics_ref,
         "metrics_digest": metrics_bytes_digest,
+        "gate_refs": gate_refs,
+        "gate_digests": gate_digests,
         "audit_checkpoint_refs": [checkpoint_ref],
         "audit_checkpoint_digests": [bytes_digest((root / checkpoint_ref).read_bytes())],
         "terminal_evidence_refs": [terminal_ref],
         "terminal_evidence_digests": [bytes_digest((root / terminal_ref).read_bytes())],
+        "manual_qa_handoff": manual_qa_handoff,
         "validator_digest": canonical_digest({ref: bytes_digest((root / ref).read_bytes()) for ref in [validator_ref, final_validator_ref]}),
     }
     fixture_write_json(root, consistency_ref, consistency)
@@ -1897,26 +2081,118 @@ def mutate_non_success_terminal_evidence_mismatch(root: Path) -> None:
     tasks_document = RealRunReader(root).read_markdown_json(tasks_ref)
     state = tasks_document["loki_run_state"]
     state["status"] = "failed"
+    state["manual_qa_handoff"]["status"] = "manual-qa-not-evaluated"
+    state["manual_qa_handoff"]["reason"] = "Technical execution did not complete successfully."
     state["state_digest"] = digest_without(state, "state_digest")
     fixture_write_markdown_json(root, tasks_ref, "Mutated contract", tasks_document)
 
     result = json.loads((root / result_ref).read_text(encoding="utf-8"))
     result["status"] = "failed"
     result["state_digest"] = state["state_digest"]
+    result["manual_qa_handoff"] = deepcopy(state["manual_qa_handoff"])
     result["result_digest"] = digest_without(result, "result_digest")
     fixture_write_json(root, result_ref, result)
 
     dashboard = json.loads((root / dashboard_ref).read_text(encoding="utf-8"))
     dashboard["status"] = "failed"
+    dashboard["manual_qa_handoff"] = deepcopy(state["manual_qa_handoff"])
     dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
     fixture_write_json(root, dashboard_ref, dashboard)
 
     consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
     consistency["status"] = "failed"
+    consistency["manual_qa_handoff"] = deepcopy(state["manual_qa_handoff"])
     consistency["state_digest"] = state["state_digest"]
     consistency["tasks_md_digest"] = bytes_digest((root / tasks_ref).read_bytes())
     consistency["result_digest"] = bytes_digest((root / result_ref).read_bytes())
     consistency["dashboard_digest"] = bytes_digest((root / dashboard_ref).read_bytes())
+    fixture_write_json(root, consistency_ref, consistency)
+
+
+def promote_manual_completion(root: Path, *, publish_consistency: bool = True) -> None:
+    plan_dir = "planos/real-run"
+    tasks_ref = f"{plan_dir}/tasks.md"
+    result_ref = f"{plan_dir}/result.json"
+    dashboard_ref = f"{plan_dir}/dashboard.json"
+    consistency_ref = f"{plan_dir}/consistency.json"
+    tasks_document = RealRunReader(root).read_markdown_json(tasks_ref)
+    state = tasks_document["loki_run_state"]
+    handoff = state["manual_qa_handoff"]
+    attestation_ref = handoff["manual_qa_attestation_ref"]
+    attestation = {
+        "schema_version": 1,
+        "run_id": state["run_id"],
+        "execution_id": state["execution_id"],
+        "applicable_steps_digest": "sha256:" + "1" * 64,
+        "demand_digest": "sha256:" + "2" * 64,
+        "analysis_digest": "sha256:" + "3" * 64,
+        "declaration": "all-applicable-manual-tests-tested-and-approved",
+        "recorded_at": "2026-08-01T12:00:00Z",
+    }
+    fixture_write_json(root, attestation_ref, attestation)
+    attestation_digest = bytes_digest((root / attestation_ref).read_bytes())
+    for gate_ref in state["gate_refs"]:
+        gate = json.loads((root / gate_ref).read_text(encoding="utf-8"))
+        if gate["kind"] == "human-validation":
+            gate["status"] = "passed"
+            gate["attestation_ref"] = attestation_ref
+            gate["attestation_digest"] = attestation_digest
+            fixture_write_json(root, gate_ref, gate)
+    gate_digests = [bytes_digest((root / ref).read_bytes()) for ref in state["gate_refs"]]
+    state["status"] = "completed"
+    state["gate_digests"] = gate_digests
+    state["next_action"] = "none"
+    state["state_digest"] = digest_without(state, "state_digest")
+    fixture_write_markdown_json(root, tasks_ref, "Run plan", tasks_document)
+
+    result = json.loads((root / result_ref).read_text(encoding="utf-8"))
+    result.update(status="completed", state_digest=state["state_digest"], gate_digests=gate_digests, next_action="none")
+    result["result_digest"] = digest_without(result, "result_digest")
+    fixture_write_json(root, result_ref, result)
+    dashboard = json.loads((root / dashboard_ref).read_text(encoding="utf-8"))
+    dashboard.update(status="completed", gate_digests=gate_digests, next_action="none")
+    dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
+    fixture_write_json(root, dashboard_ref, dashboard)
+    if publish_consistency:
+        consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
+        consistency.update(
+            status="completed",
+            state_digest=state["state_digest"],
+            tasks_md_digest=bytes_digest((root / tasks_ref).read_bytes()),
+            result_digest=bytes_digest((root / result_ref).read_bytes()),
+            dashboard_digest=bytes_digest((root / dashboard_ref).read_bytes()),
+            gate_digests=gate_digests,
+        )
+        fixture_write_json(root, consistency_ref, consistency)
+
+
+def force_completed_without_attestation(root: Path) -> None:
+    plan_dir = "planos/real-run"
+    tasks_ref = f"{plan_dir}/tasks.md"
+    result_ref = f"{plan_dir}/result.json"
+    dashboard_ref = f"{plan_dir}/dashboard.json"
+    consistency_ref = f"{plan_dir}/consistency.json"
+    tasks_document = RealRunReader(root).read_markdown_json(tasks_ref)
+    state = tasks_document["loki_run_state"]
+    state.update(status="completed", next_action="none")
+    state["state_digest"] = digest_without(state, "state_digest")
+    fixture_write_markdown_json(root, tasks_ref, "Run plan", tasks_document)
+    result = json.loads((root / result_ref).read_text(encoding="utf-8"))
+    result.update(status="completed", state_digest=state["state_digest"], next_action="none")
+    result["result_digest"] = digest_without(result, "result_digest")
+    fixture_write_json(root, result_ref, result)
+    dashboard = json.loads((root / dashboard_ref).read_text(encoding="utf-8"))
+    dashboard.update(status="completed", next_action="none")
+    dashboard["dashboard_digest"] = digest_without(dashboard, "dashboard_digest")
+    fixture_write_json(root, dashboard_ref, dashboard)
+    consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
+    consistency.update(
+        status="completed",
+        state_digest=state["state_digest"],
+        tasks_md_digest=bytes_digest((root / tasks_ref).read_bytes()),
+        result_digest=bytes_digest((root / result_ref).read_bytes()),
+        dashboard_digest=bytes_digest((root / dashboard_ref).read_bytes()),
+    )
     fixture_write_json(root, consistency_ref, consistency)
 
 
@@ -1927,6 +2203,12 @@ def real_run_self_test() -> list[dict[str, str]]:
         tasks_ref, invocation_ref = build_real_run_fixture(root)
         validate_real_run(root, tasks_ref, invocation_ref)
         results.append({"id": "real-run-positive", "result": "accepted"})
+    with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
+        root = Path(temp)
+        tasks_ref, invocation_ref = build_real_run_fixture(root)
+        promote_manual_completion(root)
+        validate_real_run(root, tasks_ref, invocation_ref)
+        results.append({"id": "real-run-manual-completed", "result": "accepted"})
     for frequency in ("task", "plan"):
         with tempfile.TemporaryDirectory(prefix="loki-real-run-") as temp:
             root = Path(temp)
@@ -1939,7 +2221,7 @@ def real_run_self_test() -> list[dict[str, str]]:
         ("real-run-self-attested-flag", "EXECUTION_INPUT_SHAPE_INVALID", lambda root: mutate_fixture_json(root, "planos/real-run/execution-input.json", lambda doc: doc.update(schema_valid=True))),
         ("real-run-state-digest", "STATE_DIGEST_MISMATCH", lambda root: mutate_fixture_markdown(root, "planos/real-run/tasks.md", lambda doc: doc["loki_run_state"].update(state_digest="sha256:" + "0" * 64))),
         ("real-run-state-audit-configuration-missing", "STATE_V3_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state.pop("audit_configuration"))),
-        ("real-run-state-extra-field", "STATE_V3_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state.update(unexpected_state_field=True))),
+        ("real-run-state-manual-qa-anchor", "MANUAL_QA_RESULT_REF_INVALID", lambda root: mutate_fixture_state(root, lambda state: state["manual_qa_handoff"].update(manual_qa_result_ref="planos/other/builds/manual-qa/result.json"))),
         ("real-run-state-audit-configuration-extra-field", "AUDIT_CONFIGURATION_SHAPE_INVALID", lambda root: mutate_fixture_state(root, lambda state: state["audit_configuration"].update(unexpected_configuration_field=True))),
         ("real-run-state-audit-frequency-divergence", "STATE_AUDIT_CONFIGURATION_MISMATCH", lambda root: mutate_fixture_state(root, lambda state: state.update(audit_configuration=fixture_audit_configuration("task", "explicit")))),
         ("real-run-state-audit-source-divergence", "STATE_AUDIT_CONFIGURATION_MISMATCH", lambda root: mutate_fixture_state(root, lambda state: state.update(audit_configuration=fixture_audit_configuration("phase", "explicit")))),
@@ -1952,6 +2234,9 @@ def real_run_self_test() -> list[dict[str, str]]:
         ("real-run-terminal-audit", "TERMINAL_AUDIT_INCOMPLETE", mutate_terminal_audit_finding),
         ("real-run-result-status", "RESULT_STATUS_MISMATCH", lambda root: mutate_fixture_json(root, "planos/real-run/result.json", lambda doc: (doc.update(status="failed"), doc.update(result_digest=digest_without(doc, "result_digest"))))),
         ("real-run-non-success-terminal-evidence", "TERMINAL_EVIDENCE_STATUS_MISMATCH", mutate_non_success_terminal_evidence_mismatch),
+        ("real-run-gate-v1", "GATE_RECORD_SHAPE_INVALID", lambda root: mutate_fixture_json(root, "planos/real-run/evidence/task-1-automatic-gate.json", lambda gate: (gate.clear(), gate.update(schema_version=1, gate_id="gate-v1:approval", task_ref="planos/real-run/task-1.md", status="passed", evidence_refs=["planos/real-run/evidence/observed.log"])))),
+        ("real-run-completed-human-gate-pending", "COMPLETED_MANUAL_QA_HUMAN_GATE_INVALID", force_completed_without_attestation),
+        ("real-run-manual-transaction-without-consistency", "CONSISTENCY_STATUS_MISMATCH", lambda root: promote_manual_completion(root, publish_consistency=False)),
     ]
     malformed_audit_scalars: tuple[tuple[str, Any], ...] = (
         ("array", ["phase"]),
@@ -2095,7 +2380,7 @@ RULES: dict[str, Callable[[dict[str, Any]], None]] = {
     "execution-state": rule_execution_state,
     "dashboard": rule_dashboard,
     "response-normative-conflict": rule_response_normative_conflict,
-    "manual": rule_manual,
+    "manual-qa-handoff": lambda payload: validate_manual_qa_handoff(payload, None, None, None, None),
     "current-schema": rule_current_schema,
     "metrics": rule_metrics,
     "metrics-resume": rule_metrics_resume,

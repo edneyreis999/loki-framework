@@ -3,7 +3,7 @@ doc_id: "loki-implement-feature-response"
 version: "3.0.0"
 status: active
 last_updated: "2026-07-24"
-scope: "Both-consumer terminal dashboard and manual-test projection for unified feature execution"
+scope: "Both-consumer terminal dashboard and structured manual-QA handoff v2 projection for unified feature execution"
 not_scope: "Execution, state repair, production writes, validator substitution, or status override"
 authority: "Validated persisted implement_feature_execution_result and this current response reference"
 canonical_source: "skills/loki-implement-feature/references/response.md"
@@ -34,11 +34,11 @@ with stable headings, explicit fields, and no hard length limit. Keep the human
 view concise and actionable while preserving every machine-relevant category.
 
 Adapter projection changes serialization only, never status, AC/evidence,
-validators, gates, risks, manual-test truth, or resume state:
+validators, gates, risks, structured manual-QA handoff v2 truth, or resume state:
 
 - `Both`: use the complete recoverable Markdown template with no hard limit.
 - `Human`: use actionable Markdown of at most 7,000 characters, preserving the
-  result, evidence, risks, manual test, and next action.
+  result, evidence, risks, structured manual-QA handoff v2, and next action.
 - `LLM`: use valid XML with no prose outside `command_response` and exactly the
   required top-level fields below.
 
@@ -72,9 +72,9 @@ Persisted LokiRunState v3, result v3, dashboard v3, terminal evidence, and
 consistency v2 use exactly one of:
 
 - `running`
+- `awaiting-manual-qa`
 - `completed`
 - `completed-with-limitations`
-- `pending-human-validation`
 - `partial`
 - `failed`
 - `cancelled`
@@ -109,10 +109,12 @@ or persisted status other than `partial | failed` rejects the response-only
 projection. When response status is not `needs-human-review`, this record must
 be absent.
 
-Never emit completion while a required AC, task/final validator, evidence
-locator, gate, final regression, or reconciliation remains unresolved. Human
-validation appears as pending only when automatic DAG work is terminal and it
-is the sole remaining condition.
+Never emit completion while a required AC, task/final validator, automatic
+gate, evidence locator, final regression, or reconciliation remains unresolved.
+`awaiting-manual-qa` is the only ready-handoff state and is explicitly not
+completion. Direct completion uses `manual-qa-not-required`; completion with a
+ready handoff requires final parity from the manual command's restricted
+transaction and passed human gates with the correlated attestation.
 
 ## Required Dashboard Content
 
@@ -137,6 +139,8 @@ explicit applicability check:
 - changed files and surfaces;
 - every AC with `passed`, `failed`, `not-demonstrated`, or `not-applicable`, plus
   its evidence locator;
+- every gate record v2 with exact ref/digest, kind, statement, status, evidence
+  and attestation pair; reject gate record v1;
 - task and final validators with result and evidence;
 - validation cycles, classification, introduced/regression severity, retry
   consumption, exhaustion, and retests;
@@ -163,8 +167,10 @@ explicit applicability check:
   was applied;
 - replay/validator correlation, materiality precheck correlation, and the last
   required liveness-probe outcome for any silence-based stop;
-- manual test steps or an explicit `none` plus a non-empty surface-specific
-  reason.
+- the exact structured manual-QA handoff v2: `manual-qa-not-evaluated` for a
+  non-terminal automatic state, `ready-for-manual-qa` only with persisted
+  `awaiting-manual-qa` when material QA remains, or
+  `manual-qa-not-required` with a non-empty reason.
 
 A passed AC always has evidence. File existence proves only an AC that literally
 requires an artifact. Summary prose may compress wording but must not omit a
@@ -179,13 +185,20 @@ After any covered correction, show the predecessor as invalidated and the new
 checkpoint as a complete replay of the same boundary; never summarize it as an
 incremental review.
 
-`RESPONSE-TRUTH-01` — Project result v3 and dashboard v3 terminal truth without
+`RESPONSE-TRUTH-01` — Project result v3 and dashboard v3 truth without
 adding a state. Status, audit configuration, active checkpoint refs, terminal
-evidence refs, Metrics v1 projection and `next_action` must equal state v3 and
-consistency v2. `completed`, `completed-with-limitations`, or
-`pending-human-validation` requires every due boundary to be `approved` or
+evidence refs, gate refs/digests, Metrics v1 projection and `next_action` must
+equal state v3 and consistency v2. `awaiting-manual-qa`, `completed`, or
+`completed-with-limitations` requires every due boundary to be `approved` or
 `not-applicable`; findings, unavailable audit capacity, invalidated coverage or
 an incomplete replay prevent those statuses.
+
+For `awaiting-manual-qa`, show every automatic gate passed and every eligible
+human-validation gate pending. For completed plus ready handoff, require every
+same human gate passed with the handoff attestation ref/digest and a final
+consistency packet matching exact current tasks/result/dashboard/gate bytes. A
+mixed or partial transaction renders no completion even when one upstream file
+already says completed.
 
 The response may relabel a persisted `partial` or `failed` normative conflict
 as `needs-human-review` only at presentation time when the exact
@@ -199,34 +212,20 @@ status or create another execution state.
 comes from a persisted task_validation v1 record. Do not synthesize a scope row,
 derive a unit from absent state fields, or invent another task/unit status.
 
-## Manual Test Contract
+## Manual-QA handoff
 
-Derive ordered steps from the demand, analysis, actually changed surfaces, and
-validated limitations. Do not emit a generic checklist. Every step contains all
-fields:
-
-```yaml
-manual_step:
-  evidence_or_acceptance_criterion_ref: "<non-empty locator>"
-  environment: "<non-empty environment>"
-  prerequisites: []
-  initial_state: "<non-empty observable starting state>"
-  action: "<non-empty command or action>"
-  expected_observable_result: "<non-empty observable result>"
-  success_signals: ["<one or more objective signals>"]
-  failure_signals: ["<one or more objective signals>"]
-  cleanup_or_restore: "<explicit action or not-needed with reason>"
-  automation_limitation: "<non-empty limitation or none with reason>"
-```
-
-If no changed surface admits a meaningful human check, emit:
-
-```yaml
-manual_test:
-  status: "none"
-  reason: "<non-empty surface-specific reason>"
-  steps: []
-```
+Never derive or render manual-QA steps or a manual-QA dashboard. Render exactly the closed persisted
+`manual_qa_handoff` v2 projection, including the deterministic manual result
+and aggregate-attestation refs plus exact task/AC/gate/changed-target source
+arrays. `running`, `partial`, `failed`, and `cancelled` require
+`manual-qa-not-evaluated`; `awaiting-manual-qa` requires
+`ready-for-manual-qa`; direct completion requires
+`manual-qa-not-required`. Completed plus ready is valid only after the manual
+transaction, with unchanged handoff and passed attested human gates. The two
+overlay refs are reserved anchors, not existence or digest claims before QA.
+Only `loki-manual-qa` derives the dashboard, accepts an aggregate attestation,
+promotes eligible human gates and publishes consistency last. Reject handoff v1
+and gate record v1 rather than translating either.
 
 ## Evidence And Security Boundary
 
@@ -257,6 +256,6 @@ validator/gate truth, audit-configuration equality, due-boundary coverage,
 active checkpoint order, Auditor independence, findings/corrections/full
 replays, terminal truth, metrics ref/digest/status and aggregate provenance,
 category coverage, inferred-target provenance, learned
-status, manual-step fields, sanitization, handoffs, and exact resume guidance.
-Revisit this unit whenever the helper result, dashboard, status, or manual-test
-contract changes.
+status, closed manual-QA-handoff parity, sanitization, handoffs, and exact
+resume guidance. Revisit this unit whenever the helper result, dashboard,
+status, or manual-QA-handoff contract changes.

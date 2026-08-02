@@ -49,7 +49,7 @@ workflow, language switching, text layout, line breaks, fonts, or LQA.
 
 ## Human Playtest/LQA Gate
 
-Keep status as `pending-human-validation` until a human validates:
+Keep the human Playtest/LQA gate open until a human validates:
 
 - Options shows the language command when the project expects one;
 - the default language matches `DefaultLocale`;

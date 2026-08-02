@@ -219,17 +219,21 @@ agentic_agent_metadata:
     parallel_safe: true
     technology_skill_routes: []
   runtime-qa:
-    capability_tags: ["runtime-validation", "human-validation", "evidence", "init-investigation", "research-packet", "domain-context-preflight"]
-    phase_roles: ["validation", "qa"]
-    agentic_modes: ["read-only", "proposal", "scoped-writer", "report"]
-    write_classes: ["validation-report", "plan-evidence"]
-    risk_tags: ["runtime", "human-validation"]
+    capability_tags: ["manual-qa-source-proposal", "source-applicability", "reproduction-guide"]
+    phase_roles: ["manual-qa-source-proposal"]
+    agentic_modes: ["read-only", "proposal"]
+    write_classes: []
+    risk_tags: ["source-integrity", "human-validation"]
     parallel_safe: true
-    technology_skill_routes: ["<technology_required_skills>"]
-    init_role: "init_inventory_domain_investigator"
-    init_execution_modes: ["read-only", "proposal-only"]
-    init_output_contract: "loki_init_research_packet schema v1"
-    domain_context_preflight: "lf-domain-context-preflight"
+    technology_skill_routes: []
+  manual-qa-attestation-auditor:
+    capability_tags: ["manual-qa-attestation-review", "semantic-attestation-judgment", "independent-review"]
+    phase_roles: ["manual-qa-attestation-review"]
+    agentic_modes: ["read-only", "proposal"]
+    write_classes: []
+    risk_tags: ["human-validation", "semantic-ambiguity", "independent-review"]
+    parallel_safe: false
+    technology_skill_routes: []
   execution-context-reader:
     capability_tags: ["context-extraction", "source-map", "preflight"]
     phase_roles: ["analysis", "execution-context"]
@@ -495,11 +499,15 @@ scripts:
   - name: "validate-agentic-run-state"
     file: "scripts/validate-agentic-run-state.py"
     status: draft
-    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 6, digest 4 and WTR 1), reject removed schemas, and check metrics/liveness, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
+    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 6, digest 4, WTR 1 and manual-QA handoff 2), reject removed schemas, and check parent status, disk-only projection parity, typed identities, anchors, reasons, metrics/liveness, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
   - name: "validate-implement-feature-contracts"
     file: "scripts/validate-implement-feature-contracts.py"
     status: draft
     purpose: "Validate only command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency packet v2, task_validation v1 and execution metrics v1, including due-boundary coverage, full replay, liveness and measurement-only cost policy."
+  - name: "validate-manual-qa-contracts"
+    file: "scripts/validate-manual-qa-contracts.py"
+    status: draft
+    purpose: "Validate current-only manual-QA handoff, source, field-bound guide facts, runtime-QA proposal, semantic assessment, independent attestation review plus agent-session-evidence XML, exclusive command ownership, collision-safe transaction journal, post-write crash recovery, issue revalidation, same-tree transition chains, terminal consistency, drift and idempotence with adversarial fixtures."
   - name: "validate-llm-artifact-precheck"
     file: "scripts/validate-llm-artifact-precheck.py"
     status: draft
@@ -641,6 +649,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
+    current_contracts: ["agentic-run-manifest-v4", "agentic-run-digest-v4", "agent-run-report-v6", "write-test-review-v1", "implementation-handoff-v1", "manual-qa-handoff-v2"]
   - name: "loki-implement-feature"
     file: "skills/loki-implement-feature/SKILL.md"
     status: active
@@ -651,7 +660,18 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
+  - name: "loki-manual-qa"
+    file: "skills/loki-manual-qa/SKILL.md"
+    status: active
+    operational_role: command
+    serialization: skill-bundle
+    bundle_contract:
+      input: "SKILL.md"
+      execution: "references/execution.md"
+      response: "references/response.md"
+      response_template: "assets/response-template.md"
+    current_contracts: ["manual-qa-handoff-v2", "manual-qa-source-v1", "manual-qa-source-catalog-v1", "runtime-qa-source-proposal-v1", "manual-qa-transaction-v1", "manual-qa-semantic-assessment-v1", "manual-qa-attestation-review-v1", "agent-session-evidence-v1", "manual-qa-dashboard-v1", "manual-qa-step-v1", "manual-qa-attestation-v1", "manual-qa-report-v1", "manual-qa-interaction-v1", "manual-qa-result-v1", "manual-qa-consistency-v1"]
   - name: "lf-agentic-orchestration"
     file: "skills/lf-agentic-orchestration/SKILL.md"
     status: draft
@@ -684,7 +704,7 @@ skills:
   - name: "lf-implement-feature-execution"
     file: "skills/lf-implement-feature-execution/SKILL.md"
     status: active
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
   - name: "lf-domain-context-preflight"
     file: "skills/lf-domain-context-preflight/SKILL.md"
     status: draft
@@ -894,7 +914,12 @@ agents:
       - "core"
   - name: "runtime-qa"
     file: "agents/runtime-qa.md"
-    status: draft-scoped-writer
+    status: draft-read-only
+    project_tags:
+      - "core"
+  - name: "manual-qa-attestation-auditor"
+    file: "agents/manual-qa-attestation-auditor.md"
+    status: draft-read-only
     project_tags:
       - "core"
   - name: "execution-context-reader"
@@ -1029,7 +1054,11 @@ codex_agents:
   - name: "runtime-qa"
     file: "codex/agents/runtime-qa.toml"
     source_agent: "agents/runtime-qa.md"
-    status: draft-derived-scoped-writer
+    status: draft-derived
+  - name: "manual-qa-attestation-auditor"
+    file: "codex/agents/manual-qa-attestation-auditor.toml"
+    source_agent: "agents/manual-qa-attestation-auditor.md"
+    status: draft-derived
   - name: "retrospective-digester"
     file: "codex/agents/retrospective-digester.toml"
     source_agent: "agents/retrospective-digester.md"
@@ -1107,6 +1136,7 @@ templates:
   - name: "agentic-run-manifest-template"
     file: "templates/agentic-run-manifest-template.xml"
     status: draft
+    current_contracts: ["agentic-run-manifest-v4", "manual-qa-handoff-v2"]
   - name: "agentic-analysis-manifest-template"
     file: "templates/agentic-analysis-manifest-template.xml"
     status: draft
@@ -1131,6 +1161,7 @@ templates:
   - name: "agentic-run-digest-template"
     file: "templates/agentic-run-digest-template.xml"
     status: draft
+    current_contracts: ["agentic-run-digest-v4", "manual-qa-handoff-v2"]
   - name: "agentic-backlog-template"
     file: "templates/agentic-backlog-template.md"
     status: draft
@@ -1146,10 +1177,11 @@ templates:
   - name: "tasks-template"
     file: "templates/tasks-template.md"
     status: draft
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v3", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "execution-metrics-v1"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v3", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
   - name: "task-template"
     file: "templates/task-template.md"
     status: draft
+    current_contracts: ["gate-record-v2"]
   - name: "technical-analysis-template"
     file: "templates/technical-analysis-template.md"
     status: draft

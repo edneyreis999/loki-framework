@@ -60,7 +60,7 @@ command_contract:
     - "immutable execution_audit_checkpoint v1 records for due boundaries"
     - "atomic builds/metrics/execution-metrics.json schema 1"
     - "validated production changes and completion evidence"
-    - "terminal Both dashboard and manual-test guidance"
+    - "terminal Both dashboard and closed structured manual-QA handoff v2"
   allowed_writes:
     - "<plan_directory>/tasks.md"
     - "<plan_directory>/task-N.M.md"
@@ -402,14 +402,32 @@ eligible only after replanning persists and validates its decision.
 12. After DAG processing, rerun applicable final validators, reconcile every
     AC/evidence relation, inspect expected artifacts/contracts, apply smoke
     checks, and route final regressions through the same severity/retry policy.
-13. Accumulate analysis-prescribed human validation while tasks run. Expose it
-    only at final reconciliation and only as `pending-human-validation` when it
-    is the sole remaining condition.
-14. Run consistency packet v2 against state v3, local tasks, terminal evidence,
+13. Validate only current gate record v2. Automatic gates must pass with null
+    attestation pairs. Preserve human-validation gates as pending with null
+    pairs; feature execution never passes them. Derive the exact ordered task,
+    AC, gate and changed-target sources for the handoff without dropping any
+    automatic task/AC evidence.
+14. Do not derive, present, collect, or reconcile manual QA. After the DAG,
+    required validators, automatic gates, and every due audit are approved,
+    publish `awaiting-manual-qa` plus the closed `ready-for-manual-qa` handoff
+    when at least one human-validation gate remains pending. When no human gate
+    applies, publish direct `completed` or `completed-with-limitations` plus
+    `manual-qa-not-required`. All other statuses carry
+    `manual-qa-not-evaluated`. The deterministic result and attestation anchors
+    are not existence claims.
+15. Reserve the restricted `awaiting-manual-qa -> completed` transaction for
+    `loki-manual-qa`. It alone may promote the exact eligible human gate records
+    and rewrite state/result/dashboard/consistency, with consistency published
+    last as the commit marker. The handoff and automatic evidence/source arrays
+    remain unchanged. A mixed prefix is non-terminal and replay may only finish
+    the same attestation-correlated desired transaction.
+16. Run consistency packet v2 against state v3, local tasks, terminal evidence,
     validators/gates, every expected boundary and latest checkpoint, result v3,
-    dashboard, metrics v1 ref/digest/status and `next_action`. Divergence blocks
-    rendering.
-15. Ask for no ceremonial intermediate approval. Pause only for the minimum
+    dashboard, exact gate refs/digests, metrics v1 ref/digest/status and
+    `next_action`. Divergence blocks rendering. `awaiting-manual-qa` is a valid
+    persisted response; completion after manual QA requires final transaction
+    parity.
+17. Ask for no ceremonial intermediate approval. Pause only for the minimum
     material input, authority, owner, validator, gate, normative decision, or
     explicit cancellation required for safe continuation.
 
@@ -423,7 +441,7 @@ does not infer, backfill, or relabel a task status.
 
 `COMMAND-UNIT-02` — Dashboard presentation is owned by the separate Response
 contract. This execution unit supplies only result v3 task rows, latest audit
-checkpoint refs, final-validator refs, terminal-evidence refs, metrics
+checkpoint refs, exact gate refs/digests, final-validator refs, terminal-evidence refs, metrics
 projection, status, and next action. Response may not invent a blocked task row,
 repair a missing checkpoint, or upgrade any persisted status.
 
@@ -436,6 +454,9 @@ repair a missing checkpoint, or upgrade any persisted status.
   targets preserve their technology owner and applicable gate.
 - The independent Write Test Agent owns finding/retest records; the applicable
   Writer owns correction responses and the optional single learned record.
+- The orchestrator owns automatic gate outcomes and pending human-gate
+  initialization. `loki-manual-qa` alone owns eligible human-gate promotion and
+  the restricted terminal transaction.
 - The applicable independent Auditor owns due material boundary judgment; the
   orchestrator owns deterministic scheduling and immutable checkpoint
   publication, never the approval itself.
@@ -464,14 +485,17 @@ records, metrics digest/spans, and target digests before dispatch. Do not
 duplicate a validated write, preflight, cycle, retry debit, learned record,
 knowledge entry, span duration, or usage observation.
 
-Completion occurs only after the helper returns a terminal
+Automatic handoff occurs only after the helper returns
 `implement_feature_execution_result` whose state digest, required ACs,
 validators, gates, expected/latest audit checkpoints, terminal evidence,
 skipped dependencies, next action, and metrics reconcile through consistency
-packet v2. Telemetry failure degrades metrics only and never changes the
-functional status. Metrics define no token/cost budget or automatic cost stop.
-Use [response.md](response.md) only to project result v3;
-Response never repairs or upgrades it.
+packet v2. `awaiting-manual-qa` is not completion. Later completion is valid
+only after `loki-manual-qa` publishes the final consistency commit proving the
+same attestation, promoted human gates and all four completed projections.
+Telemetry failure degrades metrics only and never changes the functional
+status. Metrics define no token/cost budget or automatic cost stop. Use
+[response.md](response.md) only to project result v3; Response never repairs or
+upgrades it.
 
 <examples>
 These examples are non-normative and grant no authority.

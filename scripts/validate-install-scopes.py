@@ -61,8 +61,8 @@ REQUIRED_AGENTIC_METADATA_FIELDS = {
     "parallel_safe",
     "technology_skill_routes",
 }
-FINAL_CONSUMER_INSTALLABLE_LOKI_COMMAND_COUNT = 19
-FINAL_GENERAL_LOKI_COMMAND_COUNT = 17
+FINAL_CONSUMER_INSTALLABLE_LOKI_COMMAND_COUNT = 20
+FINAL_GENERAL_LOKI_COMMAND_COUNT = 18
 FINAL_PACKAGE_MAINTENANCE_LOKI_COMMAND_COUNT = 2
 RETIRED_SOURCE_ONLY_SKILLS = frozenset(
     {f"loki-{stem}" for stem in ("generate-action-plan", "run-plan")}
@@ -82,6 +82,7 @@ REQUIRED_GENERAL_LOKI_COMMANDS = frozenset(
         "loki-enrich-tasks",
         "loki-feedback",
         "loki-implement-feature",
+        "loki-manual-qa",
         "loki-generate-inferences",
         "loki-human-decision-preflight",
         "loki-init",

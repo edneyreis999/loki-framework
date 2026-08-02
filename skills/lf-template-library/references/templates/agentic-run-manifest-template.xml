@@ -3,7 +3,7 @@
   <llm_metadata schema_version="1">
     <doc_id>loki-agentic-run-manifest</doc_id>
     <version>1.0.0</version>
-    <status>draft</status>
+    <status>{{completed_or_blocked}}</status>
     <last_updated>2026-07-23</last_updated>
     <scope>Canonical agentic run state, routing, handoffs, gates, validators and resumable execution context.</scope>
     <not_scope>Write approval, consumer runtime truth, private reasoning or authority to override package contracts.</not_scope>
@@ -169,6 +169,22 @@
     </state_errors>
     <next_action>{{review_next_action}}</next_action>
   </write_test_review>
+  <!-- Terminal reconciliation: scheduled|dispatched|running|partial|failed|cancelled => blocked/not-evaluated; awaiting-manual-qa => completed/ready; completed|completed-with-limitations => completed/not-required. -->
+  <manual_qa_handoff>
+    <schema_version>2</schema_version>
+    <status>{{manual_qa_handoff_status}}</status>
+    <run_id>{{manual_qa_run_id}}</run_id>
+    <execution_id>{{manual_qa_execution_id}}</execution_id>
+    <plan_directory>{{implementation_plan_directory}}</plan_directory>
+    <automatic_evidence_refs><ref>{{manual_qa_automatic_evidence_ref}}</ref></automatic_evidence_refs>
+    <manual_qa_result_ref>{{implementation_plan_directory}}/builds/manual-qa/result.json</manual_qa_result_ref>
+    <manual_qa_attestation_ref>{{implementation_plan_directory}}/interaction/manual-qa/{{manual_qa_run_id}}/attestation.json</manual_qa_attestation_ref>
+    <task_refs><ref>{{manual_qa_task_ref}}</ref></task_refs>
+    <acceptance_criterion_refs><ref>{{manual_qa_acceptance_criterion_ref}}</ref></acceptance_criterion_refs>
+    <gate_refs><ref>{{manual_qa_gate_ref}}</ref></gate_refs>
+    <changed_target_refs><ref>{{manual_qa_changed_target_ref}}</ref></changed_target_refs>
+    <reason>{{manual_qa_reason_or_empty_when_ready}}</reason>
+  </manual_qa_handoff>
   <decision_gates>
     <decision_gate id="{{decision_gate_id}}">
       <category>{{decision_gate_category}}</category>

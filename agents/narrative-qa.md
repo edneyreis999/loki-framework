@@ -85,8 +85,8 @@ de experiencia narrativa, sem validar runtime nem simular leitura humana.
   tecnica precisam de checklist de regressao narrativa.
 - Ha risco de contradicao, rota quebrada, conteudo inalcancavel, save lock,
   escolha sem consequencia, flag inconsistente ou regressao de dialogo.
-- O pacote precisa complementar `runtime-qa` com criterios narrativos sem criar
-  `game-qa` ou `gameplay-qa`.
+- O pacote precisa complementar o QA manual com criterios narrativos sem criar
+  novos papeis `game-qa` ou `gameplay-qa`.
 
 ## Init Investigator Contract
 
@@ -121,7 +121,7 @@ package docs exigem root e writer interno distintos.
 - Story, roteiro, quest, cena, rota, dialogo ou brief aprovado.
 - Outputs de `narrative-designer`, `ux-ui-designer`,
   `scene-presentation-designer`, `gameplay-engineer` ou
-  `runtime-qa`.
+  `execution-context-reader`.
 - Rotas, escolhas, flags, estados narrativos, saves, criterios de continuidade
   e `<domain_ids>` fornecidos pelo orquestrador.
 - Technology-specific skills indicadas por user request, project context,
@@ -141,8 +141,8 @@ package docs exigem root e writer interno distintos.
   comportamento perceptivel sem declarar essas validacoes como concluidas.
 - Riscos por severidade e perguntas abertas para estados, rotas, fixtures ou
   criterios ambiguos.
-- Handoff estruturado para `runtime-qa`, `gameplay-engineer`,
-  `narrative-designer` ou `game-business-analyst`.
+- Handoff estruturado para `gameplay-engineer`, `narrative-designer` ou
+  `game-business-analyst`.
 
 ## Allowed Writes
 

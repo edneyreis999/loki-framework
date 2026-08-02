@@ -27,11 +27,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 58, "agent": 25, "codex-agent": 25, "templates": 1},
-    "package-source": {"skill": 44, "agent": 12, "codex-agent": 12, "templates": 1},
-    "all": {"skill": 58, "agent": 25, "codex-agent": 25, "templates": 1},
+    "consumer": {"skill": 59, "agent": 28, "codex-agent": 28, "templates": 1},
+    "package-source": {"skill": 45, "agent": 15, "codex-agent": 15, "templates": 1},
+    "all": {"skill": 59, "agent": 28, "codex-agent": 28, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 109, "package-source": 69, "all": 109}
+FINAL_TOTALS = {"consumer": 116, "package-source": 76, "all": 116}
 RETIRED_SKILLS = (
     "loki-" + "generate-action-plan",
     "loki-" + "run-plan",
@@ -399,6 +399,7 @@ class ProfileAndSchemaTests(unittest.TestCase):
             [
                 "loki-human-decision-preflight",
                 "loki-implement-feature",
+                "loki-manual-qa",
             ],
             module.parse_required_commands(agentic),
         )

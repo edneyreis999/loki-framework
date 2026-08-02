@@ -64,11 +64,11 @@ apropriado sempre que disponível:
   duradoura por `docs/index.xml`;
 - `technical-implementer`, proposal-only, para propor abordagem sobre superfície
   técnica sem aplicar alterações;
-- `runtime-qa`, proposal-only, para propor checklist especializado de validators,
-  riscos e gate humano sem declarar runtime validado.
+- `execution-context-reader`, read-only, para extrair contexto e risco local de
+  superficies perceptiveis sem semantica de QA humano.
 
 Execute em paralelo apenas handoffs read-only ou proposal-only independentes.
-`technical-implementer` e `runtime-qa` podem trabalhar em paralelo depois que as
+`technical-implementer` e `execution-context-reader` podem trabalhar em paralelo depois que as
 superfícies ou hipóteses técnicas forem conhecidas. Consolide fontes, conflitos,
 riscos e gates antes da matriz de decisão. O `source-researcher` entrega
 evidência e não escolhe a solução.

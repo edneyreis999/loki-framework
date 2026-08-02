@@ -1,9 +1,9 @@
 ---
 name: lf-command-workflows
-description: Route general-purpose Loki command bundles from Codex. Trigger when the user invokes one of the 17 general `loki-*` workflows; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
+description: Route general-purpose Loki command bundles from Codex. Trigger when the user invokes one of the 18 general `loki-*` workflows; resolve the matching `skills/loki-<stem>/SKILL.md` bundle directly and load its routed references, assets and dependencies.
 when_to_use:
-  - "Use when routing one of the 17 current general-purpose Loki command bundles available to consumer and package profiles."
-  - "Use when a caller needs the catalog of 17 general loki-* identities, not a duplicate command contract."
+  - "Use when routing one of the 18 current general-purpose Loki command bundles available to consumer and package profiles."
+  - "Use when a caller needs the catalog of 18 general loki-* identities, not a duplicate command contract."
 argument-hint: "[loki-* command name, arguments]"
 arguments:
   required: []
@@ -27,7 +27,7 @@ paths:
 shell: bash
 type: skill
 status: draft
-used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-implement-feature, loki-generate-inferences, loki-human-decision-preflight, loki-agentic-development, loki-deep-analysis, loki-deep-research, loki-retrospectiva-tecnica, loki-demand-text-improver, loki-tech-analysis]
+used_by: [loki-init, loki-catalogar-docs, loki-criar-branch, loki-commit, loki-abrir-pr, loki-continuous-improvement, loki-enrich-tasks, loki-feedback, loki-implement-feature, loki-manual-qa, loki-generate-inferences, loki-human-decision-preflight, loki-agentic-development, loki-deep-analysis, loki-deep-research, loki-retrospectiva-tecnica, loki-demand-text-improver, loki-tech-analysis]
 ---
 
 # lf-command-workflows

@@ -145,8 +145,8 @@ writer interno distintos.
 - Perguntas abertas quando objetivo, recompensa, estado, personagem, mapa,
   condicao ou validacao estiver ambiguo.
 - Handoff estruturado para `narrative-designer`, `game-designer`,
-  `level-designer`, `balance-economy-designer`, `narrative-qa`, `runtime-qa`
-  ou `game-business-analyst`.
+  `level-designer`, `balance-economy-designer`, `narrative-qa`,
+  `technical-implementer` ou `game-business-analyst`.
 
 ## Allowed Writes
 

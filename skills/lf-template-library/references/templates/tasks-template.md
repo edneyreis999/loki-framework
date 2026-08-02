@@ -108,7 +108,7 @@ downstream_execution_profile:
     research: "<source-researcher|none>"
     context: "<execution-context-reader|none>"
     implementation: "<technical-implementer|none>"
-    runtime_validation: "<runtime-qa|none>"
+    runtime_validation: "none"
   scoped_writers:
     - agent: "<agent-name>"
       domains: []
@@ -160,6 +160,11 @@ A deterministic route names its executable check and evidence destination. A
 `write_test_agent` route names its independent validator. Missing AC, route,
 validator locator, or required evidence prevents task success.
 
+Every task gate locator resolves a closed gate record v2. Automatic gates use
+only automatic evidence and a null attestation pair. Human-validation gates
+remain pending until `loki-manual-qa` performs the restricted aggregate
+attestation transaction; gate record v1 is rejected without conversion.
+
 ## Target Decision Ledger
 
 ```yaml
@@ -194,13 +199,29 @@ loki_run_state:
     frequency: "<task|phase|plan>"
     source: "<default|explicit>"
     policy_digest: "sha256:<64-lowercase-hex>"
-  status: "<running|completed|completed-with-limitations|pending-human-validation|partial|failed|cancelled>"
+  status: "<running|awaiting-manual-qa|completed|completed-with-limitations|partial|failed|cancelled>"
   task_refs: []
+  gate_refs: []
+  gate_digests: []
   audit_checkpoint_refs: []
   result_ref: "<result-v3-locator>"
   dashboard_ref: "<dashboard-v3-locator>"
   consistency_packet_ref: "<consistency-v2-locator>"
   terminal_evidence_refs: []
+  manual_qa_handoff:
+    schema_version: 2
+    status: "manual-qa-not-evaluated"
+    run_id: "<same-loki-run-v2:64-lowercase-hex>"
+    execution_id: "<same-loki-execution-v2:64-lowercase-hex>"
+    plan_directory: "<same-normalized-plan-directory>"
+    automatic_evidence_refs: []
+    manual_qa_result_ref: "<same-plan-directory>/builds/manual-qa/result.json"
+    manual_qa_attestation_ref: "<same-plan-directory>/interaction/manual-qa/<same-run-id>/attestation.json"
+    task_refs: []
+    acceptance_criterion_refs: []
+    gate_refs: []
+    changed_target_refs: []
+    reason: "Technical execution has not reached successful terminal reconciliation."
   execution_metrics_ref: "<builds/metrics/execution-metrics.json|null-only-for-total-publication-failure>"
   execution_metrics_digest: "<sha256:64-lowercase-hex|null-only-for-total-publication-failure>"
   execution_metrics_status: "<complete|partial|unavailable>"
@@ -212,6 +233,22 @@ loki_run_state:
 Metrics ref/digest are both null iff status is `unavailable` and the degradation
 reason explicitly states total `publication failure`; otherwise both are the
 published metrics locator and digest, including for a minimal unavailable file.
+
+`manual_qa_handoff` is the complete closed current-only v2 mapping. All thirteen
+keys are required, extra keys fail, identities and plan directory equal the
+containing state, and both manual-QA locators equal the deterministic paths
+shown above. They reserve the later manual result and aggregate-attestation
+destinations without asserting that either exists or authorizing mutation of
+technical evidence; only the external overlay records their exact-byte digests.
+The four source arrays are exact task order, task/AC order, task/gate order, and
+first-occurrence changed-target order from completed Writer handoffs.
+`manual-qa-not-evaluated` is required for `running`,
+`partial`, `failed`, and `cancelled`; its evidence list may be empty and its
+reason is non-empty. Both terminal decisions require the non-empty exact
+ordered terminal-evidence projection. A ready handoff uses `reason: null`; a
+not-required handoff uses a non-empty reason. Ready is paired only with
+`awaiting-manual-qa` until `loki-manual-qa` promotes the eligible human gates
+and all four projections to completed; direct completion uses not-required.
 
 `audit_checkpoint_refs` contains exactly the latest active checkpoint for every
 expected boundary already due, in scheduler order. A correction invalidates

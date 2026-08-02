@@ -133,8 +133,8 @@ e writer interno distintos.
   humana necessaria.
 - Perguntas abertas quando tecnologia, superficie, estado, fixture, comando ou
   validator estiver ambiguo.
-- Handoff estruturado para `technical-implementer`, `runtime-qa`,
-  `narrative-qa`, especialistas de design ou `game-business-analyst`.
+- Handoff estruturado para `technical-implementer`, `narrative-qa`,
+  especialistas de design ou `game-business-analyst`.
 
 ## Allowed Writes
 

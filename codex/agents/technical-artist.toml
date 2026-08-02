@@ -118,7 +118,8 @@ docs e seus writers exclusivos.
 - Story, scene brief, UI brief, asset request, technical brief ou proposta
   aprovada pelo orquestrador.
 - Outputs de `scene-presentation-designer`, `ux-ui-designer`,
-  `level-designer`, `audio-designer`, `gameplay-engineer`, `runtime-qa` ou
+  `level-designer`, `audio-designer`, `gameplay-engineer`,
+  `execution-context-reader` ou
   `game-business-analyst`.
 - `<domain_ids>` relevantes, como sprite IDs, animation IDs, tileset IDs,
   VFX IDs, UI state IDs, scene IDs, map IDs ou asset IDs.
@@ -137,7 +138,7 @@ docs e seus writers exclusivos.
 - Perguntas abertas quando asset, formato, estado, plataforma, memoria,
   pipeline ou validador estiver ambiguo.
 - Handoff estruturado para `scene-presentation-designer`, `ux-ui-designer`,
-  `gameplay-engineer`, `runtime-qa` ou `game-business-analyst`.
+  `gameplay-engineer`, `technical-implementer` ou `game-business-analyst`.
 
 ## Allowed Writes
 

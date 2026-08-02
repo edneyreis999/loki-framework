@@ -149,7 +149,7 @@ writer interno aprovado escreve a segunda.
 - Perguntas abertas quando objetivo, regra, tuning, escopo ou restricao estiver
   ambiguo.
 - Handoff estruturado para `narrative-designer`, `ux-ui-designer`,
-  `gameplay-engineer`, `runtime-qa`, `narrative-qa` ou
+  `gameplay-engineer`, `narrative-qa` ou
   `game-business-analyst`.
 
 ## Allowed Writes

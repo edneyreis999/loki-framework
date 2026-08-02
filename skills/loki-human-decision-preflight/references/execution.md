@@ -86,7 +86,8 @@ resposta alterar categoria, escopo, impacto ou ordem das perguntas.
   `/docs` e puder ser localizada por `docs/index.xml`;
 - `source-researcher`, read-only, para fontes locais multiplas, conflito de
   evidencia ou pesquisa externa previamente aprovada;
-- `runtime-qa`, proposal-only, para propor evidencia de `human-validation`;
+- `technical-implementer`, proposal-only, para esclarecer viabilidade,
+  abordagem e limite de automacao tecnico sem decidir QA humano;
 - agente de dominio, proposal-only, para distinguir preferencia humana de
   detalhe delegavel.
 

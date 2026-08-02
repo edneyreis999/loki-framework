@@ -86,7 +86,8 @@ estiver resolvida:
 
 - `source-researcher`, read-only, para multiplas fontes locais ou pesquisa web
   ja aprovada;
-- `runtime-qa`, read-only, para checklist/risco de comportamento em execucao;
+- `execution-context-reader`, read-only, para contexto e risco local de
+  comportamento em execucao, sem semantica de QA humano;
 - `technical-implementer` ou skill tecnica, proposal-only, para uma possivel
   correcao sensivel; nunca para aplicar a correcao neste command.
 

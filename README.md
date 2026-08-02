@@ -5,7 +5,7 @@ status: draft
 created: 2026-06-24
 doc_id: loki-framework-local-readme
 version: 1.0.0
-last_updated: 2026-07-27
+last_updated: 2026-08-01
 scope: local-project-package
 not_scope: consumer project policy, package installation approval, or runtime validation
 authority: Approved Loki package policy and this package source
@@ -45,7 +45,10 @@ Fluxos principais:
   posteriores.
 - `loki-implement-feature`: caminho publico direto de demanda + analise
   Markdown para plano persistido, implementacao autonoma, validacao por task,
-  dashboard e teste manual.
+  e handoff estruturado para QA manual quando ele for material.
+- `loki-manual-qa`: QA manual pós-implementação com dashboard completo,
+  ajuda por ID sem mutacao e atestacao humana agregada, sem resultado ou
+  evidencia humana por teste.
 - `loki-agentic-development`: caminho avancado de demanda para analise
   agentica, gates, um unico handoff ao `loki-implement-feature`, digest e
   backlog.
@@ -125,10 +128,23 @@ respostas do Writer, retestes e retry debits ficam persistidos. Falha esgotada
 interrompe apenas dependentes transitivos; branches independentes continuam.
 Findings minor nao consomem o budget e cedem o scheduler entre ciclos.
 
-A resposta final e um dashboard derivado do estado persistido: status, units,
-targets alterados e inferidos, ACs e evidencias, validators, retries, riscos,
-resume e passos de teste manual completos. `pending-human-validation` aparece
-somente na reconciliacao final quando for a unica condicao restante.
+A resposta final deriva status, units, targets alterados e inferidos, ACs e
+evidencias, validators, retries, riscos e resume. Quando QA humano material e a
+unica condicao restante, a implementacao persiste `awaiting-manual-qa` —
+explicitamente nao concluido — junto do handoff v2
+`ready-for-manual-qa`. Quando QA manual nao e material, conclui depois dos
+gates tecnicos com `manual-qa-not-required` e motivo nao vazio.
+
+Somente `loki-manual-qa` promove `awaiting-manual-qa` para `completed`. Ele
+revalida o plano, deriva um catalogo exaustivo de criterios de aceite, gates
+humanos e superficies alteradas, e mostra todos os testes aplicaveis com
+ambiente, precondicoes, estado inicial, acoes concretas, resultado esperado,
+sinais, cleanup e limite de automacao. Ajuda por ID nao altera bytes ou status.
+O gate humano aceita uma confirmacao inequivoca de que todos os itens
+aplicaveis foram testados e aprovados; nao coleta resultado ou evidencia por
+teste. Falha ou blocker registra somente tipo, resumo curto, impacto e proxima
+acao. Depois da atestacao, o comando reconcilia gates humanos, estado,
+resultado, dashboard e consistency antes de declarar conclusao.
 
 `loki-agentic-development` permanece uma rota distinta para quem precisa de
 POVs, sintese agentica, cross-review, digest e backlog. Depois de produzir ou

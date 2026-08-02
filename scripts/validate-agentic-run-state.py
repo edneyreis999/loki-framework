@@ -26,8 +26,8 @@ KNOWLEDGE_CAPTURE_STATES = {
     "skipped-nonmaterial",
 }
 EVIDENCE_SCHEMAS = {"6"}
-TERMINAL_RUN_STATUSES = {"completed", "blocked", "failed", "pending-human-validation"}
-CURRENT_RUN_STATUSES = TERMINAL_RUN_STATUSES | {"draft", "running"}
+CURRENT_RUN_STATUSES = {"completed", "blocked"}
+TERMINAL_RUN_STATUSES = CURRENT_RUN_STATUSES
 REVIEW_FREQUENCIES = ("write_agent_handoff", "task", "fase", "plano")
 REVIEW_TERMINAL_SCOPES = ("task", "fase", "plano")
 REVIEW_PROVENANCE = {"explicit", "default", "propagated", "resumed"}
@@ -39,14 +39,13 @@ REVIEW_STATUSES = {
 REVIEW_DEGRADED = {"skipped-agent-unavailable", "failed-consultive", "outcome-unknown"}
 REVIEW_RISK_BACKLOG = REVIEW_DEGRADED | {"completed-with-findings"}
 IMPLEMENT_FEATURE_TERMINAL_STATUSES = {
+    "running",
     "completed",
     "completed-with-limitations",
-    "pending-human-validation",
     "partial",
-    "blocked",
     "failed",
     "cancelled",
-    "needs-human-review",
+    "awaiting-manual-qa",
 }
 IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES = {"scheduled", "dispatched"}
 IMPLEMENTATION_HANDOFF_STATUSES = (
@@ -59,6 +58,41 @@ SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 CHECKPOINT_RE = re.compile(r"^review-checkpoint-v1:[0-9a-f]{64}$")
 EXECUTION_SPAN_RE = re.compile(r"^execution-span-v1:[0-9a-f]{64}$")
 UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
+LOKI_RUN_RE = re.compile(r"^loki-run-v2:[0-9a-f]{64}$")
+LOKI_EXECUTION_RE = re.compile(r"^loki-execution-v2:[0-9a-f]{64}$")
+MANUAL_QA_HANDOFF_LIST_KEYS = (
+    "automatic_evidence_refs",
+    "task_refs",
+    "acceptance_criterion_refs",
+    "gate_refs",
+    "changed_target_refs",
+)
+MANUAL_QA_HANDOFF_KEYS = {
+    "schema_version",
+    "status",
+    "run_id",
+    "execution_id",
+    "plan_directory",
+    "manual_qa_result_ref",
+    "manual_qa_attestation_ref",
+    "reason",
+}.union(MANUAL_QA_HANDOFF_LIST_KEYS)
+MANUAL_QA_HANDOFF_STATUSES = {
+    "manual-qa-not-evaluated",
+    "ready-for-manual-qa",
+    "manual-qa-not-required",
+}
+TERMINAL_RECONCILIATION_BY_IMPLEMENTATION_STATUS = {
+    "scheduled": ("blocked", "manual-qa-not-evaluated"),
+    "dispatched": ("blocked", "manual-qa-not-evaluated"),
+    "running": ("blocked", "manual-qa-not-evaluated"),
+    "partial": ("blocked", "manual-qa-not-evaluated"),
+    "failed": ("blocked", "manual-qa-not-evaluated"),
+    "cancelled": ("blocked", "manual-qa-not-evaluated"),
+    "awaiting-manual-qa": ("completed", "ready-for-manual-qa"),
+    "completed": ("completed", "manual-qa-not-required"),
+    "completed-with-limitations": ("completed", "manual-qa-not-required"),
+}
 
 
 def text(element: ET.Element | None) -> str:
@@ -130,6 +164,130 @@ def require_exact_children(
     tags = [child.tag for child in parent]
     if len(tags) != len(expected) or set(tags) != expected:
         failures.append(f"{label}: unexpected, missing or duplicate fields")
+
+
+def validate_manual_qa_handoff(
+    root: ET.Element,
+    label: str,
+    failures: list[str],
+    *,
+    expected_plan_directory: str = "",
+) -> dict[str, object]:
+    nodes = root.findall("manual_qa_handoff")
+    if len(nodes) != 1:
+        failures.append(f"{label}: exactly one manual_qa_handoff is required")
+        return {}
+    handoff = nodes[0]
+    require_exact_children(
+        handoff, MANUAL_QA_HANDOFF_KEYS, f"{label}: manual_qa_handoff", failures
+    )
+    if handoff.attrib:
+        failures.append(f"{label}: manual_qa_handoff has unexpected attributes")
+    for child in handoff:
+        if child.tag in MANUAL_QA_HANDOFF_LIST_KEYS:
+            if child.attrib or any(
+                ref.tag != "ref" or ref.attrib or len(ref) or not text(ref)
+                for ref in child
+            ):
+                failures.append(f"{label}: invalid {child.tag} shape")
+        elif child.attrib or len(child):
+            failures.append(f"{label}: manual_qa_handoff/{child.tag} must be scalar")
+
+    schema_version = child_text(handoff, "schema_version")
+    status = child_text(handoff, "status")
+    run_id = child_text(handoff, "run_id")
+    execution_id = child_text(handoff, "execution_id")
+    plan_directory = child_text(handoff, "plan_directory")
+    automatic_evidence_refs = non_empty_children(
+        handoff, "automatic_evidence_refs/ref"
+    )
+    task_refs = non_empty_children(handoff, "task_refs/ref")
+    acceptance_criterion_refs = non_empty_children(
+        handoff, "acceptance_criterion_refs/ref"
+    )
+    gate_refs = non_empty_children(handoff, "gate_refs/ref")
+    changed_target_refs = non_empty_children(handoff, "changed_target_refs/ref")
+    result_ref = child_text(handoff, "manual_qa_result_ref")
+    attestation_ref = child_text(handoff, "manual_qa_attestation_ref")
+    reason = child_text(handoff, "reason")
+
+    if schema_version != "2":
+        failures.append(f"{label}: manual_qa_handoff requires schema_version 2")
+    if status not in MANUAL_QA_HANDOFF_STATUSES:
+        failures.append(f"{label}: invalid manual_qa_handoff status {status!r}")
+    if not LOKI_RUN_RE.fullmatch(run_id):
+        failures.append(f"{label}: invalid manual_qa_handoff run_id")
+    if not LOKI_EXECUTION_RE.fullmatch(execution_id):
+        failures.append(f"{label}: invalid manual_qa_handoff execution_id")
+    validate_coverage_path(
+        plan_directory, f"{label}: manual_qa_handoff plan_directory", failures
+    )
+    if expected_plan_directory and plan_directory != expected_plan_directory:
+        failures.append(f"{label}: manual_qa_handoff plan_directory mismatch")
+    ordered_refs = {
+        "automatic_evidence_refs": automatic_evidence_refs,
+        "task_refs": task_refs,
+        "acceptance_criterion_refs": acceptance_criterion_refs,
+        "gate_refs": gate_refs,
+        "changed_target_refs": changed_target_refs,
+    }
+    for field, refs in ordered_refs.items():
+        if len(refs) != len(set(refs)):
+            failures.append(f"{label}: duplicate manual_qa_handoff {field}")
+        for ref in refs:
+            validate_coverage_path(
+                ref, f"{label}: manual_qa_handoff {field}", failures
+            )
+    if result_ref != f"{plan_directory}/builds/manual-qa/result.json":
+        failures.append(f"{label}: manual_qa_handoff result anchor mismatch")
+    if attestation_ref != (
+        f"{plan_directory}/interaction/manual-qa/{run_id}/attestation.json"
+    ):
+        failures.append(f"{label}: manual_qa_handoff attestation anchor mismatch")
+    if status == "ready-for-manual-qa":
+        if reason:
+            failures.append(f"{label}: ready manual_qa_handoff reason must be null")
+    elif not reason:
+        failures.append(f"{label}: non-ready manual_qa_handoff reason is required")
+    if status != "manual-qa-not-evaluated" and not automatic_evidence_refs:
+        failures.append(f"{label}: terminal manual_qa_handoff requires evidence")
+
+    return {
+        "schema_version": schema_version,
+        "status": status,
+        "run_id": run_id,
+        "execution_id": execution_id,
+        "plan_directory": plan_directory,
+        "automatic_evidence_refs": automatic_evidence_refs,
+        "manual_qa_result_ref": result_ref,
+        "manual_qa_attestation_ref": attestation_ref,
+        "task_refs": task_refs,
+        "acceptance_criterion_refs": acceptance_criterion_refs,
+        "gate_refs": gate_refs,
+        "changed_target_refs": changed_target_refs,
+        "reason": reason or None,
+    }
+
+
+def validate_terminal_reconciliation(
+    run_status: str,
+    implementation_status: str,
+    manual_qa_status: str,
+    label: str,
+    failures: list[str],
+) -> None:
+    expected = TERMINAL_RECONCILIATION_BY_IMPLEMENTATION_STATUS.get(
+        implementation_status
+    )
+    if expected is None:
+        return
+    actual = (run_status, manual_qa_status)
+    if actual != expected:
+        failures.append(
+            f"{label}: invalid terminal reconciliation for implementation status "
+            f"{implementation_status!r}; expected parent/manual-QA {expected!r}, "
+            f"got {actual!r}"
+        )
 
 
 def validate_node_shape(
@@ -1188,10 +1346,10 @@ def validate_digest(
     failures: list[str],
     review_meta: dict[str, str],
     review_checkpoints: dict[str, dict[str, str]],
-) -> tuple[str, str, str, dict[str, dict[str, str | bool | None]], dict[str, dict[str, str]]]:
+) -> tuple[str, str, str, dict[str, dict[str, str | bool | None]], dict[str, dict[str, str]], dict[str, object]]:
     digest_roots = [(path, root) for path, root in roots.items() if root.tag == "agentic_run_digest"]
     if not digest_roots:
-        return "", "", "", {}, {}
+        return "", "", "", {}, {}, {}
     if len(digest_roots) > 1:
         failures.append("multiple agentic_run_digest XML files found")
     path, root = digest_roots[0]
@@ -1200,9 +1358,10 @@ def validate_digest(
     digest_status = child_text(root, "digest/status").lower()
     if schema_version != "4":
         failures.append(f"{path}: requires digest schema 4, got {schema_version or '<missing>'}")
-        return digest_run_id, schema_version, digest_status, {}, {}
+        return digest_run_id, schema_version, digest_status, {}, {}, {}
     if digest_status not in CURRENT_RUN_STATUSES:
         failures.append(f"{path}: invalid schema-{schema_version} digest status {digest_status!r}")
+    manual_qa_handoff = validate_manual_qa_handoff(root, str(path), failures)
     records: dict[str, dict[str, str | bool | None]] = {}
     for capture in root.findall("execution_knowledge_captures/capture"):
         record = knowledge_record(
@@ -1311,7 +1470,14 @@ def validate_digest(
                 failures.append(
                     f"{path}: unresolved review state error {state_error.get('code', '<missing>')}"
                 )
-    return digest_run_id, schema_version, digest_status, records, findings_map
+    return (
+        digest_run_id,
+        schema_version,
+        digest_status,
+        records,
+        findings_map,
+        manual_qa_handoff,
+    )
 
 
 def compare_capture_records(
@@ -1460,6 +1626,7 @@ def validate_run_dir(run_dir: Path) -> list[str]:
     manifest_schema = ""
     review_meta: dict[str, str] = {}
     review_checkpoints: dict[str, dict[str, str]] = {}
+    manifest_manual_qa_handoff: dict[str, object] = {}
 
     manifest_path = run_dir / "agentic-run-manifest.xml"
     manifest = roots.get(manifest_path)
@@ -1486,6 +1653,14 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         manifest_handoffs = validate_manifest_handoffs(manifest, failures)
         review_meta, review_checkpoints = validate_manifest_review(
             manifest, str(manifest_path), failures
+        )
+        manifest_manual_qa_handoff = validate_manual_qa_handoff(
+            manifest,
+            str(manifest_path),
+            failures,
+            expected_plan_directory=child_text(
+                manifest, "write_test_review/implementation_handoff/plan_directory"
+            ),
         )
         if manifest_schema == "4":
             current_schema = True
@@ -1544,9 +1719,12 @@ def validate_run_dir(run_dir: Path) -> list[str]:
             for checkpoint in review_checkpoints.values()
             if checkpoint["review_handoff_id"]
         }
-        blocking_evidence = False
+        blocking_evidence = (
+            manifest_manual_qa_handoff.get("status")
+            == "manual-qa-not-evaluated"
+        )
         if manifest is not None:
-            blocking_evidence = any(
+            blocking_evidence = blocking_evidence or any(
                 child_text(handoff, "status").lower() in {"blocked", "failed"}
                 and child_text(handoff, "handoff_id") not in consultive_handoff_ids
                 for handoff in manifest.findall("handoffs/handoff")
@@ -1572,7 +1750,10 @@ def validate_run_dir(run_dir: Path) -> list[str]:
                     ) or any(
                         child_text(gate, "status").lower() in {"blocked", "failed"}
                         for gate in root.findall("gates/gate")
-                    ) or any(text(blocker) for blocker in root.findall("completion/blockers/blocker"))
+                    ) or any(
+                        text(blocker)
+                        for blocker in root.findall("completion/blockers/blocker")
+                    )
             elif (
                 root.tag == "agentic_run_digest"
                 and root.get("schema_version") == "4"
@@ -1598,9 +1779,28 @@ def validate_run_dir(run_dir: Path) -> list[str]:
         review_meta,
         review_checkpoints,
     )
-    digest_run_id, digest_schema, digest_status, digest_records, digest_findings = validate_digest(
-        roots, failures, review_meta, review_checkpoints
-    )
+    (
+        digest_run_id,
+        digest_schema,
+        digest_status,
+        digest_records,
+        digest_findings,
+        digest_manual_qa_handoff,
+    ) = validate_digest(roots, failures, review_meta, review_checkpoints)
+    if manifest_manual_qa_handoff != digest_manual_qa_handoff:
+        failures.append(
+            f"{run_dir}: manifest and digest manual_qa_handoff projections differ"
+        )
+    if manifest is not None:
+        validate_terminal_reconciliation(
+            run_status,
+            child_text(
+                manifest, "write_test_review/implementation_handoff/status"
+            ),
+            str(manifest_manual_qa_handoff.get("status") or ""),
+            str(manifest_path),
+            failures,
+        )
     if current_schema:
         validate_current_knowledge_lineage(
             run_dir,
@@ -1674,6 +1874,7 @@ def validate_run_dir(run_dir: Path) -> list[str]:
 
 
 def run_self_test() -> None:
+    assert CURRENT_RUN_STATUSES == {"completed", "blocked"}
     execution_id = "execution-self-test"
     policy_digest = canonical_digest(
         {
@@ -1711,11 +1912,14 @@ def run_self_test() -> None:
         execution_id, policy_digest, "plano", "plan-self-test", coverage_digest
     )
     review_handoff_id = "review-handoff-v1:" + checkpoint_id.split(":", 1)[1]
-    implementation_handoff = f"""<implementation_handoff schema_version="1"><handoff_id>implementation-handoff-v1:{'a' * 64}</handoff_id><command>loki-implement-feature</command><demand_ref>demand.md</demand_ref><demand_digest>sha256:{'b' * 64}</demand_digest><analysis_file>analise/technical-analysis.md</analysis_file><analysis_digest>sha256:{'c' * 64}</analysis_digest><plan_directory>implementation</plan_directory><status>completed</status><execution_state_ref>implementation/tasks.md#loki-run-state</execution_state_ref><execution_state_digest>sha256:{'d' * 64}</execution_state_digest><result_ref>implementation/builds/result.md</result_ref><dashboard_ref>implementation/builds/dashboard.md</dashboard_ref><next_action>return terminal dashboard</next_action></implementation_handoff>"""
+    implementation_handoff = f"""<implementation_handoff schema_version="1"><handoff_id>implementation-handoff-v1:{'a' * 64}</handoff_id><command>loki-implement-feature</command><demand_ref>demand.md</demand_ref><demand_digest>sha256:{'b' * 64}</demand_digest><analysis_file>analise/technical-analysis.md</analysis_file><analysis_digest>sha256:{'c' * 64}</analysis_digest><plan_directory>implementation</plan_directory><status>awaiting-manual-qa</status><execution_state_ref>implementation/tasks.md#loki-run-state</execution_state_ref><execution_state_digest>sha256:{'d' * 64}</execution_state_digest><result_ref>implementation/builds/result.md</result_ref><dashboard_ref>implementation/builds/dashboard.md</dashboard_ref><next_action>return terminal dashboard</next_action></implementation_handoff>"""
+    manual_run_id = "loki-run-v2:" + "1" * 64
+    manual_execution_id = "loki-execution-v2:" + "2" * 64
+    manual_qa_handoff = f"""<manual_qa_handoff><schema_version>2</schema_version><status>ready-for-manual-qa</status><run_id>{manual_run_id}</run_id><execution_id>{manual_execution_id}</execution_id><plan_directory>implementation</plan_directory><automatic_evidence_refs><ref>evidence/terminal-1.json</ref><ref>evidence/terminal-2.json</ref></automatic_evidence_refs><manual_qa_result_ref>implementation/builds/manual-qa/result.json</manual_qa_result_ref><manual_qa_attestation_ref>implementation/interaction/manual-qa/{manual_run_id}/attestation.json</manual_qa_attestation_ref><task_refs><ref>tasks.md#task-1</ref><ref>tasks.md#task-2</ref></task_refs><acceptance_criterion_refs><ref>tasks.md#ac-1</ref><ref>tasks.md#ac-2</ref></acceptance_criterion_refs><gate_refs><ref>tasks.md#gate-1</ref><ref>tasks.md#gate-2</ref></gate_refs><changed_target_refs><ref>src/one.py</ref><ref>src/two.py</ref></changed_target_refs><reason/></manual_qa_handoff>"""
     legacy = """<?xml version="1.0"?><agentic_run_manifest schema_version="1"><freshness_signature/></agentic_run_manifest>"""
     current = f"""<?xml version="1.0"?>
 <agentic_run_manifest schema_version="4">
-  <run><run_id>run-self-test</run_id><status>running</status></run>
+  <run><run_id>run-self-test</run_id><status>completed</status></run>
   <freshness_signature/>
   <execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy>
   <write_test_review schema_version="1">
@@ -1725,12 +1929,30 @@ def run_self_test() -> None:
     <checkpoints><checkpoint checkpoint_id="{checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{coverage_manifest['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>quality-auditor</name><contract_version>1</contract_version><selection_configuration_digest>{coverage_manifest['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>completed-clean</status><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><review_agent_raw_status>clean</review_agent_raw_status><evidence_ref>evidence/review.xml</evidence_ref><risk_refs/><backlog_refs/><execution_status_effect>none</execution_status_effect><reason/></checkpoint></checkpoints>
     <risks/><state_errors/><next_action>continue</next_action>
   </write_test_review>
+  {manual_qa_handoff}
 </agentic_run_manifest>"""
 
-    def validate_fixture(source: str) -> list[str]:
+    current_digest = f"""<?xml version="1.0"?>
+<agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>completed</status></digest>
+<execution_knowledge_captures/>
+<write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{policy_digest}</policy_digest><status>completed-clean</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{coverage_digest}</coverage_digest><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><review_agent_raw_status>clean</review_agent_raw_status><evidence_ref>evidence/review.xml</evidence_ref><risk_refs/><backlog_refs/><reason/></checkpoint></checkpoints><findings/><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review>
+{manual_qa_handoff}</agentic_run_digest>"""
+
+    def validate_fixture(source: str, digest_source: str | None = None) -> list[str]:
         with tempfile.TemporaryDirectory() as directory:
             run_dir = Path(directory)
             (run_dir / "agentic-run-manifest.xml").write_text(source, encoding="utf-8")
+            if digest_source is None and 'schema_version="4"' in source:
+                source_status = child_text(ET.fromstring(source), "run/status")
+                digest_source = current_digest.replace(
+                    "<status>completed</status>",
+                    f"<status>{source_status}</status>",
+                    1,
+                )
+            if digest_source is not None:
+                (run_dir / "agentic-run-digest.xml").write_text(
+                    digest_source, encoding="utf-8"
+                )
             return validate_run_dir(run_dir)
 
     legacy_failures = validate_fixture(legacy)
@@ -1750,7 +1972,7 @@ def run_self_test() -> None:
 
     def handoff_fixture_for_status(status: str) -> str:
         candidate = implementation_handoff.replace(
-            "<status>completed</status>", f"<status>{status}</status>"
+            "<status>awaiting-manual-qa</status>", f"<status>{status}</status>"
         )
         if status in IMPLEMENTATION_HANDOFF_PRETERMINAL_STATUSES:
             for field in (
@@ -1766,9 +1988,66 @@ def run_self_test() -> None:
                 )
         return current.replace(implementation_handoff, candidate)
 
-    for status in sorted(IMPLEMENTATION_HANDOFF_STATUSES):
-        status_failures = validate_fixture(handoff_fixture_for_status(status))
-        assert status_failures == [], (status, status_failures)
+    def manual_qa_fixture_for_status(status: str) -> str:
+        candidate = manual_qa_handoff.replace(
+            "<status>ready-for-manual-qa</status>", f"<status>{status}</status>"
+        )
+        if status != "ready-for-manual-qa":
+            candidate = candidate.replace(
+                "<reason/>", f"<reason>{status} reconciliation</reason>"
+            )
+        return candidate
+
+    def reconciliation_failures(
+        implementation_status: str, parent_status: str, manual_qa_status: str
+    ) -> list[str]:
+        manifest_source = handoff_fixture_for_status(implementation_status)
+        manual_source = manual_qa_fixture_for_status(manual_qa_status)
+        manifest_source = manifest_source.replace(
+            manual_qa_handoff, manual_source
+        ).replace(
+            "<run><run_id>run-self-test</run_id><status>completed</status></run>",
+            f"<run><run_id>run-self-test</run_id><status>{parent_status}</status></run>",
+            1,
+        )
+        digest_source = current_digest.replace(
+            manual_qa_handoff, manual_source
+        ).replace(
+            "<digest><run_id>run-self-test</run_id><status>completed</status></digest>",
+            f"<digest><run_id>run-self-test</run_id><status>{parent_status}</status></digest>",
+            1,
+        )
+        return validate_fixture(manifest_source, digest_source)
+
+    reconciliation_negative_count = 0
+    for implementation_status, expected in sorted(
+        TERMINAL_RECONCILIATION_BY_IMPLEMENTATION_STATUS.items()
+    ):
+        positive_failures = reconciliation_failures(
+            implementation_status, expected[0], expected[1]
+        )
+        assert positive_failures == [], (
+            implementation_status,
+            expected,
+            positive_failures,
+        )
+        for parent_status in sorted(CURRENT_RUN_STATUSES):
+            for manual_qa_status in sorted(MANUAL_QA_HANDOFF_STATUSES):
+                if (parent_status, manual_qa_status) == expected:
+                    continue
+                combination_failures = reconciliation_failures(
+                    implementation_status, parent_status, manual_qa_status
+                )
+                assert any(
+                    "invalid terminal reconciliation" in failure
+                    for failure in combination_failures
+                ), (
+                    implementation_status,
+                    parent_status,
+                    manual_qa_status,
+                    combination_failures,
+                )
+                reconciliation_negative_count += 1
 
     invalid_implementation_statuses = (
         RESOLVED_GATE_STATUSES
@@ -1916,8 +2195,8 @@ def run_self_test() -> None:
     assert_clean_report_invalid(raw_status="blocked")
     assert_clean_report_invalid(raw_status="findings")
     digest_review = ET.fromstring(f"""
-<agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>running</status></digest>
-<write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{policy_digest}</policy_digest><status>completed-with-findings</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{coverage_digest}</coverage_digest><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><review_agent_raw_status>blocked</review_agent_raw_status><evidence_ref>evidence/review.xml</evidence_ref><risk_refs><risk_ref>risk-1</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-1</backlog_ref></backlog_refs><reason/></checkpoint></checkpoints><findings><finding finding_id="finding-1"><checkpoint_id>{checkpoint_id}</checkpoint_id><review_handoff_id>{review_handoff_id}</review_handoff_id><agent_run_id>review-run-1</agent_run_id><evidence_ref>evidence/review.xml</evidence_ref><risk_ref>risk-1</risk_ref><backlog_ref>WTR-1</backlog_ref></finding></findings><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review></agentic_run_digest>""")
+<agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>completed</status></digest>
+<write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{policy_digest}</policy_digest><status>completed-with-findings</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{coverage_digest}</coverage_digest><review_handoff_id>{review_handoff_id}</review_handoff_id><review_agent_run_id>review-run-1</review_agent_run_id><review_agent_raw_status>blocked</review_agent_raw_status><evidence_ref>evidence/review.xml</evidence_ref><risk_refs><risk_ref>risk-1</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-1</backlog_ref></backlog_refs><reason/></checkpoint></checkpoints><findings><finding finding_id="finding-1"><checkpoint_id>{checkpoint_id}</checkpoint_id><review_handoff_id>{review_handoff_id}</review_handoff_id><agent_run_id>review-run-1</agent_run_id><evidence_ref>evidence/review.xml</evidence_ref><risk_ref>risk-1</risk_ref><backlog_ref>WTR-1</backlog_ref></finding></findings><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review>{manual_qa_handoff}</agentic_run_digest>""")
     digest_failures: list[str] = []
     digest_result = validate_digest(
         {Path("digest.xml"): digest_review}, digest_failures, {"policy_digest": policy_digest, "policy_ref": "tasks.md#policy", "requested": "plano", "effective": "plano"}, checkpoint_record
@@ -1984,10 +2263,10 @@ def run_self_test() -> None:
         evidence = "evidence/review.xml" if status == "failed-consultive" else ""
         selected_xml = selected_agent or ""
         manifest_source = f"""<?xml version="1.0"?>
-<agentic_run_manifest schema_version="4"><run><run_id>run-self-test</run_id><status>running</status></run><freshness_signature/><execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy><write_test_review schema_version="1"><request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request>{implementation_handoff}<reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>{selected_xml}</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{degraded_coverage['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>{selected_xml}</name><contract_version>1</contract_version><selection_configuration_digest>{degraded_coverage['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>{status}</status><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><execution_status_effect>none</execution_status_effect><reason>review degraded</reason></checkpoint></checkpoints><risks><risk_ref>risk-degraded</risk_ref></risks><state_errors/><next_action>continue</next_action></write_test_review></agentic_run_manifest>"""
+<agentic_run_manifest schema_version="4"><run><run_id>run-self-test</run_id><status>completed</status></run><freshness_signature/><execution_knowledge_policy><promotion_owner>loki-continuous-improvement</promotion_owner></execution_knowledge_policy><write_test_review schema_version="1"><request><requested_frequency>plano</requested_frequency><provenance>explicit</provenance></request>{implementation_handoff}<reconciled_policy><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><effective_frequency>plano</effective_frequency><terminal_scope>plano</terminal_scope><selected_agent_name>{selected_xml}</selected_agent_name><selection_reason>compatible metadata</selection_reason></reconciled_policy><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><coverage_manifest schema_version="1"><handoffs><handoff><handoff_id>write-1</handoff_id><completion_ref>completion/write-1.md</completion_ref><evidence_ref>evidence/write-1.xml</evidence_ref><changed_files><file><path>target.md</path><sha256>{degraded_coverage['handoffs'][0]['changed_files'][0]['sha256']}</sha256></file></changed_files></handoff></handoffs><reviewer><name>{selected_xml}</name><contract_version>1</contract_version><selection_configuration_digest>{degraded_coverage['reviewer']['selection_configuration_digest']}</selection_configuration_digest></reviewer></coverage_manifest><covered_write_handoff_ids><handoff_id>write-1</handoff_id></covered_write_handoff_ids><status>{status}</status><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><execution_status_effect>none</execution_status_effect><reason>review degraded</reason></checkpoint></checkpoints><risks><risk_ref>risk-degraded</risk_ref></risks><state_errors/><next_action>continue</next_action></write_test_review>{manual_qa_handoff}</agentic_run_manifest>"""
         digest_source = f"""<?xml version="1.0"?>
-<agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>running</status></digest>
-<write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><status>{status}</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><reason>review degraded</reason></checkpoint></checkpoints><findings/><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review></agentic_run_digest>"""
+<agentic_run_digest schema_version="4"><digest><run_id>run-self-test</run_id><status>completed</status></digest>
+<write_test_review schema_version="1"><policy_ref>tasks.md#policy</policy_ref><policy_digest>{degraded_policy_digest}</policy_digest><requested_frequency>plano</requested_frequency><effective_frequency>plano</effective_frequency><checkpoints><checkpoint checkpoint_id="{degraded_checkpoint_id}"><execution_id>{execution_id}</execution_id><policy_digest>{degraded_policy_digest}</policy_digest><status>{status}</status><boundary_type>plano</boundary_type><boundary_ref>plan-self-test</boundary_ref><coverage_digest>{degraded_coverage_digest}</coverage_digest><review_handoff_id>{handoff}</review_handoff_id><review_agent_run_id>{agent_run}</review_agent_run_id><review_agent_raw_status>{raw_status}</review_agent_raw_status><evidence_ref>{evidence}</evidence_ref><risk_refs><risk_ref>risk-degraded</risk_ref></risk_refs><backlog_refs><backlog_ref>WTR-DEGRADED</backlog_ref></backlog_refs><reason>review degraded</reason></checkpoint></checkpoints><findings/><execution_status_effect>none</execution_status_effect><state_errors/></write_test_review>{manual_qa_handoff}</agentic_run_digest>"""
         backlog_source = f"""## Consultive Write Test Outcomes
 
 | ID | Checkpoint | Review Handoff | Agent Run | Evidence | Coverage | Risk | Status | Reason | Description | Suggested Owner |
@@ -2039,16 +2318,31 @@ def run_self_test() -> None:
         )
         unknown_digest_failures = validate_run_dir(run_dir)
         assert any("requires digest schema 4" in failure for failure in unknown_digest_failures)
-    consultive_blocker = current.replace("<status>running</status>", "<status>blocked</status>").replace(
+    consultive_blocker = current.replace(
+        "<status>completed</status>", "<status>blocked</status>", 1
+    ).replace(
         "<freshness_signature/>",
         f"<freshness_signature/><handoffs><handoff><handoff_id>{review_handoff_id}</handoff_id><agent_run_id>review-run-1</agent_run_id><evidence_id>review-evidence</evidence_id><evidence_manifest_path>evidence/review.xml</evidence_manifest_path><status>blocked</status><blockers><blocker>consultive review blocked</blocker></blockers></handoff></handoffs>",
     )
     consultive_blocker_failures = validate_fixture(consultive_blocker)
-    assert any("outer blocked status lacks non-consultive blocker evidence" in failure for failure in consultive_blocker_failures)
+    assert any(
+        "outer blocked status lacks non-consultive blocker evidence" in failure
+        for failure in consultive_blocker_failures
+    )
     with tempfile.TemporaryDirectory() as directory:
         run_dir = Path(directory)
-        blocked_manifest = current.replace("<status>running</status>", "<status>blocked</status>")
-        (run_dir / "agentic-run-manifest.xml").write_text(blocked_manifest, encoding="utf-8")
+        blocked_manifest = current.replace(
+            "<status>completed</status>", "<status>blocked</status>", 1
+        )
+        blocked_digest = current_digest.replace(
+            "<status>completed</status>", "<status>blocked</status>", 1
+        )
+        (run_dir / "agentic-run-manifest.xml").write_text(
+            blocked_manifest, encoding="utf-8"
+        )
+        (run_dir / "agentic-run-digest.xml").write_text(
+            blocked_digest, encoding="utf-8"
+        )
         (run_dir / "consultive-review.xml").write_text(
             f"""<?xml version="1.0"?><agent_session_evidence><identity><handoff_id>{review_handoff_id}</handoff_id></identity><blockers><blocker>raw reviewer blocker</blocker></blockers><validators><validator><status>failed</status></validator></validators></agent_session_evidence>""",
             encoding="utf-8",
@@ -2128,14 +2422,16 @@ def run_self_test() -> None:
         "coverage": current.replace("<handoff_id>write-1</handoff_id>", ""),
         "policy-conflict": current.replace("<state_errors/>", "<state_errors><state_error code=\"policy-conflict\"/></state_errors>"),
         "default-provenance": current.replace("<provenance>explicit", "<provenance>default"),
-        "outer-blocked": current.replace("<status>running", "<status>blocked"),
+        "outer-blocked": current.replace("<status>completed", "<status>blocked", 1),
         "nondeterministic-review-handoff": current.replace(review_handoff_id, "review-handoff-v1:" + "d" * 64),
         "unsorted-coverage": current.replace("<handoff_id>write-1</handoff_id>", "<handoff_id>write-1</handoff_id><handoff_id>write-0</handoff_id>"),
         "clean-missing-evidence": current.replace("<evidence_ref>evidence/review.xml</evidence_ref>", "<evidence_ref/>", 1),
         "unavailable-with-dispatch": current.replace("completed-clean", "skipped-agent-unavailable"),
         "executor-status": current.replace(
             implementation_handoff,
-            implementation_handoff.replace("<status>completed</status>", "<status>BANANA</status>"),
+            implementation_handoff.replace(
+                "<status>awaiting-manual-qa</status>", "<status>BANANA</status>"
+            ),
         ),
         "duplicate-implementation-handoff": current.replace(
             implementation_handoff, implementation_handoff + implementation_handoff
@@ -2149,7 +2445,11 @@ def run_self_test() -> None:
             "<analysis_file>analise/technical-analysis.txt</analysis_file>",
         ),
         "dispatched-with-returned-state": current.replace(
-            "<status>completed</status>", "<status>dispatched</status>", 1
+            implementation_handoff,
+            implementation_handoff.replace(
+                "<status>awaiting-manual-qa</status>",
+                "<status>dispatched</status>",
+            ),
         ),
         "forged-policy-digest": current.replace(policy_digest, "sha256:" + "f" * 64),
         "forged-coverage-digest": current.replace(coverage_digest, "sha256:" + "f" * 64),
@@ -2179,6 +2479,89 @@ def run_self_test() -> None:
             "<status>completed-clean</status><status>failed</status>",
             1,
         ),
+        "outer-running": current.replace(
+            "<run><run_id>run-self-test</run_id><status>completed</status>",
+            "<run><run_id>run-self-test</run_id><status>running</status>",
+        ),
+        "outer-draft": current.replace(
+            "<run><run_id>run-self-test</run_id><status>completed</status>",
+            "<run><run_id>run-self-test</run_id><status>draft</status>",
+        ),
+        "outer-pending-human": current.replace(
+            "<run><run_id>run-self-test</run_id><status>completed</status>",
+            "<run><run_id>run-self-test</run_id><status>pending-human-validation</status>",
+        ),
+        "missing-manual-qa-handoff": current.replace(manual_qa_handoff, ""),
+        "duplicate-manual-qa-handoff": current.replace(
+            manual_qa_handoff, manual_qa_handoff + manual_qa_handoff
+        ),
+        "superseded-manual-qa-schema": current.replace(
+            "<schema_version>2</schema_version>",
+            "<schema_version>1</schema_version>",
+            1,
+        ),
+        "manual-qa-extra-key": current.replace(
+            "</manual_qa_handoff>", "<handoff_digest>sha256:evil</handoff_digest></manual_qa_handoff>", 1
+        ),
+        "manual-qa-missing-automatic-evidence-refs": current.replace(
+            "<automatic_evidence_refs><ref>evidence/terminal-1.json</ref><ref>evidence/terminal-2.json</ref></automatic_evidence_refs>",
+            "",
+            1,
+        ),
+        "manual-qa-missing-task-refs": current.replace(
+            "<task_refs><ref>tasks.md#task-1</ref><ref>tasks.md#task-2</ref></task_refs>",
+            "",
+            1,
+        ),
+        "manual-qa-missing-acceptance-criterion-refs": current.replace(
+            "<acceptance_criterion_refs><ref>tasks.md#ac-1</ref><ref>tasks.md#ac-2</ref></acceptance_criterion_refs>",
+            "",
+            1,
+        ),
+        "manual-qa-missing-gate-refs": current.replace(
+            "<gate_refs><ref>tasks.md#gate-1</ref><ref>tasks.md#gate-2</ref></gate_refs>",
+            "",
+            1,
+        ),
+        "manual-qa-missing-changed-target-refs": current.replace(
+            "<changed_target_refs><ref>src/one.py</ref><ref>src/two.py</ref></changed_target_refs>",
+            "",
+            1,
+        ),
+        "manual-qa-wrong-run": current.replace(manual_run_id, "run-untyped", 1),
+        "manual-qa-wrong-execution": current.replace(
+            manual_execution_id, "execution-untyped", 1
+        ),
+        "manual-qa-wrong-plan": current.replace(
+            "<plan_directory>implementation</plan_directory>",
+            "<plan_directory>other-plan</plan_directory>",
+            1,
+        ),
+        "manual-qa-wrong-result-anchor": current.replace(
+            "implementation/builds/manual-qa/result.json",
+            "implementation/builds/manual-qa/other.json",
+            1,
+        ),
+        "manual-qa-wrong-attestation-anchor": current.replace(
+            f"implementation/interaction/manual-qa/{manual_run_id}/attestation.json",
+            "implementation/interaction/manual-qa/wrong/attestation.json",
+            1,
+        ),
+        "manual-qa-ready-with-reason": current.replace(
+            "<reason/></manual_qa_handoff>",
+            "<reason>must be null</reason></manual_qa_handoff>",
+            1,
+        ),
+        "manual-qa-ready-without-evidence": current.replace(
+            "<automatic_evidence_refs><ref>evidence/terminal-1.json</ref><ref>evidence/terminal-2.json</ref></automatic_evidence_refs>",
+            "<automatic_evidence_refs/>",
+            1,
+        ),
+        "manual-qa-not-required-without-reason": current.replace(
+            "<status>ready-for-manual-qa</status>",
+            "<status>manual-qa-not-required</status>",
+            1,
+        ),
         "scheduled-with-handoff": scheduled.replace("<review_handoff_id/>", f"<review_handoff_id>{review_handoff_id}</review_handoff_id>"),
         "scheduled-with-run": scheduled.replace("<review_agent_run_id/>", "<review_agent_run_id>review-run-1</review_agent_run_id>"),
         "scheduled-with-evidence": scheduled.replace("<evidence_ref/>", "<evidence_ref>evidence/review.xml</evidence_ref>"),
@@ -2189,10 +2572,83 @@ def run_self_test() -> None:
     for name, source in negative_cases.items():
         failures = validate_fixture(source)
         assert failures, f"negative fixture accepted: {name}"
+    drift_digest = current_digest.replace(
+        "implementation/builds/manual-qa/result.json",
+        "implementation/builds/manual-qa/drift.json",
+        1,
+    )
+    drift_failures = validate_fixture(current, drift_digest)
+    assert any(
+        "manifest and digest manual_qa_handoff projections differ" in failure
+        for failure in drift_failures
+    )
+    ordered_array_drifts = {
+        "automatic_evidence_refs": (
+            "<automatic_evidence_refs><ref>evidence/terminal-1.json</ref><ref>evidence/terminal-2.json</ref></automatic_evidence_refs>",
+            "<automatic_evidence_refs><ref>evidence/terminal-2.json</ref><ref>evidence/terminal-1.json</ref></automatic_evidence_refs>",
+        ),
+        "task_refs": (
+            "<task_refs><ref>tasks.md#task-1</ref><ref>tasks.md#task-2</ref></task_refs>",
+            "<task_refs><ref>tasks.md#task-2</ref><ref>tasks.md#task-1</ref></task_refs>",
+        ),
+        "acceptance_criterion_refs": (
+            "<acceptance_criterion_refs><ref>tasks.md#ac-1</ref><ref>tasks.md#ac-2</ref></acceptance_criterion_refs>",
+            "<acceptance_criterion_refs><ref>tasks.md#ac-2</ref><ref>tasks.md#ac-1</ref></acceptance_criterion_refs>",
+        ),
+        "gate_refs": (
+            "<gate_refs><ref>tasks.md#gate-1</ref><ref>tasks.md#gate-2</ref></gate_refs>",
+            "<gate_refs><ref>tasks.md#gate-2</ref><ref>tasks.md#gate-1</ref></gate_refs>",
+        ),
+        "changed_target_refs": (
+            "<changed_target_refs><ref>src/one.py</ref><ref>src/two.py</ref></changed_target_refs>",
+            "<changed_target_refs><ref>src/two.py</ref><ref>src/one.py</ref></changed_target_refs>",
+        ),
+    }
+    for field, (ordered, reordered) in ordered_array_drifts.items():
+        array_drift_failures = validate_fixture(
+            current, current_digest.replace(ordered, reordered, 1)
+        )
+        assert any(
+            "manifest and digest manual_qa_handoff projections differ" in failure
+            for failure in array_drift_failures
+        ), f"manual_qa_handoff array drift accepted: {field}"
+    blocked_manual_qa_handoff = manual_qa_fixture_for_status(
+        "manual-qa-not-evaluated"
+    )
+    blocked_manifest = handoff_fixture_for_status("failed").replace(
+        manual_qa_handoff, blocked_manual_qa_handoff
+    ).replace(
+        "<run><run_id>run-self-test</run_id><status>completed</status></run>",
+        "<run><run_id>run-self-test</run_id><status>blocked</status></run>",
+        1,
+    ).replace(
+        "</agentic_run_manifest>",
+        "<validators><validator><status>failed</status></validator></validators></agentic_run_manifest>",
+    )
+    blocked_digest = current_digest.replace(
+        manual_qa_handoff, blocked_manual_qa_handoff
+    ).replace(
+        "<digest><run_id>run-self-test</run_id><status>completed</status></digest>",
+        "<digest><run_id>run-self-test</run_id><status>blocked</status></digest>",
+        1,
+    )
+    assert validate_fixture(blocked_manifest, blocked_digest) == []
+    consultive_only_blocked = current.replace(
+        "<status>completed</status>", "<status>blocked</status>", 1
+    ).replace(
+        "<freshness_signature/>",
+        f"<freshness_signature/><handoffs><handoff><handoff_id>{review_handoff_id}</handoff_id><agent_run_id>review-run-1</agent_run_id><evidence_id>review-evidence</evidence_id><evidence_manifest_path>evidence/review.xml</evidence_manifest_path><status>blocked</status></handoff></handoffs>",
+    )
+    consultive_failures = validate_fixture(consultive_only_blocked)
+    assert any(
+        "outer blocked status lacks non-consultive blocker evidence" in failure
+        for failure in consultive_failures
+    )
     print(
         "self-test: passed "
-        f"({len(IMPLEMENTATION_HANDOFF_STATUSES)} implementation handoff statuses "
-        f"positive; {len(invalid_implementation_statuses)} invalid statuses negative; "
+        f"({len(TERMINAL_RECONCILIATION_BY_IMPLEMENTATION_STATUS)} terminal reconciliations "
+        f"positive; {reconciliation_negative_count} invalid combinations negative; "
+        f"{len(invalid_implementation_statuses)} invalid implementation statuses negative; "
         "canonical schemas positive; legacy/unknown schemas and contract violations negative)"
     )
 

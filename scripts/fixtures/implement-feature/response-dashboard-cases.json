@@ -16,29 +16,34 @@
       }
     },
     {
-      "id": "matrix-34-early-human-request",
+      "id": "matrix-34-early-manual-qa-handoff",
       "matrix": true,
-      "scenario": "Human validation requested before DAG terminal",
+      "scenario": "Manual QA handoff before automatic terminal approval",
       "rule": "execution-state",
-      "expect": "accept",
+      "expect": "reject",
+      "error": "HUMAN_REQUEST_BEFORE_AUTOMATIC_TERMINAL",
       "payload": {
         "event": "human-request",
-        "dag_terminal": false,
-        "accumulated": true,
-        "dispatch_interrupted": false
+        "manual_qa_handoff": "ready-for-manual-qa",
+        "automatic_terminal_approved": false,
+        "persisted_status": "awaiting-manual-qa",
+        "dispatch_interrupted": false,
+        "technical_projection_rewritten": false
       }
     },
     {
-      "id": "matrix-35-final-human-request",
+      "id": "matrix-35-final-manual-qa-handoff",
       "matrix": true,
-      "scenario": "Human validation at final reconciliation",
+      "scenario": "Manual QA handoff after automatic validation",
       "rule": "execution-state",
       "expect": "accept",
       "payload": {
         "event": "human-request",
-        "dag_terminal": true,
-        "sole_remaining_condition": true,
-        "terminal_status": "pending-human-validation"
+        "manual_qa_handoff": "ready-for-manual-qa",
+        "automatic_terminal_approved": true,
+        "persisted_status": "awaiting-manual-qa",
+        "dispatch_interrupted": false,
+        "technical_projection_rewritten": false
       }
     },
     {
@@ -115,11 +120,7 @@
         "decisions": [
           "analysis.md#decision"
         ],
-        "manual_test": {
-          "status": "none",
-          "reason": "validator-only surface",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-required", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/final.log"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Validator-only surface."},
         "evidence": [
           "builds/final.log"
         ],
@@ -175,11 +176,7 @@
         "inferred_targets": [],
         "learned_records": [],
         "decisions": [],
-        "manual_test": {
-          "status": "none",
-          "reason": "execution failed",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-required", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/failure.log"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Execution failed."},
         "evidence": [
           "builds/failure.log"
         ],
@@ -231,11 +228,7 @@
         "inferred_targets": [],
         "learned_records": [],
         "decisions": [],
-        "manual_test": {
-          "status": "none",
-          "reason": "no changed runtime surface",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-evaluated", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/final.log"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Automatic validation is not terminal."},
         "evidence": [],
         "risks": [
           "evidence missing"
@@ -246,31 +239,20 @@
       }
     },
     {
-      "id": "matrix-41-manual-field-missing",
+      "id": "matrix-41-superseded-manual-qa-handoff-v1",
       "matrix": true,
-      "scenario": "Manual step missing one required field",
-      "rule": "manual",
+      "scenario": "Superseded manual-QA handoff v1",
+      "rule": "manual-qa-handoff",
       "expect": "reject",
-      "error": "MANUAL_FIELD_MISSING",
+      "error": "MANUAL_QA_HANDOFF_SHAPE_INVALID",
       "payload": {
-        "status": "steps",
-        "steps": [
-          {
-            "evidence_or_acceptance_criterion_ref": "AC-1",
-            "environment": "local",
-            "prerequisites": [],
-            "initial_state": "service stopped",
-            "action": "start service",
-            "expected_observable_result": "health is green",
-            "success_signals": [
-              "HTTP 200"
-            ],
-            "failure_signals": [
-              "HTTP 500"
-            ],
-            "cleanup_or_restore": "stop service"
-          }
-        ]
+        "schema_version": 1,
+        "status": "ready-for-manual-qa",
+        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "plan_directory": "planos/dashboard",
+        "automatic_evidence_refs": ["builds/final.log"],
+        "reason": null
       }
     },
     {
@@ -310,11 +292,7 @@
         "inferred_targets": [],
         "learned_records": [],
         "decisions": ["analysis.md#validator-required"],
-        "manual_test": {
-          "status": "none",
-          "reason": "the unresolved validator has no substitute human check",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-evaluated", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/validator-unavailable.json"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Automatic validation is unresolved."},
         "evidence": ["builds/validator-unavailable.json"],
         "risks": ["required validation remains unavailable"],
         "resume": {"status": "unresolved"}
@@ -353,11 +331,7 @@
         "inferred_targets": [],
         "learned_records": [],
         "decisions": ["tasks.md#state-integrity"],
-        "manual_test": {
-          "status": "none",
-          "reason": "integrity failure prevents a meaningful manual check",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-evaluated", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/integrity-failure.json"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Integrity failure prevents a terminal manual-QA decision."},
         "evidence": ["builds/integrity-failure.json"],
         "risks": ["no trustworthy functional result remains"],
         "resume": {"status": "failed"}
@@ -403,11 +377,7 @@
         "inferred_targets": [],
         "learned_records": [],
         "decisions": ["analysis.md#conflict-routing"],
-        "manual_test": {
-          "status": "none",
-          "reason": "human priority decision is required before validation can continue",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-evaluated", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["docs/source-alpha.md#policy"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "A priority decision is required before validation."},
         "evidence": ["docs/source-alpha.md#policy", "docs/source-beta.md#policy"],
         "risks": ["unresolved normative conflict"],
         "resume": {"status": "partial"}
@@ -600,31 +570,25 @@
       }
     },
     {
-      "id": "valid-manual-step",
+      "id": "valid-manual-qa-handoff",
       "matrix": false,
-      "scenario": "Complete manual step passes",
-      "rule": "manual",
+      "scenario": "Complete manual-QA handoff passes",
+      "rule": "manual-qa-handoff",
       "expect": "accept",
       "payload": {
-        "status": "steps",
-        "steps": [
-          {
-            "evidence_or_acceptance_criterion_ref": "AC-1",
-            "environment": "local fixture",
-            "prerequisites": [],
-            "initial_state": "fixture loaded",
-            "action": "run the feature",
-            "expected_observable_result": "result appears",
-            "success_signals": [
-              "expected result"
-            ],
-            "failure_signals": [
-              "error result"
-            ],
-            "cleanup_or_restore": "not-needed because fixture is read-only",
-            "automation_limitation": "human presentation check is not automated"
-          }
-        ]
+        "schema_version": 2,
+        "status": "ready-for-manual-qa",
+        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "plan_directory": "planos/dashboard",
+        "automatic_evidence_refs": ["builds/final.log"],
+        "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json",
+        "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json",
+        "task_refs": ["planos/dashboard/task-1.md"],
+        "acceptance_criterion_refs": ["planos/dashboard/task-1.md#AC-1"],
+        "gate_refs": ["planos/dashboard/builds/human-gate.json"],
+        "changed_target_refs": ["src/feature.txt"],
+        "reason": null
       }
     },
     {
@@ -676,11 +640,7 @@
         "decisions": [
           "analysis.md#decision"
         ],
-        "manual_test": {
-          "status": "none",
-          "reason": "validator-only surface",
-          "steps": []
-        },
+        "manual_qa_handoff": {"schema_version": 2, "status": "manual-qa-not-required", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/dashboard", "automatic_evidence_refs": ["builds/final.log"], "manual_qa_result_ref": "planos/dashboard/builds/manual-qa/result.json", "manual_qa_attestation_ref": "planos/dashboard/interaction/manual-qa/loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/attestation.json", "task_refs": [], "acceptance_criterion_refs": [], "gate_refs": [], "changed_target_refs": [], "reason": "Validator-only surface."},
         "evidence": [
           "builds/final.log"
         ],

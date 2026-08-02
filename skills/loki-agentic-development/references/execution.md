@@ -11,7 +11,7 @@ Markdown → uma chamada a `loki-implement-feature` → completion/evidence →
 execution knowledge → digest/backlog. Ele adiciona POV, cross-review, síntese,
 digest e backlog; não é alias, wrapper ou substituto do command unificado. Inicia com Input normalizado e
 diretório aprovado; termina com todos os handoffs e validators terminais e um
-estado `completed`, `blocked` ou `pending-human-validation`. Produz manifest XML,
+estado `completed` ou `blocked`. Produz manifest XML,
 POVs/síntese, plano, completion records, evidências/gaps, knowledge
 entries/degraded states, digest e backlog.
 
@@ -26,7 +26,8 @@ riscos e próximos passos. Delegação não transfere responsabilidade global.
 
 Carregue `lf-agentic-orchestration`, `lf-tech-analysis-authoring` e
 `lf-execution-knowledge-capture`. Use, nessa ordem condicional,
-`loki-human-decision-preflight` e `loki-implement-feature`.
+`loki-human-decision-preflight` e `loki-implement-feature`; reconheça
+`loki-manual-qa` como o único destino de um handoff `ready-for-manual-qa`.
 Carregue também cada
 `<technology_required_skills>` quando a demanda ou análise exigir tecnologia
 específica. Allowed writes: estado/evidência e a análise Markdown dentro do run
@@ -45,8 +46,13 @@ tecnologia específica, escrita sensível/runtime e validação material. Só re
 trabalho material no orquestrador com exceção concreta, escopo, risco e owner de
 validação registrados.
 
-Use explicitamente `runtime-qa` quando a execução depender de comportamento
-perceptível, integrações, estado persistido ou artefatos gerados.
+Use `execution-context-reader`, read-only, quando comportamento perceptível,
+integrações, estado persistido ou artefatos gerados exigirem contexto e risco
+local adicionais. Quando a lacuna for uma abordagem técnica, use
+`technical-implementer` em modo proposal-only. Nenhum desses handoffs deriva
+QA humano, dashboard, passos manuais, reproduction guides, atestação ou
+aprovação de gate; uma chamada posterior e independente de `loki-manual-qa`
+possui o único dispatch operacional de `runtime-qa`.
 
 Antes de cada subagente, forneça objetivo/motivo, unidade, fatos, decisões,
 restrições, fontes, dependências, allowed/forbidden writes, targets, owner,
@@ -72,29 +78,53 @@ disjuntos; serialize overlaps.
    `plan_directory: <run_directory>/implementation/`. Não crie plano, DAG,
    target decisions, ciclos, retries, dashboard ou loop por fase no parent;
    essas autoridades pertencem ao command unificado.
-8. Em cada checkpoint material, persista primeiro o completion/evidence mínimo
+8. Valide e preserve o `manual_qa_handoff` v2 fechado devolvido, com exatamente
+   `schema_version`, `status`, `run_id`, `execution_id`, `plan_directory`,
+   `automatic_evidence_refs`, `manual_qa_result_ref`,
+   `manual_qa_attestation_ref`, `task_refs`, `acceptance_criterion_refs`,
+   `gate_refs`, `changed_target_refs` e `reason`; digests não pertencem a esse
+   handoff. Preserve a ordem exata de cada lista devolvida.
+   `ready-for-manual-qa` exige `reason: null`: encaminhe o mesmo
+   `plan_directory`, identidades, evidências automáticas e os dois locators para
+   `loki-manual-qa` como próximo comando. `manual-qa-not-required` exige razão
+   não vazia e fecha sem invocar QA manual. `manual-qa-not-evaluated` exige razão
+   não vazia, corresponde a execução técnica não concluída com sucesso e mantém
+   o parent `blocked`. Reconcilie a matriz fechada: implementation handoff
+   `scheduled`, `dispatched`, `running`, `partial`, `failed` ou `cancelled` exige
+   `manual-qa-not-evaluated` e parent `blocked`; `awaiting-manual-qa` exige
+   `ready-for-manual-qa` e parent `completed`; `completed` ou
+   `completed-with-limitations` exige `manual-qa-not-required` e parent
+   `completed`. Qualquer outra combinação bloqueia, mesmo quando manifest e
+   digest sejam idênticos. Nunca derive steps, colete declaração/atestação humana ou
+   converta o resultado posterior de QA em estado deste parent. Outro valor,
+   chave ausente/extra ou divergência de identidade bloqueia a reconciliação.
+   Persista a projeção completa, sem digests, em `agentic-run-manifest.xml` e
+   `agentic-run-digest.xml`. Releia ambos do disco e exija igualdade das treze
+   chaves, identidades tipadas, `plan_directory`, listas ordenadas, anchors,
+   status e razão antes de responder, retomar ou rotear.
+9. Em cada checkpoint material, persista primeiro o completion/evidence mínimo
    sanitizado. Só depois, quando suportado, invoque
    `execution-knowledge-cataloger` em paralelo para um target exclusivo em
    `<run>/execution-knowledge/entries/<capture-id>.xml`; a implementação
    continua sem esperar pelo enriquecimento.
-9. Reconcilie serialmente `captured`, `partial`, `failed`, `unsupported` ou
+10. Reconcilie serialmente `captured`, `partial`, `failed`, `unsupported` ou
    `skipped-nonmaterial` no checkpoint/run state/digest. No checkpoint final,
    não espere por handoff não terminal: interrompa/cancele e registre `partial`
    com reason e `minimum_next_path`. Falha ou validator de knowledge nunca
    invalida implementação já validada.
-10. Registre timing, usage exato/estimado/indisponível sem misturar categorias,
+11. Registre timing, usage exato/estimado/indisponível sem misturar categorias,
     replay/validator, materiality precheck e liveness probe no agent-run report
     schema `6` e nos spans correlacionados. Telemetria falha degrada apenas
     métricas; não existe budget/stop automático de custo.
-11. Registre validators, digest e backlog; finalize o estado e o próximo passo.
+12. Registre validators, digest e backlog; finalize o estado e o próximo passo.
    Retrospectiva é ação explícita, nunca fallback, e somente
    `loki-continuous-improvement` promove conhecimento.
 
 Antes da chamada única, persista o locator/digest da demanda, análise Markdown,
 plan directory reservado e `implementation_handoff_id`. Depois do retorno,
-reconcilie a identidade, `loki_run_state`/digest, completion/evidence, validators
-e dashboard fornecidos pelo command unificado. Divergência ou segundo handoff é
-stop condition.
+reconcilie a identidade, `loki_run_state`/digest, completion/evidence, validators,
+dashboard e o `manual_qa_handoff` v2 fornecidos pelo command unificado.
+Divergência, chave extra, digest no handoff ou segundo handoff é stop condition.
 
 Imediatamente antes de abort/interrupção/cancelamento por silêncio, execute o
 probe observado do adapter e persista timestamp, source, outcome e reason.
@@ -118,9 +148,11 @@ com targets/limits/controls; trabalho material delegado ou exceção; checkpoint
 experience; zero must-ask pendente antes da análise Markdown; zero overlap
 paralelo; um handoff unificado com inputs/digests exatos;
 validators/evidência ou gap explícito por fase; zero
-write fora de escopo. Aplique interview para decisões materiais pré-plano,
-approval para instalação, política ou escrita sensível, e human-validation para
-runtime. Quando esta execução identificar um candidato de pacote, registre somente o
+write fora de escopo. Aplique interview para decisões materiais pré-plano e
+approval para instalação, política ou escrita sensível. Runtime manual material
+deve resultar no handoff `ready-for-manual-qa` para `loki-manual-qa`; este
+workflow não coleta observação ou atestação humana. Quando esta execução
+identificar um candidato de pacote, registre somente o
 encaminhamento para uma futura `loki-continuous-improvement` com
 `destination_scope: package`; não invoque Writer nem Auditor do pacote. Pare se
 qualquer controle concreto falhar ou estiver pendente; validator não substitui
@@ -167,6 +199,11 @@ implementation handoff, fase/task atual,
 agent runs, targets, owners, validators, completion/evidence states, capture
 IDs, knowledge target/status/reason/minimum next path, blockers, backlog, status
 e próximo passo. Preserve locator/digests da demanda/análise, plan directory,
-handoff ID e as referências/digest do current run state, execution metrics e
-dashboard devolvidos.
-Retome o mesmo handoff/estado sem loop por fase ou reinício quando suficiente.
+handoff ID e as referências/digest do current run state, execution metrics,
+dashboard e `manual_qa_handoff` v2 devolvidos. Preserve também o destino
+`loki-manual-qa` para `ready-for-manual-qa`, ou a razão não vazia de
+`manual-qa-not-required` ou `manual-qa-not-evaluated`.
+Retome somente das projeções atuais iguais lidas de
+`agentic-run-manifest.xml` e `agentic-run-digest.xml`; memória de conversa não
+reconstrói campo ausente nem resolve drift. Retome o mesmo handoff/estado sem
+loop por fase ou reinício quando suficiente.

@@ -1,6 +1,6 @@
 ---
 name: loki-agentic-development
-description: Run the Loki `loki-agentic-development` command bundle. Add selected agent POVs, cross-review, synthesis and a decision-complete Markdown analysis before one loki-implement-feature handoff, then reconcile completion/evidence, non-blocking execution knowledge, digest and backlog.
+description: Run the Loki `loki-agentic-development` command bundle. Add selected agent POVs, cross-review, synthesis and a decision-complete Markdown analysis before one loki-implement-feature handoff, then reconcile completion/evidence, route its closed manual-QA handoff, capture non-blocking execution knowledge, and publish digest/backlog.
 when_to_use:
   - "Use when a demand should pass through selected multi-agent POV analysis and synthesis before one unified feature implementation."
   - "Use when the run requires resumable XML state, scoped writers, validators, human gates, completion/evidence, non-blocking execution-knowledge capture and digest."
@@ -37,7 +37,7 @@ type: command
 serialization: skill-bundle
 domain: orchestration
 required_skills: [lf-agentic-orchestration, lf-tech-analysis-authoring, lf-execution-knowledge-capture]
-required_commands: [loki-human-decision-preflight, loki-implement-feature]
+required_commands: [loki-human-decision-preflight, loki-implement-feature, loki-manual-qa]
 status: draft
 used_by: [loki-agentic-development]
 ---

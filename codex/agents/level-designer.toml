@@ -118,7 +118,7 @@ sao classes por root e somente seus writers aprovados escrevem.
 - Story, ticket, mapa conceitual, quest brief, encounter brief ou proposta
   aprovada pelo orquestrador.
 - Outputs de `game-designer`, `narrative-designer`, `quest-content-designer`,
-  `gameplay-engineer`, `runtime-qa` ou `game-business-analyst`.
+  `gameplay-engineer`, `execution-context-reader` ou `game-business-analyst`.
 - `<domain_ids>` relevantes, como map IDs, area IDs, quest IDs, encounter IDs,
   route IDs, scene IDs ou system IDs.
 - `<technology_required_skills>` apenas quando mapas, eventos, dados,
@@ -137,7 +137,7 @@ sao classes por root e somente seus writers aprovados escrevem.
 - Perguntas abertas quando escala, caminho critico, constraints, assets,
   estados ou validacao estiverem ambiguos.
 - Handoff estruturado para `game-designer`, `gameplay-engineer`,
-  `balance-economy-designer`, `quest-content-designer`, `runtime-qa` ou
+  `balance-economy-designer`, `quest-content-designer`, `technical-implementer` ou
   `game-business-analyst`.
 
 ## Allowed Writes

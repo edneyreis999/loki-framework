@@ -61,7 +61,8 @@ não existe projection ou command físico separado.
 | `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
 | `loki-agentic-development` | `mvp` | Executar o caminho avancado com analise multiagente, gates, um unico handoff ao `loki-implement-feature`, completion/evidence, knowledge state, digest e backlog. |
-| `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e métricas v1, DAG, retry e terminal truth. |
+| `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e métricas v1, DAG e retry; com QA material persiste `awaiting-manual-qa` mais handoff v2 `ready-for-manual-qa`, e sem QA conclui com `manual-qa-not-required`. |
+| `loki-manual-qa` | `mvp` | Owner exclusivo do QA manual pos-implementacao: deriva catalogo exaustivo de ACs, gates humanos e superficies alteradas, mostra passos concretos, oferece ajuda por ID sem mutacao, aceita somente atestacao agregada sem evidencia/resultado por teste e promove `awaiting-manual-qa` para `completed` reconciliando gates, estado, result, dashboard e consistency. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
 | `loki-retrospectiva-tecnica` | `mvp` | Registrar retrospectiva tecnica reutilizavel ao fim de uma fase ou apos uma dificuldade real ser resolvida de fato. |
 | `loki-continuous-improvement` | `mvp` | Aceitar fontes aprovadas ou um `plan_directory` completo; inventariar e retomar estado XML, reconciliar claims globalmente, aplicar o Semantic Abstraction Gate antes do candidate v2 current-only, promover por envelopes root-bound e provar recuperação de todo conhecimento material. |
@@ -96,8 +97,8 @@ approval vincula diretorio canonico, target exato, basename/versao,
 before-state/snapshot e um create exclusivo. Colisao posterior invalida a
 approval, bloqueia sem retry e exige nova resolucao e nova approval.
 
-O pacote possui 19 command bundles `loki-*` ativos, todos com escopo de
-instalacao `both`. O router geral `lf-command-workflows` expoe 17 workflows de
+O pacote possui 20 command bundles `loki-*` ativos, todos com escopo de
+instalacao `both`. O router geral `lf-command-workflows` expoe 18 workflows de
 uso geral; os dois workflows de manutencao do pacote,
 `loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados por
 `lf-internal-command-workflows`. Instalar esses workflows em um consumidor nao
@@ -170,10 +171,10 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 17 commands Loki de uso geral disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 18 commands Loki de uso geral disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill `both` especializada em rotear extracao de conhecimento e self-healing; a disponibilidade no consumidor nao amplia os limites package-only desses workflows. |
 | `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
-| `lf-implement-feature-execution` | `mvp` | Autoridade current-only para command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, métricas v1, target decisions, DAG, preflights, AC/validators, liveness, retry, resume e terminal truth. |
+| `lf-implement-feature-execution` | `mvp` | Autoridade current-only para command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, métricas v1, target decisions, DAG, preflights, AC/validators, liveness, retry, resume, `awaiting-manual-qa`, handoff v2 e terminal truth. |
 | `lf-execution-knowledge-capture` | `mvp` | Separar evidence de knowledge, avaliar materialidade, despachar entry exclusiva sem bloquear e reconciliar estados degradados em checkpoint. |
 | `lf-domain-context-preflight` | `mvp` | Preflight pessoal reutilizavel para docs minimas, fontes atuais, freshness, conflitos e lacunas, sem autocorrecao de docs. |
 | `lf-external-knowledge-extraction` | `mvp` | Extrair observacoes, padroes, exemplos, riscos e aprendizados candidatos de artefatos externos sem decidir mudancas no Loki. |
@@ -202,7 +203,8 @@ bundles.
 | `standards-curator` | `mvp` | Avaliar promocao de aprendizados validados para pacote Loki, documentacao duradoura do consumidor ou backlog. |
 | `retrospective-digester` | `mvp` | Digerir retrospectivas tecnicas em modo read-only, com fan-out por arquivo, retornando aprendizados, atritos, candidatos e evidencias para `loki-continuous-improvement`. |
 | `plan-knowledge-digester` | `mvp` | Digerir um batch disjunto do source manifest em fatos, decisões, learnings, canon, rationales, change claims e findings materiais, sem declarar implementation deltas ou escrever. |
-| `runtime-qa` | `mvp` | Avaliar feedback, checklist de validacao humana e evidencias perceptiveis; pode escrever reports/evidencias quando uma task atribuir target_files. |
+| `runtime-qa` | `mvp` | Propor, em modo read-only/proposal-only e sob dispatch de `loki-manual-qa`, aplicabilidade e guia concreto para uma fonte enumerada; nao deriva o catalogo/dashboard final, observa runtime, coleta atestacao, exige evidencia por teste ou promove status. |
+| `manual-qa-attestation-auditor` | `draft-read-only` | Julgar independentemente, somente apos o dashboard e sob dispatch de `loki-manual-qa`, a semantica da declaracao agregada; devolve `manual_qa_attestation_review` v1 proposal-only sem observar runtime, revisar guias, perguntar, escrever, atestar ou promover gates. |
 | `framework-artifact-writer` | `draft-scoped-writer` | Agente `both` para escrita interna do pacote: emite profile, executa checks e precheck mecanico de materialidade/perfil, e entrega apenas packets ready ao Auditor; a instalacao no consumidor nao autoriza escrita em consumer/runtime. |
 | `framework-artifact-quality-auditor` | `draft-write-test` | Agente `both`, read-only e independente, para auditar patches do pacote: valida profile, rubric v2, fixtures, revisao isolada e bias controls; bloqueia findings/incertezas e nunca corrige producao. |
 | `execution-context-reader` | `mvp` | Extrair contexto read-only da demanda, `analysis_file`, state, task, docs e fontes locais para `loki-implement-feature` sem escrever. |
@@ -252,6 +254,7 @@ bundle e não entram na tabela top-level abaixo. O bundle
 | `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e a matriz temporaria de rejeicao de layouts fora do schema 2, sem tocar destinos consumidores. |
 | `scripts/validate-agentic-run-state.py` | `mvp` | Validar o contrato agentic XML atual (manifest 4, report 6, digest 4 e WTR 1), métricas/liveness e rejeição current-only de schemas removidos. |
 | `scripts/validate-implement-feature-contracts.py` | `mvp` | Validar somente command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e execution metrics v1, incluindo fronteiras due, replay completo, liveness e custo sem budgets/autostop. |
+| `scripts/validate-manual-qa-contracts.py` | `mvp` | Validar handoff/catalogo/guide facts, review independente com `agent_session_evidence` XML, ownership exclusivo, transacoes collision-safe, crash recovery pos-write, chains same-tree, issue fresca, promocao terminal, consistencia, drift e idempotencia do `loki-manual-qa`, com fixtures adversariais. |
 | `scripts/validate-llm-artifact-precheck.py` | `mvp` | Bloquear antes do Auditor packets package fora do approval, materialidade observada ou profiles/partições/projeções incompletos; nunca aprovar qualidade. |
 | `scripts/validate-execution-knowledge.py` | `mvp` | Validar entry schema v1, lineage, materialidade, estados, targets exclusivos, sanitização e ausência de promoção. |
 | `scripts/validate-loki-init-catalogador-contracts.py` | `mvp` | Validar packets e lotes schema v1 do `loki-init`, caller/mode do `catalogador`, ownership serial, fixtures e projeções atuais de agentes. |

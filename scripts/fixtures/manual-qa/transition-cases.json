@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id":"intake-literal-tested-everything","statement":"já testei tudo","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found an unequivocal completed aggregate statement.","expected_status":"created"},
+    {"id":"intake-portuguese-equivalent","statement":"Já testei todos os itens aplicáveis.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found all applicable items explicitly completed.","expected_status":"created"},
+    {"id":"intake-english-equivalent","statement":"I already tested every applicable manual test.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found all applicable manual tests explicitly completed.","expected_status":"created"},
+    {"id":"intake-portuguese-checked-paraphrase","statement":"Conferi cada teste manual aplicável e todos passaram.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found a completed aggregate paraphrase.","expected_status":"created"},
+    {"id":"intake-english-passive-paraphrase","statement":"Every applicable item has been checked.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found a completed aggregate paraphrase.","expected_status":"created"},
+    {"id":"intake-ambiguous-praise","statement":"Parece ótimo.","signals":{"explicit_completed_all":false,"ambiguous":true,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found praise without an aggregate testing assertion.","expected_status":"rejected"},
+    {"id":"intake-ambiguous-completion","statement":"Acho que testei tudo.","signals":{"explicit_completed_all":false,"ambiguous":true,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found uncertainty despite aggregate wording.","expected_status":"rejected"},
+    {"id":"intake-partial-scope","statement":"Testei o MQ-01.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":true},"rationale":"The assessor found that the statement covers only one item.","expected_status":"rejected"},
+    {"id":"intake-negation","statement":"Não testei tudo.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":true,"future_intent":false,"partial_scope":false},"rationale":"The assessor found explicit negation of aggregate completion.","expected_status":"rejected"},
+    {"id":"intake-future-intent","statement":"Vou testar tudo amanhã.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":false,"future_intent":true,"partial_scope":false},"rationale":"The assessor found future intent rather than completed testing.","expected_status":"rejected"}
+  ]
+}

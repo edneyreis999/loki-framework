@@ -112,7 +112,7 @@ consumer/package docs e seus writers exclusivos.
 - Contexto de publico, dificuldade alvo, progressao existente e restricoes de
   escopo quando fornecidos.
 - Outputs de `game-designer`, `level-designer`, `quest-content-designer`,
-  `gameplay-engineer`, `runtime-qa` ou `game-business-analyst`.
+  `gameplay-engineer`, `execution-context-reader` ou `game-business-analyst`.
 - `<domain_ids>` relevantes, como item IDs, skill IDs, enemy IDs, actor IDs,
   quest IDs, shop IDs, economy IDs ou system IDs.
 - `<technology_required_skills>` apenas quando dados reais, database,
@@ -131,7 +131,7 @@ consumer/package docs e seus writers exclusivos.
 - Perguntas abertas quando dados, curva, publico, duracao, dificuldade,
   restricoes ou validadores estiverem ambiguos.
 - Handoff estruturado para `game-designer`, `level-designer`,
-  `quest-content-designer`, `gameplay-engineer`, `runtime-qa` ou
+  `quest-content-designer`, `gameplay-engineer`, `technical-implementer` ou
   `game-business-analyst`.
 
 ## Allowed Writes

@@ -190,7 +190,7 @@ essa tag. Classifique os seguintes 15 papeis como
 
 - `audio-designer`, `balance-economy-designer`, `game-business-analyst`,
   `game-designer`, `game-product-owner`, `gameplay-engineer`, `level-designer`,
-  `narrative-designer`, `narrative-qa`, `quest-content-designer`, `runtime-qa`,
+  `narrative-designer`, `narrative-qa`, `quest-content-designer`,
   `scene-presentation-designer`, `technical-artist`, `technical-implementer` e
   `ux-ui-designer`.
 

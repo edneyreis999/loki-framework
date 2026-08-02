@@ -6,7 +6,7 @@ created: 2026-06-24
 scope: local-project-package
 doc_id: loki-usage-guide
 version: 1.0.0
-last_updated: 2026-07-31
+last_updated: 2026-08-01
 not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
 authority: Approved Loki package policy and current package command contracts
 canonical_source: docs/usage-guide.md
@@ -57,7 +57,7 @@ Use estes documentos como fonte principal do ciclo operacional:
   rollback antes de usar Loki em um projeto alvo.
 - [Workflow Unificado de Implementacao do Loki](loki-plan-execution-workflow.md):
   descreve o caminho publico de demanda + analise Markdown para plano, DAG,
-  escrita serializada, AC/validators, dashboard, teste manual e evidencia, alem
+  escrita serializada, AC/validators, handoff para QA manual e evidencia, alem
   do caminho agentic avancado com um unico handoff ao executor unificado.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   fontes aprovadas ou um plano completo viram candidate v2, promoção
@@ -193,8 +193,11 @@ Nenhum dos dois escreve `.loki`.
 Use `loki-implement-feature` quando ja houver uma demanda nao vazia e uma
 analise Markdown decision-complete. O comando recebe esses dois inputs,
 materializa ou retoma o plano, registra targets e owners antes da escrita,
-executa o DAG e termina com dashboard e passos de teste manual. Nao existe uma
-segunda chamada publica para executar o plano.
+executa o DAG e, quando QA humano for material, persiste o estado
+`awaiting-manual-qa` — explicitamente nao concluido — junto do handoff v2
+`ready-for-manual-qa`. Quando QA manual nao for material, ele conclui depois
+dos gates tecnicos com `manual-qa-not-required` e motivo nao vazio. Nao existe
+uma segunda chamada publica para executar o plano.
 
 Um terceiro argumento publico opcional, `audit_frequency`, controla a
 granularidade da auditoria independente. Se omitido, normaliza para
@@ -240,13 +243,37 @@ enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`;
 lookup trivial pode ser `skipped-nonmaterial`. Somente
 `loki-continuous-improvement` promove conhecimento depois.
 
-O dashboard unificado deriva do estado persistido e inclui AC/evidence,
+O resultado unificado deriva do estado persistido e inclui AC/evidence,
 validators, ciclos, retries, failed tasks, skipped dependents, targets
-inferidos, riscos, resume e teste manual. Human validation herdada da analise
-aparece somente no final e apenas quando for a unica condicao restante.
-Ele tambem mostra a configuracao v1 completa, fronteiras due, checkpoints
+inferidos, riscos, resume e um handoff fechado: `ready-for-manual-qa` com
+identidades e evidencia automatica correlatas, ou `manual-qa-not-required` com
+motivo nao vazio. `loki-implement-feature` nao deriva passos manuais, nem
+interpreta validacao humana. Os statuses persistidos atuais sao `running`,
+`awaiting-manual-qa`, `completed`, `completed-with-limitations`, `partial`,
+`failed` e `cancelled`. O resultado tambem mostra a configuracao v1 completa,
+fronteiras due, checkpoints
 ativos, materialidade, independencia, findings/corrections e full replays. Um
 status de sucesso exige toda fronteira due `approved` ou `not-applicable`.
+
+### QA manual pos-implementacao
+
+`loki-manual-qa` e o unico owner da transicao
+`awaiting-manual-qa -> completed`. Depois de revalidar o plano completo e o
+handoff v2, ele constroi um catalogo exaustivo na ordem persistida: todos os
+criterios de aceite, todos os gates humanos e todas as superficies alteradas.
+Cada fonte aplicavel vira um teste com ID estavel e guia concreto de ambiente,
+precondicoes, estado inicial, acoes, resultado observavel, sinais de sucesso e
+falha, cleanup e limite de automacao. O primeiro dashboard ja mostra todos os
+testes; ele nao inventa fontes nem esconde itens para uma etapa posterior.
+
+Ajuda por ID reapresenta um guia e nao altera estado. Para passar o gate humano,
+o usuario declara de forma inequivoca que ja testou e aprovou todos os itens
+aplicaveis do dashboard atual. A confirmacao e agregada: nao ha resultado,
+observacao, locator ou evidencia humana por teste. Falha ou blocker reportado
+persiste somente tipo, resumo livre curto, impacto e proxima acao e impede a
+conclusao. Depois da atestacao e da revalidacao final, somente
+`loki-manual-qa` promove os gates humanos e reconcilia estado, resultado,
+dashboard e consistency, publicada por ultimo.
 
 O mesmo run publica `builds/metrics/execution-metrics.json` schema v1, ligado
 por ref/digest ao LokiRunState v3, resultado v3 e dashboard v3. Ele registra spans,
@@ -405,7 +432,7 @@ proposta de PR. Consulte `docs/loki-git-workflow.md`.
 
 Os command bundles instaláveis (`loki-init`, `loki-feedback`,
 `loki-tech-analysis`, `loki-deep-analysis`,
-`loki-human-decision-preflight`, `loki-implement-feature`,
+`loki-human-decision-preflight`, `loki-implement-feature`, `loki-manual-qa`,
 `loki-agentic-development`,
 `loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
 meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
@@ -507,8 +534,10 @@ lifecycle ou prontidão de exclusão.
 - `lf-domain-context-preflight`: preflight pessoal antes de cada task; consulta
   docs minimas, compara fontes atuais, registra freshness, conflitos e lacunas
   e nunca autocorrige `/docs`.
-- `runtime-qa`: produz checklist e evidencia exigida; nunca simula
-  confirmacao humana.
+- `runtime-qa`: propoe, em modo read-only/proposal-only e somente quando
+  despachado por `loki-manual-qa`, guias concretos para fontes ja enumeradas;
+  nao deriva o catalogo final, observa runtime, coleta atestacao ou exige
+  evidencia humana por teste.
 - `execution-context-reader`: extrai contexto em modo read-only da demanda,
   `analysis_file`, state, task e fontes locais permitidas para
   `loki-implement-feature`, sem escrever.

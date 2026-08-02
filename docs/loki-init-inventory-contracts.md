@@ -230,16 +230,6 @@ somente conforme as regras universais acima.
 - `quest-content-designer.postconditions` (`deep`): pos-condicoes.
 - `quest-content-designer.source-map` (`map`): fontes de conteudo.
 
-### runtime-qa
-
-- `runtime-qa.perceivable-surfaces` (`deep`): superficies perceptiveis.
-- `runtime-qa.executable-flows` (`deep`): fluxos executaveis.
-- `runtime-qa.input-audio-visual` (`deep`): input, audio e visual.
-- `runtime-qa.save-load` (`deep`): save/load.
-- `runtime-qa.integrations` (`deep`): integracoes.
-- `runtime-qa.validation-state` (`deep`): estado de validacao existente.
-- `runtime-qa.documented-human-gates` (`map`): gates humanos documentados.
-
 ### scene-presentation-designer
 
 - `scene-presentation-designer.scenes-staging` (`deep`): cenas e staging.

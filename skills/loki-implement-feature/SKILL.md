@@ -1,6 +1,6 @@
 ---
 name: loki-implement-feature
-description: Plan and implement a software or game feature from a non-empty demand and a readable Markdown technical analysis in one resumable invocation, with validated targets, DAG execution, hierarchical measurement, per-task acceptance evidence, and a truthful terminal dashboard with manual tests.
+description: Plan and implement a software or game feature from a non-empty demand and a readable Markdown technical analysis in one resumable invocation, with validated targets, DAG execution, hierarchical measurement, per-task acceptance evidence, and an awaiting-manual-qa handoff when needed.
 doc_id: "loki-implement-feature"
 version: "2.0.0"
 status: active
@@ -22,7 +22,7 @@ known_conflicts: []
 replaced_by: null
 when_to_use:
   - "Use when a non-empty demand and a decision-complete Markdown analysis should be planned and implemented in one autonomous, persisted workflow."
-  - "Use when execution needs exact target provenance, task acceptance criteria, deterministic or independent validation, hierarchical execution metrics, retry, resume, and a manual-test dashboard."
+  - "Use when execution needs exact target provenance, task acceptance criteria, automatic/human gate separation, deterministic or independent validation, hierarchical execution metrics, retry, resume, and a manual-QA handoff."
 argument-hint: "[demand, analysis_file, optional plan_directory, optional retry_limit, optional audit_frequency]"
 arguments:
   required:

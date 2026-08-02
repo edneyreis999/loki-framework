@@ -104,7 +104,7 @@ docs e seus writers exclusivos.
 
 - Story, cena, quest, mechanic, UX flow, audio brief ou proposta aprovada.
 - Outputs de `scene-presentation-designer`, `game-designer`,
-  `ux-ui-designer`, `narrative-designer`, `runtime-qa` ou
+  `ux-ui-designer`, `narrative-designer`, `execution-context-reader` ou
   `game-business-analyst`.
 - `<domain_ids>` relevantes, como scene IDs, audio cue IDs, SFX IDs, music IDs,
   UI state IDs, encounter IDs ou quest IDs.
@@ -124,7 +124,7 @@ docs e seus writers exclusivos.
 - Perguntas abertas quando asset, mix, trigger, loop, plataforma, timing ou
   validador estiver ambiguo.
 - Handoff estruturado para `scene-presentation-designer`, `ux-ui-designer`,
-  `gameplay-engineer`, `runtime-qa`, `technical-artist` ou
+  `gameplay-engineer`, `technical-implementer`, `technical-artist` ou
   `game-business-analyst`.
 
 ## Allowed Writes

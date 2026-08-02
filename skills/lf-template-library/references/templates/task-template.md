@@ -47,7 +47,7 @@ recommended_handoffs:
   research: "<source-researcher|none>"
   context: "<execution-context-reader|none>"
   implementation: "<technical-implementer|none>"
-  runtime_validation: "<runtime-qa|none>"
+  runtime_validation: "none"
 scoped_write_owner: "<orchestrator|agent-name|none>"
 scoped_write_mode: "<none|task_scoped_writer>"
 scoped_write_domains: []
@@ -144,6 +144,28 @@ finding and Writer response as an immutable validation cycle.
 - Gate: <none | interview | approval | human-validation>
 - Required decision: <decisao ou `none`>
 
+## Gate Records
+
+```yaml
+gate_refs: []
+gate_record:
+  schema_version: 2
+  gate_id: "<stable-non-empty-gate-id>"
+  task_ref: "<this-task-locator>"
+  kind: "<automatic|human-validation>"
+  statement: "<non-empty-observable-gate-statement>"
+  status: "pending"
+  evidence_refs: []
+  attestation_ref: null
+  attestation_digest: null
+```
+
+Persist each gate at its declared locator; the inline mapping above documents
+the only current exact shape. Automatic gates always keep the attestation pair
+null. Feature execution may leave a human-validation gate only pending;
+`loki-manual-qa` alone may promote it to passed with the correlated aggregate
+attestation during the restricted terminal transaction. Reject gate record v1.
+
 ## Definition Of Done
 
 - [ ] Requisitos atendidos.
@@ -177,6 +199,7 @@ loki_task_state:
   orchestrator_exception_reason: ""
   validation_owner: ""
   task_validation_ref: "<this-task-locator>#task_validation"
+  gate_refs: []
   completion_evidence_refs: []
   validation_cycle_refs: []
   retry_refs: []

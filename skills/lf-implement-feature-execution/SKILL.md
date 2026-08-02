@@ -21,7 +21,7 @@ known_conflicts: []
 replaced_by: null
 when_to_use:
   - "Use inside loki-implement-feature after its demand, Markdown analysis, plan directory, inherited restrictions, and retry limit have been validated."
-  - "Use when creating or resuming LokiRunState v3, publishing execution metrics v1, scheduling a validated task DAG and its configured audit boundaries, enforcing single-file ownership, or deriving result v3 from disk evidence."
+  - "Use when creating or resuming LokiRunState v3, publishing execution metrics v1, scheduling a validated task DAG and its configured audit boundaries, enforcing single-file ownership, validating gate record v2, or deriving result v3 from disk evidence."
   - "Use when a task requires deterministic or independent Write Test Agent primary acceptance validation, or when a due material task/phase/plan boundary requires a separate independent Auditor, correction replay, cancellation, or dependency-aware continuation."
 argument-hint: "[validated execution input and plan directory]"
 arguments:
@@ -131,8 +131,13 @@ identity and authority correlate to the active run.
    correlation refs for each attempt and replay.
 9. Persist sanitized completion/evidence locators before optional non-blocking
    execution-knowledge capture. Reconcile every required acceptance criterion,
-   final validator, cancellation request, and prescribed human validation before
-   deriving the terminal result and dashboard.
+   final validator, due audit and cancellation request before deriving the
+   result. Publish `awaiting-manual-qa` with the closed ready handoff only after
+   automatic conditions are terminally approved and every human-validation
+   gate remains explicitly pending. Publish `completed` directly only when
+   manual QA is not required. `loki-manual-qa` alone may later promote the
+   eligible pending human gates and the four correlated projections to
+   `completed` under the execution contract's restricted transaction.
 
 ## Outputs And Outcomes
 
@@ -140,10 +145,10 @@ Return one `implement_feature_execution_result` matching the exact schema in
 the execution contract. It references persisted state and evidence; it never
 embeds raw payloads, private reasoning, or an unredacted transcript.
 
-- `success`: result v3 terminal state is `completed`,
-  `completed-with-limitations`, or
-  `pending-human-validation`, and every state/evidence invariant for that status
-  passes.
+- `success`: result v3 state is `awaiting-manual-qa`, `completed`, or
+  `completed-with-limitations`, and every state/evidence invariant for that
+  status passes. `awaiting-manual-qa` is a persisted successful automatic
+  handoff state, never a completion claim.
 - `partial`: terminal state is `partial` or `cancelled`, useful evidence remains
   integral, and the exact resume or cancellation reconciliation is persisted.
 - `failure`: terminal state is `blocked` or `failed`, with the minimum blocker,
@@ -161,6 +166,9 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
   task result.
 - Do not claim completion when a required criterion, validator, evidence
   locator, due material audit boundary, or final reconciliation is unresolved.
+- Do not publish a ready handoff with `completed`; use
+  `awaiting-manual-qa`. Do not let feature execution pass a human-validation
+  gate or perform the restricted manual terminal transaction.
 - Do not resolve, preflight, dispatch, or require an Auditor while validating
   Input. Do not dispatch an Auditor for a no-material-write boundary.
 - Do not accept a due material checkpoint when Auditor identity or lineage
@@ -184,7 +192,7 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
 - Validate the entrypoint frontmatter, folder/name match, and all three relative
   links.
 - Validate command identity v2, execution input v2, audit configuration v1,
-  LokiRunState v3, execution audit checkpoint v1, result v3, consistency v2,
+  LokiRunState v3, gate record v2, execution audit checkpoint v1, result v3, consistency v2,
   current-only rejection, path safety, digest correlation, DAG/boundary
   scheduling, owner/Auditor independence, preflight, AC route v1, retry, full
   replay, learned, liveness, metrics v1, cancellation, resume, dashboard

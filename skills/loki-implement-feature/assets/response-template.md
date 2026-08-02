@@ -21,7 +21,7 @@ replaced_by: null
 
 ## Status
 
-- Persisted status: `<running | completed | completed-with-limitations | pending-human-validation | partial | failed | cancelled>`
+- Persisted status: `<running | awaiting-manual-qa | completed | completed-with-limitations | partial | failed | cancelled>`
 - Response status: `<same persisted status | needs-human-review only for persisted partial/failed normative conflict>`
 - Terminal reason: `<state-and-evidence-derived reason>`
 - Normative-conflict projection: `<the complete normative_conflict v1 block below | absent unless response status is needs-human-review>`
@@ -34,6 +34,7 @@ replaced_by: null
 - Audit configuration v1: `<schema_version=1 + frequency=task|phase|plan + source=default|explicit + policy_digest>`
 - Active audit checkpoints: `<ordered refs + digests or none because no boundary is due>`
 - Metrics: `<ref + sha256 digest + status/reason; or null/null + unavailable + explicit publication failure reason>`
+- Gate parity: `<ordered gate refs + exact byte digests + v2 kinds/statuses/attestation pairs>`
 
 When and only when response status is `needs-human-review`, include:
 
@@ -106,6 +107,16 @@ replayed deterministic/final-validator evidence; delta-only review is invalid.
 | --- | --- | --- | --- |
 | `<validator>` | `<passed/failed/unavailable/not-applicable>` | `<locator or reason>` | `<effect>` |
 
+## Gates
+
+| Gate ref/digest | Task | Kind | Statement | Status | Evidence | Attestation pair |
+| --- | --- | --- | --- | --- | --- | --- |
+| `<locator + exact-byte digest>` | `<task ref>` | `<automatic|human-validation>` | `<persisted statement>` | `<pending|passed|failed>` | `<refs or none>` | `<null/null unless passed human gate; then exact ref/digest>` |
+
+Reject gate record v1. `awaiting-manual-qa` requires all automatic gates passed
+and at least one human-validation gate pending. Completed plus a ready handoff
+requires those same human gates passed with the aggregate attestation.
+
 ## Validation cycles, severity, and retries
 
 | Task/finding | Classification | Severity | Retry consumed | Retest | Result/evidence |
@@ -166,29 +177,32 @@ If none: `<No target was inferred beyond the explicit demand + evidence.>`
 - Human decisions incorporated: `<items + locators or none + reason>`
 - Normative conflicts: `<both locators + required decision or none + reason>`
 
-## Manual test
-
-- Status: `<steps | none>`
-- None reason: `<non-empty surface-specific reason when status=none | not-applicable because steps exist>`
-
-### Step 1
+## Manual-QA handoff
 
 ```yaml
-manual_step:
-  evidence_or_acceptance_criterion_ref: "<non-empty locator>"
-  environment: "<non-empty environment>"
-  prerequisites: []
-  initial_state: "<non-empty observable starting state>"
-  action: "<non-empty command or action>"
-  expected_observable_result: "<non-empty observable result>"
-  success_signals: ["<objective signal>"]
-  failure_signals: ["<objective signal>"]
-  cleanup_or_restore: "<action or not-needed with reason>"
-  automation_limitation: "<limitation or none with reason>"
+manual_qa_handoff:
+  schema_version: 2
+  status: "<manual-qa-not-evaluated | ready-for-manual-qa | manual-qa-not-required>"
+  run_id: "<loki-run-v2 identity>"
+  execution_id: "<loki-execution-v2 identity>"
+  plan_directory: "<normalized plan directory>"
+  automatic_evidence_refs: ["<exact ordered terminal evidence locators; may be empty only when not evaluated>"]
+  manual_qa_result_ref: "<plan_directory>/builds/manual-qa/result.json"
+  manual_qa_attestation_ref: "<plan_directory>/interaction/manual-qa/<run_id>/attestation.json"
+  task_refs: ["<exact state task order>"]
+  acceptance_criterion_refs: ["<exact task order then AC order>"]
+  gate_refs: ["<exact state gate order>"]
+  changed_target_refs: ["<first-occurrence changed target paths from completed Writer handoffs>"]
+  reason: "<null when ready; non-empty reason when not evaluated or not required>"
 ```
 
-Repeat the complete step block in execution order. Remove Step 1 only when
-status is `none` and the required surface-specific reason is present.
+This is the exact persisted closed current-only v2 projection, not a test
+dashboard. The overlay refs are deterministic reserved destinations, not claims
+that files or digests already exist. Ready is paired with
+`awaiting-manual-qa`, never direct completion. `loki-manual-qa` is the sole
+owner of manual-test steps, aggregate attestation, eligible human-gate
+promotion, and the restricted completed transaction; the handoff itself and
+automatic evidence/source arrays remain unchanged.
 
 ## Evidence and handoffs
 
@@ -203,7 +217,7 @@ status is `none` and the required surface-specific reason is present.
 
 - Blockers: `<items + minimum next input or none>`
 - Residual risks: `<items + evidence or none>`
-- Pending human validation: `<gate, observable steps, evidence destination | none + reason>`
+- Manual-QA handoff: `<manual-qa-not-evaluated + reason | ready-for-manual-qa + identity/evidence/overlay refs | manual-qa-not-required + reason>`
 
 ## Resume and next steps
 

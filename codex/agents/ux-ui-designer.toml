@@ -149,7 +149,7 @@ writer interno distintos.
 - Perguntas abertas quando plataforma, layout, texto, input, hierarquia ou
   comportamento esperado estiver ambiguo.
 - Handoff estruturado para `game-designer`, `narrative-designer`,
-  `gameplay-engineer`, `runtime-qa`, `narrative-qa` ou
+  `gameplay-engineer`, `narrative-qa` ou
   `game-business-analyst`.
 
 ## Allowed Writes

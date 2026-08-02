@@ -114,7 +114,8 @@ writer interno distintos.
 ## Inputs
 
 - Story, cena, NSD, dialogo, branching matrix, quest beat ou proposta aprovada.
-- Outputs de `narrative-designer`, `ux-ui-designer`, `audio-designer`, `runtime-qa` ou
+- Outputs de `narrative-designer`, `ux-ui-designer`, `audio-designer`,
+  `execution-context-reader` ou
   `game-business-analyst`.
 - `<domain_ids>` relevantes, como scene IDs, character IDs, expression IDs,
   background IDs, CG IDs, route IDs, audio cue IDs ou UI state IDs.
@@ -134,7 +135,7 @@ writer interno distintos.
 - Perguntas abertas quando asset, timing, personagem, expressao, cena, audio ou
   validador estiver ambiguo.
 - Handoff estruturado para `narrative-designer`, `audio-designer`,
-  `ux-ui-designer`, `technical-artist`, `runtime-qa` ou
+  `ux-ui-designer`, `technical-artist`, `technical-implementer` ou
   `game-business-analyst`.
 
 ## Allowed Writes
