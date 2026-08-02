@@ -10,10 +10,10 @@
     "policy_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
     "catalog_state": "no-match"
   },
-  "caller_projections": {
-    "loki-deep-analysis": {"command": "loki-deep-analysis", "run_id": "excluded-from-core", "destination": "excluded-from-core"},
-    "loki-generate-inferences": {"command": "loki-generate-inferences", "run_id": "excluded-from-core", "destination": "excluded-from-core"}
-  },
+  "independent_evaluations": [
+    {"evaluation_context": "excluded-from-core-a"},
+    {"evaluation_context": "excluded-from-core-b"}
+  ],
   "expected": {
     "equal_fields": ["input_fingerprint", "preparation_id", "preparation_digest", "candidates", "selected_for_investigation", "generation_state", "execution_boundary"],
     "request_controls_exact_keys": ["candidate_ceiling", "catalog_retrieval_page_size", "minimum_candidate_floor"],

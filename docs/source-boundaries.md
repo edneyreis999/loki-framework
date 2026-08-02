@@ -49,9 +49,9 @@ explicitamente, sem tentativa de usar qualquer `index.md` para esse fim.
 
 ## Contratos apos o corte
 
-Cada familia conserva apenas a sua forma canonica: manifest/report/digest
-agentic 4/5/4 com WTR 1; evidencia de sessao e conhecimento de execucao em
-schema 1; catalogo analitico XML v2; e escopos de instalacao schema 2. Um
+Cada familia conserva apenas a sua forma canonica: evidencia de sessao e
+conhecimento de execucao em schema 1; catalogo analitico XML v2; e escopos de
+instalacao schema 2. Um
 formato removido deve ser rejeitado antes de leitura que possa interpretá-lo e
 antes de qualquer escrita; esta regra nao cria um leitor, conversor ou remocao
 automatico. Schema 1 permanece valido nas familias que o declaram

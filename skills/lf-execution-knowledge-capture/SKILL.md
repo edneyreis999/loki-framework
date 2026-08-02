@@ -2,7 +2,7 @@
 name: lf-execution-knowledge-capture
 description: Capture provider-neutral execution knowledge from persisted sanitized completion and evidence artifacts without blocking implementation or promoting durable policy.
 when_to_use:
-  - "Use when loki-agentic-development or loki-implement-feature reaches a checkpoint with material attempts, errors, recovery, validation, environment, handoff, liveness or state friction."
+  - "Use when loki-implement-feature reaches a checkpoint with material attempts, errors, recovery, validation, environment, handoff, liveness or state friction."
   - "Use when an orchestrator must reconcile captured, partial, failed, unsupported or skipped-nonmaterial knowledge state without waiting at final completion."
 argument-hint: "[calling_workflow, run_directory, capture_id, persisted_source_refs, target_entry]"
 arguments:
@@ -31,7 +31,7 @@ paths:
 shell: bash
 type: skill
 status: draft
-used_by: [loki-agentic-development, loki-implement-feature, execution-knowledge-cataloger]
+used_by: [loki-implement-feature, execution-knowledge-cataloger]
 ---
 
 # lf-execution-knowledge-capture

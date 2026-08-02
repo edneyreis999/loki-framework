@@ -56,11 +56,8 @@ não existe projection ou command físico separado.
 | `loki-abrir-pr` | `mvp` | Abrir Pull Request a partir da branch atual usando GitHub MCP quando disponivel ou `gh` autenticado como fallback, com push e PR aprovados. |
 | `loki-feedback` | `mvp` | Investigar feedback por entrevista, uma pergunta por vez, sem escrita automatica. |
 | `loki-demand-text-improver` | `mvp` | Enriquecer uma demanda inicial em um unico Markdown antes de analise ou planejamento, sem gate de estado de sessao, com destination existente e gravavel, naming deterministico e nenhum workflow posterior automatico. |
-| `loki-generate-inferences` | `mvp` | Gerar, de forma opt-in, um unico Markdown canonico de pre-investigacao em diretorio existente e aprovado sob `planos/` do consumidor, com request controls derivados da policy, slug/digest e versao deterministica resolvida antes da approval, create exclusivo e bloqueio sem retry em colisao concorrente; nao investiga, nao faz fan-out, handoff, agent run, web research, CI, workflow downstream ou mutacao de catalogo. |
 | `loki-tech-analysis` | `mvp` | Produzir analise tecnica agnostica e baseada em evidencias antes de plano ou execucao. |
-| `loki-deep-analysis` | `mvp` | Produzir, de forma opt-in, analise profunda assistida por catalogo com descoberta seletiva de tecnologias, inferencias contextuais e investigacoes independentes; gera report, eventos e candidatos rastreaveis sem aninhar `loki-tech-analysis`, alterar o catalogo ou declarar validacao de runtime. |
 | `loki-human-decision-preflight` | `mvp` | Classificar decisoes humanas pendentes antes do plano como perguntar agora, delegar ao plano, validar depois ou responder por fonte local. |
-| `loki-agentic-development` | `mvp` | Executar o caminho avancado com analise multiagente, gates, um unico handoff ao `loki-implement-feature`, completion/evidence, knowledge state, digest e backlog. |
 | `loki-implement-feature` | `mvp` | Planejar e implementar uma demanda + analise Markdown em uma invocacao retomavel, com command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e métricas v1, DAG e retry; com QA material persiste `awaiting-manual-qa` mais handoff v2 `ready-for-manual-qa`, e sem QA conclui com `manual-qa-not-required`. |
 | `loki-manual-qa` | `mvp` | Owner exclusivo do QA manual pos-implementacao: deriva catalogo exaustivo de ACs, gates humanos e superficies alteradas, mostra passos concretos, oferece ajuda por ID sem mutacao, aceita somente atestacao agregada sem evidencia/resultado por teste e promove `awaiting-manual-qa` para `completed` reconciliando gates, estado, result, dashboard e consistency. |
 | `loki-enrich-tasks` | `mvp` | Revisar tasks usando aprendizados anteriores, interactions e research gate condicionado sem expor fontes internas nem promover regra duradoura diretamente. |
@@ -78,27 +75,8 @@ não existe projection ou command físico separado.
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
-### Contrato resumido de `loki-generate-inferences`
-
-O command deriva piso minimo 8, teto inexistente e pagina de recuperacao 20.
-Piso nao e stop, pagina nao e limite total e o limite persistente 3 e somente
-armazenamento/manutencao. Gera todo candidato material distinto ate saturacao
-semantica; interrupcao de contexto retorna parcial retomavel. Saturacao abaixo
-do piso nao autoriza padding. Custo e impacto nao influenciam disposicao.
-
-O `loki-deep-analysis` executa no maximo 3 rodadas de ate 6 investigacoes
-delegadas, com concorrencia 2, barreira terminal e reclassificacao total entre
-rodadas. Reinvestigacao posterior exige nova pergunta, justificativa e IDs.
-Resolucao local nao consome capacidade e custo e apenas telemetria. Nao existe
-quarta rodada nem auto-invocacao downstream.
-
-Depois de resolver digest, basename e versao por um snapshot do diretorio, a
-approval vincula diretorio canonico, target exato, basename/versao,
-before-state/snapshot e um create exclusivo. Colisao posterior invalida a
-approval, bloqueia sem retry e exige nova resolucao e nova approval.
-
-O pacote possui 20 command bundles `loki-*` ativos, todos com escopo de
-instalacao `both`. O router geral `lf-command-workflows` expoe 18 workflows de
+O pacote possui 17 command bundles `loki-*` ativos, todos com escopo de
+instalacao `both`. O router geral `lf-command-workflows` expoe 15 workflows de
 uso geral; os dois workflows de manutencao do pacote,
 `loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados por
 `lf-internal-command-workflows`. Instalar esses workflows em um consumidor nao
@@ -171,9 +149,8 @@ bundles.
 
 | Componente | Status | Responsabilidade |
 | --- | --- | --- |
-| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 18 commands Loki de uso geral disponiveis no perfil instalado. |
+| `lf-command-workflows` | `mvp` | Skill agregadora para rotear os 15 commands Loki de uso geral disponiveis no perfil instalado. |
 | `lf-internal-command-workflows` | `mvp` | Skill `both` especializada em rotear extracao de conhecimento e self-healing; a disponibilidade no consumidor nao amplia os limites package-only desses workflows. |
-| `lf-agentic-orchestration` | `mvp` | Skill auxiliar para preflight de agentes, fan-out selecionado, estado XML, gates, cross-review, reports, liveness, invalidacao, digest, backlog e retrospectivas por agente. |
 | `lf-implement-feature-execution` | `mvp` | Autoridade current-only para command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, métricas v1, target decisions, DAG, preflights, AC/validators, liveness, retry, resume, `awaiting-manual-qa`, handoff v2 e terminal truth. |
 | `lf-execution-knowledge-capture` | `mvp` | Separar evidence de knowledge, avaliar materialidade, despachar entry exclusiva sem bloquear e reconciliar estados degradados em checkpoint. |
 | `lf-domain-context-preflight` | `mvp` | Preflight pessoal reutilizavel para docs minimas, fontes atuais, freshness, conflitos e lacunas, sem autocorrecao de docs. |
@@ -252,7 +229,6 @@ bundle e não entram na tabela top-level abaixo. O bundle
 | `scripts/install-loki-symlinks.py` | `mvp` | Instalar command bundles/skills, agents, templates e TOMLs Codex por symlink, filtrando por `--profile`, com dry-run, apply explícito, manifest de instalacao e rejeicao sem writes de layouts fora do schema 2. |
 | `scripts/validate-install-scopes.py` | `mvp` | Validar `install-scopes.json` schema 2, neutralidade de artefatos `both`, dependencias de comandos, TOMLs Codex, tags de tipo de projeto, ausencia de seed/catalogo XML vivo empacotado, ausencia da projecao retirada e paridade exata entre `scripts/*.py`, `manifest.yaml#scripts` e esta tabela. |
 | `scripts/validate-install-loki-upgrade.py` | `mvp` | Validar baselines limpos dos perfis do instalador e a matriz temporaria de rejeicao de layouts fora do schema 2, sem tocar destinos consumidores. |
-| `scripts/validate-agentic-run-state.py` | `mvp` | Validar o contrato agentic XML atual (manifest 4, report 6, digest 4 e WTR 1), métricas/liveness e rejeição current-only de schemas removidos. |
 | `scripts/validate-implement-feature-contracts.py` | `mvp` | Validar somente command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency v2, task_validation e execution metrics v1, incluindo fronteiras due, replay completo, liveness e custo sem budgets/autostop. |
 | `scripts/validate-manual-qa-contracts.py` | `mvp` | Validar handoff/catalogo/guide facts, review independente com `agent_session_evidence` XML, ownership exclusivo, transacoes collision-safe, crash recovery pos-write, chains same-tree, issue fresca, promocao terminal, consistencia, drift e idempotencia do `loki-manual-qa`, com fixtures adversariais. |
 | `scripts/validate-llm-artifact-precheck.py` | `mvp` | Bloquear antes do Auditor packets package fora do approval, materialidade observada ou profiles/partições/projeções incompletos; nunca aprovar qualidade. |
@@ -278,16 +254,9 @@ bundle e não entram na tabela top-level abaixo. O bundle
 | `command-contract-template.md` | `mvp` | Padronizar frontmatter, entradas, saidas, skills, gates e handoffs de comandos. |
 | `component-contract-template.md` | `mvp` | Padronizar descricao operacional de agents, commands e skills. |
 | `project-doc-index-template.xml` | `mvp` | Base para criar `docs/index.xml` no projeto consumidor e catalogar documentacao duradoura. |
-| `agentic-run-manifest-template.xml` | `mvp` | Modelo de estado principal da rodada v2, com demanda, agentes selecionados, handoffs, gates, invalidacao, validators e proxima acao. |
-| `agentic-analysis-manifest-template.xml` | `mvp` | Modelo de estado da analise agentica, agentes selecionados ou pulados, POVs, reviews, sintese e gates. |
-| `agentic-agent-pov-template.xml` | `mvp` | Modelo de POV por agente selecionado, com evidencias, riscos, gates e handoff para sintese. |
-| `agentic-agent-review-template.xml` | `mvp` | Modelo de cross-review agentico para acordos, conflitos materiais, resolucao recomendada e notas de validator. |
-| `agentic-synthesis-template.xml` | `mvp` | Modelo de sintese do orquestrador com fatos, gates resolvidos, blockers e handoff para plano. |
 | `agent-run-report-template.xml` | `mvp` | Modelo report schema 6 por handoff, com IDs, owner, validators, métricas/tokens, liveness probe, gates, evidência e status. |
 | `agent-session-evidence-template.xml` | `mvp` | Modelo de evidencia de sessao com identidade tipada, completude, snapshots sanitizados, locators de runtime e proveniencia de uso. |
 | `execution-knowledge-entry-template.xml` | `mvp` | Modelo de knowledge run-local com claims tipadas, attempts, cause/resolution, gaps, reuse guidance, segurança e ownership de promoção. |
-| `agentic-run-digest-template.xml` | `mvp` | Modelo de digest final da rodada v2 para consolidar resultados, validators, gates pendentes, backlog e proxima acao. |
-| `agentic-backlog-template.md` | `mvp` | Modelo Markdown para pendencias, blockers e follow-ups nao bloqueantes do fluxo agentic. |
 | `templates-xml-zord` | `reference-only` | Referencia estrutural, sem formato obrigatorio no MVP Loki. |
 
 ## Docs

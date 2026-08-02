@@ -298,9 +298,8 @@ Toda auditoria produz uma única tabela 24/24 com evidência por arquivo e headi
 - A politica para um contrato removido e `rejection-only`: rejeite-o antes de
   interpretar ou escrever, sem adicionar reader, conversor, remocao ou
   fallback implicito.
-- O estado agentic vigente e manifest schema 4, report schema 6 e digest schema
-  4; WTR schema 1 permanece vigente. Evidencia de sessao e execution knowledge
-  schema 1 tambem permanecem vigentes nas suas familias.
+- Evidencia de sessao e execution knowledge schema 1 permanecem vigentes nas
+  suas familias.
 - O unico catalogo analitico persistido e XML v2. O layout v1 deve falhar antes
   de processamento; JSON de policy, request, approval e CLI e control plane e
   nao um reader de catalogo.

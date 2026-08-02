@@ -57,8 +57,7 @@ Use estes documentos como fonte principal do ciclo operacional:
   rollback antes de usar Loki em um projeto alvo.
 - [Workflow Unificado de Implementacao do Loki](loki-plan-execution-workflow.md):
   descreve o caminho publico de demanda + analise Markdown para plano, DAG,
-  escrita serializada, AC/validators, handoff para QA manual e evidencia, alem
-  do caminho agentic avancado com um unico handoff ao executor unificado.
+  escrita serializada, AC/validators, handoff para QA manual e evidencia.
 - [Workflow de Aprendizado do Loki](loki-learning-workflow.md): descreve como
   fontes aprovadas ou um plano completo viram candidate v2, promoção
   root-specific e conhecimento recuperável.
@@ -98,57 +97,16 @@ existir, o command bloqueia sem sobrescrever, autonumerar ou escolher outro
 nome.
 
 O resultado terminal e somente a demanda enriquecida. O command nao produz
-analise tecnica como `loki-tech-analysis` e nao percorre o caminho integrado de
-analise, gates, plano e execucao de `loki-agentic-development`. Tambem nao
-invoca decision preflight, action planning ou implementacao. Depois da saida, o
-usuario faz uma nova escolha explicita sobre o proximo workflow.
+analise tecnica como `loki-tech-analysis`, nem invoca decision preflight,
+action planning ou implementacao. Depois da saida, o usuario faz uma nova
+escolha explicita sobre o proximo workflow.
 
-## Analise Padrao e Analise Profunda
+## Analise e inferencias reutilizaveis
 
 Use `loki-tech-analysis` como rota padrao de analise pre-plano baseada em
 evidencias. Ela organiza fontes, fatos, inferencias, hipoteses, alternativas,
 risco, validators e gates consumidos pelo planejamento interno do
 `loki-implement-feature`.
-
-Use `loki-deep-analysis` de forma opt-in quando a demanda se beneficiar de
-descoberta de tecnologias, consulta seletiva a inferencias catalogadas,
-geracao contextual de candidatos ou investigacoes independentes. Essa e uma
-rota especializada para a mesma etapa: ela nao chama nem aninha
-`loki-tech-analysis`. Seu report, seus eventos imutaveis e seus candidatos
-`unreviewed` sao evidencia rastreavel; nao alteram o catalogo e nao comprovam
-validacao de runtime.
-
-`loki-generate-inferences` e um fork opcional anterior a investigacao. Ele
-recebe `analysis_input`, `source_paths` locais permitidos e um `destination`
-aprovado; o destino deve ser um diretorio existente abaixo de
-`<consumer-root>/planos/`, sem symlink ou traversal. O command deriva piso
-minimo 8, nenhum teto e pagina de recuperacao 20. O piso nao encerra geracao e
-a pagina nao limita recuperacao total. Preserva todo candidato material
-distinto ate saturacao semantica; interrupcao de contexto retorna parcial com
-cursor e superficies nao exploradas, enquanto saturacao abaixo do piso termina
-sem padding. O limite persistente 3 e somente armazenamento/manutencao. Custo
-e impacto nao influenciam disposicao. Depois resolve o digest da demanda e
-escolhe antes da approval um target versionado: slug NFKD/ASCII do
-stem para arquivo ou `inferences-<digest12>` para inline, seguido pelo menor
-`-vN` ausente quando o basename ja existir. A approval fica vinculada ao
-diretorio canonico, target exato, basename/versao, before-state/snapshot e um
-create exclusivo. Colisao posterior invalida a approval e bloqueia sem retry;
-uma nova resolucao e nova approval sao obrigatorias. Seu unico output e
-esse Markdown, com um core canonico de preparacao de inferencias, criado uma
-unica vez e terminal em
-`pre-investigation-complete`. O command nao investiga, nao cria fan-out,
-handoff ou agent run, nao pesquisa a web, nao roda CI, nao invoca workflow
-downstream e nao altera o catalogo. Depois da resposta, a pessoa escolhe
-manualmente uma rota posterior permitida, como `loki-deep-analysis`; o command
-nao a agenda nem a invoca.
-
-`loki-deep-analysis` usa no maximo 3 rodadas de ate 6 investigacoes delegadas,
-em subondas de concorrencia 2. Ao fim de cada rodada terminal, reclassifica
-todas as inferencias e para cedo quando nao resta investigacao util. A mesma
-inferencia pode ser reinvestigada apenas em rodada posterior, com nova pergunta,
-justificativa material e IDs novos. Resolucao local nao consome os seis slots e
-custo e telemetria, nunca gate. A terceira rodada encerra a fase e o handoff
-downstream e retornado sem auto-invocacao.
 
 As duas projecoes suportadas, Codex e Claude Code, compartilham
 `lf-analytic-inference` com escopo de instalacao `both`. O pacote distribui
@@ -188,7 +146,7 @@ e ligada a root, IDs, paths, hashes e digests exatos.
 e docs do pacote; `catalogador` escreve somente docs duradouros do consumidor.
 Nenhum dos dois escreve `.loki`.
 
-## Implementacao Unificada e Caminho Agentic
+## Implementacao Unificada
 
 Use `loki-implement-feature` quando ja houver uma demanda nao vazia e uma
 analise Markdown decision-complete. O comando recebe esses dois inputs,
@@ -228,15 +186,10 @@ minor nao consomem budget; medium/major consomem o `retry_limit`. Ao esgotar, a
 task fica unresolved, seus dependentes transitivos sao pulados e branches
 independentes continuam.
 
-Use `loki-agentic-development` quando tambem forem necessarios POVs, selecao de
-agentes, cross-review, sintese, gates, completion reports, digest e backlog.
-Esse caminho permanece semanticamente distinto, mas produz ou valida uma
-analise Markdown e realiza um unico handoff ao `loki-implement-feature`.
-
 O contrato e current-only: comandos, schemas e estados substituidos nao mantem
 alias, wrapper, conversor, fallback ou uma segunda autoridade operacional.
 
-Nos dois caminhos, completion/evidence minimo e persistido primeiro. Quando ha
+No fluxo de implementacao, completion/evidence minimo e persistido primeiro. Quando ha
 atrito ou aprendizado material, `execution-knowledge-cataloger` pode criar em
 paralelo uma entry exclusiva no run. O fluxo principal nao espera por esse
 enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`;
@@ -431,22 +384,20 @@ proposta de PR. Consulte `docs/loki-git-workflow.md`.
 ## Command Bundles, Skills Core e Extensoes
 
 Os command bundles instaláveis (`loki-init`, `loki-feedback`,
-`loki-tech-analysis`, `loki-deep-analysis`,
-`loki-human-decision-preflight`, `loki-implement-feature`, `loki-manual-qa`,
-`loki-agentic-development`,
-`loki-enrich-tasks` e `loki-retrospectiva-tecnica`) expõem commands Loki por
+`loki-tech-analysis`, `loki-human-decision-preflight`,
+`loki-implement-feature`, `loki-manual-qa`, `loki-enrich-tasks` e
+`loki-retrospectiva-tecnica`) expõem commands Loki por
 meio de `SKILL.md`, references e assets, e continuam sendo commands operacionais.
 
-As skills core (`lf-agentic-orchestration`, `lf-implement-feature-execution`,
-`lf-execution-knowledge-capture`,
+As skills core (`lf-implement-feature-execution`, `lf-execution-knowledge-capture`,
 `lf-command-creator`, `lf-agent-creator`, `lf-skill-creator`,
 `lf-index-navigator`, `lf-tech-analysis-authoring`, `lf-analytic-inference`,
 `lf-action-plan-authoring` e `lf-template-library`) fornecem conhecimento e
 procedimentos reutilizáveis chamados pelos commands.
 
 Juntas, essas superficies governam entrevista, autoria de analises,
-planejamento e execucao unificados, AC/validators por task, orquestracao
-agentica, templates, enriquecimento de tasks, retrospectiva, navegacao de
+planejamento e execucao unificados, AC/validators por task, templates,
+enriquecimento de tasks, retrospectiva, navegacao de
 documentacao e evolucao controlada de commands, agents e skills.
 
 Skills tecnicas por tecnologia entram somente quando o projeto consumidor, o

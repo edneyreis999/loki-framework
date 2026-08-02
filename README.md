@@ -49,14 +49,8 @@ Fluxos principais:
 - `loki-manual-qa`: QA manual pós-implementação com dashboard completo,
   ajuda por ID sem mutacao e atestacao humana agregada, sem resultado ou
   evidencia humana por teste.
-- `loki-agentic-development`: caminho avancado de demanda para analise
-  agentica, gates, um unico handoff ao `loki-implement-feature`, digest e
-  backlog.
 - `loki-deep-research`: pesquisa profunda na internet com fontes citadas,
   verificacao cruzada, contradicoes e handoff para analise ou plano.
-- `loki-generate-inferences`: prepara, de forma opt-in, um unico artefato
-  deterministico de pre-investigacao sob `planos/` do consumidor; nao inicia
-  investigacao, dispatch, CI ou outro workflow.
 - `loki-continuous-improvement`: recebe fontes aprovadas ou um plano completo,
   produz candidate v2 current-only, promove por roots independentes e prova
   recuperação e independência do conhecimento sem decidir lifecycle/exclusão.
@@ -78,40 +72,8 @@ destination: planos/027-demanda/
 Nesse caso, o target e `planos/027-demanda/Demanda-improved.md`. Para texto
 inline, o nome e `improved-demand.md`. Uma colisao bloqueia sem sobrescrever ou
 autonumerar. O command termina nesse Markdown enriquecido: nao inicia
-`loki-tech-analysis`, decisao humana, plano, `loki-agentic-development` ou
-execucao. O usuario escolhe o proximo workflow em um novo pedido.
-
-`loki-generate-inferences` e outra preparacao opt-in, para quando uma entrada
-de analise e fontes locais permitidas precisarem virar um unico core canonico
-de inferencias antes da investigacao. Ele requer `analysis_input` e um
-`destination` que seja diretorio existente sob `<consumer-root>/planos/`, sem
-symlink ou traversal. Depois do digest da demanda, resolve um target versionado
-deterministico: slug NFKD/ASCII do stem para input em arquivo, ou
-`inferences-<digest12>` para inline; se `<base>.md` existir, escolhe antes da
-approval o menor `<base>-vN.md` ausente. Internamente, deriva piso minimo 8,
-nenhum teto de candidatos e pagina de recuperacao 20. O piso nao encerra a
-geracao e a pagina nao limita a recuperacao total. Preserva todo candidato
-material distinto e termina somente por saturacao semantica; se o contexto
-interromper antes disso, retorna parcial com cursor e superficies nao
-exploradas. Saturacao abaixo do piso e valida sem padding. O limite persistente
-3 existe somente para armazenamento/manutencao do catalogo. Custo e impacto
-nao influenciam essa disposicao pre-investigacao. A approval vincula diretorio canonico,
-target exato,
-basename/versao, before-state/snapshot e um create exclusivo. Colisao posterior
-invalida a approval e bloqueia sem retry; exige nova resolucao e nova approval.
-O command cria somente esse arquivo uma vez e termina em
-`pre-investigation-complete`: nao faz fan-out, handoff, agente, pesquisa web,
-CI, mutacao de catalogo ou chamada downstream. Uma pessoa pode escolher, em
-novo pedido, uma rota posterior permitida — por exemplo
-`loki-deep-analysis` — usando o artefato validado.
-
-Na investigacao, `loki-deep-analysis` executa no maximo 3 rodadas de ate 6
-investigacoes delegadas, em subondas de concorrencia 2. Cada rodada espera seus
-handoffs terminais, reclassifica todas as inferencias e so abre a seguinte se
-ainda houver investigacao material util. Uma inferencia pode voltar em rodada
-posterior com nova pergunta, justificativa material e IDs novos. Custo e apenas
-telemetria. A terceira rodada encerra a analise; o command retorna a rota
-downstream sem invoca-la automaticamente.
+`loki-tech-analysis`, decisao humana, plano ou execucao. O usuario escolhe o
+proximo workflow em um novo pedido.
 
 ## Implementar uma feature
 
@@ -145,11 +107,6 @@ aplicaveis foram testados e aprovados; nao coleta resultado ou evidencia por
 teste. Falha ou blocker registra somente tipo, resumo curto, impacto e proxima
 acao. Depois da atestacao, o comando reconcilia gates humanos, estado,
 resultado, dashboard e consistency antes de declarar conclusao.
-
-`loki-agentic-development` permanece uma rota distinta para quem precisa de
-POVs, sintese agentica, cross-review, digest e backlog. Depois de produzir ou
-validar a analise Markdown, ele faz um unico handoff ao mesmo
-`loki-implement-feature`; nao existe um executor publico alternativo.
 
 Este e um contrato current-only: nao ha alias, wrapper, conversor, fallback ou
 segunda autoridade publica para formatos e comandos substituidos.
@@ -269,10 +226,9 @@ Perfis:
 `install-scopes.json` e a fonte machine-readable dos escopos. O perfil default
 do script e `consumer`.
 
-Os comandos `loki-implement-feature` e `loki-agentic-development` sao instalados
-nos perfis que incluem artefatos `both`. Nenhum deles autoriza instalacao ou
-sincronizacao por si so; dry-run, approval de destino e validacao continuam
-obrigatorios.
+O comando `loki-implement-feature` e instalado nos perfis que incluem artefatos
+`both`. Sua disponibilidade nao autoriza instalacao ou sincronizacao por si so;
+dry-run, approval de destino e validacao continuam obrigatorios.
 
 Dry-run recomendado:
 
@@ -306,11 +262,10 @@ command/historico de remocao, ele falha sem escrever no destino. Resolva o
 layout existente manualmente fora do instalador e rode um novo dry-run.
 
 Contratos removidos seguem politica de rejeicao, nunca de conversao automatica:
-o estado agentic aceita somente manifest 4, report 5 e digest 4 (mantendo WTR
-schema 1); o catalogo de inferencias usa somente XML v2; e a projecao retirada
-nao possui superficie instalavel. Os formatos schema 1 que pertencem a evidencia, conhecimento
-de execucao e subdocumentos analiticos continuam contratos atuais de suas
-proprias familias.
+o catalogo de inferencias usa somente XML v2 e a projecao retirada nao possui
+superficie instalavel. Os formatos schema 1 que pertencem a evidencia,
+conhecimento de execucao e subdocumentos analiticos continuam contratos atuais
+de suas proprias familias.
 
 Validacao pos-instalacao:
 

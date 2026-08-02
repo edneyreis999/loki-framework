@@ -94,10 +94,10 @@ preparation_failure:
 </output_format>
 
 Every key is required. This failure envelope is not an
-`inference_preparation`, has no preparation identity or digest, is never
-persisted by `loki-generate-inferences`, and cannot be interpreted as a partial
-candidate core. Use the canonical preparation schema below only after all its
-identity-domain fields are available. A later catalog-validation failure may
+`inference_preparation`, has no preparation identity or digest, is not
+persistable, and cannot be interpreted as a partial candidate core. Use the
+canonical preparation schema below only after all its identity-domain fields
+are available. A later catalog-validation failure may
 still produce the fully formed `inference_preparation.status: blocked` defined
 below.
 

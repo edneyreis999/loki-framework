@@ -619,15 +619,15 @@ def assert_case_matrix() -> None:
 def assert_structural_parity() -> None:
     parity = load_fixture("parity-cases.json")
     expected = parity.get("expected", {})
-    projections = parity.get("caller_projections")
-    if parity.get("schema_version") != 3 or parity.get("byte_replay_is_out_of_scope") is not True or not isinstance(projections, dict) or set(projections) != {"loki-deep-analysis", "loki-generate-inferences"}:
+    evaluations = parity.get("independent_evaluations")
+    if parity.get("schema_version") != 3 or parity.get("byte_replay_is_out_of_scope") is not True or not isinstance(evaluations, list) or len(evaluations) != 2:
         raise AssertionError("parity fixture is invalid")
     common = parity.get("common_normalized_input")
     if not isinstance(common, dict): raise AssertionError("parity fixture has no common normalized input")
     outputs = []
-    for _caller, projection in projections.items():
-        if not isinstance(projection, dict) or not {"command", "run_id", "destination"} <= set(projection):
-            raise AssertionError("caller projection is incomplete")
+    for evaluation in evaluations:
+        if not isinstance(evaluation, dict) or set(evaluation) != {"evaluation_context"}:
+            raise AssertionError("independent evaluation is incomplete")
         value = fixture()
         value["input"]["demand_digest"] = common["demand_digest"]
         value["input"]["request_controls"] = copy.deepcopy(common["request_controls"])
@@ -639,7 +639,7 @@ def assert_structural_parity() -> None:
         value["catalog_observation"]["catalog_snapshot_digest"] = None
         value["candidates"] = [generated_candidate("shared normalized candidate")]
         refresh_identities(value); validate_preparation(value); outputs.append(value)
-    if outputs[0] != outputs[1]: raise AssertionError("caller projections produced unequal preparation cores")
+    if outputs[0] != outputs[1]: raise AssertionError("independent evaluations produced unequal preparation cores")
     if expected.get("zero_dispatch_web_downstream") is not True or outputs[0]["execution_boundary"] != BOUNDARY:
         raise AssertionError("parity fixture did not retain zero execution boundary")
     if sorted(outputs[0]["input"]["request_controls"]) != expected.get("request_controls_exact_keys"):

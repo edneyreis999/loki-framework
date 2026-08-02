@@ -146,7 +146,7 @@ Falha pós-escrita é `partial` e deve ser reportada honestamente; não sobrescr
 o arquivo para tentar corrigir sem um novo envelope e decisão explícita.
 
 Não invoque `loki-tech-analysis`, `loki-human-decision-preflight`,
-`loki-implement-feature`, `loki-agentic-development` ou qualquer implementação.
+`loki-implement-feature` ou qualquer implementação.
 A escolha downstream pertence a um novo pedido do usuário.
 
 ## Stop and resume

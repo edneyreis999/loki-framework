@@ -91,27 +91,12 @@ Preparacoes opcionais continuam terminais e nao auto-invocam o proximo passo:
 
 - `loki-demand-text-improver` enriquece uma demanda e entrega um Markdown;
 - `loki-feedback` diagnostica observacao humana uma pergunta por vez;
-- `loki-generate-inferences` prepara um core deterministico antes de
-  investigacao;
 - `loki-tech-analysis` produz a analise padrao baseada em evidencias;
-- `loki-deep-analysis` oferece investigacao opt-in assistida por inferencias;
 - `loki-deep-research` pesquisa a web somente com consentimento e citacoes.
 
 Depois dessas preparacoes, a pessoa fornece a demanda e a analise resultante ao
 comando unificado. `loki-enrich-tasks` pode enriquecer a fase ativa quando o
 proprio plano e o estado indicarem essa necessidade, sem promover norma.
-
-### Caminho agentic avancado
-
-Use `loki-agentic-development` quando forem necessarios selecao de agentes,
-POVs, cross-review, sintese, gates materiais, completion reports, digest e
-backlog. Esse caminho preserva sua semantica avancada, mas nao possui executor
-paralelo: depois de produzir ou validar uma analise Markdown, realiza um unico
-handoff ao `loki-implement-feature`.
-
-O handoff unificado leva demanda, `analysis_file`, restricoes resolvidas e
-locators de evidencia. Digest, backlog e reports agenticos permanecem outputs
-adicionais do fluxo avancado e nao alteram o contrato de implementacao.
 
 ## Fluxo unificado
 
@@ -320,7 +305,6 @@ targets exatos, validators e approvals root-bound aplicaveis. `catalogador` e
 | `loki-implement-feature` | Entrada publica unica para planejar e implementar demanda + analise Markdown. |
 | `loki-manual-qa` | QA manual pos-implementacao de um plano em `awaiting-manual-qa`; deriva catalogo/dashboard completos, aceita atestacao agregada e executa a promocao terminal restrita. |
 | `lf-implement-feature-execution` | Autoridade reutilizavel de estado, DAG, preflight, validation cycles, retry, resume e terminal truth. |
-| `loki-agentic-development` | Rota avancada que acrescenta analise multiagente, sintese, reports, digest e backlog antes/depois do handoff unificado. |
 | `lf-action-plan-authoring` | Mantem o plano com fases, tasks, dependencias, targets, validators e gates. |
 | `lf-domain-context-preflight` | Seleciona contexto duradouro minimo do dominio sem autorizar escrita. |
 | `lf-agent-execution-evidence` | Persiste evidence provider-neutral sanitizada e tipada. |

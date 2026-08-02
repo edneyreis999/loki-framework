@@ -496,10 +496,6 @@ scripts:
     file: "scripts/validate-install-loki-upgrade.py"
     status: draft
     purpose: "Validate clean installer profile baselines and reject non-schema-v2 layouts in temporary fixtures without touching consumer destinations."
-  - name: "validate-agentic-run-state"
-    file: "scripts/validate-agentic-run-state.py"
-    status: draft
-    purpose: "Validate canonical Loki agentic XML run state (manifest 4, report 6, digest 4, WTR 1 and manual-QA handoff 2), reject removed schemas, and check parent status, disk-only projection parity, typed identities, anchors, reasons, metrics/liveness, evidence/knowledge lineage, gates, writer contracts, parallel target conflicts and completion reports."
   - name: "validate-implement-feature-contracts"
     file: "scripts/validate-implement-feature-contracts.py"
     status: draft
@@ -639,17 +635,6 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-  - name: "loki-agentic-development"
-    file: "skills/loki-agentic-development/SKILL.md"
-    status: draft
-    operational_role: command
-    serialization: skill-bundle
-    bundle_contract:
-      input: "SKILL.md"
-      execution: "references/execution.md"
-      response: "references/response.md"
-      response_template: "assets/response-template.md"
-    current_contracts: ["agentic-run-manifest-v4", "agentic-run-digest-v4", "agent-run-report-v6", "write-test-review-v1", "implementation-handoff-v1", "manual-qa-handoff-v2"]
   - name: "loki-implement-feature"
     file: "skills/loki-implement-feature/SKILL.md"
     status: active
@@ -672,25 +657,12 @@ skills:
       response: "references/response.md"
       response_template: "assets/response-template.md"
     current_contracts: ["manual-qa-handoff-v2", "manual-qa-source-v1", "manual-qa-source-catalog-v1", "runtime-qa-source-proposal-v1", "manual-qa-transaction-v1", "manual-qa-semantic-assessment-v1", "manual-qa-attestation-review-v1", "agent-session-evidence-v1", "manual-qa-dashboard-v1", "manual-qa-step-v1", "manual-qa-attestation-v1", "manual-qa-report-v1", "manual-qa-interaction-v1", "manual-qa-result-v1", "manual-qa-consistency-v1"]
-  - name: "lf-agentic-orchestration"
-    file: "skills/lf-agentic-orchestration/SKILL.md"
-    status: draft
   - name: "lf-agent-execution-evidence"
     file: "skills/lf-agent-execution-evidence/SKILL.md"
     status: draft
   - name: "lf-execution-knowledge-capture"
     file: "skills/lf-execution-knowledge-capture/SKILL.md"
     status: draft
-  - name: "loki-generate-inferences"
-    file: "skills/loki-generate-inferences/SKILL.md"
-    status: draft
-    operational_role: command
-    serialization: skill-bundle
-    bundle_contract:
-      input: "SKILL.md"
-      execution: "references/execution.md"
-      response: "references/response.md"
-      response_template: "assets/response-template.md"
   - name: "loki-enrich-tasks"
     file: "skills/loki-enrich-tasks/SKILL.md"
     status: draft
@@ -747,16 +719,6 @@ skills:
   - name: "lf-git-workflow"
     file: "skills/lf-git-workflow/SKILL.md"
     status: draft
-  - name: "loki-deep-analysis"
-    file: "skills/loki-deep-analysis/SKILL.md"
-    status: draft
-    operational_role: command
-    serialization: skill-bundle
-    bundle_contract:
-      input: "SKILL.md"
-      execution: "references/execution.md"
-      response: "references/response.md"
-      response_template: "assets/response-template.md"
   - name: "loki-deep-research"
     file: "skills/loki-deep-research/SKILL.md"
     status: draft
@@ -1133,22 +1095,6 @@ codex_agents:
     status: draft-derived-scoped-writer
 
 templates:
-  - name: "agentic-run-manifest-template"
-    file: "templates/agentic-run-manifest-template.xml"
-    status: draft
-    current_contracts: ["agentic-run-manifest-v4", "manual-qa-handoff-v2"]
-  - name: "agentic-analysis-manifest-template"
-    file: "templates/agentic-analysis-manifest-template.xml"
-    status: draft
-  - name: "agentic-agent-pov-template"
-    file: "templates/agentic-agent-pov-template.xml"
-    status: draft
-  - name: "agentic-agent-review-template"
-    file: "templates/agentic-agent-review-template.xml"
-    status: draft
-  - name: "agentic-synthesis-template"
-    file: "templates/agentic-synthesis-template.xml"
-    status: draft
   - name: "agent-run-report-template"
     file: "templates/agent-run-report-template.xml"
     status: draft
@@ -1157,13 +1103,6 @@ templates:
     status: draft
   - name: "execution-knowledge-entry-template"
     file: "templates/execution-knowledge-entry-template.xml"
-    status: draft
-  - name: "agentic-run-digest-template"
-    file: "templates/agentic-run-digest-template.xml"
-    status: draft
-    current_contracts: ["agentic-run-digest-v4", "manual-qa-handoff-v2"]
-  - name: "agentic-backlog-template"
-    file: "templates/agentic-backlog-template.md"
     status: draft
   - name: "command-contract-template"
     file: "templates/command-contract-template.md"

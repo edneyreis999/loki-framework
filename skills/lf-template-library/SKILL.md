@@ -1,6 +1,6 @@
 ---
 name: lf-template-library
-description: Use installed Loki templates for analyses, plans, tasks, contracts, indexes, init packets, agent evidence, execution-knowledge entries and agentic XML state artifacts.
+description: Use installed Loki templates for analyses, plans, tasks, contracts, indexes, init packets, agent evidence and execution-knowledge entries.
 doc_id: "lf-template-library"
 version: "1.0.0"
 last_updated: "2026-07-23"
@@ -14,7 +14,7 @@ confidence: high
 known_conflicts: []
 replaced_by: null
 when_to_use:
-  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, Loki init research packets or publication batches, agent-session evidence, or agentic v2 XML state artifacts."
+  - "Use when creating or reviewing Loki technical analyses, action plans, task files, command contracts, component contracts, project documentation indexes, Loki init research packets or publication batches, agent-session evidence, agent-run reports, or execution-knowledge entries."
   - "Use when an installed package template should be loaded before writing an artifact."
 argument-hint: "[template kind, artifact destination]"
 arguments:
@@ -87,26 +87,12 @@ inspection mirror.
 - Loki init publication batch schema v1, assembled by the orchestrator for
   serial materialization by `catalogador`:
   [loki-init-publication-batch-template.xml](references/templates/loki-init-publication-batch-template.xml)
-- Agentic run manifest:
-  [agentic-run-manifest-template.xml](references/templates/agentic-run-manifest-template.xml)
-- Agentic analysis manifest:
-  [agentic-analysis-manifest-template.xml](references/templates/agentic-analysis-manifest-template.xml)
-- Agentic agent POV:
-  [agentic-agent-pov-template.xml](references/templates/agentic-agent-pov-template.xml)
-- Agentic agent review:
-  [agentic-agent-review-template.xml](references/templates/agentic-agent-review-template.xml)
-- Agentic synthesis:
-  [agentic-synthesis-template.xml](references/templates/agentic-synthesis-template.xml)
 - Agent run report:
   [agent-run-report-template.xml](references/templates/agent-run-report-template.xml)
 - Agent session evidence:
   [agent-session-evidence-template.xml](references/templates/agent-session-evidence-template.xml)
 - Execution knowledge entry:
   [execution-knowledge-entry-template.xml](references/templates/execution-knowledge-entry-template.xml)
-- Agentic run digest:
-  [agentic-run-digest-template.xml](references/templates/agentic-run-digest-template.xml)
-- Agentic backlog:
-  [agentic-backlog-template.md](references/templates/agentic-backlog-template.md)
 
 ## Procedure
 

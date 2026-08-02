@@ -27,11 +27,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 59, "agent": 28, "codex-agent": 28, "templates": 1},
-    "package-source": {"skill": 45, "agent": 15, "codex-agent": 15, "templates": 1},
-    "all": {"skill": 59, "agent": 28, "codex-agent": 28, "templates": 1},
+    "consumer": {"skill": 55, "agent": 28, "codex-agent": 28, "templates": 1},
+    "package-source": {"skill": 41, "agent": 15, "codex-agent": 15, "templates": 1},
+    "all": {"skill": 55, "agent": 28, "codex-agent": 28, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 116, "package-source": 76, "all": 116}
+FINAL_TOTALS = {"consumer": 112, "package-source": 72, "all": 112}
 RETIRED_SKILLS = (
     "loki-" + "generate-action-plan",
     "loki-" + "run-plan",
@@ -383,26 +383,9 @@ class ProfileAndSchemaTests(unittest.TestCase):
             self.assertEqual(2, config.schema_version)
             self.assertFalse(hasattr(config, "commands"))
 
-    def test_real_inline_dependency_lists_preserve_agentic_and_self_healing_counts(self) -> None:
+    def test_real_inline_dependency_lists_preserve_self_healing_counts(self) -> None:
         module = load_scope_validator_module()
-        agentic = PACKAGE_ROOT / "skills" / "loki-agentic-development" / "SKILL.md"
         self_healing = PACKAGE_ROOT / "skills" / "loki-self-healing" / "SKILL.md"
-        self.assertEqual(
-            [
-                "lf-agentic-orchestration",
-                "lf-tech-analysis-authoring",
-                "lf-execution-knowledge-capture",
-            ],
-            module.parse_required_skills(agentic),
-        )
-        self.assertEqual(
-            [
-                "loki-human-decision-preflight",
-                "loki-implement-feature",
-                "loki-manual-qa",
-            ],
-            module.parse_required_commands(agentic),
-        )
         self.assertEqual(
             [
                 "lf-framework-impact-audit",
@@ -582,8 +565,8 @@ class LegacyLayoutRejectionTests(unittest.TestCase):
     def test_legacy_skill_file_symlink_is_rejected_even_with_replace(self) -> None:
         with tempfile.TemporaryDirectory(prefix="loki-reject-skill-file-") as raw_temp:
             destination = Path(raw_temp) / "consumer"
-            source = PACKAGE_ROOT / "skills" / "loki-deep-analysis" / "SKILL.md"
-            legacy = destination / ".agents" / "skills" / "loki-deep-analysis" / "SKILL.md"
+            source = PACKAGE_ROOT / "skills" / "loki-implement-feature" / "SKILL.md"
+            legacy = destination / ".agents" / "skills" / "loki-implement-feature" / "SKILL.md"
             legacy.parent.mkdir(parents=True)
             os.symlink(source, legacy)
             before = os.readlink(legacy)
