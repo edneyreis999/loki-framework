@@ -1,11 +1,11 @@
 ---
 name: loki-manual-qa
-description: Run resumable post-implementation manual QA for one awaiting-manual-qa plan, exhaustively cataloging acceptance criteria, human gates and changed surfaces, showing every applicable test, and performing the restricted terminal promotion after aggregate human attestation.
+description: Run resumable post-implementation manual QA for one awaiting-manual-qa plan, including a closed administrative-schema-degraded admission that permits cataloging but forbids attestation and terminal promotion until the current administrative serialization is repaired.
 doc_id: "loki-manual-qa"
-version: "1.0.0"
+version: "1.1.0"
 status: active
-last_updated: "2026-08-01"
-scope: "Current-only provider-neutral manual QA source catalog, complete dashboard, independent aggregate-attestation review and restricted terminal promotion"
+last_updated: "2026-08-03"
+scope: "Current-only provider-neutral manual QA source catalog, closed administrative-schema-degraded admission, complete dashboard, independent aggregate-attestation review and restricted terminal promotion"
 not_scope: "Runtime observation by Loki, per-test human evidence, automatic production repair, installation or Git operations"
 authority: "Approved human decisions, current package policy, and this command bundle"
 canonical_source: "skills/loki-manual-qa/SKILL.md"
@@ -45,9 +45,11 @@ type: command
 serialization: skill-bundle
 domain: manual-qa
 response_consumer: both
-required_skills: [lf-agent-execution-evidence]
+required_skills: [lf-agent-execution-evidence, lf-execution-knowledge-capture]
 required_commands: []
 allowed_writes:
+  - "<plan_directory>/builds/manual-qa/admission.json"
+  - "the one exact normalized sibling temporary <plan_directory>/builds/manual-qa/admission.json.tmp, used only for exclusive admission publication and removed only when its bytes equal the intended admission"
   - "<plan_directory>/builds/manual-qa/source-catalog.json"
   - "<plan_directory>/builds/manual-qa/proposals/<source-order>.json"
   - "<plan_directory>/builds/manual-qa/dashboard.json"
@@ -60,6 +62,7 @@ allowed_writes:
   - "<plan_directory>/interaction/manual-qa/<run_id>/semantic-assessment.json"
   - "<plan_directory>/interaction/manual-qa/<run_id>/attestation-review.json"
   - "<plan_directory>/interaction/manual-qa/<run_id>/report.json"
+  - "one exact <plan_directory>/execution-knowledge/entries/<capture-id>.xml plus its sibling temporary, delegated only to execution-knowledge-cataloger under lf-execution-knowledge-capture"
   - "the exact existing human-validation gate v2 records referenced by the validated source catalog, limited to pending-to-passed terminal promotion fields"
   - "the exact whole tasks.md containing LokiRunState v3, plus implementation result v3, dashboard v3 and consistency v2 referenced by the eligible run, limited to awaiting-manual-qa-to-completed reconciliation fields; frontmatter, prose, task and acceptance-criterion bytes outside LokiRunState remain unchanged"
 forbidden_writes:
@@ -69,6 +72,10 @@ forbidden_writes:
   - ".agents/**"
   - ".codex/**"
 validators:
+  - "manual_qa_admission v1 closed schema, qualifying upstream code, closed split-root administrative Markdown adapter, derived YAML gate/audit controls and explicit current-byte semantic/provenance correlation without invented legacy records"
+  - "current command identity, demand/analysis bytes, execution-input bytes, plan/task refs, audit configuration, state/result/dashboard/consistency/metrics refs and exact-byte digests, terminal evidence and recomputed validator digest"
+  - "exact current type-specific final-validator v1, execution_audit_checkpoint v1, gate_record v2 and automatic/human gate semantics; reject unknown roots, aliases and missing/extra fields"
+  - "exclusive admission.json.tmp creation, divergent temp/final collision rejection, byte-identical final no-op, interrupted-publication recovery and owned-temp cleanup"
   - "current-only manual-QA schemas, manual_qa_handoff v2 and exact-key closure"
   - "path containment, typed identity and exact-byte digest parity"
   - "exhaustive AC/human-gate/changed-surface catalog coverage, source ordering and applicable_steps_digest"
@@ -85,7 +92,8 @@ stop_conditions:
   - "automatic gate not passed or not-applicable, no applicable manual step, or handoff other than ready-for-manual-qa"
   - "ambiguous prose, praise without aggregate testing, help, silence, per-test result/evidence, caller-provided signals/review, cancellation, open report, missing/rejected independent review, or failed pre-publication revalidation"
   - "any write target outside this contract or a terminal reconciliation that is not eligible"
-resume_contract: "Reconstruct only from current validated on-disk plan state, task contracts, human-gate v2 records, target/surface provenance, implementation result/dashboard/consistency and automatic evidence, the byte-equal eligible handoff, current demand/analysis bytes, agent_session_evidence XML schema 1, and current manual-QA source-catalog/dashboard/transaction/result/consistency/interaction/assessment/attestation-review/attestation/report records. Conversation memory and provider-session continuity are non-authoritative. Reread every referenced byte, validate transaction batch kind, immutable transition-intent digest, predecessor, phase and residue, rederive exhaustive coverage and intended bytes, compare each current target to its frozen before digest immediately before write, and if the next target already equals both persisted intended and rederived digest journal its completed write before continuing; otherwise resume only the exact remaining prefix or accept an exact committed replay as a no-op."
+  - "administrative degradation with any code other than MARKDOWN_CONTRACT_BLOCK_INVALID, any non-administrative surface, stale current-schema proof, target/evidence/control/identity/gate drift, or attempted attestation/promotion while degraded"
+resume_contract: "Reconstruct only from current validated on-disk plan state and current manual-QA records. When admission.json exists, first replay its administrative-admission journal, current JSON projection digests, byte-equal handoff v2, targets, automatic evidence/controls, pending human gates and execution-knowledge capture state; while degraded, attestation and every terminal publication remain forbidden. Otherwise retain the existing transaction prefix/recovery and exact committed no-op rules. Conversation memory and provider-session continuity are non-authoritative."
 ---
 
 # loki-manual-qa
@@ -122,6 +130,11 @@ only a read-only help response after that dashboard has been rendered.
 
 Input only validates and normalizes. It does not derive a dashboard, mutate
 state, ask the human, or repair production.
+
+If the current upstream real-run validator returns exactly
+`MARKDOWN_CONTRACT_BLOCK_INVALID`, Execution may evaluate the closed
+administrative-schema-degraded overlay. Every other error remains blocking;
+Input never interprets an unknown or superseded contract.
 
 ## Execution
 

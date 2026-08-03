@@ -1,9 +1,9 @@
 ---
 doc_id: "loki-manual-qa-response-template"
-version: "2.0.0"
+version: "2.1.0"
 status: active
-last_updated: "2026-08-01"
-scope: "Recoverable complete manual QA and terminal promotion response skeleton"
+last_updated: "2026-08-03"
+scope: "Recoverable complete manual QA, visible administrative degradation and eligible terminal promotion response skeleton"
 not_scope: "Execution authority or evidence creation"
 authority: "skills/loki-manual-qa/references/response.md"
 canonical_source: "skills/loki-manual-qa/assets/response-template.md"
@@ -18,7 +18,7 @@ replaced_by: null
 
 ## Status and eligibility
 
-- Status: `<in-progress | pending-input | blocked | stopped | completed>`
+- Status: `<administrative-schema-degraded | in-progress | pending-input | blocked | stopped | completed>`
 - Plan / run / execution: `<validated locators and typed IDs>`
 - Final plan status: `<awaiting-manual-qa | completed>`
 - Handoff v2: `<ref + digest + byte-equal parity>`
@@ -30,6 +30,19 @@ replaced_by: null
 - Aggregate attestation: `<ref + exact-byte digest | absent>`
 - Blockers: `<none | exact blockers>`
 - Resume: `<disk-only condition and next legal action>`
+
+## Administrative admission
+
+`<none | admission ref/digest + administrative-admission phase +
+MARKDOWN_CONTRACT_BLOCK_INVALID + source/projection/target/evidence/control/gate
+proofs + cross-projection control-set parity + recomputed validator digest +
+unchanged-upstream non-Markdown semantic/provenance validation passed +
+publication created|recovered|no-op with admission.json.tmp residue absent +
+capture status/reason/minimum-next-path + allowed actions + forbidden actions +
+non-empty blockers>`
+
+While this section is active, terminal reconciliation below must say
+`forbidden-while-degraded`; do not request or record aggregate attestation.
 
 ## Source coverage
 
@@ -59,6 +72,7 @@ length cap. Never truncate, paginate, summarize away or hide later tests.
 
 ## Terminal reconciliation
 
+- Eligibility: `<eligible | forbidden-while-degraded>`
 - Covered/reconciled tasks (bytes unchanged): `<refs>`
 - Covered/reconciled acceptance criteria (bytes unchanged): `<refs>`
 - Promoted tasks: `none`

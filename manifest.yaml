@@ -180,7 +180,7 @@ agentic_selection_policy:
 agentic_agent_metadata:
   execution-knowledge-cataloger:
     capability_tags: ["execution-knowledge", "evidence-lineage", "cataloging"]
-    phase_roles: ["execution", "capture"]
+    phase_roles: ["execution", "manual-qa", "capture"]
     agentic_modes: ["scoped-writer"]
     write_classes: ["execution-knowledge-entry"]
     risk_tags: ["privacy", "evidence-integrity", "liveness"]
@@ -503,7 +503,7 @@ scripts:
   - name: "validate-manual-qa-contracts"
     file: "scripts/validate-manual-qa-contracts.py"
     status: draft
-    purpose: "Validate current-only manual-QA handoff, source, field-bound guide facts, runtime-QA proposal, semantic assessment, independent attestation review plus agent-session-evidence XML, exclusive command ownership, collision-safe transaction journal, post-write crash recovery, issue revalidation, same-tree transition chains, terminal consistency, drift and idempotence with adversarial fixtures."
+    purpose: "Validate current-only manual-QA handoff, closed administrative-schema-degraded admission, exact split-root administrative Markdown and derived YAML controls, explicit current-byte semantic/provenance correlation without invented legacy records, exclusive atomic admission publication, source guides, attestation review, crash recovery, terminal consistency, drift and adversarial fixtures."
   - name: "validate-llm-artifact-precheck"
     file: "scripts/validate-llm-artifact-precheck.py"
     status: draft
@@ -656,7 +656,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["manual-qa-handoff-v2", "manual-qa-source-v1", "manual-qa-source-catalog-v1", "runtime-qa-source-proposal-v1", "manual-qa-transaction-v1", "manual-qa-semantic-assessment-v1", "manual-qa-attestation-review-v1", "agent-session-evidence-v1", "manual-qa-dashboard-v1", "manual-qa-step-v1", "manual-qa-attestation-v1", "manual-qa-report-v1", "manual-qa-interaction-v1", "manual-qa-result-v1", "manual-qa-consistency-v1"]
+    current_contracts: ["manual-qa-handoff-v2", "manual-qa-admission-v1", "manual-qa-source-v1", "manual-qa-source-catalog-v1", "runtime-qa-source-proposal-v1", "manual-qa-transaction-v1", "manual-qa-semantic-assessment-v1", "manual-qa-attestation-review-v1", "agent-session-evidence-v1", "manual-qa-dashboard-v1", "manual-qa-step-v1", "manual-qa-attestation-v1", "manual-qa-report-v1", "manual-qa-interaction-v1", "manual-qa-result-v1", "manual-qa-consistency-v1"]
   - name: "lf-agent-execution-evidence"
     file: "skills/lf-agent-execution-evidence/SKILL.md"
     status: draft

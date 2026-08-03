@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import sys
 import tempfile
@@ -30,6 +31,7 @@ AGENT_RUN_RE = re.compile(rf"agent-run-v1:{HEX}\Z")
 HANDOFF_ID_RE = re.compile(rf"handoff-v1:{HEX}\Z")
 REPORT_RE = re.compile(rf"manual-qa-report-v1:{HEX}\Z")
 TRANSACTION_ID_RE = re.compile(rf"manual-qa-transaction-v1:{HEX}\Z")
+ADMISSION_ID_RE = re.compile(rf"manual-qa-admission-v1:{HEX}\Z")
 DECLARATION = "all-applicable-manual-tests-tested-and-approved"
 ASSESSOR_IDENTITY = "loki-manual-qa:semantic-assessor-v1"
 ASSESSMENT_OWNER = "loki-manual-qa-orchestrator"
@@ -42,6 +44,8 @@ MANUAL_WRITE_TRACE: list[str] = []
 EVIDENCE_DIMENSIONS = ("transcript", "tool_io", "errors", "reasoning_summary", "token_usage")
 EVIDENCE_STATES = {"complete", "partial", "pointer-only", "unavailable", "unsupported"}
 GUIDE_FIELDS = ("environment", "prerequisites", "initial_state", "actions", "expected_result", "success_signal", "failure_signal", "cleanup", "automation_limit")
+ADMISSION_ALLOWED_ACTIONS = ["catalog-manual-sources", "publish-complete-dashboard", "provide-read-only-help", "record-human-test-observations"]
+ADMISSION_FORBIDDEN_ACTIONS = ["aggregate-attestation", "promote-human-gates", "publish-terminal-consistency", "complete-plan", "rewrite-manual-qa-handoff"]
 
 
 class ContractError(ValueError):
@@ -200,6 +204,12 @@ def validate_locator(value: Any, code: str, *, fragment: bool = False) -> None:
     require(code, pure.parts[0] == "planos")
 
 
+def validate_project_ref(value: Any, code: str) -> None:
+    require(code, nonempty(value) and "\\" not in value and "#" not in value)
+    pure = PurePosixPath(value)
+    require(code, not pure.is_absolute() and ".." not in pure.parts and "." not in pure.parts and bool(pure.parts))
+
+
 def validate_timestamp(value: Any, code: str) -> None:
     require(code, isinstance(value, str) and value.endswith("Z"))
     try:
@@ -207,6 +217,109 @@ def validate_timestamp(value: Any, code: str) -> None:
     except ValueError as exc:
         raise ContractError(code) from exc
     require(code, parsed.utcoffset() is not None and parsed.utcoffset().total_seconds() == 0)
+
+
+def administrative_yaml_scalar(value: str) -> Any:
+    """Parse only the JSON-compatible scalar subset used by current administrative YAML."""
+    value = value.strip()
+    require("ADMINISTRATIVE_YAML_SCALAR_INVALID", bool(value) and value not in {"|", ">"})
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        require("ADMINISTRATIVE_YAML_SCALAR_INVALID", not any(token in value for token in ("&", "*", "!", "{", "}")))
+        return value
+
+
+def parse_administrative_yaml(text: str) -> dict[str, Any]:
+    """Parse a closed indentation subset; callers must still validate an exact current schema."""
+    rows: list[tuple[int, str]] = []
+    for raw in text.splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        require("ADMINISTRATIVE_YAML_TAB_INVALID", "\t" not in raw)
+        indent = len(raw) - len(raw.lstrip(" "))
+        require("ADMINISTRATIVE_YAML_INDENT_INVALID", indent % 2 == 0)
+        rows.append((indent, raw.strip()))
+    require("ADMINISTRATIVE_YAML_EMPTY", bool(rows))
+
+    def mapping(index: int, indent: int) -> tuple[dict[str, Any], int]:
+        result: dict[str, Any] = {}
+        while index < len(rows) and rows[index][0] == indent and not rows[index][1].startswith("- "):
+            content = rows[index][1]
+            require("ADMINISTRATIVE_YAML_MAPPING_INVALID", ":" in content)
+            key, raw_value = content.split(":", 1)
+            require("ADMINISTRATIVE_YAML_KEY_INVALID", re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", key) is not None and key not in result)
+            index += 1
+            if raw_value.strip():
+                result[key] = administrative_yaml_scalar(raw_value)
+            else:
+                require("ADMINISTRATIVE_YAML_CHILD_MISSING", index < len(rows) and rows[index][0] == indent + 2)
+                if rows[index][1].startswith("- "):
+                    result[key], index = sequence(index, indent + 2)
+                else:
+                    result[key], index = mapping(index, indent + 2)
+        return result, index
+
+    def sequence(index: int, indent: int) -> tuple[list[Any], int]:
+        result: list[Any] = []
+        while index < len(rows) and rows[index][0] == indent and rows[index][1].startswith("- "):
+            content = rows[index][1][2:].strip()
+            index += 1
+            if not content:
+                require("ADMINISTRATIVE_YAML_SEQUENCE_CHILD_MISSING", index < len(rows) and rows[index][0] == indent + 2)
+                item, index = mapping(index, indent + 2)
+            elif ":" in content and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", content.split(":", 1)[0]):
+                key, raw_value = content.split(":", 1)
+                item = {key: administrative_yaml_scalar(raw_value) if raw_value.strip() else None}
+                if index < len(rows) and rows[index][0] == indent + 2:
+                    tail, index = mapping(index, indent + 2)
+                    require("ADMINISTRATIVE_YAML_SEQUENCE_KEY_DUPLICATE", not (set(item) & set(tail)))
+                    item.update(tail)
+            else:
+                item = administrative_yaml_scalar(content)
+            result.append(item)
+        return result, index
+
+    require("ADMINISTRATIVE_YAML_ROOT_INVALID", rows[0][0] == 0 and not rows[0][1].startswith("- "))
+    document, cursor = mapping(0, 0)
+    require("ADMINISTRATIVE_YAML_TRAILING_CONTENT", cursor == len(rows))
+    return document
+
+
+def read_administrative_markdown_block(reader: Any, ref: str, root_key: str) -> dict[str, Any]:
+    text = reader.read_bytes(ref).decode("utf-8")
+    require("ADMINISTRATIVE_JSON_FENCE_FORBIDDEN", re.search(r"^```json\s*$", text, flags=re.MULTILINE) is None)
+    blocks = re.findall(r"^```ya?ml\s*\n(.*?)^```\s*$", text, flags=re.MULTILINE | re.DOTALL)
+    matches = [document for block in blocks if root_key in (document := parse_administrative_yaml(block))]
+    require("ADMINISTRATIVE_YAML_SURFACE_INVALID", len(matches) == 1 and set(matches[0]) == {root_key})
+    require("ADMINISTRATIVE_YAML_ROOT_VALUE_INVALID", isinstance(matches[0][root_key], dict))
+    return matches[0][root_key]
+
+
+def administrative_yaml_dump(value: Any, indent: int = 0) -> str:
+    prefix = " " * indent
+    if isinstance(value, dict):
+        lines: list[str] = []
+        for key, item in value.items():
+            if isinstance(item, (dict, list)) and item:
+                lines.append(f"{prefix}{key}:")
+                lines.append(administrative_yaml_dump(item, indent + 2))
+            else:
+                lines.append(f"{prefix}{key}: {json.dumps(item, ensure_ascii=False)}")
+        return "\n".join(lines)
+    if isinstance(value, list):
+        lines = []
+        for item in value:
+            if isinstance(item, dict) and item:
+                first_key = next(iter(item))
+                first_value = item[first_key]
+                lines.append(f"{prefix}- {first_key}: {json.dumps(first_value, ensure_ascii=False)}")
+                tail = {key: val for key, val in item.items() if key != first_key}
+                if tail: lines.append(administrative_yaml_dump(tail, indent + 2))
+            else:
+                lines.append(f"{prefix}- {json.dumps(item, ensure_ascii=False)}")
+        return "\n".join(lines)
+    return f"{prefix}{json.dumps(value, ensure_ascii=False)}"
 
 
 HANDOFF_KEYS = {"schema_version", "status", "run_id", "execution_id", "plan_directory", "automatic_evidence_refs", "manual_qa_result_ref", "manual_qa_attestation_ref", "task_refs", "acceptance_criterion_refs", "gate_refs", "changed_target_refs", "reason"}
@@ -225,6 +338,13 @@ TRANSACTION_KEYS = {"schema_version", "transaction_id", "run_id", "execution_id"
 TERMINAL_PROJECTION_KEYS = {"source_catalog_ref", "source_catalog_digest", "transaction_ref", "transaction_id", "covered_task_refs", "covered_acceptance_criterion_refs", "covered_gate_refs", "covered_changed_surface_refs", "promoted_task_refs", "promoted_acceptance_criterion_refs", "promoted_gate_refs", "canonical_asset_refs", "canonical_asset_digests", "validator_refs", "validator_digests", "audit_refs", "audit_digests", "final_plan_status", "blockers", "resume"}
 RESULT_KEYS = {"schema_version", "run_id", "execution_id", "status", "state_ref", "state_digest", "handoff_ref", "handoff_digest", "dashboard_ref", "dashboard_digest", "interaction_ref", "interaction_digest", "attestation_ref", "attestation_digest", "report_ref", "report_digest", "applicable_steps_digest", "demand_revalidation_digest", "automatic_gate_refs", "automatic_gate_digests", "reconciled_handoff_ref", "next_action", "result_digest"} | TERMINAL_PROJECTION_KEYS
 CONSISTENCY_KEYS = ({"schema_version", "run_id", "execution_id", "state_ref", "state_digest", "handoff_ref", "handoff_digest", "dashboard_ref", "dashboard_digest", "interaction_ref", "interaction_digest", "attestation_ref", "attestation_digest", "report_ref", "report_digest", "result_ref", "result_digest", "applicable_steps_digest", "demand_revalidation_digest", "automatic_gate_refs", "automatic_gate_digests", "reconciled_handoff_ref", "consistency_digest"} | TERMINAL_PROJECTION_KEYS)
+ADMISSION_KEYS = {"schema_version", "admission_id", "status", "batch_kind", "phase", "run_id", "execution_id", "plan_directory", "trigger", "authoritative_projection", "production_targets", "automatic_evidence", "automatic_controls", "human_gates", "allowed_actions", "forbidden_actions", "blockers", "execution_knowledge_capture", "admission_digest"}
+ADMISSION_TRIGGER_KEYS = {"upstream_error_code", "serialization", "source_refs", "source_digests"}
+ADMISSION_PROJECTION_KEYS = {"invocation_ref", "invocation_digest", "result_ref", "result_digest", "dashboard_ref", "dashboard_digest", "consistency_ref", "consistency_digest", "state_digest", "manual_qa_handoff_digest"}
+ADMISSION_ROW_KEYS = {"ref", "digest", "outcome"}
+ADMISSION_GATE_KEYS = {"ref", "digest", "kind", "status", "attestation_ref", "attestation_digest"}
+ADMISSION_CAPTURE_KEYS = {"capture_id", "target_entry", "status", "entry_digest", "reason", "minimum_next_path"}
+ADMISSION_TEMP_NAME = "admission.json.tmp"
 
 
 def validate_handoff(value: Any) -> dict[str, Any]:
@@ -244,6 +364,54 @@ def validate_handoff(value: Any) -> dict[str, Any]:
     require("HANDOFF_CHANGED_TARGETS_INVALID", isinstance(p["changed_target_refs"], list) and bool(p["changed_target_refs"]) and len(p["changed_target_refs"]) == len(set(p["changed_target_refs"])))
     for ref in p["changed_target_refs"]:
         require("HANDOFF_CHANGED_TARGET_REF_INVALID", nonempty(ref) and "#" not in ref and "\\" not in ref and not PurePosixPath(ref).is_absolute() and ".." not in PurePosixPath(ref).parts)
+    return p
+
+
+def validate_admission(value: Any) -> dict[str, Any]:
+    p = closed("ADMISSION_SHAPE_INVALID", value, ADMISSION_KEYS)
+    require("ADMISSION_SCHEMA_INVALID", type(p["schema_version"]) is int and p["schema_version"] == 1)
+    validate_ids(p)
+    require("ADMISSION_ID_INVALID", isinstance(p["admission_id"], str) and ADMISSION_ID_RE.fullmatch(p["admission_id"]) is not None)
+    require("ADMISSION_STATE_INVALID", p["status"] == "administrative-schema-degraded" and p["batch_kind"] == "administrative-admission" and p["phase"] in {"admission-recorded", "capture-reconciled"})
+    validate_locator(f'{p["plan_directory"]}/tasks.md', "ADMISSION_PLAN_INVALID")
+    trigger = closed("ADMISSION_TRIGGER_SHAPE_INVALID", p["trigger"], ADMISSION_TRIGGER_KEYS)
+    require("ADMISSION_TRIGGER_CODE_INVALID", trigger["upstream_error_code"] == "MARKDOWN_CONTRACT_BLOCK_INVALID")
+    require("ADMISSION_TRIGGER_SURFACE_INVALID", trigger["serialization"] == "multiple-fenced-yaml-administrative-sections" and isinstance(trigger["source_refs"], list) and bool(trigger["source_refs"]) and len(trigger["source_refs"]) == len(set(trigger["source_refs"])) == len(trigger["source_digests"]))
+    for ref in trigger["source_refs"]: validate_locator(ref, "ADMISSION_TRIGGER_REF_INVALID")
+    for item_digest in trigger["source_digests"]: validate_digest(item_digest, "ADMISSION_TRIGGER_DIGEST_INVALID")
+    projection = closed("ADMISSION_PROJECTION_SHAPE_INVALID", p["authoritative_projection"], ADMISSION_PROJECTION_KEYS)
+    for key in ("invocation_ref", "result_ref", "dashboard_ref", "consistency_ref"): validate_locator(projection[key], "ADMISSION_PROJECTION_REF_INVALID")
+    for key in ("invocation_digest", "result_digest", "dashboard_digest", "consistency_digest", "state_digest", "manual_qa_handoff_digest"): validate_digest(projection[key], "ADMISSION_PROJECTION_DIGEST_INVALID")
+    for rows, code, outcomes in ((p["production_targets"], "ADMISSION_TARGET", {"digest-verified"}), (p["automatic_evidence"], "ADMISSION_EVIDENCE", {"digest-verified"}), (p["automatic_controls"], "ADMISSION_CONTROL", {"passed", "approved", "not-applicable"})):
+        require(f"{code}_ROWS_INVALID", isinstance(rows, list) and bool(rows))
+        refs: list[str] = []
+        for row in rows:
+            closed(f"{code}_ROW_SHAPE_INVALID", row, ADMISSION_ROW_KEYS)
+            validate_project_ref(row["ref"], f"{code}_REF_INVALID")
+            validate_digest(row["digest"], f"{code}_DIGEST_INVALID")
+            require(f"{code}_OUTCOME_INVALID", row["outcome"] in outcomes)
+            refs.append(row["ref"])
+        require(f"{code}_DUPLICATE", len(refs) == len(set(refs)))
+    require("ADMISSION_HUMAN_GATES_EMPTY", isinstance(p["human_gates"], list) and bool(p["human_gates"]))
+    for gate in p["human_gates"]:
+        closed("ADMISSION_HUMAN_GATE_SHAPE_INVALID", gate, ADMISSION_GATE_KEYS)
+        validate_locator(gate["ref"], "ADMISSION_HUMAN_GATE_REF_INVALID")
+        validate_digest(gate["digest"], "ADMISSION_HUMAN_GATE_DIGEST_INVALID")
+        require("ADMISSION_HUMAN_GATE_STATE_INVALID", gate["kind"] == "human-validation" and gate["status"] == "pending" and gate["attestation_ref"] is None and gate["attestation_digest"] is None)
+    require("ADMISSION_ALLOWED_ACTIONS_INVALID", p["allowed_actions"] == ADMISSION_ALLOWED_ACTIONS)
+    require("ADMISSION_FORBIDDEN_ACTIONS_INVALID", p["forbidden_actions"] == ADMISSION_FORBIDDEN_ACTIONS)
+    require("ADMISSION_BLOCKERS_INVALID", isinstance(p["blockers"], list) and len(p["blockers"]) == len(set(p["blockers"])) and {"administrative-serialization-incompatibility", "terminal-promotion-forbidden-while-degraded"}.issubset(p["blockers"]))
+    capture = closed("ADMISSION_CAPTURE_SHAPE_INVALID", p["execution_knowledge_capture"], ADMISSION_CAPTURE_KEYS)
+    require("ADMISSION_CAPTURE_ID_INVALID", nonempty(capture["capture_id"]))
+    validate_locator(capture["target_entry"], "ADMISSION_CAPTURE_TARGET_INVALID")
+    require("ADMISSION_CAPTURE_TARGET_SHAPE_INVALID", capture["target_entry"] == f'{p["plan_directory"]}/execution-knowledge/entries/{capture["capture_id"]}.xml')
+    require("ADMISSION_CAPTURE_STATUS_INVALID", capture["status"] in {"pending", "captured", "partial", "failed", "unsupported"})
+    require("ADMISSION_CAPTURE_DEGRADED_FIELDS_INVALID", (capture["status"] == "captured" and capture["entry_digest"] is not None) or (capture["status"] != "captured" and capture["entry_digest"] is None and nonempty(capture["reason"]) and nonempty(capture["minimum_next_path"])))
+    if capture["entry_digest"] is not None: validate_digest(capture["entry_digest"], "ADMISSION_CAPTURE_DIGEST_INVALID")
+    require("ADMISSION_CAPTURE_PHASE_INVALID", (p["phase"] == "admission-recorded") == (capture["status"] == "pending"))
+    expected_id = "manual-qa-admission-v1:" + digest({"run_id": p["run_id"], "execution_id": p["execution_id"], "trigger": trigger, "authoritative_projection": projection}).split(":", 1)[1]
+    require("ADMISSION_ID_MISMATCH", p["admission_id"] == expected_id)
+    require("ADMISSION_DIGEST_MISMATCH", p["admission_digest"] == digest(p, omit="admission_digest"))
     return p
 
 
@@ -912,6 +1080,325 @@ def load_upstream() -> Any:
     return module
 
 
+def read_administrative_record(reader: Any, ref: str) -> dict[str, Any]:
+    if ref.endswith(".json"):
+        return reader.read_json(ref)
+    require("ADMINISTRATIVE_RECORD_EXTENSION_INVALID", ref.endswith((".yaml", ".yml")))
+    return parse_administrative_yaml(reader.read_bytes(ref).decode("utf-8"))
+
+
+def read_current_control_record(reader: Any, ref: str, record_kind: str) -> dict[str, Any]:
+    """Read one current control without generic root unwrapping or aliases."""
+    require("ADMISSION_CONTROL_KIND_INVALID", record_kind in {"final-validator", "audit-checkpoint", "gate"})
+    if record_kind == "final-validator":
+        require("ADMISSION_CONTROL_EXTENSION_INVALID", ref.endswith(".json"))
+        record = reader.read_json(ref)
+        require("ADMISSION_CONTROL_JSON_ROOT_INVALID", isinstance(record, dict))
+        return record
+    require("ADMISSION_CONTROL_EXTENSION_INVALID", ref.endswith((".yaml", ".yml")))
+    record = parse_administrative_yaml(reader.read_bytes(ref).decode("utf-8"))
+    if record_kind == "audit-checkpoint":
+        require("ADMISSION_AUDIT_YAML_ROOT_INVALID", set(record) == {"execution_audit_checkpoint"})
+        value = record["execution_audit_checkpoint"]
+        require("ADMISSION_AUDIT_YAML_VALUE_INVALID", isinstance(value, dict))
+        return value
+    require("ADMISSION_GATE_YAML_ROOT_INVALID", set(record) == load_upstream().GATE_RECORD_KEYS)
+    return record
+
+
+ADMINISTRATIVE_EXECUTION_PROFILE_KEYS = {
+    "documentation_profile", "escalation_reason", "model_class", "orchestrator_exception_reason",
+    "recommended_handoffs", "scoped_write_domains", "scoped_write_mode", "scoped_write_owner",
+    "task_effort", "validator_effort",
+}
+ADMINISTRATIVE_SCOPED_WRITE_KEYS = {
+    "allowed_writes", "human_gates", "mode", "orchestrator_exception_reason", "owner",
+    "required_skills", "scoped_write_domains", "target_files", "validation_owner", "validators",
+}
+ADMINISTRATIVE_TASK_STATE_KEYS = {
+    "blocked_by", "blockers", "completion_evidence_refs", "files_expected", "gate_refs", "learned_ref",
+    "limitations", "next_action", "orchestrator_exception_reason", "plan_state_ref", "retry_refs",
+    "schema_version", "status", "target_decision_refs", "target_files", "task_ref", "task_validation_ref",
+    "validation_cycle_refs", "validation_owner", "write_owner",
+}
+ADMINISTRATIVE_PREFLIGHT_KEYS = {
+    "analysis_digest", "blockers", "bootstrap_record_ref", "classification", "demand_digest", "demand_ref",
+    "execution_id", "minimum_next_input", "plan_directory", "result", "run_id", "schema_version",
+    "state_ref", "validation_refs",
+}
+ADMINISTRATIVE_DOWNSTREAM_KEYS = {
+    "escalation_reason", "execution_effort", "model_class", "recommended_handoffs", "scoped_writers",
+    "validator_effort",
+}
+ADMINISTRATIVE_TARGET_DECISION_KEYS = {
+    "demand_or_acceptance_criterion_refs", "evidence_refs", "expected_impact", "origin", "owner_ref",
+    "rationale", "schema_version", "status", "target", "validator_ref",
+}
+
+
+def read_administrative_documents(reader: Any, ref: str) -> list[dict[str, Any]]:
+    text = reader.read_bytes(ref).decode("utf-8")
+    require("ADMINISTRATIVE_JSON_FENCE_FORBIDDEN", re.search(r"^```json\s*$", text, flags=re.MULTILINE) is None)
+    blocks = re.findall(r"^```ya?ml\s*\n(.*?)^```\s*$", text, flags=re.MULTILINE | re.DOTALL)
+    require("ADMINISTRATIVE_YAML_SURFACE_INVALID", bool(blocks))
+    return [parse_administrative_yaml(block) for block in blocks]
+
+
+def read_split_administrative_surface(reader: Any, tasks_ref: str) -> dict[str, Any]:
+    documents = read_administrative_documents(reader, tasks_ref)
+    require("ADMINISTRATIVE_TASKS_BLOCK_CARDINALITY_INVALID", len(documents) >= 5)
+    require("ADMINISTRATIVE_COMMAND_BLOCK_INVALID", set(documents[0]) == {"command_identity", "execution_input"})
+    require("ADMINISTRATIVE_PREFLIGHT_BLOCK_INVALID", set(documents[1]) == {"plan_directory_preflight_result"})
+    require("ADMINISTRATIVE_DOWNSTREAM_BLOCK_INVALID", set(documents[2]) == {"downstream_execution_profile"})
+    require("ADMINISTRATIVE_STATE_BLOCK_INVALID", set(documents[-1]) == {"loki_run_state"})
+    decision_documents = documents[3:-1]
+    require("ADMINISTRATIVE_TARGET_DECISION_BLOCKS_INVALID", bool(decision_documents) and all(set(item) == {"target_decision"} for item in decision_documents))
+    preflight = closed("ADMINISTRATIVE_PREFLIGHT_SHAPE_INVALID", documents[1]["plan_directory_preflight_result"], ADMINISTRATIVE_PREFLIGHT_KEYS)
+    downstream = closed("ADMINISTRATIVE_DOWNSTREAM_SHAPE_INVALID", documents[2]["downstream_execution_profile"], ADMINISTRATIVE_DOWNSTREAM_KEYS)
+    decisions = [closed("ADMINISTRATIVE_TARGET_DECISION_SHAPE_INVALID", item["target_decision"], ADMINISTRATIVE_TARGET_DECISION_KEYS) for item in decision_documents]
+    targets = [item["target"] for item in decisions]
+    require("ADMINISTRATIVE_TARGET_DECISION_DUPLICATE", len(targets) == len(set(targets)))
+    return {
+        "command_identity": documents[0]["command_identity"],
+        "execution_input": documents[0]["execution_input"],
+        "preflight": preflight,
+        "downstream": downstream,
+        "target_decisions": decisions,
+        "state": documents[-1]["loki_run_state"],
+    }
+
+
+def read_split_administrative_task(reader: Any, task_ref: str) -> dict[str, Any]:
+    documents = read_administrative_documents(reader, task_ref)
+    require("ADMINISTRATIVE_TASK_BLOCK_CARDINALITY_INVALID", len(documents) == 5)
+    require("ADMINISTRATIVE_TASK_PROFILE_BLOCK_INVALID", set(documents[0]) == ADMINISTRATIVE_EXECUTION_PROFILE_KEYS)
+    expected_roots = ({"scoped_write"}, {"task_validation"}, {"gate_refs"}, {"loki_task_state"})
+    require("ADMINISTRATIVE_TASK_ROOT_SEQUENCE_INVALID", tuple(set(item) for item in documents[1:]) == expected_roots)
+    profile = closed("ADMINISTRATIVE_TASK_PROFILE_SHAPE_INVALID", documents[0], ADMINISTRATIVE_EXECUTION_PROFILE_KEYS)
+    scoped_write = closed("ADMINISTRATIVE_SCOPED_WRITE_SHAPE_INVALID", documents[1]["scoped_write"], ADMINISTRATIVE_SCOPED_WRITE_KEYS)
+    task_state = closed("ADMINISTRATIVE_TASK_STATE_SHAPE_INVALID", documents[4]["loki_task_state"], ADMINISTRATIVE_TASK_STATE_KEYS)
+    require("ADMINISTRATIVE_TASK_GATE_REFS_INVALID", isinstance(documents[3]["gate_refs"], list))
+    return {"profile": profile, "scoped_write": scoped_write, "task_validation": documents[2]["task_validation"], "gate_refs": documents[3]["gate_refs"], "state": task_state}
+
+
+def validate_real_run_with_administrative_markdown(
+    upstream: Any,
+    project_root: Path,
+    tasks_ref: str,
+    invocation_ref: str,
+) -> dict[str, Any]:
+    """Validate the recognized split administrative surface without inventing an upstream task contract."""
+    reader = upstream.RealRunReader(project_root)
+    surface = read_split_administrative_surface(reader, tasks_ref)
+    invocation = upstream.validate_execution_input(reader.read_json(invocation_ref))
+    require("ADMINISTRATIVE_DEMAND_CURRENT_BYTES_DRIFT", invocation["command_identity"]["demand_digest"] == bytes_digest(reader.read_bytes(invocation["demand_ref"])))
+    require("ADMINISTRATIVE_ANALYSIS_CURRENT_BYTES_DRIFT", invocation["command_identity"]["analysis_digest"] == bytes_digest(reader.read_bytes(invocation["analysis_ref"])))
+    require("ADMINISTRATIVE_EXECUTION_INPUT_DRIFT", surface["execution_input"] == invocation)
+    require("ADMINISTRATIVE_COMMAND_IDENTITY_DRIFT", surface["command_identity"] == invocation["command_identity"])
+    state = closed("ADMINISTRATIVE_STATE_SHAPE_INVALID", surface["state"], upstream.STATE_V3_KEYS)
+    require("ADMINISTRATIVE_STATE_SELF_DIGEST_INVALID", state["state_digest"] == upstream.digest_without(state, "state_digest"))
+    require("STATE_COMMAND_IDENTITY_DIGEST_MISMATCH", state["command_identity_digest"] == upstream.canonical_digest(invocation["command_identity"]))
+    require("STATE_EXECUTION_INPUT_DIGEST_MISMATCH", state["execution_input_digest"] == bytes_digest(reader.read_bytes(invocation_ref)))
+    require("ADMINISTRATIVE_STATE_IDENTITY_DRIFT", (state["run_id"], state["execution_id"]) == (invocation["run_id"], invocation["execution_id"]))
+    require("STATE_AUDIT_CONFIGURATION_MISMATCH", state["audit_configuration"] == invocation["command_identity"]["audit_configuration"])
+    require("ADMINISTRATIVE_STATE_OUTPUT_REFS_DRIFT", (state["result_ref"], state["dashboard_ref"], state["consistency_packet_ref"]) == (invocation["result_ref"], invocation["dashboard_ref"], invocation["consistency_packet_ref"]))
+    require("STATE_TASK_REFS_MISMATCH", isinstance(state["task_refs"], list) and bool(state["task_refs"]) and len(state["task_refs"]) == len(set(state["task_refs"])))
+    require("ADMINISTRATIVE_STATE_STATUS_INVALID", state["status"] == "awaiting-manual-qa" and state["manual_qa_handoff"]["status"] == "ready-for-manual-qa")
+    require("ADMINISTRATIVE_PREFLIGHT_IDENTITY_DRIFT", (surface["preflight"]["run_id"], surface["preflight"]["execution_id"], surface["preflight"]["plan_directory"]) == (state["run_id"], state["execution_id"], invocation["command_identity"]["plan_directory"]) and surface["preflight"]["state_ref"] in {tasks_ref, f"{tasks_ref}#loki_run_state"})
+    require("ADMINISTRATIVE_PREFLIGHT_SOURCE_DRIFT", surface["preflight"]["demand_ref"] == invocation["demand_ref"] and surface["preflight"]["demand_digest"] == invocation["command_identity"]["demand_digest"] and surface["preflight"]["analysis_digest"] == invocation["command_identity"]["analysis_digest"])
+    require("ADMINISTRATIVE_PREFLIGHT_RESULT_INVALID", surface["preflight"]["result"] in {"ready", "passed", "existing-valid-plan", "created-valid-plan"} and surface["preflight"]["blockers"] == [] and nonempty(surface["preflight"]["classification"]))
+
+    result = closed("ADMINISTRATIVE_RESULT_SHAPE_INVALID", reader.read_json(state["result_ref"]), upstream.RESULT_V3_KEYS)
+    dashboard_record = reader.read_json(state["dashboard_ref"])
+    dashboard_keys = set(upstream.DASHBOARD_V3_KEYS)
+    require("ADMINISTRATIVE_DASHBOARD_SHAPE_INVALID", set(dashboard_record) in {frozenset(dashboard_keys), frozenset(dashboard_keys | {"state_digest"})})
+    dashboard = dashboard_record
+    consistency = closed("ADMINISTRATIVE_CONSISTENCY_SHAPE_INVALID", reader.read_json(state["consistency_packet_ref"]), upstream.CONSISTENCY_V2_KEYS)
+    identity = (state["run_id"], state["execution_id"])
+    require("ADMINISTRATIVE_PROJECTION_IDENTITY_DRIFT", all((item["run_id"], item["execution_id"]) == identity for item in (result, dashboard, consistency)))
+    require("RESULT_AUDIT_CONFIGURATION_MISMATCH", result["audit_configuration"] == state["audit_configuration"])
+    require("DASHBOARD_AUDIT_CONFIGURATION_MISMATCH", dashboard["audit_configuration"] == state["audit_configuration"])
+    require("CONSISTENCY_AUDIT_CONFIGURATION_MISMATCH", consistency["audit_configuration"] == state["audit_configuration"])
+    require("ADMINISTRATIVE_PROJECTION_STATUS_DRIFT", result["status"] == dashboard["status"] == consistency["status"] == state["status"])
+    require("ADMINISTRATIVE_RESULT_SELF_DIGEST_INVALID", result["result_digest"] == upstream.digest_without(result, "result_digest"))
+    require("ADMINISTRATIVE_DASHBOARD_SELF_DIGEST_INVALID", dashboard["dashboard_digest"] == upstream.digest_without(dashboard, "dashboard_digest"))
+    require("CONSISTENCY_RESULT_MISMATCH", consistency["result_ref"] == state["result_ref"] and consistency["result_digest"] == bytes_digest(reader.read_bytes(state["result_ref"])))
+    require("CONSISTENCY_DASHBOARD_MISMATCH", consistency["dashboard_ref"] == state["dashboard_ref"] and consistency["dashboard_digest"] == bytes_digest(reader.read_bytes(state["dashboard_ref"])))
+    require("ADMINISTRATIVE_STATE_DIGEST_DRIFT", result["state_digest"] == consistency["state_digest"] == state["state_digest"] and ("state_digest" not in dashboard or dashboard["state_digest"] == state["state_digest"]))
+    handoffs = [validate_handoff(item["manual_qa_handoff"]) for item in (state, result, dashboard, consistency)]
+    require("ADMINISTRATIVE_HANDOFF_DRIFT", handoffs[0] == handoffs[1] == handoffs[2] == handoffs[3])
+    handoff = handoffs[0]
+    require("ADMINISTRATIVE_HANDOFF_TASK_REFS_DRIFT", handoff["task_refs"] == state["task_refs"])
+
+    tasks: dict[str, dict[str, Any]] = {}
+    acceptance_refs: list[str] = []
+    primary_validator_refs: list[str] = []
+    owned_targets: list[str] = []
+    for task_ref in state["task_refs"]:
+        task = read_split_administrative_task(reader, task_ref)
+        tasks[task_ref] = task
+        task_state = task["state"]
+        scoped_write = task["scoped_write"]
+        validation = closed("ADMINISTRATIVE_TASK_VALIDATION_SHAPE_INVALID", task["task_validation"], upstream.TASK_VALIDATION_KEYS)
+        require("ADMINISTRATIVE_TASK_STATE_DRIFT", task_state["task_ref"] == task_ref and task_state["plan_state_ref"] in {tasks_ref, f"{tasks_ref}#loki_run_state"} and task_state["status"] in {"passed", "completed"} and validation["status"] == "passed")
+        require("ADMINISTRATIVE_TASK_WRITE_DRIFT", task_state["target_files"] == scoped_write["target_files"] and set(task_state["target_files"]).issubset(set(task_state["files_expected"])) and task_state["write_owner"] == scoped_write["owner"] and task_state["validation_owner"] == scoped_write["validation_owner"])
+        require("ADMINISTRATIVE_TASK_GATE_DRIFT", task["gate_refs"] == task_state["gate_refs"])
+        criteria = validation["acceptance_criteria"]
+        require("ADMINISTRATIVE_TASK_AC_INVALID", isinstance(criteria, list) and bool(criteria) and all(isinstance(item, dict) and set(item) == {"id", "statement", "required"} and item["required"] is True and nonempty(item["id"]) and nonempty(item["statement"]) for item in criteria))
+        acceptance_refs.extend(f'{task_ref}#{item["id"]}' for item in criteria)
+        route = closed("ADMINISTRATIVE_TASK_ROUTE_INVALID", validation["primary_route"], {"type", "validator_ref"})
+        require("ADMINISTRATIVE_TASK_ROUTE_INVALID", route["type"] == "deterministic" and nonempty(route["validator_ref"]))
+        primary_validator_refs.append(route["validator_ref"])
+        for evidence_ref in validation["evidence_refs"] + task_state["completion_evidence_refs"] + task_state["validation_cycle_refs"]:
+            reader.read_bytes(evidence_ref)
+        owned_targets.extend(scoped_write["target_files"])
+    require("ADMINISTRATIVE_TARGET_DECISION_COVERAGE_DRIFT", set(handoff["changed_target_refs"]).issubset({item["target"] for item in surface["target_decisions"]}) and set(handoff["changed_target_refs"]).issubset(set(owned_targets)))
+    require("ADMINISTRATIVE_TASK_RESULTS_CARDINALITY_DRIFT", len(result["task_results"]) == len(dashboard["tasks"]) == len(state["task_refs"]))
+
+    for refs, code in ((state["gate_refs"], "ADMINISTRATIVE_GATE_REFS_INVALID"), (state["audit_checkpoint_refs"], "ADMINISTRATIVE_AUDIT_REFS_INVALID"), (state["terminal_evidence_refs"], "ADMINISTRATIVE_TERMINAL_REFS_INVALID")):
+        require(code, isinstance(refs, list) and bool(refs) and len(refs) == len(set(refs)))
+    require("ADMINISTRATIVE_GATE_REFS_DRIFT", state["gate_refs"] == result["gate_refs"] == dashboard["gate_refs"] == consistency["gate_refs"] == handoff["gate_refs"])
+    gate_digests = [bytes_digest(reader.read_bytes(ref)) for ref in state["gate_refs"]]
+    require("ADMINISTRATIVE_GATE_DIGEST_DRIFT", gate_digests == state["gate_digests"] == result["gate_digests"] == dashboard["gate_digests"] == consistency["gate_digests"])
+    gate_records = [validate_current_gate_record(upstream, read_current_control_record(reader, ref, "gate")) for ref in state["gate_refs"]]
+    require("ADMINISTRATIVE_GATE_TASK_UNKNOWN", all(item["task_ref"] in state["task_refs"] for item in gate_records))
+    require("ADMINISTRATIVE_AUDIT_REFS_DRIFT", state["audit_checkpoint_refs"] == result["audit_checkpoint_refs"] == dashboard["audit_checkpoint_refs"] == consistency["audit_checkpoint_refs"])
+    audit_records = [validate_current_audit_checkpoint(upstream, read_current_control_record(reader, ref, "audit-checkpoint"), run_identity=identity) for ref in state["audit_checkpoint_refs"]]
+    audit_digests = [bytes_digest(reader.read_bytes(ref)) for ref in state["audit_checkpoint_refs"]]
+    require("ADMINISTRATIVE_AUDIT_DIGEST_DRIFT", audit_digests == consistency["audit_checkpoint_digests"])
+    require("ADMINISTRATIVE_AUDIT_TASK_COVERAGE_DRIFT", set(item for record in audit_records for item in record["membership_refs"]) == set(state["task_refs"]))
+
+    require("ADMINISTRATIVE_TERMINAL_REFS_DRIFT", state["terminal_evidence_refs"] == result["terminal_evidence_refs"] == dashboard["terminal_evidence_refs"] == consistency["terminal_evidence_refs"] == handoff["automatic_evidence_refs"])
+    terminal_digests = [bytes_digest(reader.read_bytes(ref)) for ref in state["terminal_evidence_refs"]]
+    require("ADMINISTRATIVE_AUTOMATIC_EVIDENCE_BYTES_DRIFT", terminal_digests == consistency["terminal_evidence_digests"])
+    require("ADMINISTRATIVE_AUDIT_TARGET_BYTES_DRIFT", all(row.rsplit("=", 1)[1] == bytes_digest(reader.read_bytes(row.rsplit("=", 1)[0])) for record in audit_records for row in record["covered_target_digests"]))
+    require("ADMINISTRATIVE_ACCEPTANCE_COVERAGE_DRIFT", acceptance_refs == handoff["acceptance_criterion_refs"])
+    require("CONSISTENCY_TASKS_MD_DIGEST_MISMATCH", consistency["tasks_md_digest"] == bytes_digest(reader.read_bytes(tasks_ref)))
+    final_validator_refs = result["final_validator_refs"]
+    require("ADMINISTRATIVE_FINAL_VALIDATOR_REFS_DRIFT", final_validator_refs == dashboard["final_validator_refs"] and bool(final_validator_refs))
+    validator_refs = list(dict.fromkeys([*primary_validator_refs, *final_validator_refs]))
+    require("ADMINISTRATIVE_VALIDATOR_DIGEST_DRIFT", consistency["validator_digest"] == upstream.canonical_digest({ref: bytes_digest(reader.read_bytes(ref)) for ref in validator_refs}))
+    metrics = reader.read_json(state["execution_metrics_ref"])
+    upstream.rule_metrics(metrics)
+    require("ADMINISTRATIVE_METRICS_IDENTITY_DRIFT", (metrics["run_id"], metrics["execution_id"]) == identity)
+    require("STATE_METRICS_DIGEST_MISMATCH", state["execution_metrics_digest"] == metrics["metrics_digest"])
+    require("RESULT_METRICS_REF_MISMATCH", result["execution_metrics_ref"] == state["execution_metrics_ref"])
+    require("RESULT_METRICS_DIGEST_MISMATCH", result["execution_metrics_digest"] == metrics["metrics_digest"])
+    require("DASHBOARD_METRICS_REF_MISMATCH", dashboard["execution_metrics_ref"] == state["execution_metrics_ref"])
+    require("DASHBOARD_METRICS_DIGEST_MISMATCH", dashboard["execution_metrics_digest"] == metrics["metrics_digest"])
+    require("CONSISTENCY_METRICS_MISMATCH", consistency["metrics_ref"] == state["execution_metrics_ref"] and consistency["metrics_digest"] == bytes_digest(reader.read_bytes(state["execution_metrics_ref"])))
+    return {"schema_version": 1, "status": "passed", "state": state, "result": result, "dashboard": dashboard, "consistency": consistency, "handoff": handoff, "surface": surface, "tasks": tasks, "primary_validator_refs": primary_validator_refs}
+
+
+def validate_current_validator_record(
+    upstream: Any,
+    record: Any,
+    *,
+    final: bool,
+    run_identity: tuple[str, str],
+) -> dict[str, Any]:
+    code = "ADMISSION_FINAL_VALIDATOR" if final else "ADMISSION_PRIMARY_VALIDATOR"
+    value = closed(f"{code}_SHAPE_INVALID", record, upstream.VALIDATOR_RECORD_KEYS)
+    require(f"{code}_SCHEMA_INVALID", type(value["schema_version"]) is int and value["schema_version"] == 1)
+    require(f"{code}_ID_INVALID", nonempty(value["validator_id"]) and nonempty(value["identity"]))
+    require(f"{code}_TASK_REF_INVALID", value["task_ref"] is None if final else nonempty(value["task_ref"]))
+    require(f"{code}_AC_REFS_INVALID", isinstance(value["acceptance_criterion_refs"], list) and bool(value["acceptance_criterion_refs"]) and len(value["acceptance_criterion_refs"]) == len(set(value["acceptance_criterion_refs"])) and all(nonempty(ref) for ref in value["acceptance_criterion_refs"]))
+    require(f"{code}_EVIDENCE_REFS_INVALID", isinstance(value["evidence_refs"], list) and bool(value["evidence_refs"]) and len(value["evidence_refs"]) == len(set(value["evidence_refs"])) and all(nonempty(ref) for ref in value["evidence_refs"]))
+    require(f"{code}_RESULT_INVALID", value["result"] == "passed")
+    require(f"{code}_IDENTITY_CONTEXT_INVALID", all(nonempty(item) for item in run_identity))
+    return value
+
+
+def validate_current_audit_checkpoint(
+    upstream: Any,
+    record: Any,
+    *,
+    run_identity: tuple[str, str],
+) -> dict[str, Any]:
+    try:
+        value = upstream.validate_audit_checkpoint(record)
+    except Exception as exc:
+        raise ContractError(str(exc)) from exc
+    require("ADMISSION_AUDIT_IDENTITY_DRIFT", (value["run_id"], value["execution_id"]) == run_identity)
+    require("ADMISSION_AUDIT_CONTROL_NONTERMINAL", value["status"] in {"approved", "not-applicable"})
+    return value
+
+
+def validate_current_gate_record(
+    upstream: Any,
+    record: Any,
+    *,
+    expected_kind: str | None = None,
+) -> dict[str, Any]:
+    value = closed("ADMISSION_GATE_RECORD_SHAPE_INVALID", record, upstream.GATE_RECORD_KEYS)
+    require("ADMISSION_GATE_RECORD_SCHEMA_INVALID", type(value["schema_version"]) is int and value["schema_version"] == 2)
+    require("ADMISSION_GATE_RECORD_ID_INVALID", nonempty(value["gate_id"]))
+    require("ADMISSION_GATE_RECORD_TASK_INVALID", nonempty(value["task_ref"]))
+    require("ADMISSION_GATE_RECORD_KIND_INVALID", value["kind"] in {"automatic", "human-validation"} and (expected_kind is None or value["kind"] == expected_kind))
+    require("ADMISSION_GATE_RECORD_STATEMENT_INVALID", nonempty(value["statement"]))
+    require("ADMISSION_GATE_RECORD_EVIDENCE_INVALID", isinstance(value["evidence_refs"], list) and len(value["evidence_refs"]) == len(set(value["evidence_refs"])) and all(nonempty(ref) for ref in value["evidence_refs"]))
+    require("ADMISSION_GATE_RECORD_ATTESTATION_PAIR_INVALID", (value["attestation_ref"] is None) == (value["attestation_digest"] is None))
+    if value["kind"] == "automatic":
+        require("ADMISSION_AUTOMATIC_GATE_STATE_INVALID", value["status"] == "passed" and bool(value["evidence_refs"]) and value["attestation_ref"] is None)
+    else:
+        require("ADMISSION_HUMAN_GATE_STATE_INVALID", value["status"] == "pending" and value["attestation_ref"] is None)
+    return value
+
+
+def validate_admission_tree(project_root: Path, plan_directory: str) -> dict[str, Any]:
+    upstream = load_upstream()
+    reader = upstream.RealRunReader(project_root)
+    admission_ref = f"{plan_directory}/builds/manual-qa/admission.json"
+    admission = validate_admission(reader.read_json(admission_ref))
+    require("ADMISSION_TREE_PLAN_MISMATCH", admission["plan_directory"] == plan_directory)
+    projection = admission["authoritative_projection"]
+    tasks_ref = f"{plan_directory}/tasks.md"
+    try:
+        upstream.validate_real_run(project_root, tasks_ref, projection["invocation_ref"])
+    except Exception as exc:
+        require("ADMISSION_UPSTREAM_ERROR_NOT_QUALIFYING", str(exc) == "MARKDOWN_CONTRACT_BLOCK_INVALID")
+    else:
+        raise ContractError("ADMISSION_UPSTREAM_ERROR_ABSENT")
+    semantic = validate_real_run_with_administrative_markdown(upstream, project_root, tasks_ref, projection["invocation_ref"])
+    state = semantic["state"]
+    result = semantic["result"]
+    consistency = semantic["consistency"]
+    handoff = semantic["handoff"]
+    identity = (state["run_id"], state["execution_id"])
+    require("ADMISSION_IDENTITY_DRIFT", identity == (admission["run_id"], admission["execution_id"]))
+    require("ADMISSION_PROJECTION_REF_DRIFT", (projection["result_ref"], projection["dashboard_ref"], projection["consistency_ref"]) == (state["result_ref"], state["dashboard_ref"], state["consistency_packet_ref"]))
+    for name in ("invocation", "result", "dashboard", "consistency"):
+        ref = projection[f"{name}_ref"]
+        require("ADMISSION_PROJECTION_BYTES_DRIFT", projection[f"{name}_digest"] == bytes_digest(reader.read_bytes(ref)))
+    require("ADMISSION_STATE_PROJECTION_DRIFT", projection["state_digest"] == state["state_digest"])
+    require("ADMISSION_HANDOFF_PROJECTION_DRIFT", projection["manual_qa_handoff_digest"] == digest(handoff))
+    source_refs = [tasks_ref, *handoff["task_refs"]]
+    require("ADMISSION_SOURCE_SET_INVALID", admission["trigger"]["source_refs"] == source_refs)
+    require("ADMISSION_SOURCE_DIGEST_DRIFT", admission["trigger"]["source_digests"] == [bytes_digest(reader.read_bytes(ref)) for ref in source_refs])
+    target_rows = admission["production_targets"]
+    require("ADMISSION_TARGET_SET_DRIFT", [row["ref"] for row in target_rows] == handoff["changed_target_refs"])
+    require("ADMISSION_TARGET_BYTES_DRIFT", [row["digest"] for row in target_rows] == [bytes_digest(reader.read_bytes(ref)) for ref in handoff["changed_target_refs"]])
+    evidence_rows = admission["automatic_evidence"]
+    require("ADMISSION_EVIDENCE_SET_DRIFT", [row["ref"] for row in evidence_rows] == state["terminal_evidence_refs"])
+    require("ADMISSION_EVIDENCE_BYTES_DRIFT", [row["digest"] for row in evidence_rows] == consistency["terminal_evidence_digests"])
+    gate_records = {ref: validate_current_gate_record(upstream, read_current_control_record(reader, ref, "gate")) for ref in state["gate_refs"]}
+    audit_records = {ref: validate_current_audit_checkpoint(upstream, read_current_control_record(reader, ref, "audit-checkpoint"), run_identity=identity) for ref in state["audit_checkpoint_refs"]}
+    automatic_gate_refs = [ref for ref, record in gate_records.items() if record["kind"] == "automatic"]
+    human_gate_refs = [ref for ref, record in gate_records.items() if record["kind"] == "human-validation"]
+    expected_control_refs = [*result["final_validator_refs"], *state["audit_checkpoint_refs"], *automatic_gate_refs]
+    require("ADMISSION_CONTROL_SET_DRIFT", [row["ref"] for row in admission["automatic_controls"]] == expected_control_refs)
+    outcomes = {**{ref: "passed" for ref in result["final_validator_refs"]}, **{ref: record["status"] for ref, record in audit_records.items()}, **{ref: gate_records[ref]["status"] for ref in automatic_gate_refs}}
+    for row in admission["automatic_controls"]:
+        require("ADMISSION_CONTROL_NONTERMINAL", row["outcome"] == outcomes[row["ref"]])
+        require("ADMISSION_CONTROL_DIGEST_DRIFT", row["digest"] == bytes_digest(reader.read_bytes(row["ref"])))
+    require("ADMISSION_GATE_SET_DRIFT", [row["ref"] for row in admission["human_gates"]] == human_gate_refs)
+    for row in admission["human_gates"]:
+        record = gate_records[row["ref"]]
+        require("ADMISSION_GATE_SEMANTIC_DRIFT", {key: row[key] for key in ("kind", "status", "attestation_ref", "attestation_digest")} == {key: record[key] for key in ("kind", "status", "attestation_ref", "attestation_digest")})
+        require("ADMISSION_GATE_BYTES_DRIFT", row["digest"] == bytes_digest(reader.read_bytes(row["ref"])))
+    return {"schema_version": 1, "status": "administrative-schema-degraded", "admission_ref": admission_ref, "admission_digest": bytes_digest(reader.read_bytes(admission_ref)), "run_id": admission["run_id"], "execution_id": admission["execution_id"], "terminal_promotion_allowed": False}
+
+
 def enumerate_candidates(reader: Any, handoff: dict[str, Any]) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     task_contracts = {ref: reader.read_markdown_json(ref)["task_contract"] for ref in handoff["task_refs"]}
@@ -960,6 +1447,48 @@ def enumerate_candidates(reader: Any, handoff: dict[str, Any]) -> list[dict[str,
     return candidates
 
 
+def enumerate_administrative_candidates(reader: Any, handoff: dict[str, Any]) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    observable_by_task: dict[str, list[tuple[str, str, str]]] = {}
+    target_owner: dict[str, str] = {}
+    observed_ac_refs: list[str] = []
+    for task_ref in handoff["task_refs"]:
+        validation = read_administrative_markdown_block(reader, task_ref, "task_validation")
+        facts: list[tuple[str, str, str]] = []
+        for ac in validation["acceptance_criteria"]:
+            ref = f'{task_ref}#{ac["id"]}'
+            ac_digest = digest(ac)
+            observed_ac_refs.append(ref)
+            facts.append((ref, ac["statement"], ac_digest))
+            candidates.append({"source_kind": "acceptance-criterion", "source_ref": ref, "source_digest": ac_digest, "task_refs": [task_ref], "acceptance_criterion_refs": [ref], "gate_refs": [], "changed_surface_refs": [], "observable_fact_refs": [ref], "observable_fact_digests": [ac_digest], "observable_fact_statements": [ac["statement"]], "statement": ac["statement"]})
+        observable_by_task[task_ref] = facts
+        try:
+            scoped_write = read_administrative_markdown_block(reader, task_ref, "scoped_write")
+        except ContractError:
+            scoped_write = {"target_files": []}
+        require("ADMINISTRATIVE_TARGET_FILES_INVALID", isinstance(scoped_write.get("target_files"), list))
+        for target in scoped_write["target_files"]:
+            require("ADMINISTRATIVE_TARGET_OWNER_CONFLICT", target not in target_owner)
+            target_owner[target] = task_ref
+    require("ADMINISTRATIVE_AC_COVERAGE_INVALID", observed_ac_refs == handoff["acceptance_criterion_refs"])
+    for ref in handoff["gate_refs"]:
+        gate = read_administrative_record(reader, ref)
+        if len(gate) == 1 and isinstance(next(iter(gate.values())), dict): gate = next(iter(gate.values()))
+        if gate["kind"] != "human-validation": continue
+        immutable = {key: gate[key] for key in ("schema_version", "gate_id", "task_ref", "kind", "statement")}
+        gate_digest = digest(immutable)
+        observable_by_task.setdefault(gate["task_ref"], []).append((ref, gate["statement"], gate_digest))
+        candidates.append({"source_kind": "human-gate", "source_ref": ref, "source_digest": gate_digest, "task_refs": [gate["task_ref"]], "acceptance_criterion_refs": [], "gate_refs": [ref], "changed_surface_refs": [], "observable_fact_refs": [ref], "observable_fact_digests": [gate_digest], "observable_fact_statements": [gate["statement"]], "statement": gate["statement"]})
+    for ref in handoff["changed_target_refs"]:
+        require("ADMINISTRATIVE_CHANGED_TARGET_UNOWNED", ref in target_owner)
+        owner_ref = target_owner[ref]
+        facts = observable_by_task.get(owner_ref, [])
+        surface_digest = bytes_digest(reader.read_bytes(ref))
+        statement = "Validate the changed surface against persisted observable facts: " + "; ".join(f"{fact_ref} ({fact_digest}) states {fact_statement}" for fact_ref, fact_statement, fact_digest in facts)
+        candidates.append({"source_kind": "changed-surface", "source_ref": ref, "source_digest": surface_digest, "task_refs": [owner_ref], "acceptance_criterion_refs": [fact_ref for fact_ref, _, _ in facts if "#" in fact_ref], "gate_refs": [fact_ref for fact_ref, _, _ in facts if "#" not in fact_ref], "changed_surface_refs": [ref], "observable_fact_refs": [fact_ref for fact_ref, _, _ in facts], "observable_fact_digests": [fact_digest for _, _, fact_digest in facts], "observable_fact_statements": [fact_statement for _, fact_statement, _ in facts], "statement": statement, "default_applicable": bool(facts)})
+    return candidates
+
+
 def steps_from_catalog(catalog: dict[str, Any]) -> list[dict[str, Any]]:
     steps: list[dict[str, Any]] = []
     for source in catalog["sources"]:
@@ -971,11 +1500,25 @@ def steps_from_catalog(catalog: dict[str, Any]) -> list[dict[str, Any]]:
 def read_context(project_root: Path, plan_directory: str) -> tuple[Any, Any, dict[str, Any], dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
     upstream = load_upstream()
     tasks_ref = f"{plan_directory}/tasks.md"
+    admission_path = project_root / plan_directory / "builds/manual-qa/admission.json"
+    if admission_path.is_file():
+        validate_admission_tree(project_root, plan_directory)
+        admission = validate_admission(json.loads(admission_path.read_text(encoding="utf-8")))
+        invocation_ref = admission["authoritative_projection"]["invocation_ref"]
+        class AdministrativeRunReader(upstream.RealRunReader):
+            def read_json(self, value: str | Path) -> dict[str, Any]:
+                ref = self.normalize(value)
+                return read_administrative_record(self, ref) if ref.endswith((".yaml", ".yml")) else super().read_json(ref)
+        reader = AdministrativeRunReader(project_root)
+        state = read_administrative_markdown_block(reader, tasks_ref, "loki_run_state")
+        invocation = reader.read_json(invocation_ref)
+        handoff = validate_handoff(state["manual_qa_handoff"])
+        candidates = enumerate_administrative_candidates(reader, handoff)
+        return upstream, reader, state, invocation, handoff, candidates
     invocation_ref = f"{plan_directory}/execution-input.json"
     upstream.validate_real_run(project_root, tasks_ref, invocation_ref)
     reader = upstream.RealRunReader(project_root)
-    tasks = reader.read_markdown_json(tasks_ref)
-    state = tasks["loki_run_state"]
+    state = reader.read_markdown_json(tasks_ref)["loki_run_state"]
     invocation = reader.read_json(invocation_ref)
     handoff = validate_handoff(state["manual_qa_handoff"])
     require("HANDOFF_STATE_IDENTITY_MISMATCH", (handoff["run_id"], handoff["execution_id"], handoff["plan_directory"]) == (state["run_id"], state["execution_id"], plan_directory))
@@ -1028,6 +1571,9 @@ def validate_tree(project_root: Path, plan_directory: str) -> dict[str, Any]:
 
     interaction = validate_interaction(reader.read_json(interaction_ref))
     require("INTERACTION_TREE_IDENTITY_MISMATCH", (interaction["run_id"], interaction["execution_id"]) == (state["run_id"], state["execution_id"]))
+    degraded_admission_active = (project_root / plan_directory / "builds/manual-qa/admission.json").is_file()
+    if degraded_admission_active:
+        require("DEGRADED_ATTESTATION_FORBIDDEN", interaction["attestation_ref"] is None and interaction["status"] not in {"attested"})
     attestation = validate_attestation(reader.read_json(interaction["attestation_ref"])) if interaction["attestation_ref"] is not None else None
     report = validate_report(reader.read_json(interaction["report_ref"])) if interaction["report_ref"] is not None else None
     if attestation is not None:
@@ -1058,6 +1604,8 @@ def validate_tree(project_root: Path, plan_directory: str) -> dict[str, Any]:
 
     result = validate_result(reader.read_json(result_ref))
     transaction = validate_transaction(reader.read_json(transaction_ref))
+    if degraded_admission_active:
+        require("DEGRADED_TERMINAL_BATCH_FORBIDDEN", transaction["batch_kind"] in {"initial", "issue"} and result["status"] != "completed")
     if transaction["batch_kind"] == "terminal-reject":
         expected_transaction_targets = rejected_transaction_targets(plan_directory, handoff)
         rejected_assessment_ref = expected_transaction_targets[0]
@@ -1123,6 +1671,56 @@ def write_json(root: Path, ref: str, value: Any) -> None:
     MANUAL_WRITE_TRACE.append(ref)
 
 
+def publish_admission(root: Path, plan_directory: str, value: Any) -> dict[str, Any]:
+    """Create or recover the fixed admission artifact without overwriting final bytes."""
+    admission = validate_admission(value)
+    require("ADMISSION_PUBLICATION_PLAN_MISMATCH", admission["plan_directory"] == plan_directory)
+    final_ref = f"{plan_directory}/builds/manual-qa/admission.json"
+    temp_ref = f"{plan_directory}/builds/manual-qa/{ADMISSION_TEMP_NAME}"
+    validate_locator(final_ref, "ADMISSION_PUBLICATION_FINAL_REF_INVALID")
+    validate_locator(temp_ref, "ADMISSION_PUBLICATION_TEMP_REF_INVALID")
+    require("ADMISSION_PUBLICATION_REF_COLLISION", final_ref != temp_ref and PurePosixPath(final_ref).parent == PurePosixPath(temp_ref).parent)
+    final_path = root / final_ref
+    temp_path = root / temp_ref
+    intended = (json.dumps(admission, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    intended_digest = bytes_digest(intended)
+    final_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if final_path.exists() or final_path.is_symlink():
+        require("ADMISSION_PUBLICATION_FINAL_NOT_FILE", final_path.is_file() and not final_path.is_symlink())
+        require("ADMISSION_PUBLICATION_DIVERGENT_FINAL", final_path.read_bytes() == intended)
+        if temp_path.exists() or temp_path.is_symlink():
+            require("ADMISSION_PUBLICATION_TEMP_NOT_FILE", temp_path.is_file() and not temp_path.is_symlink())
+            require("ADMISSION_PUBLICATION_DIVERGENT_TEMP", temp_path.read_bytes() == intended)
+            temp_path.unlink()
+        return {"schema_version": 1, "status": "no-op", "admission_ref": final_ref, "admission_digest": intended_digest, "temporary_ref": temp_ref, "temporary_residue": False}
+
+    if temp_path.exists() or temp_path.is_symlink():
+        require("ADMISSION_PUBLICATION_TEMP_NOT_FILE", temp_path.is_file() and not temp_path.is_symlink())
+        require("ADMISSION_PUBLICATION_DIVERGENT_TEMP", temp_path.read_bytes() == intended)
+        publication_status = "recovered"
+    else:
+        try:
+            with temp_path.open("xb") as handle:
+                handle.write(intended)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except FileExistsError as exc:
+            raise ContractError("ADMISSION_PUBLICATION_TEMP_COLLISION") from exc
+        publication_status = "created"
+    require("ADMISSION_PUBLICATION_TEMP_BYTES_MISMATCH", temp_path.read_bytes() == intended)
+    validate_admission(json.loads(temp_path.read_text(encoding="utf-8")))
+    try:
+        final_path.hardlink_to(temp_path)
+    except FileExistsError:
+        require("ADMISSION_PUBLICATION_DIVERGENT_FINAL", final_path.is_file() and not final_path.is_symlink() and final_path.read_bytes() == intended)
+        publication_status = "no-op"
+    require("ADMISSION_PUBLICATION_FINAL_BYTES_MISMATCH", final_path.read_bytes() == intended)
+    require("ADMISSION_PUBLICATION_TEMP_OWNERSHIP_LOST", temp_path.is_file() and temp_path.read_bytes() == intended)
+    temp_path.unlink()
+    return {"schema_version": 1, "status": publication_status, "admission_ref": final_ref, "admission_digest": intended_digest, "temporary_ref": temp_ref, "temporary_residue": False}
+
+
 def frozen_target_digest(root: Path, ref: str) -> str:
     path = root / ref.partition("#")[0]
     return bytes_digest(path.read_bytes()) if path.is_file() else "sha256:" + "0" * 64
@@ -1182,6 +1780,139 @@ def proposal_source(plan: str, run_id: str, execution_id: str, candidate: dict[s
     guide_fact_bindings = ({field: {"fact_ref": fact_ref, "fact_digest": fact_digest} for field in GUIDE_FIELDS} if candidate["observable_fact_refs"] else {})
     source = {"schema_version": 1, "source_kind": candidate["source_kind"], "source_ref": candidate["source_ref"], "source_digest": candidate["source_digest"], "source_order": order, "applicability": proposal["applicability"], "not_applicable_reason": proposal["not_applicable_reason"], "task_refs": candidate["task_refs"], "acceptance_criterion_refs": candidate["acceptance_criterion_refs"], "gate_refs": candidate["gate_refs"], "changed_surface_refs": candidate["changed_surface_refs"], "observable_fact_refs": candidate["observable_fact_refs"], "observable_fact_digests": candidate["observable_fact_digests"], "observable_fact_statements": candidate["observable_fact_statements"], "guide_fact_bindings": guide_fact_bindings, "environment": proposal["environment"], "prerequisites": proposal["prerequisites"], "initial_state": proposal["initial_state"], "actions": proposal["actions"], "expected_result": proposal["expected_result"], "success_signal": proposal["success_signal"], "failure_signal": proposal["failure_signal"], "cleanup": proposal["cleanup"], "automation_limit": proposal["automation_limit"], "runtime_qa_proposal_ref": ref, "runtime_qa_proposal_digest": bytes_digest(proposal_bytes)}
     return ref, proposal, source
+
+
+def convert_real_run_fixture_to_administrative_yaml(root: Path, tasks_ref: str, invocation_ref: str) -> None:
+    upstream = load_upstream()
+    reader = upstream.RealRunReader(root)
+    tasks = reader.read_markdown_json(tasks_ref)
+    state = deepcopy(tasks["loki_run_state"])
+    invocation = reader.read_json(invocation_ref)
+    task_contracts = {ref: deepcopy(reader.read_markdown_json(ref)["task_contract"]) for ref in state["task_refs"]}
+
+    control_ref_map: dict[str, str] = {}
+    for ref in state["audit_checkpoint_refs"]:
+        new_ref = ref.removesuffix(".json") + ".yaml"
+        record = reader.read_json(ref)
+        (root / new_ref).write_text(administrative_yaml_dump({"execution_audit_checkpoint": record}) + "\n", encoding="utf-8")
+        control_ref_map[ref] = new_ref
+    for ref in state["gate_refs"]:
+        new_ref = ref.removesuffix(".json") + ".yaml"
+        record = reader.read_json(ref)
+        (root / new_ref).write_text(administrative_yaml_dump(record) + "\n", encoding="utf-8")
+        control_ref_map[ref] = new_ref
+
+    def replace_control_refs(value: Any) -> Any:
+        if isinstance(value, str):
+            return control_ref_map.get(value, value)
+        if isinstance(value, list):
+            return [replace_control_refs(item) for item in value]
+        if isinstance(value, dict):
+            return {key: replace_control_refs(item) for key, item in value.items()}
+        return value
+
+    state = replace_control_refs(state)
+    result = replace_control_refs(reader.read_json(state["result_ref"]))
+    dashboard = replace_control_refs(reader.read_json(state["dashboard_ref"]))
+    consistency = replace_control_refs(reader.read_json(state["consistency_packet_ref"]))
+    task_contracts = {ref: replace_control_refs(value) for ref, value in task_contracts.items()}
+    state["gate_digests"] = [bytes_digest(reader.read_bytes(ref)) for ref in state["gate_refs"]]
+    result["gate_digests"] = list(state["gate_digests"])
+    dashboard["gate_digests"] = list(state["gate_digests"])
+    consistency["gate_digests"] = list(state["gate_digests"])
+    consistency["audit_checkpoint_digests"] = [bytes_digest(reader.read_bytes(ref)) for ref in state["audit_checkpoint_refs"]]
+    consistency["terminal_evidence_digests"] = [bytes_digest(reader.read_bytes(ref)) for ref in state["terminal_evidence_refs"]]
+
+    decision_rows: list[dict[str, Any]] = []
+    owner_by_target = {target: ref for ref, task in task_contracts.items() for target in task["target_files"]}
+    for target, owner_ref in owner_by_target.items():
+        decision_rows.append({"schema_version": 1, "target": target, "origin": "approved-task-scope", "rationale": "The approved task contract assigns this exact target.", "demand_or_acceptance_criterion_refs": [ref for ref in state["manual_qa_handoff"]["acceptance_criterion_refs"] if ref.startswith(owner_ref + "#")], "evidence_refs": task_contracts[owner_ref]["task_validation"]["evidence_refs"], "expected_impact": "Material fixture output", "validator_ref": task_contracts[owner_ref]["task_validation"]["primary_route"]["validator_ref"], "owner_ref": owner_ref, "status": "approved"})
+    preflight = {"schema_version": 1, "run_id": state["run_id"], "execution_id": state["execution_id"], "plan_directory": str(PurePosixPath(tasks_ref).parent), "state_ref": tasks_ref, "demand_ref": invocation["demand_ref"], "demand_digest": invocation["command_identity"]["demand_digest"], "analysis_digest": invocation["command_identity"]["analysis_digest"], "classification": "existing-valid-plan", "result": "existing-valid-plan", "blockers": [], "bootstrap_record_ref": None, "minimum_next_input": None, "validation_refs": [invocation["analysis_ref"]]}
+    downstream = {"model_class": "current", "execution_effort": "high", "validator_effort": "high", "scoped_writers": [task["writer_identity"] for task in task_contracts.values()], "recommended_handoffs": [], "escalation_reason": None}
+
+    task_sections: dict[str, list[dict[str, Any]]] = {}
+    for task_ref, task in task_contracts.items():
+        validation_owner = "independent-validator"
+        profile = {"documentation_profile": "llm-facing", "escalation_reason": None, "model_class": "current", "orchestrator_exception_reason": None, "recommended_handoffs": {"context": [], "implementation": [], "research": [], "runtime_validation": []}, "scoped_write_domains": ["fixture"], "scoped_write_mode": "task_scoped_writer", "scoped_write_owner": task["writer_identity"], "task_effort": "high", "validator_effort": "high"}
+        scoped_write = {"allowed_writes": task["target_files"], "human_gates": [ref for ref in task["gate_refs"] if "human" in ref], "mode": "task_scoped_writer", "orchestrator_exception_reason": None, "owner": task["writer_identity"], "required_skills": [], "scoped_write_domains": ["fixture"], "target_files": task["target_files"], "validation_owner": validation_owner, "validators": [task["task_validation"]["primary_route"]["validator_ref"]]}
+        task_state = {"schema_version": 1, "task_ref": task_ref, "plan_state_ref": tasks_ref, "status": "passed", "blocked_by": task["dependencies"], "blockers": [], "files_expected": task["target_files"], "target_files": task["target_files"], "target_decision_refs": [f"{tasks_ref}#target-decision-{index + 1}" for index, row in enumerate(decision_rows) if row["owner_ref"] == task_ref], "write_owner": task["writer_identity"], "validation_owner": validation_owner, "task_validation_ref": f"{task_ref}#task_validation", "gate_refs": task["gate_refs"], "completion_evidence_refs": task["handoff_refs"], "validation_cycle_refs": task["task_validation"]["evidence_refs"], "retry_refs": [], "learned_ref": None, "limitations": [], "next_action": "none", "orchestrator_exception_reason": None}
+        task_sections[task_ref] = [profile, {"scoped_write": scoped_write}, {"task_validation": task["task_validation"]}, {"gate_refs": task["gate_refs"]}, {"loki_task_state": task_state}]
+
+    metrics = reader.read_json(state["execution_metrics_ref"])
+    state["execution_metrics_digest"] = metrics["metrics_digest"]
+    result["execution_metrics_digest"] = metrics["metrics_digest"]
+    dashboard["execution_metrics_digest"] = metrics["metrics_digest"]
+    state["state_digest"] = upstream.digest_without(state, "state_digest")
+    result["state_digest"] = state["state_digest"]
+    dashboard["state_digest"] = state["state_digest"]
+    consistency["state_digest"] = state["state_digest"]
+    documents = [{"command_identity": invocation["command_identity"], "execution_input": invocation}, {"plan_directory_preflight_result": preflight}, {"downstream_execution_profile": downstream}, *({"target_decision": row} for row in decision_rows), {"loki_run_state": state}]
+    (root / tasks_ref).write_text("# Administrative run fixture\n\n" + "\n\n".join("```yaml\n" + administrative_yaml_dump(item) + "\n```" for item in documents) + "\n", encoding="utf-8")
+    for task_ref, sections in task_sections.items():
+        (root / task_ref).write_text("# Administrative task fixture\n\n" + "\n\n".join("```yaml\n" + administrative_yaml_dump(item) + "\n```" for item in sections) + "\n", encoding="utf-8")
+    result["result_digest"] = upstream.digest_without(result, "result_digest")
+    dashboard["dashboard_digest"] = upstream.digest_without(dashboard, "dashboard_digest")
+    write_json(root, state["result_ref"], result)
+    write_json(root, state["dashboard_ref"], dashboard)
+    consistency["tasks_md_digest"] = bytes_digest((root / tasks_ref).read_bytes())
+    consistency["result_digest"] = bytes_digest((root / state["result_ref"]).read_bytes())
+    consistency["dashboard_digest"] = bytes_digest((root / state["dashboard_ref"]).read_bytes())
+    write_json(root, state["consistency_packet_ref"], consistency)
+
+
+def build_admission_fixture(root: Path) -> tuple[str, str]:
+    upstream = load_upstream()
+    tasks_ref, invocation_ref = upstream.build_real_run_fixture(root)
+    plan = str(PurePosixPath(tasks_ref).parent)
+    convert_real_run_fixture_to_administrative_yaml(root, tasks_ref, invocation_ref)
+    try:
+        upstream.validate_real_run(root, tasks_ref, invocation_ref)
+    except Exception as exc:
+        require("ADMISSION_FIXTURE_TRIGGER_INVALID", str(exc) == "MARKDOWN_CONTRACT_BLOCK_INVALID")
+    else:
+        raise ContractError("ADMISSION_FIXTURE_TRIGGER_NOT_REPRODUCED")
+    reader = upstream.RealRunReader(root)
+    invocation = upstream.validate_execution_input(reader.read_json(invocation_ref))
+    result = reader.read_json(invocation["result_ref"])
+    consistency = reader.read_json(invocation["consistency_packet_ref"])
+    handoff = validate_handoff(result["manual_qa_handoff"])
+    source_refs = [tasks_ref, *handoff["task_refs"]]
+    target_proofs: dict[str, str] = {}
+    controls: list[dict[str, str]] = []
+    identity = (result["run_id"], result["execution_id"])
+    for ref in result["final_validator_refs"]:
+        record = validate_current_validator_record(
+            upstream,
+            read_current_control_record(reader, ref, "final-validator"),
+            final=True,
+            run_identity=identity,
+        )
+        controls.append({"ref": ref, "digest": bytes_digest(reader.read_bytes(ref)), "outcome": record["result"]})
+    for ref in result["audit_checkpoint_refs"]:
+        record = validate_current_audit_checkpoint(
+            upstream,
+            read_current_control_record(reader, ref, "audit-checkpoint"),
+            run_identity=identity,
+        )
+        controls.append({"ref": ref, "digest": bytes_digest(reader.read_bytes(ref)), "outcome": record["status"]})
+        for row in record["covered_target_digests"]:
+            target_ref, target_digest = row.rsplit("=", 1); target_proofs[target_ref] = target_digest
+    gates = []
+    for ref, item_digest in zip(result["gate_refs"], result["gate_digests"]):
+        gate = validate_current_gate_record(upstream, read_current_control_record(reader, ref, "gate"))
+        if gate["kind"] == "automatic":
+            controls.append({"ref": ref, "digest": item_digest, "outcome": gate["status"]})
+        else:
+            gates.append({"ref": ref, "digest": item_digest, "kind": gate["kind"], "status": gate["status"], "attestation_ref": gate["attestation_ref"], "attestation_digest": gate["attestation_digest"]})
+    projection = {"invocation_ref": invocation_ref, "invocation_digest": bytes_digest(reader.read_bytes(invocation_ref)), "result_ref": invocation["result_ref"], "result_digest": bytes_digest(reader.read_bytes(invocation["result_ref"])), "dashboard_ref": invocation["dashboard_ref"], "dashboard_digest": bytes_digest(reader.read_bytes(invocation["dashboard_ref"])), "consistency_ref": invocation["consistency_packet_ref"], "consistency_digest": bytes_digest(reader.read_bytes(invocation["consistency_packet_ref"])), "state_digest": result["state_digest"], "manual_qa_handoff_digest": digest(handoff)}
+    trigger = {"upstream_error_code": "MARKDOWN_CONTRACT_BLOCK_INVALID", "serialization": "multiple-fenced-yaml-administrative-sections", "source_refs": source_refs, "source_digests": [bytes_digest(reader.read_bytes(ref)) for ref in source_refs]}
+    capture_id = "manual-qa-admission-" + result["run_id"].split(":", 1)[1][:16]
+    admission = {"schema_version": 1, "admission_id": "", "status": "administrative-schema-degraded", "batch_kind": "administrative-admission", "phase": "admission-recorded", "run_id": result["run_id"], "execution_id": result["execution_id"], "plan_directory": plan, "trigger": trigger, "authoritative_projection": projection, "production_targets": [{"ref": ref, "digest": target_proofs[ref], "outcome": "digest-verified"} for ref in handoff["changed_target_refs"]], "automatic_evidence": [{"ref": ref, "digest": item_digest, "outcome": "digest-verified"} for ref, item_digest in zip(handoff["automatic_evidence_refs"], consistency["terminal_evidence_digests"])], "automatic_controls": controls, "human_gates": gates, "allowed_actions": list(ADMISSION_ALLOWED_ACTIONS), "forbidden_actions": list(ADMISSION_FORBIDDEN_ACTIONS), "blockers": ["administrative-serialization-incompatibility", "terminal-promotion-forbidden-while-degraded", "execution-knowledge-capture-pending"], "execution_knowledge_capture": {"capture_id": capture_id, "target_entry": f"{plan}/execution-knowledge/entries/{capture_id}.xml", "status": "pending", "entry_digest": None, "reason": "Capture is queued after crash-safe admission publication.", "minimum_next_path": "Dispatch execution-knowledge-cataloger with calling_workflow=loki-manual-qa and the admission build report."}, "admission_digest": ""}
+    admission["admission_id"] = "manual-qa-admission-v1:" + digest({"run_id": admission["run_id"], "execution_id": admission["execution_id"], "trigger": trigger, "authoritative_projection": projection}).split(":", 1)[1]
+    admission["admission_digest"] = digest(admission, omit="admission_digest")
+    publication = publish_admission(root, plan, admission)
+    require("ADMISSION_FIXTURE_PUBLICATION_INVALID", publication["status"] == "created" and publication["temporary_residue"] is False)
+    return plan, invocation_ref
 
 
 def make_catalog(plan: str, state: dict[str, Any], handoff: dict[str, Any], candidates: list[dict[str, Any]], not_applicable_orders: set[int] | None = None) -> tuple[dict[str, Any], list[tuple[str, dict[str, Any]]]]:
@@ -1582,7 +2313,7 @@ def make_record(kind: str) -> dict[str, Any]:
     raise ContractError("FIXTURE_RECORD_KIND_INVALID")
 
 
-VALIDATORS: dict[str, Callable[[Any], Any]] = {"handoff": validate_handoff, "source": validate_source, "source-catalog": validate_catalog, "runtime-qa-proposal": validate_proposal, "runtime-qa-human-gate-not-applicable": validate_proposal, "step": validate_step, "dashboard": validate_dashboard, "semantic-assessment": validate_semantic_assessment, "attestation-review": validate_attestation_review, "attestation": validate_attestation, "report-resolved": validate_report, "interaction-attested": validate_interaction, "transaction": validate_transaction, "result": validate_result, "consistency": validate_consistency}
+VALIDATORS: dict[str, Callable[[Any], Any]] = {"admission": validate_admission, "handoff": validate_handoff, "source": validate_source, "source-catalog": validate_catalog, "runtime-qa-proposal": validate_proposal, "runtime-qa-human-gate-not-applicable": validate_proposal, "step": validate_step, "dashboard": validate_dashboard, "semantic-assessment": validate_semantic_assessment, "attestation-review": validate_attestation_review, "attestation": validate_attestation, "report-resolved": validate_report, "interaction-attested": validate_interaction, "transaction": validate_transaction, "result": validate_result, "consistency": validate_consistency}
 
 
 def mutate(document: Any, mutation: dict[str, Any]) -> None:
@@ -1609,7 +2340,325 @@ def self_test() -> dict[str, Any]:
             require("MANUAL_QA_EVIL_COMMAND_ERROR_MISMATCH", str(exc).startswith("MANUAL_QA_FOREIGN_OWNER:"))
         else:
             raise ContractError("MANUAL_QA_EVIL_COMMAND_ACCEPTED")
-        results.append({"id": "current-tree-manual-qa-evil-command", "result": "expected-rejection"})
+    results.append({"id": "current-tree-manual-qa-evil-command", "result": "expected-rejection"})
+    with tempfile.TemporaryDirectory(prefix="loki-manual-admission-positive-") as temp:
+        admission_root = Path(temp)
+        admission_plan, _ = build_admission_fixture(admission_root)
+        first = validate_admission_tree(admission_root, admission_plan)
+        second = validate_admission_tree(admission_root, admission_plan)
+        require("ADMISSION_REPLAY_INVALID", first == second and first["status"] == "administrative-schema-degraded" and first["terminal_promotion_allowed"] is False)
+        results.append({"id": "administrative-admission-positive-replay", "result": "accepted"})
+        admission_path = admission_root / admission_plan / "builds/manual-qa/admission.json"
+        reconciled = json.loads(admission_path.read_text(encoding="utf-8"))
+        reconciled["phase"] = "capture-reconciled"
+        reconciled["execution_knowledge_capture"].update(status="failed", reason="Cataloger failed after admission publication.", minimum_next_path="Retry the lineage-bound capture without blocking manual source cataloging.")
+        reconciled["blockers"][-1] = "execution-knowledge-capture-failed"
+        reconciled["admission_digest"] = digest(reconciled, omit="admission_digest")
+        write_json(admission_root, admission_path.relative_to(admission_root).as_posix(), reconciled)
+        validate_admission_tree(admission_root, admission_plan)
+        results.append({"id": "administrative-admission-capture-failed-visible", "result": "accepted"})
+        replay = publish_admission(admission_root, admission_plan, reconciled)
+        require("ADMISSION_PUBLICATION_NOOP_INVALID", replay["status"] == "no-op" and replay["temporary_residue"] is False)
+        results.append({"id": "administrative-admission-publication-exact-final-noop", "result": "accepted"})
+    with tempfile.TemporaryDirectory(prefix="loki-manual-admission-publication-recovery-") as temp:
+        publication_root = Path(temp)
+        publication_plan, _ = build_admission_fixture(publication_root)
+        final_path = publication_root / publication_plan / "builds/manual-qa/admission.json"
+        intended = final_path.read_bytes()
+        document = json.loads(intended)
+        final_path.unlink()
+        temp_path = final_path.with_name(ADMISSION_TEMP_NAME)
+        temp_path.write_bytes(intended)
+        recovered = publish_admission(publication_root, publication_plan, document)
+        require("ADMISSION_PUBLICATION_RECOVERY_INVALID", recovered["status"] == "recovered" and final_path.read_bytes() == intended and not temp_path.exists())
+        results.append({"id": "administrative-admission-publication-interrupted-recovery", "result": "accepted"})
+    publication_rejections = (
+        ("divergent-final", lambda final_path, temp_path: final_path.write_bytes(b"divergent-final\n"), "ADMISSION_PUBLICATION_DIVERGENT_FINAL"),
+        ("divergent-temp-collision", lambda final_path, temp_path: (final_path.unlink(), temp_path.write_bytes(b"divergent-temp\n")), "ADMISSION_PUBLICATION_DIVERGENT_TEMP"),
+        ("final-directory-collision", lambda final_path, temp_path: (final_path.unlink(), final_path.mkdir()), "ADMISSION_PUBLICATION_FINAL_NOT_FILE"),
+        ("temp-directory-collision", lambda final_path, temp_path: (final_path.unlink(), temp_path.mkdir()), "ADMISSION_PUBLICATION_TEMP_NOT_FILE"),
+        ("final-symlink-collision", lambda final_path, temp_path: (final_path.unlink(), final_path.symlink_to(temp_path)), "ADMISSION_PUBLICATION_FINAL_NOT_FILE"),
+        ("temp-symlink-collision", lambda final_path, temp_path: (final_path.unlink(), temp_path.symlink_to(final_path)), "ADMISSION_PUBLICATION_TEMP_NOT_FILE"),
+    )
+    for case_id, setup, expected_error in publication_rejections:
+        with tempfile.TemporaryDirectory(prefix=f"loki-manual-admission-publication-{case_id}-") as temp:
+            publication_root = Path(temp)
+            publication_plan, _ = build_admission_fixture(publication_root)
+            final_path = publication_root / publication_plan / "builds/manual-qa/admission.json"
+            temp_path = final_path.with_name(ADMISSION_TEMP_NAME)
+            document = json.loads(final_path.read_text(encoding="utf-8"))
+            setup(final_path, temp_path)
+            try:
+                publish_admission(publication_root, publication_plan, document)
+            except ContractError as exc:
+                require("ADMISSION_PUBLICATION_ERROR_MISMATCH", str(exc) == expected_error)
+            else:
+                raise ContractError(f"ADMISSION_PUBLICATION_COLLISION_ACCEPTED:{case_id}")
+            results.append({"id": f"administrative-admission-publication-{case_id}", "result": "expected-rejection", "error": expected_error})
+
+    def mutate_control_source(root: Path, ref: str, mutation: Callable[[dict[str, Any]], Any]) -> None:
+        if ref.endswith(".json"):
+            record = json.loads((root / ref).read_text(encoding="utf-8"))
+            wrapper = None
+        else:
+            document = parse_administrative_yaml((root / ref).read_text(encoding="utf-8"))
+            wrapper = "execution_audit_checkpoint" if set(document) == {"execution_audit_checkpoint"} else None
+            record = document[wrapper] if wrapper else document
+        replacement = mutation(record)
+        value = replacement if isinstance(replacement, dict) else record
+        if ref.endswith(".json"):
+            write_json(root, ref, value)
+        else:
+            (root / ref).write_text(administrative_yaml_dump({wrapper: value} if wrapper else value) + "\n", encoding="utf-8")
+
+    def mutate_projection_record(root: Path, doc: dict[str, Any], projection_kind: str, mutation: Callable[[dict[str, Any]], None]) -> None:
+        projection = doc["authoritative_projection"]
+        ref = projection[f"{projection_kind}_ref"]
+        record = json.loads((root / ref).read_text(encoding="utf-8"))
+        mutation(record)
+        if projection_kind == "result":
+            record["result_digest"] = load_upstream().digest_without(record, "result_digest")
+        elif projection_kind == "dashboard":
+            record["dashboard_digest"] = load_upstream().digest_without(record, "dashboard_digest")
+        write_json(root, ref, record)
+        projection[f"{projection_kind}_digest"] = bytes_digest((root / ref).read_bytes())
+
+    def administrative_tasks_document(root: Path, plan: str) -> dict[str, Any]:
+        upstream = load_upstream()
+        reader = upstream.RealRunReader(root)
+        tasks_ref = f"{plan}/tasks.md"
+        documents = read_administrative_documents(reader, tasks_ref)
+        return {"documents": documents, "loki_run_state": documents[-1]["loki_run_state"]}
+
+    def write_administrative_tasks(root: Path, plan: str, tasks: dict[str, Any]) -> None:
+        tasks["documents"][-1] = {"loki_run_state": tasks["loki_run_state"]}
+        text = "# Administrative run fixture\n\n" + "\n\n".join("```yaml\n" + administrative_yaml_dump(item) + "\n```" for item in tasks["documents"]) + "\n"
+        (root / plan / "tasks.md").write_text(text, encoding="utf-8")
+
+    administrative_surface_mutations = (
+        ("duplicate-preflight-root", lambda docs: docs.insert(2, deepcopy(docs[1])), "ADMINISTRATIVE_DOWNSTREAM_BLOCK_INVALID"),
+        ("extra-root", lambda docs: docs.insert(-1, {"unexpected_root": {"schema_version": 1}}), "ADMINISTRATIVE_TARGET_DECISION_BLOCKS_INVALID"),
+        ("target-root-substitution", lambda docs: docs.__setitem__(3, {"target_decision_alias": docs[3]["target_decision"]}), "ADMINISTRATIVE_TARGET_DECISION_BLOCKS_INVALID"),
+    )
+    for case_id, mutation, expected_error in administrative_surface_mutations:
+        with tempfile.TemporaryDirectory(prefix=f"loki-manual-administrative-surface-{case_id}-") as temp:
+            surface_root = Path(temp)
+            surface_plan, invocation_ref = build_admission_fixture(surface_root)
+            tasks = administrative_tasks_document(surface_root, surface_plan)
+            mutation(tasks["documents"])
+            write_administrative_tasks(surface_root, surface_plan, tasks)
+            try:
+                validate_real_run_with_administrative_markdown(load_upstream(), surface_root, f"{surface_plan}/tasks.md", invocation_ref)
+            except ContractError as exc:
+                require(f"ADMINISTRATIVE_SURFACE_ERROR_MISMATCH:{case_id}:{expected_error}:{exc}", str(exc) == expected_error)
+            else:
+                raise ContractError(f"ADMINISTRATIVE_SURFACE_ADVERSARIAL_ACCEPTED:{case_id}")
+            results.append({"id": f"administrative-surface-{case_id}", "result": "expected-rejection", "error": expected_error})
+    with tempfile.TemporaryDirectory(prefix="loki-manual-administrative-surface-json-mix-") as temp:
+        surface_root = Path(temp)
+        surface_plan, invocation_ref = build_admission_fixture(surface_root)
+        tasks_path = surface_root / surface_plan / "tasks.md"
+        tasks_path.write_text(tasks_path.read_text(encoding="utf-8") + "\n```json\n{}\n```\n", encoding="utf-8")
+        try:
+            validate_real_run_with_administrative_markdown(load_upstream(), surface_root, f"{surface_plan}/tasks.md", invocation_ref)
+        except ContractError as exc:
+            require("ADMINISTRATIVE_JSON_MIX_ERROR_MISMATCH", str(exc) == "ADMINISTRATIVE_JSON_FENCE_FORBIDDEN")
+        else:
+            raise ContractError("ADMINISTRATIVE_JSON_MIX_ACCEPTED")
+        results.append({"id": "administrative-surface-json-yaml-mix", "result": "expected-rejection", "error": "ADMINISTRATIVE_JSON_FENCE_FORBIDDEN"})
+    administrative_current_byte_mutations = (
+        ("demand", "demand_ref", b"changed demand bytes\n", "ADMINISTRATIVE_DEMAND_CURRENT_BYTES_DRIFT"),
+        ("analysis", "analysis_ref", b"# Changed analysis bytes\n", "ADMINISTRATIVE_ANALYSIS_CURRENT_BYTES_DRIFT"),
+    )
+    for case_id, source_key, changed_bytes, expected_error in administrative_current_byte_mutations:
+        with tempfile.TemporaryDirectory(prefix=f"loki-manual-administrative-current-bytes-{case_id}-") as temp:
+            source_root = Path(temp)
+            source_plan, invocation_ref = build_admission_fixture(source_root)
+            invocation = load_upstream().validate_execution_input(json.loads((source_root / invocation_ref).read_text(encoding="utf-8")))
+            (source_root / invocation[source_key]).write_bytes(changed_bytes)
+            try:
+                validate_real_run_with_administrative_markdown(load_upstream(), source_root, f"{source_plan}/tasks.md", invocation_ref)
+            except ContractError as exc:
+                require(f"ADMINISTRATIVE_CURRENT_BYTES_ERROR_MISMATCH:{case_id}:{expected_error}:{exc}", str(exc) == expected_error)
+            else:
+                raise ContractError(f"ADMINISTRATIVE_CURRENT_BYTES_DRIFT_ACCEPTED:{case_id}")
+            results.append({"id": f"administrative-current-bytes-{case_id}", "result": "expected-rejection", "error": expected_error, "direct_narrow_path": True})
+
+    def refresh_state_dependents(root: Path, plan: str, tasks: dict[str, Any]) -> None:
+        upstream = load_upstream()
+        state = tasks["loki_run_state"]
+        state["state_digest"] = upstream.digest_without(state, "state_digest")
+        write_administrative_tasks(root, plan, tasks)
+        result = json.loads((root / state["result_ref"]).read_text(encoding="utf-8"))
+        result["state_digest"] = state["state_digest"]
+        result["result_digest"] = upstream.digest_without(result, "result_digest")
+        write_json(root, state["result_ref"], result)
+        dashboard = json.loads((root / state["dashboard_ref"]).read_text(encoding="utf-8"))
+        dashboard["state_digest"] = state["state_digest"]
+        dashboard["dashboard_digest"] = upstream.digest_without(dashboard, "dashboard_digest")
+        write_json(root, state["dashboard_ref"], dashboard)
+        consistency = json.loads((root / state["consistency_packet_ref"]).read_text(encoding="utf-8"))
+        consistency["state_digest"] = state["state_digest"]
+        consistency["tasks_md_digest"] = bytes_digest((root / plan / "tasks.md").read_bytes())
+        consistency["result_ref"] = state["result_ref"]
+        consistency["result_digest"] = bytes_digest((root / state["result_ref"]).read_bytes())
+        consistency["dashboard_ref"] = state["dashboard_ref"]
+        consistency["dashboard_digest"] = bytes_digest((root / state["dashboard_ref"]).read_bytes())
+        write_json(root, state["consistency_packet_ref"], consistency)
+
+    def refresh_admission_envelope(root: Path, plan: str, document: dict[str, Any]) -> None:
+        upstream = load_upstream()
+        reader = upstream.RealRunReader(root)
+        projection = document["authoritative_projection"]
+        for kind in ("invocation", "result", "dashboard", "consistency"):
+            projection[f"{kind}_digest"] = bytes_digest(reader.read_bytes(projection[f"{kind}_ref"]))
+        state = read_split_administrative_surface(reader, f"{plan}/tasks.md")["state"]
+        projection["state_digest"] = state["state_digest"]
+        result = reader.read_json(projection["result_ref"])
+        projection["manual_qa_handoff_digest"] = digest(validate_handoff(result["manual_qa_handoff"]))
+        document["trigger"]["source_digests"] = [bytes_digest(reader.read_bytes(ref)) for ref in document["trigger"]["source_refs"]]
+        document["admission_id"] = "manual-qa-admission-v1:" + digest({"run_id": document["run_id"], "execution_id": document["execution_id"], "trigger": document["trigger"], "authoritative_projection": projection}).split(":", 1)[1]
+        document["admission_digest"] = digest(document, omit="admission_digest")
+        write_json(root, f"{plan}/builds/manual-qa/admission.json", document)
+
+    def mutate_state_with_refresh(root: Path, plan: str, document: dict[str, Any], mutation: Callable[[dict[str, Any]], None]) -> None:
+        tasks = administrative_tasks_document(root, plan)
+        mutation(tasks["loki_run_state"])
+        refresh_state_dependents(root, plan, tasks)
+        refresh_admission_envelope(root, plan, document)
+
+    def mutate_json_projection_with_refresh(root: Path, plan: str, document: dict[str, Any], kind: str, mutation: Callable[[dict[str, Any]], None]) -> None:
+        upstream = load_upstream()
+        projection = document["authoritative_projection"]
+        ref = projection[f"{kind}_ref"]
+        record = json.loads((root / ref).read_text(encoding="utf-8"))
+        mutation(record)
+        if kind == "result": record["result_digest"] = upstream.digest_without(record, "result_digest")
+        if kind == "dashboard": record["dashboard_digest"] = upstream.digest_without(record, "dashboard_digest")
+        write_json(root, ref, record)
+        if kind in {"result", "dashboard"}:
+            consistency_ref = projection["consistency_ref"]
+            consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
+            consistency[f"{kind}_digest"] = bytes_digest((root / ref).read_bytes())
+            write_json(root, consistency_ref, consistency)
+        refresh_admission_envelope(root, plan, document)
+
+    admission_mutations = (
+        ("unknown-error-code", lambda root, plan, doc: doc["trigger"].update(upstream_error_code="UNKNOWN_CODE")),
+        ("extra-key", lambda root, plan, doc: doc.update(extra=True)),
+        ("missing-key", lambda root, plan, doc: doc.pop("allowed_actions")),
+        ("identity-drift", lambda root, plan, doc: doc.update(run_id="loki-run-v2:" + "9" * 64)),
+        ("stale-source-proof", lambda root, plan, doc: (root / plan / "tasks.md").write_bytes((root / plan / "tasks.md").read_bytes() + b"\n")),
+        ("production-target-drift", lambda root, plan, doc: (root / doc["production_targets"][0]["ref"]).write_bytes(b"drift\n")),
+        ("automatic-evidence-drift", lambda root, plan, doc: (root / doc["automatic_evidence"][0]["ref"]).write_bytes(b"drift\n")),
+        ("nonterminal-automatic-control", lambda root, plan, doc: doc["automatic_controls"][0].update(outcome="pending")),
+        ("automatic-control-omission", lambda root, plan, doc: doc["automatic_controls"].pop()),
+        ("automatic-control-substitution", lambda root, plan, doc: doc["automatic_controls"][0].update(ref=doc["automatic_evidence"][0]["ref"], digest=doc["automatic_evidence"][0]["digest"], outcome="passed")),
+        ("automatic-control-duplicate", lambda root, plan, doc: doc["automatic_controls"].append(deepcopy(doc["automatic_controls"][0]))),
+        ("automatic-control-reorder", lambda root, plan, doc: doc["automatic_controls"].__setitem__(slice(0, 2), list(reversed(doc["automatic_controls"][:2])))),
+        ("cross-projection-audit-omission", lambda root, plan, doc: mutate_projection_record(root, doc, "result", lambda record: record.update(audit_checkpoint_refs=[]))),
+        ("cross-projection-gate-substitution", lambda root, plan, doc: mutate_projection_record(root, doc, "dashboard", lambda record: (record["gate_refs"].reverse(), record["gate_digests"].reverse()))),
+        ("final-validator-extra-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][0]["ref"], lambda record: record.update(extra=True))),
+        ("final-validator-missing-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][0]["ref"], lambda record: record.pop("identity"))),
+        ("final-validator-result-alias", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][0]["ref"], lambda record: (record.__setitem__("status", record.pop("result"))))),
+        ("final-validator-unknown-root", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][0]["ref"], lambda record: {"final_validator": record})),
+        ("audit-checkpoint-extra-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][1]["ref"], lambda record: record.update(extra=True))),
+        ("audit-checkpoint-missing-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][1]["ref"], lambda record: record.pop("auditor_identity"))),
+        ("audit-checkpoint-status-alias", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][1]["ref"], lambda record: record.__setitem__("result", record.pop("status")))),
+        ("audit-checkpoint-unknown-root", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][1]["ref"], lambda record: {"execution_audit_checkpoint": record})),
+        ("automatic-gate-extra-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][2]["ref"], lambda record: record.update(extra=True))),
+        ("automatic-gate-missing-field", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][2]["ref"], lambda record: record.pop("statement"))),
+        ("automatic-gate-status-alias", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][2]["ref"], lambda record: record.__setitem__("result", record.pop("status")))),
+        ("automatic-gate-unknown-root", lambda root, plan, doc: mutate_control_source(root, doc["automatic_controls"][2]["ref"], lambda record: {"gate_record": record})),
+        ("human-gate-extra-field", lambda root, plan, doc: mutate_control_source(root, doc["human_gates"][0]["ref"], lambda record: record.update(extra=True))),
+        ("human-gate-bypass", lambda root, plan, doc: doc["human_gates"][0].update(status="passed")),
+        ("attempted-terminal-promotion", lambda root, plan, doc: doc.update(status="completed")),
+    )
+    for case_id, mutation in admission_mutations:
+        with tempfile.TemporaryDirectory(prefix=f"loki-manual-admission-{case_id}-") as temp:
+            mutation_root = Path(temp)
+            mutation_plan, _ = build_admission_fixture(mutation_root)
+            admission_path = mutation_root / mutation_plan / "builds/manual-qa/admission.json"
+            document = json.loads(admission_path.read_text(encoding="utf-8"))
+            mutation(mutation_root, mutation_plan, document)
+            document["admission_id"] = "manual-qa-admission-v1:" + digest({"run_id": document["run_id"], "execution_id": document["execution_id"], "trigger": document["trigger"], "authoritative_projection": document["authoritative_projection"]}).split(":", 1)[1]
+            document["admission_digest"] = digest(document, omit="admission_digest")
+            write_json(mutation_root, admission_path.relative_to(mutation_root).as_posix(), document)
+            try:
+                validate_admission_tree(mutation_root, mutation_plan)
+            except (ContractError, KeyError, TypeError, OSError):
+                results.append({"id": f"administrative-admission-{case_id}", "result": "expected-rejection"})
+            else:
+                raise ContractError(f"ADMISSION_ADVERSARIAL_ACCEPTED:{case_id}")
+
+    def divergent_audit_configuration() -> dict[str, Any]:
+        return load_upstream().fixture_audit_configuration("task", "explicit")
+
+    def mutate_command_identity_plan(root: Path, plan: str, document: dict[str, Any]) -> None:
+        upstream = load_upstream()
+        ref = document["authoritative_projection"]["invocation_ref"]
+        invocation = json.loads((root / ref).read_text(encoding="utf-8"))
+        invocation["command_identity"]["plan_directory"] = f"{plan}/subplan"
+        invocation["run_id"] = upstream.derive_typed_id("loki-run-v2", invocation["command_identity"])
+        invocation["execution_id"] = upstream.derive_typed_id("loki-execution-v2", {"run_id": invocation["run_id"], "command_identity": invocation["command_identity"]})
+        write_json(root, ref, invocation)
+        tasks = administrative_tasks_document(root, plan)
+        tasks["loki_run_state"]["execution_input_digest"] = bytes_digest((root / ref).read_bytes())
+        refresh_state_dependents(root, plan, tasks)
+        refresh_admission_envelope(root, plan, document)
+
+    def mutate_metrics_digest_everywhere(root: Path, plan: str, document: dict[str, Any]) -> None:
+        upstream = load_upstream()
+        tasks = administrative_tasks_document(root, plan)
+        state = tasks["loki_run_state"]
+        wrong_digest = bytes_digest((root / state["dashboard_ref"]).read_bytes())
+        state["execution_metrics_digest"] = wrong_digest
+        for kind in ("result", "dashboard"):
+            ref = document["authoritative_projection"][f"{kind}_ref"]
+            record = json.loads((root / ref).read_text(encoding="utf-8"))
+            record["execution_metrics_digest"] = wrong_digest
+            record[f"{kind}_digest"] = upstream.digest_without(record, f"{kind}_digest")
+            write_json(root, ref, record)
+        consistency_ref = document["authoritative_projection"]["consistency_ref"]
+        consistency = json.loads((root / consistency_ref).read_text(encoding="utf-8"))
+        consistency["metrics_digest"] = wrong_digest
+        write_json(root, consistency_ref, consistency)
+        refresh_state_dependents(root, plan, tasks)
+        refresh_admission_envelope(root, plan, document)
+
+    provenance_mutations: tuple[tuple[str, Callable[[Path, str, dict[str, Any]], None], str], ...] = (
+        ("command-identity-plan-directory", mutate_command_identity_plan, "ADMISSION_UPSTREAM_ERROR_NOT_QUALIFYING"),
+        ("demand-current-bytes", lambda root, plan, doc: ((root / load_upstream().validate_execution_input(json.loads((root / doc["authoritative_projection"]["invocation_ref"]).read_text()))["demand_ref"]).write_bytes(b"changed demand bytes\n"), refresh_admission_envelope(root, plan, doc)), "ADMISSION_UPSTREAM_ERROR_NOT_QUALIFYING"),
+        ("analysis-current-bytes", lambda root, plan, doc: ((root / load_upstream().validate_execution_input(json.loads((root / doc["authoritative_projection"]["invocation_ref"]).read_text()))["analysis_ref"]).write_bytes(b"# Changed analysis bytes\n"), refresh_admission_envelope(root, plan, doc)), "ADMISSION_UPSTREAM_ERROR_NOT_QUALIFYING"),
+        ("state-command-identity-digest", lambda root, plan, doc: mutate_state_with_refresh(root, plan, doc, lambda state: state.update(command_identity_digest="sha256:" + "7" * 64)), "STATE_COMMAND_IDENTITY_DIGEST_MISMATCH"),
+        ("state-execution-input-digest", lambda root, plan, doc: mutate_state_with_refresh(root, plan, doc, lambda state: state.update(execution_input_digest="sha256:" + "7" * 64)), "STATE_EXECUTION_INPUT_DIGEST_MISMATCH"),
+        ("state-audit-configuration", lambda root, plan, doc: mutate_state_with_refresh(root, plan, doc, lambda state: state.update(audit_configuration=divergent_audit_configuration())), "STATE_AUDIT_CONFIGURATION_MISMATCH"),
+        ("result-audit-configuration", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "result", lambda record: record.update(audit_configuration=divergent_audit_configuration())), "RESULT_AUDIT_CONFIGURATION_MISMATCH"),
+        ("dashboard-audit-configuration", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "dashboard", lambda record: record.update(audit_configuration=divergent_audit_configuration())), "DASHBOARD_AUDIT_CONFIGURATION_MISMATCH"),
+        ("consistency-audit-configuration", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "consistency", lambda record: record.update(audit_configuration=divergent_audit_configuration())), "CONSISTENCY_AUDIT_CONFIGURATION_MISMATCH"),
+        ("state-task-refs", lambda root, plan, doc: mutate_state_with_refresh(root, plan, doc, lambda state: state.update(task_refs=[])), "STATE_TASK_REFS_MISMATCH"),
+        ("consistency-tasks-md-digest", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "consistency", lambda record: record.update(tasks_md_digest="sha256:" + "7" * 64)), "CONSISTENCY_TASKS_MD_DIGEST_MISMATCH"),
+        ("consistency-result-ref-digest", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "consistency", lambda record: record.update(result_ref=record["dashboard_ref"], result_digest=record["dashboard_digest"])), "CONSISTENCY_RESULT_MISMATCH"),
+        ("consistency-dashboard-ref-digest", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "consistency", lambda record: record.update(dashboard_ref=record["result_ref"], dashboard_digest=record["result_digest"])), "CONSISTENCY_DASHBOARD_MISMATCH"),
+        ("metrics-current-byte-digest", mutate_metrics_digest_everywhere, "STATE_METRICS_DIGEST_MISMATCH"),
+        ("result-metrics-ref", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "result", lambda record: record.update(execution_metrics_ref=doc["authoritative_projection"]["dashboard_ref"])), "RESULT_METRICS_REF_MISMATCH"),
+        ("dashboard-metrics-digest", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "dashboard", lambda record: record.update(execution_metrics_digest="sha256:" + "7" * 64)), "DASHBOARD_METRICS_DIGEST_MISMATCH"),
+        ("consistency-metrics-ref-digest", lambda root, plan, doc: mutate_json_projection_with_refresh(root, plan, doc, "consistency", lambda record: record.update(metrics_ref=record["dashboard_ref"], metrics_digest=record["dashboard_digest"])), "CONSISTENCY_METRICS_MISMATCH"),
+    )
+    for case_id, mutation, expected_error in provenance_mutations:
+        with tempfile.TemporaryDirectory(prefix=f"loki-manual-admission-provenance-{case_id}-") as temp:
+            mutation_root = Path(temp)
+            mutation_plan, _ = build_admission_fixture(mutation_root)
+            admission_path = mutation_root / mutation_plan / "builds/manual-qa/admission.json"
+            document = json.loads(admission_path.read_text(encoding="utf-8"))
+            mutation(mutation_root, mutation_plan, document)
+            try:
+                validate_admission_tree(mutation_root, mutation_plan)
+            except ContractError as exc:
+                require(f"ADMISSION_PROVENANCE_ERROR_MISMATCH:{case_id}:{expected_error}:{exc}", str(exc) == expected_error)
+            else:
+                raise ContractError(f"ADMISSION_PROVENANCE_ADVERSARIAL_ACCEPTED:{case_id}")
+            results.append({"id": f"administrative-admission-provenance-{case_id}", "result": "expected-rejection", "error": expected_error, "downstream_digests_refreshed": True})
     synthetic_batches = {"initial": 3, "issue": 3, "terminal-reject": 4}
     for batch_kind, target_count in synthetic_batches.items():
         for resume_mode in ("normal", "recovery", "post-write"):
@@ -2021,13 +3070,35 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--record", choices=sorted(VALIDATORS))
     parser.add_argument("--tree", metavar="PROJECT_ROOT")
+    parser.add_argument("--admission-tree", metavar="PROJECT_ROOT")
+    parser.add_argument("--administrative-probe", metavar="PROJECT_ROOT")
+    parser.add_argument("--invocation", metavar="REF")
+    parser.add_argument("--expect-error", metavar="CODE")
     parser.add_argument("path", nargs="?")
     args = parser.parse_args()
-    require("CLI_MODE_INVALID", sum((args.self_test, bool(args.record), bool(args.tree))) == 1)
+    require("CLI_MODE_INVALID", sum((args.self_test, bool(args.record), bool(args.tree), bool(args.admission_tree), bool(args.administrative_probe))) == 1)
     try:
         if args.self_test: output = self_test()
         elif args.record:
             require("CLI_PATH_REQUIRED", bool(args.path)); VALIDATORS[args.record](json.loads(Path(args.path).read_text(encoding="utf-8"))); output = {"schema_version": 1, "status": "passed", "record": args.record}
+        elif args.admission_tree:
+            require("CLI_PLAN_REQUIRED", nonempty(args.path)); output = validate_admission_tree(Path(args.admission_tree), args.path)
+        elif args.administrative_probe:
+            require("CLI_PLAN_REQUIRED", nonempty(args.path)); require("CLI_INVOCATION_REQUIRED", nonempty(args.invocation)); require("CLI_EXPECT_ERROR_REQUIRED", nonempty(args.expect_error))
+            upstream = load_upstream(); tasks_ref = f"{args.path}/tasks.md"
+            try:
+                upstream.validate_real_run(Path(args.administrative_probe), tasks_ref, args.invocation)
+            except Exception as exc:
+                require("ADMISSION_UPSTREAM_ERROR_NOT_QUALIFYING", str(exc) == "MARKDOWN_CONTRACT_BLOCK_INVALID")
+            else:
+                raise ContractError("ADMISSION_UPSTREAM_ERROR_ABSENT")
+            try:
+                validate_real_run_with_administrative_markdown(upstream, Path(args.administrative_probe), tasks_ref, args.invocation)
+            except ContractError as exc:
+                require(f"ADMINISTRATIVE_PROBE_ERROR_MISMATCH:{args.expect_error}:{exc}", str(exc) == args.expect_error)
+                output = {"schema_version": 1, "status": "expected-rejection", "error": str(exc), "project_root": str(Path(args.administrative_probe).resolve()), "plan_directory": args.path, "consumer_writes": 0}
+            else:
+                raise ContractError("ADMINISTRATIVE_PROBE_UNEXPECTED_ACCEPTANCE")
         else:
             require("CLI_PLAN_REQUIRED", nonempty(args.path)); output = validate_tree(Path(args.tree), args.path)
         print(json.dumps(output, ensure_ascii=False, indent=2, sort_keys=True))

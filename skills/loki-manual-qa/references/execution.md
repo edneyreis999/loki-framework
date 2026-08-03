@@ -1,9 +1,9 @@
 ---
 doc_id: "loki-manual-qa-execution"
-version: "2.0.0"
+version: "2.1.0"
 status: active
-last_updated: "2026-08-01"
-scope: "Exhaustive manual-QA source catalog, interaction, and restricted awaiting-manual-qa terminal promotion"
+last_updated: "2026-08-03"
+scope: "Exhaustive manual-QA source catalog, closed administrative-schema-degraded admission, interaction, and restricted awaiting-manual-qa terminal promotion"
 not_scope: "Runtime observation by Loki, per-test human evidence, production repair, or mutation outside terminal QA state"
 authority: "skills/loki-manual-qa/SKILL.md"
 canonical_source: "skills/loki-manual-qa/references/execution.md"
@@ -72,6 +72,135 @@ views and rebuild. If issue resolution produces a new technical projection,
 invalidate all dependent manual views, re-enumerate, redispatch and present the
 whole dashboard again. Any other invalidated dependency blocks; never patch a
 downstream digest to hide drift.
+
+## Closed administrative-schema-degraded admission
+
+The only degradable upstream failure is `MARKDOWN_CONTRACT_BLOCK_INVALID`
+caused by multiple fenced YAML administrative sections where the current
+reader expected exactly one fenced JSON contract. This is a narrow current
+schema serialization overlay, not a legacy reader: reject every other code,
+JSON/YAML mix, unknown root, missing/extra current-schema field or value, and
+never migrate, alias, rewrite or substitute a handoff.
+
+Before cataloging, independently validate the current JSON
+`execution-input-v2`, result v3, dashboard v3 and consistency v2 refs supplied
+by the invocation. Require exact run/execution identity, `awaiting-manual-qa`,
+equal state digest, current self-digests, exact ref/byte digests, and one
+semantically equal manual-qa-handoff v2 across all three authoritative
+projections. Preserve that handoff byte-equivalent throughout the workflow.
+Parse only the closed JSON-compatible indentation subset of the qualifying
+administrative YAML blocks. `tasks.md` must contain, in order, the sole
+`{command_identity, execution_input}` block, sole
+`{plan_directory_preflight_result}`, sole `{downstream_execution_profile}`, one
+or more `{target_decision}` blocks and sole terminal `{loki_run_state}`. Each
+task must contain exactly the unwrapped execution profile followed by sole
+`{scoped_write}`, `{task_validation}`, `{gate_refs}` and `{loki_task_state}`
+blocks. Reject missing, extra, duplicate, reordered, substituted, aliased or
+JSON-mixed roots. Validate only semantic fields explicitly available across
+these split records; never invent a legacy `loki_run_plan` or `task_contract`.
+
+This explicit parity includes normalized command-identity plan directory;
+demand/analysis current-byte digests; typed run/execution identities; state
+command-identity and execution-input digests; exact audit configuration across
+identity, state, result, dashboard and consistency; state/handoff task sets;
+complete split task surfaces, validators, handoffs, gates, audits and terminal
+evidence; consistency `tasks_md_digest`; current result/dashboard refs and byte
+digests; metrics schema, identity, refs, current-byte digests, status and
+degradation reason; next action; and every remaining current upstream
+correlation. Refreshing container, projection or admission digests cannot waive
+a semantic/provenance mismatch.
+
+Derive controls from independently correlated current surfaces, never from the
+result alone. Invocation output refs must equal the admission projection and
+state output refs. State, result, dashboard, consistency and handoff must carry
+the exact same ordered, non-empty, duplicate-free gate refs; state, result,
+dashboard and consistency must carry current gate byte digests. State, result,
+dashboard and consistency must carry the same audit refs, and consistency must
+carry their current byte digests. Result and dashboard must carry the same
+ordered, non-empty, duplicate-free final-validator refs. Derive primary
+validator refs from each current task-validation `primary_route`, then
+recompute consistency `validator_digest` from the current primary plus final
+validator bytes. State, result, dashboard, consistency and handoff must carry
+the same terminal-evidence refs. Any omission, addition, substitution,
+duplication, reorder or cross-projection mismatch blocks.
+
+Read each derived non-Markdown control only through its exact current type.
+Audit checkpoint refs derived from validated state/result may be YAML only with
+the sole `execution_audit_checkpoint` root; derived gate refs may be bare closed
+gate-record YAML. Final-validator records remain JSON. No generic wrapper,
+alias, alternate root or unrelated YAML control is accepted. A
+final-validator is the bare closed seven-key JSON validator record v1 with
+`task_ref: null`, non-empty AC and evidence refs, and `result: passed`;
+`status` is not an alias. An audit is the bare closed audit-checkpoint v1
+mapping. Its typed identity, run/execution, policy, boundary, coverage,
+primary/final validator refs and `approved | not-applicable` status must
+validate. A gate is the bare closed nine-key gate record v2. Automatic gates
+are `passed`, have evidence and a null
+attestation pair; human-validation gates are `pending` with the null pair.
+Unknown roots, generic one-key unwrapping, aliases, generic `result/status`
+substitution and missing or extra fields all block.
+
+Require all production targets to equal the target digests persisted by the
+approved audit checkpoints; all automatic evidence refs/bytes to equal the
+consistency projection; every final validator, audit and automatic gate to be
+`passed`, `approved` or `not-applicable`; and every required human gate to be
+`pending` with null attestation fields. Target drift, evidence ref/digest
+drift, a nonterminal automatic control, run/execution drift, stale current
+schema proof, or a missing/unresolved human gate is non-waivable.
+
+Persist the crash-safe record first at
+`<plan_directory>/builds/manual-qa/admission.json`. Its exact schema v1 keys
+are:
+
+```yaml
+manual_qa_admission:
+  schema_version: 1
+  admission_id: "manual-qa-admission-v1:<digest of identity, trigger and authoritative projection>"
+  status: "administrative-schema-degraded"
+  batch_kind: "administrative-admission"
+  phase: "admission-recorded | capture-reconciled"
+  run_id: "loki-run-v2:<digest>"
+  execution_id: "loki-execution-v2:<digest>"
+  plan_directory: "planos/<plan>"
+  trigger: {upstream_error_code: "MARKDOWN_CONTRACT_BLOCK_INVALID", serialization: "multiple-fenced-yaml-administrative-sections", source_refs: [], source_digests: []}
+  authoritative_projection: {invocation_ref: "", invocation_digest: "", result_ref: "", result_digest: "", dashboard_ref: "", dashboard_digest: "", consistency_ref: "", consistency_digest: "", state_digest: "", manual_qa_handoff_digest: ""}
+  production_targets: [{ref: "", digest: "", outcome: "digest-verified"}]
+  automatic_evidence: [{ref: "", digest: "", outcome: "digest-verified"}]
+  automatic_controls: [{ref: "", digest: "", outcome: "passed | approved | not-applicable"}]
+  human_gates: [{ref: "", digest: "", kind: "human-validation", status: "pending", attestation_ref: null, attestation_digest: null}]
+  allowed_actions: ["catalog-manual-sources", "publish-complete-dashboard", "provide-read-only-help", "record-human-test-observations"]
+  forbidden_actions: ["aggregate-attestation", "promote-human-gates", "publish-terminal-consistency", "complete-plan", "rewrite-manual-qa-handoff"]
+  blockers: ["administrative-serialization-incompatibility", "terminal-promotion-forbidden-while-degraded"]
+  execution_knowledge_capture: {capture_id: "", target_entry: "", status: "pending | captured | partial | failed | unsupported", entry_digest: null, reason: "", minimum_next_path: ""}
+  admission_digest: "sha256:<canonical record excluding admission_digest>"
+```
+
+The persisted admission is its own `administrative-admission` journal and may
+never reuse `initial`, `issue`, `terminal-reject` or `terminal`. Its only
+temporary is the exact normalized sibling
+`<plan_directory>/builds/manual-qa/admission.json.tmp`; final and temporary
+must resolve to distinct names in the same validated directory. Encode the
+complete validated admission as canonical indented JSON, create the temporary
+with exclusive-create semantics, flush it, reread and validate its exact
+bytes, then atomically create the final without overwrite by linking that
+sibling to `admission.json`. Remove only that owned temporary and only after
+its bytes equal the intended record and final bytes verify. An existing exact
+final is a no-op; an existing exact temporary with no final is an interrupted
+publication that resumes through the same validation and exclusive final
+creation. A divergent final, divergent/foreign temporary, directory/symlink or
+target/temp collision blocks and is never overwritten or cleaned. After
+publication, dispatch a lineage-bound material
+execution-knowledge capture using the admission as a `build-report`. Capture
+remains nonblocking, but `pending`, `partial`, `failed` or `unsupported` must
+remain visible with a reason and `minimum_next_path` in a reconciled admission.
+
+Degraded admission permits source catalog/proposals, the complete dashboard,
+read-only help and issue/observation recording. It remains visible,
+non-successful and has non-empty blockers. It forbids semantic assessment,
+independent aggregate-attestation review, aggregate attestation, human-gate or
+canonical promotion, consistency publication and completion. After the
+administrative source is repaired, discard the degraded route and rerun the
+ordinary current-only preflight from bytes before any terminal batch.
 
 ## Runtime-QA proposal handoff
 
@@ -416,14 +545,14 @@ complete re-enumeration, proposals and presentation before attestation.
 
 ## Managed-state transaction and restricted terminal promotion
 
-The recoverable journal is the first manual-QA write, before any proposal,
+Outside a degraded admission, the recoverable transaction journal is the first manual-QA write, before any proposal,
 catalog, dashboard, interaction, assessment, attestation, report, manual
 result/consistency, gate or canonical write. Derive the complete unique target
 set and pre-write digests first. Before each target publication, persist its
 intended digest; after writing, verify exact bytes and advance the cursor and
 phase in the journal.
 
-Use exactly one current journal file, overwritten first for each of four
+Use exactly one current transaction journal file, overwritten first for each of four
 closed batches. Derive its `target_refs` from the requested transition:
 
 - initial publication: proposals in candidate order, source catalog, manual
@@ -621,3 +750,6 @@ Formal independent quality approval is external and cannot be self-issued.
 Run `python3 scripts/validate-manual-qa-contracts.py --self-test`, then the
 upstream implementation validator, Python compilation, forbidden-reference
 scan and `git diff --check`. A failed check blocks completion.
+Validate a persisted degraded admission separately with
+`python3 scripts/validate-manual-qa-contracts.py --admission-tree <project-root> <plan_directory>`
+before publishing any manual source.

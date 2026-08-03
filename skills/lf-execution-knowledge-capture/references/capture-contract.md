@@ -11,6 +11,9 @@ their snapshots or payloads.
 The synchronous checkpoint records `capture_id`, calling workflow, run/task or
 agent lineage when available, persisted source refs, materiality, target entry,
 state, reason and `minimum_next_path`. It never depends on a parallel agent.
+Accepted calling workflows are `loki-implement-feature` and `loki-manual-qa`.
+For manual QA, a validated `manual_qa_admission` v1 is a `build-report` source;
+its exact run/execution identity and target entry remain caller-bound.
 
 ## Materiality
 
@@ -41,6 +44,11 @@ reconciles these values serially into its existing checkpoint/run state or
 digest. The cataloger never writes those shared artifacts. At final completion,
 the orchestrator does not wait: it interrupts/cancels a non-terminal handoff and
 records `partial`.
+
+`loki-manual-qa` persists `pending` in its administrative-admission journal
+before dispatch and reconciles capture there without blocking cataloging.
+Capture success or failure never removes the visible degraded state and never
+permits aggregate attestation, gate promotion, consistency or completion.
 
 ## Entry contract
 

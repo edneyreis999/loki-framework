@@ -1,9 +1,9 @@
 ---
 doc_id: "loki-manual-qa-response"
-version: "2.0.0"
+version: "2.1.0"
 status: active
-last_updated: "2026-08-01"
-scope: "Recoverable complete manual QA dashboard and terminal promotion response"
+last_updated: "2026-08-03"
+scope: "Recoverable complete manual QA dashboard, visible administrative degradation and eligible terminal promotion response"
 not_scope: "State authority, runtime observation or inferred per-test evidence"
 authority: "skills/loki-manual-qa/references/execution.md and validated persisted state"
 canonical_source: "skills/loki-manual-qa/references/response.md"
@@ -36,6 +36,20 @@ phase/residue, blockers, resume condition and the complete dashboard. Each
 applicable test uses the exact catalog guide in deterministic ID order. Show
 the not-applicable refs/reasons separately. Never truncate, paginate or defer a
 later test. Help returns one guide and explicitly says no bytes/status changed.
+
+When `admission.json` is active, show
+`administrative-schema-degraded`, its ref/digest, trigger code, authoritative
+current JSON projection, independently correlated control sets and recomputed
+validator digest, successful unchanged-upstream semantic/provenance validation
+with only Markdown decoding adapted, exact type-specific
+target/evidence/control/gate proofs,
+publication result (`created | recovered | no-op`) with
+`admission.json.tmp` residue absent, capture
+state/reason/minimum-next-path, allowed/forbidden actions and every non-empty
+blocker before the dashboard. This is never a success status. Do not accept an
+aggregate attestation, dispatch attestation review, promote human gates or
+canonical records, publish consistency or claim completion while active.
+Human observations are issue input only; they do not become attestation.
 
 For pending input, ask only whether every applicable item was already tested;
 the intake payload contains only `human_statement`. Signals and review cannot
@@ -73,6 +87,9 @@ Completed response must expose:
 - byte-equal handoff v2, final plan status, empty blockers and disk-only resume
   condition/no-op replay;
 - runtime-qa handoff completion records and the managed-state completion record.
+
+A completed response is invalid while an administrative admission is active,
+even if the human statement would otherwise qualify.
 
 This `both` Markdown response has no rigid length limit. If an adapter also
 needs XML, append the exact top-level mapping in the template; XML never
