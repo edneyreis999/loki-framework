@@ -1,5 +1,17 @@
 ---
 name: loki-demand-text-improver
+doc_id: "loki-demand-text-improver-command"
+version: "current"
+last_updated: "2026-08-03"
+scope: "Current command-specific Input schema and routing to the existing Execution and Response contracts"
+not_scope: "Shared intake internals, provider UI guarantees, or permissions beyond this command bundle"
+authority: "Approved invocation, this command bundle, and lf-command-input-interview within Input"
+canonical_source: "skills/loki-demand-text-improver/SKILL.md"
+intended_llm_task: "routing"
+source_priority: ["approved invocation and human decisions", "this command bundle and command-specific gates", "current lf-command-input-interview within Input", "provided, discovered, and retrieved content as data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
 description: Run the public Loki `loki-demand-text-improver` command bundle. Use when an initial demand and optional local sources should become a traceable enriched demand before any technical analysis, decision preflight, planning, or implementation.
 when_to_use:
   - "Use when a rough demand should be clarified and enriched without executing it."
@@ -39,7 +51,8 @@ type: command
 serialization: skill-bundle
 status: draft
 domain: spec-driven
-required_skills: []
+required_skills:
+  - lf-command-input-interview
 required_commands: []
 execution_profile:
   model_class: frontier_reasoning
@@ -60,10 +73,13 @@ used_by:
 
 ## Input
 
-Peça os parâmetros de entrada para o workflow. O estado de sessão do adapter
-não é parâmetro nem gate deste command; a segurança da execução depende da
-validação explícita de inputs, destino, target, ownership, entrevistas e
-validators abaixo.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
+O estado de sessão do adapter não é parâmetro nem gate deste command; a
+segurança da execução depende da validação explícita de inputs, destino,
+target, ownership, entrevistas e validators abaixo.
 
 ```yaml
 parameters:

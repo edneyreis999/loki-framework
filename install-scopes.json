@@ -108,6 +108,7 @@
       "lf-analytic-inference-preparation": "both",
       "lf-agent-creator": "both",
       "lf-command-creator": "both",
+      "lf-command-input-interview": "both",
       "lf-command-workflows": "both",
       "loki-catalogar-docs": "both",
       "loki-criar-branch": "both",

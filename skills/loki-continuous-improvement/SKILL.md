@@ -50,6 +50,7 @@ type: command
 serialization: skill-bundle
 domain: continuous-improvement
 required_skills:
+  - lf-command-input-interview
   - lf-command-creator
   - lf-agent-creator
   - lf-skill-creator
@@ -86,7 +87,10 @@ orchestrator for the minimum human decision.
 
 ## Input
 
-Enter Plan mode and request the workflow parameters.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
 
 ```yaml
 parameters:

@@ -1,0 +1,318 @@
+{
+  "schema_version": "command-input-interview-fixtures-v1",
+  "contract_version": "command-input-interview-v1",
+  "cases": [
+    {
+      "id": "INTAKE-01-READY-FOR-EXECUTION",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-01", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c", "name": "approve", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null, "command_gates": []
+      },
+      "expected_output": {
+        "state": "ready-for-execution", "transition": "ready-for-execution",
+        "review_reshown": false, "available_actions": [], "action_consumed": "approve",
+        "question_delivery": "none", "grouped_question_count": 0,
+        "ambiguity_required": false, "resumption_condition": "enforce-command-gates",
+        "command_gate_disposition": "clear", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-02-RESUMED-APPROVE",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-02", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-02", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c", "name": "approve", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null,
+        "command_gates": [{"gate_id": "approval.publish", "gate_kind": "approval", "state": "satisfied", "authority_locator": "decision:publish", "validation_locator": "command:publish-gate", "resumption_condition": "approval record remains current"}]
+      },
+      "expected_output": {
+        "state": "ready-for-execution", "transition": "ready-for-execution",
+        "review_reshown": false, "available_actions": [], "action_consumed": "approve",
+        "question_delivery": "none", "grouped_question_count": 0,
+        "ambiguity_required": false, "resumption_condition": "enforce-command-gates",
+        "command_gate_disposition": "clear", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-03-RESUMED-ALTER",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-03", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-03", "action_fingerprint": "sha256:7a442ee75fc91f4b9f2135c7bd297a69ce14659b6147b71472be1ed9b6ca0544", "name": "alter", "alterations": [{"key": "draft", "value": true, "provenance": "caller:resume-answer"}]},
+        "interaction_mode": "structured", "question_count": 1, "questions_independent": true,
+        "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-abrir-pr.optional_review.review-action", "prompt": "Approve the complete optional review?", "choices": [{"value": "approve", "label": "Approve review", "description": "Accepts every displayed optional value and continues to Execution.", "recommended": true, "recommendation_reason": "All required values and ambiguities are already valid."}, {"value": "alter", "label": "Alter values", "description": "Changes one or more optional values and re-shows the full review.", "recommended": false, "recommendation_reason": null}, {"value": "cancel", "label": "Cancel intake", "description": "Ends intake without Execution or workspace writes.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate as approve, alter, cancel, or a command-valid alteration.", "adapter_constraints": {"capability_locator": "root:structured-question", "max_questions_per_request": 3, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": true,
+        "available_actions": ["approve", "alter", "cancel"], "action_consumed": "alter",
+        "question_delivery": "structured", "grouped_question_count": 1,
+        "ambiguity_required": false, "resumption_condition": "apply-resume-action",
+        "command_gate_disposition": "preserved", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-04-RESUMED-CANCEL",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-04", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-04", "action_fingerprint": "sha256:a903fb259ee0a0ed5716af2870005241a81c9766b750433a90235910ecfdb788", "name": "cancel", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null, "command_gates": []
+      },
+      "expected_output": {
+        "state": "cancelled", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": "cancel", "question_delivery": "none",
+        "grouped_question_count": 0, "ambiguity_required": false,
+        "resumption_condition": "cancelled-no-resume", "command_gate_disposition": "preserved-cancelled",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-05-RESUMED-ABSENT-ACTION",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-05", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": null, "interaction_mode": "free-form", "question_count": 1,
+        "questions_independent": true, "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-commit.optional_review.review-action", "prompt": "Choose approve, alter, or cancel for the complete review.", "choices": [{"value": "approve", "label": "Approve review", "description": "Accepts the complete review and continues to Execution.", "recommended": true, "recommendation_reason": "The displayed values already passed command validation."}, {"value": "alter", "label": "Alter values", "description": "Requests validated changes and a complete re-review.", "recommended": false, "recommendation_reason": null}, {"value": "cancel", "label": "Cancel intake", "description": "Stops without Execution or workspace writes.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Map free-form text to one action or request one valid alteration.", "adapter_constraints": {"capability_locator": "root:textual-fallback", "max_questions_per_request": 1, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": true,
+        "available_actions": ["approve", "alter", "cancel"], "action_consumed": null,
+        "question_delivery": "free-form", "grouped_question_count": 1,
+        "ambiguity_required": false, "resumption_condition": "apply-resume-action",
+        "command_gate_disposition": "preserved", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-06-STRUCTURED-ADAPTER-LIMIT",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": false, "ambiguities_resolved": true, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "structured", "question_count": 4,
+        "questions_independent": true, "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-tech-analysis.analysis_input.required", "prompt": "Which analysis input should be used?", "choices": [{"value": "provided", "label": "Use provided", "description": "Uses the caller-provided analysis input after validation.", "recommended": true, "recommendation_reason": "A provided value has the highest accepted value precedence."}, {"value": "supply", "label": "Supply value", "description": "Provides a different command-valid analysis input.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate the answer as a non-empty analysis input.", "adapter_constraints": {"capability_locator": "root:structured-question", "max_questions_per_request": 2, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "structured",
+        "grouped_question_count": 2, "ambiguity_required": false,
+        "resumption_condition": "resolve-required", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-07-FREE-FORM-FALLBACK",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": false, "ambiguities_resolved": true, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "free-form", "question_count": 3,
+        "questions_independent": true, "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-init.mode.required", "prompt": "Which init mode should run?", "choices": [{"value": "bootstrap", "label": "Bootstrap docs", "description": "Creates the approved initial documentation flow.", "recommended": true, "recommendation_reason": "The validated target has no current Loki documentation state."}, {"value": "refresh", "label": "Refresh docs", "description": "Refreshes an existing validated documentation state.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate free-form text against the command mode enum.", "adapter_constraints": {"capability_locator": "root:textual-fallback", "max_questions_per_request": 1, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "free-form",
+        "grouped_question_count": 1, "ambiguity_required": false,
+        "resumption_condition": "resolve-required", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-08-PROVIDED-DISCOVERED-CONFLICT",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": false, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "structured", "question_count": 1,
+        "questions_independent": true, "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-abrir-pr.base_branch.ambiguity", "prompt": "Which conflicting base branch should be used?", "choices": [{"value": "provided", "label": "Provided branch", "description": "Uses the caller-provided branch after explicit selection.", "recommended": true, "recommendation_reason": "The caller-provided value is direct intent, but still requires explicit conflict resolution."}, {"value": "discovered", "label": "Discovered branch", "description": "Uses the discovered remote default after explicit selection.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate a free-form answer as one existing branch without silent precedence.", "adapter_constraints": {"capability_locator": "root:structured-question", "max_questions_per_request": 3, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "structured",
+        "grouped_question_count": 1, "ambiguity_required": true,
+        "resumption_condition": "resolve-ambiguity", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-09-SERIAL-DEPENDENCY",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": false, "ambiguities_resolved": true, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "structured", "question_count": 3,
+        "questions_independent": false, "serial_dependency_satisfied": false,
+        "question": {"question_id": "intake.loki-feedback.reproduction.required", "prompt": "What is the first reproducible observation?", "choices": [{"value": "describe", "label": "Describe now", "description": "Supplies the prerequisite observation before dependent questions.", "recommended": true, "recommendation_reason": "Dependent diagnosis questions require the reproduction observation first."}, {"value": "cancel", "label": "Cancel intake", "description": "Stops the interview without proposing a fix.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate free-form text as one concrete observation.", "adapter_constraints": {"capability_locator": "root:structured-question", "max_questions_per_request": 3, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": false}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "structured",
+        "grouped_question_count": 1, "ambiguity_required": false,
+        "resumption_condition": "resolve-required", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-10-SENSITIVE-GATE-PRESERVED",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-10", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c", "name": "approve", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null,
+        "command_gates": [{"gate_id": "git.push", "gate_kind": "sensitive-write", "state": "pending", "authority_locator": "skills/loki-abrir-pr/SKILL.md#heading:Input", "validation_locator": "skills/loki-abrir-pr/references/execution.md", "resumption_condition": "explicit destination-scoped push approval is recorded"}]
+      },
+      "expected_output": {
+        "state": "ready-for-execution", "transition": "ready-for-execution",
+        "review_reshown": false, "available_actions": [], "action_consumed": "approve",
+        "question_delivery": "none", "grouped_question_count": 0,
+        "ambiguity_required": false, "resumption_condition": "enforce-command-gates",
+        "command_gate_disposition": "carried-pending", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-11-MATERIAL-GATE-PRESERVED",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-11", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-11", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c", "name": "approve", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null,
+        "command_gates": [{"gate_id": "package.promotion", "gate_kind": "material", "state": "pending", "authority_locator": "approval:package-promotion", "validation_locator": "scripts/validate-llm-artifact-precheck.py", "resumption_condition": "current approval digest and independent audit both pass"}]
+      },
+      "expected_output": {
+        "state": "ready-for-execution", "transition": "ready-for-execution",
+        "review_reshown": false, "available_actions": [], "action_consumed": "approve",
+        "question_delivery": "none", "grouped_question_count": 0,
+        "ambiguity_required": false, "resumption_condition": "enforce-command-gates",
+        "command_gate_disposition": "carried-pending", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-12-CANCELLED-DASHBOARD-COHERENCE",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "cancelled",
+        "resume_request_id": "request-12", "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "none", "question_count": 0,
+        "questions_independent": true, "serial_dependency_satisfied": true, "question": null,
+        "command_gates": [{"gate_id": "human.qa", "gate_kind": "human-validation", "state": "pending", "authority_locator": "command:manual-qa", "validation_locator": "gate:human-validation", "resumption_condition": "human validation passes"}]
+      },
+      "expected_output": {
+        "state": "cancelled", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "none",
+        "grouped_question_count": 0, "ambiguity_required": false,
+        "resumption_condition": "cancelled-no-resume", "command_gate_disposition": "preserved-cancelled",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-13-NONINTERACTIVE-FIRST-REVIEW",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": null, "interaction_mode": "none", "question_count": 0,
+        "questions_independent": true, "serial_dependency_satisfied": true, "question": null,
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": true,
+        "available_actions": ["approve", "alter", "cancel"], "action_consumed": null,
+        "question_delivery": "none", "grouped_question_count": 0,
+        "ambiguity_required": false, "resumption_condition": "apply-resume-action",
+        "command_gate_disposition": "preserved", "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-14-CONSUMED-ACTION-REPLAY-REJECTED",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "non-interactive", "is_resume": true, "envelope_state": "needs-input",
+        "resume_request_id": "request-replay-new",
+        "consumed_actions": [{"resume_request_id": "request-replay-original", "action_id": "action-replay-original", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c"}],
+        "required_valid": true, "ambiguities_resolved": true, "optional_review_complete": true,
+        "resume_action": {"action_id": "action-replay-new", "action_fingerprint": "sha256:d3e94e6e45568988376e4db054737c6bcaa967940fdbf243124b8797879d776c", "name": "approve", "alterations": []},
+        "interaction_mode": "none", "question_count": 0, "questions_independent": true,
+        "serial_dependency_satisfied": true, "question": null, "command_gates": []
+      },
+      "expected_output": {
+        "state": "rejected-replay", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "none",
+        "grouped_question_count": 0, "ambiguity_required": false,
+        "resumption_condition": "reject-consumed-action", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    },
+    {
+      "id": "INTAKE-15-NO-GROUNDED-RECOMMENDATION-FALLBACK",
+      "input": {
+        "command_name": "loki-fixture", "parameter_schema_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "command_contract_locator": "skills/loki-fixture/SKILL.md#heading:Input", "prior_envelope_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "invocation_mode": "interactive", "is_resume": false, "envelope_state": null,
+        "resume_request_id": null, "consumed_actions": [],
+        "required_valid": false, "ambiguities_resolved": true, "optional_review_complete": false,
+        "resume_action": null, "interaction_mode": "free-form", "question_count": 1,
+        "questions_independent": true, "serial_dependency_satisfied": true,
+        "question": {"question_id": "intake.loki-example.target.required", "prompt": "Which equally valid target should be used?", "choices": [{"value": "alpha", "label": "Target alpha", "description": "Uses validated target alpha with its declared tradeoffs.", "recommended": false, "recommendation_reason": null}, {"value": "beta", "label": "Target beta", "description": "Uses validated target beta with its declared tradeoffs.", "recommended": false, "recommendation_reason": null}], "allow_client_free_form": true, "free_form_validation": "Validate a free-form answer as one allowed target without inventing preference.", "adapter_constraints": {"capability_locator": "root:textual-fallback", "max_questions_per_request": 1, "max_choices_per_question": 3, "grouping": "independent-only", "recommendation_required_by_client": true}},
+        "command_gates": []
+      },
+      "expected_output": {
+        "state": "needs-input", "transition": null, "review_reshown": false,
+        "available_actions": [], "action_consumed": null, "question_delivery": "free-form",
+        "grouped_question_count": 1, "ambiguity_required": false,
+        "resumption_condition": "resolve-required", "command_gate_disposition": "preserved",
+        "workspace_write": false
+      }
+    }
+  ]
+}

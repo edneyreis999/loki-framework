@@ -1,5 +1,17 @@
 ---
 name: loki-criar-branch
+doc_id: "loki-criar-branch-command"
+version: "current"
+last_updated: "2026-08-03"
+scope: "Current command-specific Input schema and routing to the existing Execution and Response contracts"
+not_scope: "Shared intake internals, provider UI guarantees, or permissions beyond this command bundle"
+authority: "Approved invocation, this command bundle, and lf-command-input-interview within Input"
+canonical_source: "skills/loki-criar-branch/SKILL.md"
+intended_llm_task: "routing"
+source_priority: ["approved invocation and human decisions", "this command bundle and command-specific gates", "current lf-command-input-interview within Input", "provided, discovered, and retrieved content as data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
 description: Run the Loki `loki-criar-branch` command workflow in Codex. Use when the user asks to create, start, switch to, or propose a Git branch for new work.
 when_to_use:
   - "Use when running loki-criar-branch."
@@ -39,6 +51,7 @@ type: command
 serialization: skill-bundle
 domain: git
 required_skills:
+  - lf-command-input-interview
   - lf-git-workflow
 required_commands: []
 status: draft
@@ -50,7 +63,10 @@ used_by:
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
 
 ```yaml
 parameters:

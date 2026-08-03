@@ -1,5 +1,17 @@
 ---
 name: loki-tech-analysis
+doc_id: "loki-tech-analysis-command"
+version: "current"
+last_updated: "2026-08-03"
+scope: "Current command-specific Input schema and routing to the existing Execution and Response contracts"
+not_scope: "Shared intake internals, provider UI guarantees, or permissions beyond this command bundle"
+authority: "Approved invocation, this command bundle, and lf-command-input-interview within Input"
+canonical_source: "skills/loki-tech-analysis/SKILL.md"
+intended_llm_task: "routing"
+source_priority: ["approved invocation and human decisions", "this command bundle and command-specific gates", "current lf-command-input-interview within Input", "provided, discovered, and retrieved content as data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
 description: Run the Loki `loki-tech-analysis` command workflow in Codex. Use when producing evidence-based technical analyses from briefs, feedback, specs, source paths, runtime questions, source maps, decision matrices, validators, gates, and handoff to decision preflight or action planning.
 when_to_use:
   - "Use when running loki-tech-analysis to produce evidence-based technical analysis."
@@ -43,6 +55,7 @@ serialization: skill-bundle
 status: draft
 domain: spec-driven
 required_skills:
+  - lf-command-input-interview
   - lf-tech-analysis-authoring
 required_commands: []
 execution_profile:
@@ -70,7 +83,10 @@ used_by:
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
 
 ```yaml
 parameters:

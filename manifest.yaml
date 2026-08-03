@@ -732,6 +732,9 @@ skills:
   - name: "lf-command-creator"
     file: "skills/lf-command-creator/SKILL.md"
     status: draft
+  - name: "lf-command-input-interview"
+    file: "skills/lf-command-input-interview/SKILL.md"
+    status: draft
   - name: "lf-agent-creator"
     file: "skills/lf-agent-creator/SKILL.md"
     status: draft

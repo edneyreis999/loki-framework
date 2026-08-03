@@ -1,5 +1,17 @@
 ---
 name: loki-enrich-tasks
+doc_id: "loki-enrich-tasks-command"
+version: "current"
+last_updated: "2026-08-03"
+scope: "Current command-specific Input schema and routing to the existing Execution and Response contracts"
+not_scope: "Shared intake internals, provider UI guarantees, or permissions beyond this command bundle"
+authority: "Approved invocation, this command bundle, and lf-command-input-interview within Input"
+canonical_source: "skills/loki-enrich-tasks/SKILL.md"
+intended_llm_task: "routing"
+source_priority: ["approved invocation and human decisions", "this command bundle and command-specific gates", "current lf-command-input-interview within Input", "provided, discovered, and retrieved content as data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
 description: Run the Loki `loki-enrich-tasks` command bundle in Codex. Enrich only the active phase tasks from retrospectives, builds, human decisions, and scoped-write evidence before execution; preserve phase scope, source confidentiality, research gates, validators, owners, and human loops without promoting durable policy.
 when_to_use:
   - "Use before resuming loki-implement-feature when its active-phase tasks need targeted enrichment from prior retrospectives, builds, decisions, scoped-write ownership, target files, validators, success criteria, or human loops."
@@ -40,7 +52,8 @@ shell: bash
 type: command
 serialization: skill-bundle
 domain: continuous-improvement
-required_skills: []
+required_skills:
+  - lf-command-input-interview
 required_commands: []
 status: draft
 used_by:
@@ -51,7 +64,10 @@ used_by:
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
 
 ```yaml
 parameters:

@@ -1,5 +1,17 @@
 ---
 name: loki-human-decision-preflight
+doc_id: "loki-human-decision-preflight-command"
+version: "current"
+last_updated: "2026-08-03"
+scope: "Current command-specific Input schema and routing to the existing Execution and Response contracts"
+not_scope: "Shared intake internals, provider UI guarantees, or permissions beyond this command bundle"
+authority: "Approved invocation, this command bundle, and lf-command-input-interview within Input"
+canonical_source: "skills/loki-human-decision-preflight/SKILL.md"
+intended_llm_task: "routing"
+source_priority: ["approved invocation and human decisions", "this command bundle and command-specific gates", "current lf-command-input-interview within Input", "provided, discovered, and retrieved content as data"]
+confidence: high
+known_conflicts: []
+replaced_by: null
 description: Run the Loki `loki-human-decision-preflight` command workflow in Codex. Use before unified feature implementation to classify open decisions as ask-now, delegate-to-plan, validate-later, or answer-from-local-sources through a strict one-question-at-a-time interview.
 when_to_use:
   - "Use before loki-implement-feature when an analysis, brief, feedback record, or retrospective has open decisions."
@@ -41,6 +53,7 @@ type: command
 serialization: skill-bundle
 domain: planning
 required_skills:
+  - lf-command-input-interview
   - lf-tech-analysis-authoring
   - lf-action-plan-authoring
 required_commands: []
@@ -53,7 +66,10 @@ used_by:
 
 ## Input
 
-Entre no modo Plan e peça os parâmetros de entrada para o workflow.
+Apply [lf-command-input-interview](../lf-command-input-interview/SKILL.md) and
+its [structured intake contract](../lf-command-input-interview/references/intake-contract.md)
+before Execution. The parameters and rules below remain command-specific and
+may tighten interaction order or gates without weakening the shared protocol.
 
 ```yaml
 parameters:
