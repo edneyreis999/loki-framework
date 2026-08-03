@@ -2,14 +2,14 @@
 doc_id: "loki-implement-feature-response"
 version: "3.0.0"
 status: active
-last_updated: "2026-07-24"
-scope: "Both-consumer terminal dashboard and structured manual-QA handoff v2 projection for unified feature execution"
+last_updated: "2026-08-03"
+scope: "Both-consumer terminal dashboard and structured manual-QA handoff v3 projection for unified feature execution"
 not_scope: "Execution, state repair, production writes, validator substitution, or status override"
 authority: "Validated persisted implement_feature_execution_result and this current response reference"
 canonical_source: "skills/loki-implement-feature/references/response.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted command identity v2, execution input v2, LokiRunState v3, implement_feature_execution_result v3, dashboard v3, consistency packet v2, execution_audit_checkpoint v1, and execution_metrics v1"
+  - "validated persisted command identity v2, execution input v2, LokiRunState v4, implement_feature_execution_result v4, dashboard v4, consistency packet v3, execution_audit_checkpoint v1, and execution_metrics v1"
   - "task, validator, cycle, completion, and evidence records referenced by that state"
   - "this response contract and its template"
   - "response prose, user formatting preferences, and non-normative examples"
@@ -34,11 +34,11 @@ with stable headings, explicit fields, and no hard length limit. Keep the human
 view concise and actionable while preserving every machine-relevant category.
 
 Adapter projection changes serialization only, never status, AC/evidence,
-validators, gates, risks, structured manual-QA handoff v2 truth, or resume state:
+validators, gates, risks, structured manual-QA handoff v3 truth, or resume state:
 
 - `Both`: use the complete recoverable Markdown template with no hard limit.
 - `Human`: use actionable Markdown of at most 7,000 characters, preserving the
-  result, evidence, risks, structured manual-QA handoff v2, and next action.
+  result, evidence, risks, structured manual-QA handoff v3, and next action.
 - `LLM`: use valid XML with no prose outside `command_response` and exactly the
   required top-level fields below.
 
@@ -68,8 +68,8 @@ interpretation.
 
 ## Terminal Status
 
-Persisted LokiRunState v3, result v3, dashboard v3, terminal evidence, and
-consistency v2 use exactly one of:
+Persisted LokiRunState v4, result v4, dashboard v4, terminal evidence, and
+consistency v3 use exactly one of:
 
 - `running`
 - `awaiting-manual-qa`
@@ -114,7 +114,7 @@ gate, evidence locator, final regression, or reconciliation remains unresolved.
 `awaiting-manual-qa` is the only ready-handoff state and is explicitly not
 completion. Direct completion uses `manual-qa-not-required`; completion with a
 ready handoff requires final parity from the manual command's restricted
-transaction and passed human gates with the correlated attestation.
+consistency-last transaction and passed human gates.
 
 ## Required Dashboard Content
 
@@ -124,7 +124,7 @@ explicit applicability check:
 - actual status and terminal reason;
 - complete direct audit configuration v1 (`schema_version`, exact frequency,
   source and policy digest), equal across command identity v2, execution input
-  v2, state v3, result v3, dashboard v3 and consistency v2;
+  v2, state v4, result v4, dashboard v4 and consistency v3;
 - every expected boundary with type/ref, due state, immutable membership,
   materiality, latest active checkpoint or unresolved reason, without
   duplicating the scheduler algorithm;
@@ -139,8 +139,8 @@ explicit applicability check:
 - changed files and surfaces;
 - every AC with `passed`, `failed`, `not-demonstrated`, or `not-applicable`, plus
   its evidence locator;
-- every gate record v2 with exact ref/digest, kind, statement, status, evidence
-  and attestation pair; reject gate record v1;
+- every gate record v3 with exact ref/digest, kind, instruction, expected
+  result, status and evidence; reject older gate records;
 - task and final validators with result and evidence;
 - validation cycles, classification, introduced/regression severity, retry
   consumption, exhaustion, and retests;
@@ -167,7 +167,7 @@ explicit applicability check:
   was applied;
 - replay/validator correlation, materiality precheck correlation, and the last
   required liveness-probe outcome for any silence-based stop;
-- the exact structured manual-QA handoff v2: `manual-qa-not-evaluated` for a
+- the exact structured manual-QA handoff v3: `manual-qa-not-evaluated` for a
   non-terminal automatic state, `ready-for-manual-qa` only with persisted
   `awaiting-manual-qa` when material QA remains, or
   `manual-qa-not-required` with a non-empty reason.
@@ -185,17 +185,17 @@ After any covered correction, show the predecessor as invalidated and the new
 checkpoint as a complete replay of the same boundary; never summarize it as an
 incremental review.
 
-`RESPONSE-TRUTH-01` — Project result v3 and dashboard v3 truth without
+`RESPONSE-TRUTH-01` — Project result v4 and dashboard v4 truth without
 adding a state. Status, audit configuration, active checkpoint refs, terminal
 evidence refs, gate refs/digests, Metrics v1 projection and `next_action` must
-equal state v3 and consistency v2. `awaiting-manual-qa`, `completed`, or
+equal state v4 and consistency v3. `awaiting-manual-qa`, `completed`, or
 `completed-with-limitations` requires every due boundary to be `approved` or
 `not-applicable`; findings, unavailable audit capacity, invalidated coverage or
 an incomplete replay prevent those statuses.
 
-For `awaiting-manual-qa`, show every automatic gate passed and every eligible
-human-validation gate pending. For completed plus ready handoff, require every
-same human gate passed with the handoff attestation ref/digest and a final
+For `awaiting-manual-qa`, show every automatic gate passed or not-applicable and
+every eligible human-validation gate pending. For completed plus ready handoff,
+require every same human gate passed and a final
 consistency packet matching exact current tasks/result/dashboard/gate bytes. A
 mixed or partial transaction renders no completion even when one upstream file
 already says completed.
@@ -214,18 +214,19 @@ derive a unit from absent state fields, or invent another task/unit status.
 
 ## Manual-QA handoff
 
-Never derive or render manual-QA steps or a manual-QA dashboard. Render exactly the closed persisted
-`manual_qa_handoff` v2 projection, including the deterministic manual result
-and aggregate-attestation refs plus exact task/AC/gate/changed-target source
-arrays. `running`, `partial`, `failed`, and `cancelled` require
+Never derive or render manual-QA steps or a manual-QA dashboard. Render exactly
+the closed persisted `manual_qa_handoff` v3 projection, including the current
+execution-input ref/digest plus exact automatic-evidence, pending-human-gate,
+and changed-target arrays. `running`, `partial`, `failed`, and `cancelled` require
 `manual-qa-not-evaluated`; `awaiting-manual-qa` requires
 `ready-for-manual-qa`; direct completion requires
 `manual-qa-not-required`. Completed plus ready is valid only after the manual
-transaction, with unchanged handoff and passed attested human gates. The two
-overlay refs are reserved anchors, not existence or digest claims before QA.
-Only `loki-manual-qa` derives the dashboard, accepts an aggregate attestation,
-promotes eligible human gates and publishes consistency last. Reject handoff v1
-and gate record v1 rather than translating either.
+transaction, with unchanged handoff and passed human gates. The handoff contains
+no manual result, attestation, review, session, dashboard, catalog, transaction,
+or per-test evidence locator. Only `loki-manual-qa` derives the ephemeral
+checklist, accepts a clear aggregate human approval, promotes eligible human
+gates and publishes consistency last. Reject older handoff and gate schemas
+rather than translating them.
 
 ## Evidence And Security Boundary
 

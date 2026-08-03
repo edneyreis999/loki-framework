@@ -1,147 +1,31 @@
 {
   "schema_version": 1,
-  "fixture_group": "validation-cycle-retry-and-learned",
   "cases": [
     {
-      "id": "matrix-21-write-test-cycle",
-      "matrix": true,
-      "scenario": "Write Test Agent validation",
-      "rule": "cycle",
-      "expect": "accept",
-      "payload": {
-        "immutable_records": true,
-        "distinct_owners": true,
-        "finding": {"schema_version": 1, "cycle_id": "cycle-1", "locator": "cycle-1-finding.yaml", "acceptance_criterion_refs": ["task.md#AC-1"], "classification": "introduced", "severity": "medium", "evidence_refs": ["validator.log"], "retry_consumed": true},
-        "writer_response": {"schema_version": 1, "finding_ref": "cycle-1-finding.yaml", "evidence_refs": ["cycle-1-fix.log"]}
-      }
+      "id": "gate-v3-automatic-passed",
+      "validator": "gate",
+      "accept": true,
+      "input": {"schema_version": 3, "gate_id": "tests", "task_ref": "planos/p/task-1.md", "kind": "automatic", "instruction": "Run the unit tests.", "expected": "Every unit test passes.", "status": "passed", "evidence_refs": ["planos/p/builds/tests.log"]}
     },
     {
-      "id": "matrix-22-minor-retry",
-      "matrix": true,
-      "scenario": "Introduced/regression minor",
-      "rule": "retry",
-      "expect": "accept",
-      "payload": {"severity": "minor", "consumed": 0, "scheduler_yield": true}
+      "id": "gate-v3-human-pending",
+      "validator": "gate",
+      "accept": true,
+      "input": {"schema_version": 3, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes without an error.", "status": "pending", "evidence_refs": []}
     },
     {
-      "id": "matrix-23-medium-major-retry",
-      "matrix": true,
-      "scenario": "Introduced/regression medium or major",
-      "rule": "retry",
-      "expect": "accept",
-      "payload": {"severity": "major", "retry_limit": 3, "consumed": 3, "initial_validation": true}
+      "id": "gate-v2-rejected-current-only",
+      "validator": "gate",
+      "accept": false,
+      "error": "GATE_RECORD_SCHEMA_INVALID",
+      "input": {"schema_version": 2, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes.", "status": "pending", "evidence_refs": []}
     },
     {
-      "id": "matrix-24-learned-original-writer",
-      "matrix": true,
-      "scenario": "Resolved medium/major with original Writer available",
-      "rule": "learned",
-      "expect": "accept",
-      "payload": {"status": "created", "resolved_severity": "medium", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "cycle-1-finding.yaml", "writer_response_ref": "cycle-1-writer-response.yaml", "retest_ref": "cycle-2-finding.yaml", "transcript_required": false, "cause_supported": true, "content": "Persisted evidence supports the bounded cause.", "writer_session": "resumed"}
-    },
-    {
-      "id": "matrix-25-learned-compatible-writer",
-      "matrix": true,
-      "scenario": "Resolved medium/major without original Writer",
-      "rule": "learned",
-      "expect": "accept",
-      "payload": {"status": "created", "resolved_severity": "major", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "cycle-1-finding.yaml", "writer_response_ref": "cycle-1-writer-response.yaml", "retest_ref": "cycle-2-finding.yaml", "transcript_required": false, "cause_supported": true, "content": "A compatible writer reconstructed only persisted records.", "writer_session": "reconstructed"}
-    },
-    {
-      "id": "matrix-26-learned-missing",
-      "matrix": true,
-      "scenario": "Learned file missing or invalid",
-      "rule": "learned",
-      "expect": "accept",
-      "payload": {"status": "missing", "task_result_unchanged": true, "dashboard_limitation": "optional knowledge capture unavailable"}
-    },
-    {
-      "id": "matrix-27-exhausted-retry",
-      "matrix": true,
-      "scenario": "Exhausted medium/major retry",
-      "rule": "scheduler",
-      "expect": "accept",
-      "payload": {"failed_task_status": "unresolved", "transitive_dependents": ["task-2", "task-3"], "skipped": ["task-3", "task-2"], "independent_continues": true}
-    },
-    {
-      "id": "matrix-28-pre-existing",
-      "matrix": true,
-      "scenario": "Pre-existing failure",
-      "rule": "classification",
-      "expect": "accept",
-      "payload": {"classification": "pre-existing", "retry_consumed": false, "comparable_analysis_evidence": true, "not_worsened": true}
-    },
-    {
-      "id": "matrix-29-unknown-attribution",
-      "matrix": true,
-      "scenario": "Unknown attribution",
-      "rule": "classification",
-      "expect": "accept",
-      "payload": {"classification": "unknown", "retry_consumed": false, "scope_expanded": false, "observed": "suite failed", "evidence_gap": "no baseline", "affected_criterion": "AC-9", "investigation_recommendation": "capture comparable baseline"}
-    },
-    {
-      "id": "matrix-30-soft-fail",
-      "matrix": true,
-      "scenario": "Optional soft-fail",
-      "rule": "classification",
-      "expect": "accept",
-      "payload": {"classification": "soft-fail", "retry_consumed": false, "terminal_status": "completed-with-limitations"}
-    },
-    {
-      "id": "matrix-31-validator-unavailable",
-      "matrix": true,
-      "scenario": "Required task validator unavailable",
-      "rule": "execution-state",
-      "expect": "accept",
-      "payload": {"event": "validator-unavailable", "task_status": "unresolved", "dependents_skipped": true, "independent_continues": true}
-    },
-    {
-      "id": "matrix-32-final-regression",
-      "matrix": true,
-      "scenario": "Final regression",
-      "rule": "execution-state",
-      "expect": "accept",
-      "payload": {"event": "final-regression", "severity_policy_applied": true, "terminal_status": "partial"}
-    },
-    {
-      "id": "invalid-cycle-severity",
-      "matrix": false,
-      "scenario": "Severity is forbidden for unknown findings",
-      "rule": "cycle",
-      "expect": "reject",
-      "error": "CYCLE_SEVERITY_INVALID",
-      "payload": {
-        "immutable_records": true,
-        "distinct_owners": true,
-        "finding": {"schema_version": 1, "cycle_id": "cycle-x", "locator": "cycle-x-finding.yaml", "acceptance_criterion_refs": ["task.md#AC-X"], "classification": "unknown", "severity": "minor", "evidence_refs": ["gap.log"], "retry_consumed": false},
-        "writer_response": {"schema_version": 1, "finding_ref": "cycle-x-finding.yaml", "evidence_refs": ["response.log"]}
-      }
-    },
-    {
-      "id": "learned-secret-content",
-      "matrix": false,
-      "scenario": "Learned records reject secret or private content",
-      "rule": "learned",
-      "expect": "reject",
-      "error": "LEARNED_CONTENT_UNSAFE",
-      "payload": {"status": "created", "resolved_severity": "medium", "approved_retest": true, "owner": "applicable-writer", "files_for_finding": 1, "finding_ref": "finding.yaml", "writer_response_ref": "response.yaml", "retest_ref": "retest.yaml", "transcript_required": false, "cause_supported": true, "content": "secret: do-not-persist"}
-    },
-    {
-      "id": "audit-correction-incremental-replay",
-      "matrix": false,
-      "scenario": "A correction cannot retain approval or replay only its delta",
-      "rule": "audit-replay",
-      "expect": "reject",
-      "error": "AUDIT_INCREMENTAL_REPLAY_FORBIDDEN",
-      "payload": {"correction_refs": ["correction.json"], "replay": true, "predecessor_audit_ref": "audit-v1.json", "replay_cause": "corrected target bytes", "membership_refs": ["task-1.md"], "required_membership_refs": ["task-1.md", "task-2.md"], "coverage_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "required_coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "evidence_refs": ["retest.log"]}
-    },
-    {
-      "id": "audit-correction-full-replay",
-      "matrix": false,
-      "scenario": "A correction replays the complete affected boundary without duplicate evidence",
-      "rule": "audit-replay",
-      "expect": "accept",
-      "payload": {"correction_refs": ["correction.json"], "replay": true, "predecessor_audit_ref": "audit-v1.json", "replay_cause": "corrected target bytes", "membership_refs": ["task-1.md", "task-2.md"], "required_membership_refs": ["task-1.md", "task-2.md"], "coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "required_coverage_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "evidence_refs": ["retest.log", "full-audit.log"]}
+      "id": "human-gate-evidence-forbidden",
+      "validator": "gate",
+      "accept": false,
+      "error": "HUMAN_GATE_EVIDENCE_FORBIDDEN",
+      "input": {"schema_version": 3, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes.", "status": "passed", "evidence_refs": ["planos/p/builds/manual.json"]}
     }
   ]
 }

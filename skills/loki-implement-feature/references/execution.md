@@ -2,7 +2,7 @@
 doc_id: "loki-implement-feature-execution"
 version: "2.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Provider-neutral orchestration of normalized unified-feature inputs through planning, persisted DAG execution, validation, evidence, and reconciliation"
 not_scope: "Public input parsing, terminal response presentation, technology-specific implementation rules, package installation, or superseded command behavior"
 authority: "skills/loki-implement-feature/SKILL.md and this current execution reference"
@@ -56,11 +56,11 @@ command_contract:
   start_condition: "Input is normalized; required identities, exact digests, inherited restrictions, retry limit, and safe plan path are available."
   completion_condition: "All selected DAG units are terminal; required validators, gates, evidence and final reconciliation support the reported status."
   outputs:
-    - "persisted action plan and LokiRunState v3"
+    - "persisted action plan and LokiRunState v4"
     - "immutable execution_audit_checkpoint v1 records for due boundaries"
     - "atomic builds/metrics/execution-metrics.json schema 1"
     - "validated production changes and completion evidence"
-    - "terminal Both dashboard and closed structured manual-QA handoff v2"
+    - "terminal Both dashboard and closed structured manual-QA handoff v3"
   allowed_writes:
     - "<plan_directory>/tasks.md"
     - "<plan_directory>/task-N.M.md"
@@ -94,7 +94,7 @@ command_contract:
     - "action-plan and target-decision structure"
     - "DAG, owner, dependency, AC, primary-route, and resume-state integrity"
     - "task primary validators and final applicable validators"
-    - "executable consistency packet across state, tasks, evidence, validators, result, dashboard, metrics, and next action"
+    - "executable consistency packet v3 across state, tasks, evidence, validators, result, dashboard, metrics, and next action"
   human_gates:
     - "inherited material approvals or restrictions already declared by the analysis"
     - "<human_validation_gate> accumulated for final reconciliation when prescribed"
@@ -106,7 +106,7 @@ command_contract:
     - "missing or ambiguous owner, validator, permission, evidence, or gate"
     - "corrupt or uncorrelated persisted state"
     - "explicit correlated cancellation"
-  resume_contract: "Reconstruct exclusively from validated LokiRunState v3, execution input v2, task files, immutable preflights/cycles/audit checkpoints, target decisions, completion evidence, execution-metrics spans/digest, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
+  resume_contract: "Reconstruct exclusively from validated LokiRunState v4, execution input v2, task files, immutable preflights/cycles/audit checkpoints, target decisions, completion evidence, execution-metrics spans/digest, current target digests, and typed locators; conversation memory and provider session continuity are non-authoritative."
 ```
 
 Only the exact managed plan paths and validated production targets are writable.
@@ -165,7 +165,7 @@ allocation or write. Provider session identity, conversation position,
 timestamp, and randomness are never identity inputs.
 
 Persist the complete identity and both typed IDs in execution input v2 and bind
-their canonical digests into LokiRunState v3. The inline-demand record persists
+their canonical digests into LokiRunState v4. The inline-demand record persists
 `run_id`; validate its correlation against normalized execution input rather
 than deriving execution identity from the run suffix or adding an unrecognized
 bootstrap field.
@@ -330,7 +330,7 @@ eligible only after replanning persists and validates its decision.
 
 ## Unified Execution Flow
 
-1. Require matching current LokiRunState v3 and the helper-persisted plan-directory
+1. Require matching current LokiRunState v4 and the helper-persisted plan-directory
    classification from Planning. Revalidate both typed identities, finalized
    plan path, demand and analysis digests, readable `demand_ref`, current plan,
    and inherited restrictions before dispatch.
@@ -402,28 +402,29 @@ eligible only after replanning persists and validates its decision.
 12. After DAG processing, rerun applicable final validators, reconcile every
     AC/evidence relation, inspect expected artifacts/contracts, apply smoke
     checks, and route final regressions through the same severity/retry policy.
-13. Validate only current gate record v2. Automatic gates must pass with null
-    attestation pairs. Preserve human-validation gates as pending with null
-    pairs; feature execution never passes them. Derive the exact ordered task,
-    AC, gate and changed-target sources for the handoff without dropping any
-    automatic task/AC evidence.
+13. Validate only current gate record v3. Automatic gates are `passed` or
+    `not-applicable` with non-empty evidence. Preserve human-validation gates as
+    pending with empty evidence; feature execution never passes them. Derive
+    the current execution-input locator/digest, exact ordered automatic evidence,
+    pending human gates, and changed-target sources for handoff v3.
 14. Do not derive, present, collect, or reconcile manual QA. After the DAG,
     required validators, automatic gates, and every due audit are approved,
     publish `awaiting-manual-qa` plus the closed `ready-for-manual-qa` handoff
     when at least one human-validation gate remains pending. When no human gate
     applies, publish direct `completed` or `completed-with-limitations` plus
     `manual-qa-not-required`. All other statuses carry
-    `manual-qa-not-evaluated`. The deterministic result and attestation anchors
-    are not existence claims.
+    `manual-qa-not-evaluated`. The handoff contains no manual result,
+    attestation, review, session, dashboard, catalog, transaction, or per-test
+    evidence anchor.
 15. Reserve the restricted `awaiting-manual-qa -> completed` transaction for
     `loki-manual-qa`. It alone may promote the exact eligible human gate records
     and rewrite state/result/dashboard/consistency, with consistency published
     last as the commit marker. The handoff and automatic evidence/source arrays
     remain unchanged. A mixed prefix is non-terminal and replay may only finish
-    the same attestation-correlated desired transaction.
-16. Run consistency packet v2 against state v3, local tasks, terminal evidence,
-    validators/gates, every expected boundary and latest checkpoint, result v3,
-    dashboard, exact gate refs/digests, metrics v1 ref/digest/status and
+    the same handoff-correlated desired transaction.
+16. Run consistency packet v3 against state v4, local tasks, terminal evidence,
+    validators/gates, every expected boundary and latest checkpoint, result v4,
+    dashboard v4, exact gate refs/digests, metrics v1 ref/digest/status and
     `next_action`. Divergence blocks rendering. `awaiting-manual-qa` is a valid
     persisted response; completion after manual QA requires final transaction
     parity.
@@ -433,14 +434,14 @@ eligible only after replanning persists and validates its decision.
 
 ## Deterministic Dashboard Unit Mapping
 
-`COMMAND-UNIT-01` — Build result v3 `task_results` only from validated persisted
+`COMMAND-UNIT-01` — Build result v4 `task_results` only from validated persisted
 task_validation v1 records, in exact plan task order. Each row contains exactly
 `task_ref`, the unchanged persisted status `pending | passed | unresolved |
 skipped-dependency | cancelled`, and its validated evidence refs. The command
 does not infer, backfill, or relabel a task status.
 
 `COMMAND-UNIT-02` — Dashboard presentation is owned by the separate Response
-contract. This execution unit supplies only result v3 task rows, latest audit
+contract. This execution unit supplies only result v4 task rows, latest audit
 checkpoint refs, exact gate refs/digests, final-validator refs, terminal-evidence refs, metrics
 projection, status, and next action. Response may not invent a blocked task row,
 repair a missing checkpoint, or upgrade any persisted status.
@@ -486,15 +487,15 @@ duplicate a validated write, preflight, cycle, retry debit, learned record,
 knowledge entry, span duration, or usage observation.
 
 Automatic handoff occurs only after the helper returns
-`implement_feature_execution_result` whose state digest, required ACs,
+`implement_feature_execution_result` v4 whose state digest, required ACs,
 validators, gates, expected/latest audit checkpoints, terminal evidence,
 skipped dependencies, next action, and metrics reconcile through consistency
-packet v2. `awaiting-manual-qa` is not completion. Later completion is valid
+packet v3. `awaiting-manual-qa` is not completion. Later completion is valid
 only after `loki-manual-qa` publishes the final consistency commit proving the
-same attestation, promoted human gates and all four completed projections.
+same ready handoff, promoted human gates and all four completed projections.
 Telemetry failure degrades metrics only and never changes the functional
 status. Metrics define no token/cost budget or automatic cost stop. Use
-[response.md](response.md) only to project result v3; Response never repairs or
+[response.md](response.md) only to project result v4; Response never repairs or
 upgrades it.
 
 <examples>

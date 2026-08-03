@@ -2,7 +2,7 @@
 doc_id: "lf-action-plan-authoring-contract"
 version: "2.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Current plan, task, DAG, target-decision and resume authoring contract"
 not_scope: "Public command input, production writes or compatibility schemas"
 authority: "skills/lf-action-plan-authoring/SKILL.md and current lf-implement-feature-execution contracts"
@@ -33,7 +33,7 @@ Minimum safe inputs:
 - non-empty validated demand and readable non-empty Markdown analysis;
 - complete command identity v2 and execution input v2, including typed
   run/execution identities, exact input digests, normalized plan directory,
-  result v3/dashboard/consistency v2 locators, and the current plan-directory
+  result v4/dashboard v4/consistency v3 locators, and the current plan-directory
   preflight result;
 - complete direct audit configuration v1 with exact `task | phase | plan`
   frequency, `default | explicit` source, and canonical policy digest;
@@ -138,9 +138,9 @@ The index must include:
 - the exact current command identity v2 and execution input v2 used by the run;
 - a validated target-decision ledger with rationale, demand/AC relation,
   evidence, impact, validator and one owner for every production target;
-- the exact closed `loki_run_state` v3 with typed run/execution identity,
+- the exact closed `loki_run_state` v4 with typed run/execution identity,
   command/input digests, direct audit configuration v1, task refs, latest active
-  due-boundary audit checkpoint refs, result v3/dashboard/consistency v2 refs,
+  due-boundary audit checkpoint refs, result v4/dashboard v4/consistency v3 refs,
   terminal evidence, Metrics v1 projection, next action and verified state
   digest.
 
@@ -197,8 +197,8 @@ Before declaring the plan ready, check:
 - every production target has one validated decision and owner before write;
 - current state identity/digest and immutable cycle locators reconcile without
   a compatibility reader or conversation reconstruction.
-- command identity v2, execution input v2, state v3, result v3, dashboard and
-  consistency v2 agree exactly on identity, audit configuration, active
+- command identity v2, execution input v2, state v4, result v4, dashboard v4 and
+  consistency v3 agree exactly on identity, audit configuration, active
   checkpoint refs, terminal truth and current locators;
 - audit checkpoints referenced by state are the latest active checkpoints for
   expected boundaries already due; any correction invalidates overlapping

@@ -4,7 +4,7 @@ description: Execute the provider-neutral, current-only implementation contract 
 doc_id: "lf-implement-feature-execution"
 version: "3.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Reusable execution authority for unified Loki feature implementation"
 not_scope: "Public command routing, plan approval, installation, consumer-specific technology rules, or compatibility with superseded execution schemas"
 authority: "Approved Loki package policy and the invoking command's exact validated permissions"
@@ -21,7 +21,7 @@ known_conflicts: []
 replaced_by: null
 when_to_use:
   - "Use inside loki-implement-feature after its demand, Markdown analysis, plan directory, inherited restrictions, and retry limit have been validated."
-  - "Use when creating or resuming LokiRunState v3, publishing execution metrics v1, scheduling a validated task DAG and its configured audit boundaries, enforcing single-file ownership, validating gate record v2, or deriving result v3 from disk evidence."
+  - "Use when creating or resuming LokiRunState v4, publishing execution metrics v1, scheduling a validated task DAG and its configured audit boundaries, enforcing single-file ownership, validating gate record v3, or deriving result v4 from disk evidence."
   - "Use when a task requires deterministic or independent Write Test Agent primary acceptance validation, or when a due material task/phase/plan boundary requires a separate independent Auditor, correction replay, cancellation, or dependency-aware continuation."
 argument-hint: "[validated execution input and plan directory]"
 arguments:
@@ -132,12 +132,14 @@ identity and authority correlate to the active run.
 9. Persist sanitized completion/evidence locators before optional non-blocking
    execution-knowledge capture. Reconcile every required acceptance criterion,
    final validator, due audit and cancellation request before deriving the
-   result. Publish `awaiting-manual-qa` with the closed ready handoff only after
+   result. Publish `awaiting-manual-qa` with the closed handoff v3 only after
    automatic conditions are terminally approved and every human-validation
    gate remains explicitly pending. Publish `completed` directly only when
    manual QA is not required. `loki-manual-qa` alone may later promote the
    eligible pending human gates and the four correlated projections to
-   `completed` under the execution contract's restricted transaction.
+   `completed` under the execution contract's restricted consistency-last
+   transaction. That transaction creates no manual-QA session, result,
+   attestation, review, dashboard, catalog, or per-test evidence artifact.
 
 ## Outputs And Outcomes
 
@@ -145,7 +147,7 @@ Return one `implement_feature_execution_result` matching the exact schema in
 the execution contract. It references persisted state and evidence; it never
 embeds raw payloads, private reasoning, or an unredacted transcript.
 
-- `success`: result v3 state is `awaiting-manual-qa`, `completed`, or
+- `success`: result v4 state is `awaiting-manual-qa`, `completed`, or
   `completed-with-limitations`, and every state/evidence invariant for that
   status passes. `awaiting-manual-qa` is a persisted successful automatic
   handoff state, never a completion claim.
@@ -192,7 +194,7 @@ embeds raw payloads, private reasoning, or an unredacted transcript.
 - Validate the entrypoint frontmatter, folder/name match, and all three relative
   links.
 - Validate command identity v2, execution input v2, audit configuration v1,
-  LokiRunState v3, gate record v2, execution audit checkpoint v1, result v3, consistency v2,
+  LokiRunState v4, gate record v3, execution audit checkpoint v1, result v4, consistency v3,
   current-only rejection, path safety, digest correlation, DAG/boundary
   scheduling, owner/Auditor independence, preflight, AC route v1, retry, full
   replay, learned, liveness, metrics v1, cancellation, resume, dashboard

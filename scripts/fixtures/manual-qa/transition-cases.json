@@ -1,15 +1,101 @@
 {
   "schema_version": 1,
   "cases": [
-    {"id":"intake-literal-tested-everything","statement":"já testei tudo","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found an unequivocal completed aggregate statement.","expected_status":"created"},
-    {"id":"intake-portuguese-equivalent","statement":"Já testei todos os itens aplicáveis.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found all applicable items explicitly completed.","expected_status":"created"},
-    {"id":"intake-english-equivalent","statement":"I already tested every applicable manual test.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found all applicable manual tests explicitly completed.","expected_status":"created"},
-    {"id":"intake-portuguese-checked-paraphrase","statement":"Conferi cada teste manual aplicável e todos passaram.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found a completed aggregate paraphrase.","expected_status":"created"},
-    {"id":"intake-english-passive-paraphrase","statement":"Every applicable item has been checked.","signals":{"explicit_completed_all":true,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found a completed aggregate paraphrase.","expected_status":"created"},
-    {"id":"intake-ambiguous-praise","statement":"Parece ótimo.","signals":{"explicit_completed_all":false,"ambiguous":true,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The assessor found praise without an aggregate testing assertion.","expected_status":"rejected"},
-    {"id":"intake-ambiguous-completion","statement":"Acho que testei tudo.","signals":{"explicit_completed_all":false,"ambiguous":true,"negated":false,"future_intent":false,"partial_scope":false},"rationale":"The pinned evaluator found uncertainty despite aggregate wording.","expected_status":"rejected"},
-    {"id":"intake-partial-scope","statement":"Testei o MQ-01.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":false,"future_intent":false,"partial_scope":true},"rationale":"The assessor found that the statement covers only one item.","expected_status":"rejected"},
-    {"id":"intake-negation","statement":"Não testei tudo.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":true,"future_intent":false,"partial_scope":false},"rationale":"The assessor found explicit negation of aggregate completion.","expected_status":"rejected"},
-    {"id":"intake-future-intent","statement":"Vou testar tudo amanhã.","signals":{"explicit_completed_all":false,"ambiguous":false,"negated":false,"future_intent":true,"partial_scope":false},"rationale":"The assessor found future intent rather than completed testing.","expected_status":"rejected"}
+    {"id": "response-clear-english-approval", "kind": "response", "accept": true, "text": "I completed the entire applicable checklist and everything passed successfully.", "expected": "approved", "writes": 1},
+    {"id": "response-clear-portuguese-approval", "kind": "response", "accept": true, "text": "Executei todos os testes aplicáveis e tudo funcionou sem problemas.", "expected": "approved", "writes": 1},
+    {"id": "response-paraphrased-approval", "kind": "response", "accept": true, "text": "I ran the whole checklist; all checks worked with no issues.", "expected": "approved", "writes": 1},
+    {"id": "response-explicit-english-negation", "kind": "response", "accept": true, "text": "I have not tested everything and it passed.", "expected": "no-decision", "writes": 0},
+    {"id": "response-explicit-portuguese-negation", "kind": "response", "accept": true, "text": "Não testei tudo e passou.", "expected": "no-decision", "writes": 0},
+    {"id": "response-partial-scope", "kind": "response", "accept": true, "text": "I tested only some items and everything passed.", "expected": "no-decision", "writes": 0},
+    {"id": "response-uncertain", "kind": "response", "accept": true, "text": "I think I tested everything and it probably passed.", "expected": "no-decision", "writes": 0},
+    {"id": "response-failure-overrides-positive", "kind": "response", "accept": true, "text": "I tested everything and most passed, but the save action failed.", "expected": "problem", "writes": 0},
+    {"id": "response-blocker-zero-write", "kind": "response", "accept": true, "text": "Há um bloqueio: a tela não abre.", "expected": "problem", "writes": 0},
+    {"id": "response-ambiguous-zero-write", "kind": "response", "accept": true, "text": "Looks good.", "expected": "no-decision", "writes": 0},
+    {"id": "response-silence-zero-write", "kind": "response", "accept": true, "text": "", "expected": "no-decision", "writes": 0},
+    {"id": "response-future-intent-zero-write", "kind": "response", "accept": true, "text": "I will test everything later.", "expected": "no-decision", "writes": 0},
+    {"id": "response-help-explicit-id", "kind": "response", "accept": true, "text": null, "help_id": "MQ-01", "expected": "help", "writes": 0},
+    {"id": "response-natural-help-request", "kind": "response", "accept": true, "text": "How do I run MQ-02? Please explain that test.", "expected": "help", "writes": 0},
+    {"id": "preflight-ready", "kind": "preflight-route", "accept": true, "automatic_controls_passed": true, "pending_human_gate_count": 2, "expected": {"status": "ready-for-playtest", "writes": 0, "feedback_prompt": false}},
+    {"id": "preflight-automatic-failure", "kind": "preflight-route", "accept": true, "automatic_controls_passed": false, "pending_human_gate_count": 2, "expected": {"status": "blocked-preflight", "writes": 0, "feedback_prompt": true}},
+    {"id": "preflight-ready-handoff-without-human-gate-blocked", "kind": "preflight-route", "accept": true, "automatic_controls_passed": true, "pending_human_gate_count": 0, "expected": {"status": "blocked-preflight", "writes": 0, "feedback_prompt": true}},
+    {
+      "id": "admission-terminal-not-required-not-applicable",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "accept": true,
+      "expected": {"status": "not-applicable", "writes": 0, "checklist": false, "feedback_prompt": false}
+    },
+    {
+      "id": "admission-terminal-limited-not-required-not-applicable",
+      "kind": "admission-route",
+      "factory": "terminal-limited-not-required-admission",
+      "accept": true,
+      "expected": {"status": "not-applicable", "writes": 0, "checklist": false, "feedback_prompt": false}
+    },
+    {
+      "id": "admission-awaiting-ready-for-playtest",
+      "kind": "admission-route",
+      "factory": "ready-admission",
+      "accept": true,
+      "expected": {"status": "ready-for-playtest", "writes": 0, "checklist": true, "feedback_prompt": false}
+    },
+    {
+      "id": "admission-awaiting-with-not-required-handoff-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["state", "status"], "value": "awaiting-manual-qa"}],
+      "accept": false,
+      "error": "ADMISSION_AWAITING_HANDOFF_INVALID"
+    },
+    {
+      "id": "admission-terminal-not-evaluated-handoff-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["state", "manual_qa_handoff", "status"], "value": "manual-qa-not-evaluated"}],
+      "accept": false,
+      "error": "ADMISSION_TERMINAL_HANDOFF_INVALID"
+    },
+    {
+      "id": "admission-terminal-next-action-reopen-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["state", "next_action"], "value": "loki-manual-qa"}],
+      "accept": false,
+      "error": "ADMISSION_TERMINAL_NEXT_ACTION_INVALID"
+    },
+    {
+      "id": "admission-identity-drift-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["state", "manual_qa_handoff", "execution_id"], "value": "loki-execution-v2:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}],
+      "accept": false,
+      "error": "ADMISSION_IDENTITY_MISMATCH"
+    },
+    {
+      "id": "admission-input-byte-drift-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["execution_input_text"], "value": "{\"schema_version\":3}"}],
+      "accept": false,
+      "error": "ADMISSION_INPUT_DIGEST_MISMATCH"
+    },
+    {
+      "id": "admission-automatic-failure-rejected",
+      "kind": "admission-route",
+      "factory": "terminal-not-required-admission",
+      "mutations": [{"path": ["automatic_evidence", 0, "record", "status"], "value": "failed"}],
+      "accept": false,
+      "error": "AUTOMATIC_EVIDENCE_STATUS_INVALID"
+    },
+    {
+      "id": "feedback-copyable-not-dispatched",
+      "kind": "feedback",
+      "accept": true,
+      "plan_directory": "planos/feature-a",
+      "summary": "Automatic control unit-tests did not pass",
+      "expected": "Use loki-feedback for plan planos/feature-a. Problem summary: Automatic control unit-tests did not pass. Diagnose and recommend the next authorized workflow; do not transition the plan automatically.",
+      "writes": 0,
+      "dispatched": false
+    }
   ]
 }

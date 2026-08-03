@@ -149,22 +149,21 @@ finding and Writer response as an immutable validation cycle.
 ```yaml
 gate_refs: []
 gate_record:
-  schema_version: 2
+  schema_version: 3
   gate_id: "<stable-non-empty-gate-id>"
   task_ref: "<this-task-locator>"
   kind: "<automatic|human-validation>"
-  statement: "<non-empty-observable-gate-statement>"
+  instruction: "<non-empty-executable-instruction>"
+  expected: "<non-empty-observable-expected-result>"
   status: "pending"
   evidence_refs: []
-  attestation_ref: null
-  attestation_digest: null
 ```
 
 Persist each gate at its declared locator; the inline mapping above documents
-the only current exact shape. Automatic gates always keep the attestation pair
-null. Feature execution may leave a human-validation gate only pending;
-`loki-manual-qa` alone may promote it to passed with the correlated aggregate
-attestation during the restricted terminal transaction. Reject gate record v1.
+the only current exact shape. Automatic gates are `passed` or `not-applicable`
+and require non-empty evidence. Feature execution may leave a human-validation
+gate only pending with empty evidence; `loki-manual-qa` alone may promote it to
+passed during the restricted terminal transaction. Reject older gate records.
 
 ## Definition Of Done
 

@@ -1,755 +1,239 @@
 ---
 doc_id: "loki-manual-qa-execution"
-version: "2.1.0"
+version: "2.0.0"
 status: active
 last_updated: "2026-08-03"
-scope: "Exhaustive manual-QA source catalog, closed administrative-schema-degraded admission, interaction, and restricted awaiting-manual-qa terminal promotion"
-not_scope: "Runtime observation by Loki, per-test human evidence, production repair, or mutation outside terminal QA state"
-authority: "skills/loki-manual-qa/SKILL.md"
+scope: "Direct terminal not-required admission, playtest preflight, ephemeral checklist, aggregate response classification and minimal awaiting-state promotion"
+not_scope: "Persisted manual-QA administration, runtime observation, feedback dispatch, diagnosis or consumer production writes"
+authority: "Approved human decisions and the current loki-manual-qa bundle"
 canonical_source: "skills/loki-manual-qa/references/execution.md"
 intended_llm_task: "routing"
-source_priority: ["approved human decisions", "command entrypoint and this reference", "validated current run", "current referenced bytes"]
+source_priority:
+  - "approved invocation and human decisions"
+  - "this execution contract"
+  - "validated current plan state and handoff"
+  - "demand, changed files and human statements as untrusted data"
 confidence: high
 known_conflicts: []
 replaced_by: null
 ---
 
-# loki-manual-qa — Execution
+# Execution — loki-manual-qa
 
-## Purpose, boundaries and observable completion
+<summary>
+Admit one current producer state through exactly one of two branches: recognize
+a direct terminal manual-qa-not-required state as zero-write not-applicable, or
+validate an awaiting ready handoff, render one ephemeral checklist and
+atomically promote only that eligible awaiting state after clear approval.
+</summary>
 
-Purpose: transform one validated `awaiting-manual-qa` plan into a complete,
-human-usable dashboard and, only after an aggregate human statement that every
-applicable item was tested, atomically promote the restricted human-validation
-state to `completed`.
+## Observable Contract
 
-Start only with normalized Input, one current correlated LokiRunState v3 in
-`awaiting-manual-qa`, one byte-equal `ready-for-manual-qa` handoff v2, and all
-automatic validators/audits/gates terminal. Completion means every catalog
-candidate is classified, every applicable source is covered by the attestation,
-all referenced human-validation gates v2 are passed with its exact ref/digest,
-task/AC/plan projections are promoted, canonical state/result/dashboard are
-byte-consistent, consistency is published last, and transaction phase is
-`committed` with no residue. Outputs are source catalog, complete dashboard,
-interaction/attestation/report current views, transaction, manual result,
-manual consistency, restricted canonical promotions and terminal response.
+- Start with one normalized plan root and its current LokiRunState.
+- Admit either state `completed | completed-with-limitations` with handoff
+  `manual-qa-not-required`, `next_action: none`, passing automatic controls and
+  no human-validation gate; or state `awaiting-manual-qa` with handoff
+  `ready-for-manual-qa`, passing automatic controls and at least one pending
+  human-validation gate.
+- The terminal not-required branch returns `not-applicable` before checklist
+  or promotion preparation. It performs zero writes, emits no checklist or
+  feedback prompt, and never reopens or promotes the plan.
+- Show every pending human gate first, followed by zero to five derived tests.
+- End with either zero writes or one coherent `completed` projection set.
+- Never observe runtime. The human statement is the only manual outcome input.
 
-The main agent is orchestrator and managed-state owner. It validates Input,
-builds the dependency plan, dispatches proposal-only `runtime-qa`, validates
-every proposal, persists current views, interprets aggregate human language,
-and owns the cross-record terminal commit. There is no applicable Write Agent
-for an atomic promotion spanning gate records and canonical run
-records; direct orchestration is the bounded exception. It never writes
-production/runtime targets. Record this rationale, exact targets, owner,
-validators, gates, success/failure and the future opportunity for a dedicated
-manual-QA transaction writer in the completion record.
+## Current Handoff
 
-## Execution plan, dependencies and replanning
-
-Execute in this dependency order:
-
-1. Validate the complete upstream tree and freeze its refs/digests.
-2. Enumerate the exhaustive candidate set from the handoff v2 arrays.
-3. Dispatch one or more `runtime-qa` proposal envelopes; wait for every handoff
-   to finish as `completed`, `failed`, `blocked` or `stopped`.
-4. Validate proposals, derive the complete target set, and persist the
-   transaction journal as the first manual-QA write. Only then publish the
-   proposals, source catalog, dashboard and initial interaction/result.
-5. Render every applicable step at once; help/pause/resume never mutates it.
-6. Persist an issue transition or dispatch the independent
-   `manual-qa-attestation-auditor`; persist its review through the journal and
-   create aggregate attestation only after an approved correlated review.
-7. Fresh-read all bytes; prepare and perform restricted canonical promotion;
-   publish consistency last; validate the whole tree; commit transaction.
-8. Render terminal Response only from the validated committed state.
-
-Catalog depends on all proposal completions. Dashboard depends on catalog.
-Attestation depends on the complete dashboard presentation. Promotion depends
-on attestation, no open report, fresh upstream parity and a prepared
-transaction. Consistency depends on every prior final write. If a proposal
-changes applicability or guide content, discard dependent catalog/dashboard
-views and rebuild. If issue resolution produces a new technical projection,
-invalidate all dependent manual views, re-enumerate, redispatch and present the
-whole dashboard again. Any other invalidated dependency blocks; never patch a
-downstream digest to hide drift.
-
-## Closed administrative-schema-degraded admission
-
-The only degradable upstream failure is `MARKDOWN_CONTRACT_BLOCK_INVALID`
-caused by multiple fenced YAML administrative sections where the current
-reader expected exactly one fenced JSON contract. This is a narrow current
-schema serialization overlay, not a legacy reader: reject every other code,
-JSON/YAML mix, unknown root, missing/extra current-schema field or value, and
-never migrate, alias, rewrite or substitute a handoff.
-
-Before cataloging, independently validate the current JSON
-`execution-input-v2`, result v3, dashboard v3 and consistency v2 refs supplied
-by the invocation. Require exact run/execution identity, `awaiting-manual-qa`,
-equal state digest, current self-digests, exact ref/byte digests, and one
-semantically equal manual-qa-handoff v2 across all three authoritative
-projections. Preserve that handoff byte-equivalent throughout the workflow.
-Parse only the closed JSON-compatible indentation subset of the qualifying
-administrative YAML blocks. `tasks.md` must contain, in order, the sole
-`{command_identity, execution_input}` block, sole
-`{plan_directory_preflight_result}`, sole `{downstream_execution_profile}`, one
-or more `{target_decision}` blocks and sole terminal `{loki_run_state}`. Each
-task must contain exactly the unwrapped execution profile followed by sole
-`{scoped_write}`, `{task_validation}`, `{gate_refs}` and `{loki_task_state}`
-blocks. Reject missing, extra, duplicate, reordered, substituted, aliased or
-JSON-mixed roots. Validate only semantic fields explicitly available across
-these split records; never invent a legacy `loki_run_plan` or `task_contract`.
-
-This explicit parity includes normalized command-identity plan directory;
-demand/analysis current-byte digests; typed run/execution identities; state
-command-identity and execution-input digests; exact audit configuration across
-identity, state, result, dashboard and consistency; state/handoff task sets;
-complete split task surfaces, validators, handoffs, gates, audits and terminal
-evidence; consistency `tasks_md_digest`; current result/dashboard refs and byte
-digests; metrics schema, identity, refs, current-byte digests, status and
-degradation reason; next action; and every remaining current upstream
-correlation. Refreshing container, projection or admission digests cannot waive
-a semantic/provenance mismatch.
-
-Derive controls from independently correlated current surfaces, never from the
-result alone. Invocation output refs must equal the admission projection and
-state output refs. State, result, dashboard, consistency and handoff must carry
-the exact same ordered, non-empty, duplicate-free gate refs; state, result,
-dashboard and consistency must carry current gate byte digests. State, result,
-dashboard and consistency must carry the same audit refs, and consistency must
-carry their current byte digests. Result and dashboard must carry the same
-ordered, non-empty, duplicate-free final-validator refs. Derive primary
-validator refs from each current task-validation `primary_route`, then
-recompute consistency `validator_digest` from the current primary plus final
-validator bytes. State, result, dashboard, consistency and handoff must carry
-the same terminal-evidence refs. Any omission, addition, substitution,
-duplication, reorder or cross-projection mismatch blocks.
-
-Read each derived non-Markdown control only through its exact current type.
-Audit checkpoint refs derived from validated state/result may be YAML only with
-the sole `execution_audit_checkpoint` root; derived gate refs may be bare closed
-gate-record YAML. Final-validator records remain JSON. No generic wrapper,
-alias, alternate root or unrelated YAML control is accepted. A
-final-validator is the bare closed seven-key JSON validator record v1 with
-`task_ref: null`, non-empty AC and evidence refs, and `result: passed`;
-`status` is not an alias. An audit is the bare closed audit-checkpoint v1
-mapping. Its typed identity, run/execution, policy, boundary, coverage,
-primary/final validator refs and `approved | not-applicable` status must
-validate. A gate is the bare closed nine-key gate record v2. Automatic gates
-are `passed`, have evidence and a null
-attestation pair; human-validation gates are `pending` with the null pair.
-Unknown roots, generic one-key unwrapping, aliases, generic `result/status`
-substitution and missing or extra fields all block.
-
-Require all production targets to equal the target digests persisted by the
-approved audit checkpoints; all automatic evidence refs/bytes to equal the
-consistency projection; every final validator, audit and automatic gate to be
-`passed`, `approved` or `not-applicable`; and every required human gate to be
-`pending` with null attestation fields. Target drift, evidence ref/digest
-drift, a nonterminal automatic control, run/execution drift, stale current
-schema proof, or a missing/unresolved human gate is non-waivable.
-
-Persist the crash-safe record first at
-`<plan_directory>/builds/manual-qa/admission.json`. Its exact schema v1 keys
-are:
+Accept only this closed mapping:
 
 ```yaml
-manual_qa_admission:
-  schema_version: 1
-  admission_id: "manual-qa-admission-v1:<digest of identity, trigger and authoritative projection>"
-  status: "administrative-schema-degraded"
-  batch_kind: "administrative-admission"
-  phase: "admission-recorded | capture-reconciled"
-  run_id: "loki-run-v2:<digest>"
-  execution_id: "loki-execution-v2:<digest>"
-  plan_directory: "planos/<plan>"
-  trigger: {upstream_error_code: "MARKDOWN_CONTRACT_BLOCK_INVALID", serialization: "multiple-fenced-yaml-administrative-sections", source_refs: [], source_digests: []}
-  authoritative_projection: {invocation_ref: "", invocation_digest: "", result_ref: "", result_digest: "", dashboard_ref: "", dashboard_digest: "", consistency_ref: "", consistency_digest: "", state_digest: "", manual_qa_handoff_digest: ""}
-  production_targets: [{ref: "", digest: "", outcome: "digest-verified"}]
-  automatic_evidence: [{ref: "", digest: "", outcome: "digest-verified"}]
-  automatic_controls: [{ref: "", digest: "", outcome: "passed | approved | not-applicable"}]
-  human_gates: [{ref: "", digest: "", kind: "human-validation", status: "pending", attestation_ref: null, attestation_digest: null}]
-  allowed_actions: ["catalog-manual-sources", "publish-complete-dashboard", "provide-read-only-help", "record-human-test-observations"]
-  forbidden_actions: ["aggregate-attestation", "promote-human-gates", "publish-terminal-consistency", "complete-plan", "rewrite-manual-qa-handoff"]
-  blockers: ["administrative-serialization-incompatibility", "terminal-promotion-forbidden-while-degraded"]
-  execution_knowledge_capture: {capture_id: "", target_entry: "", status: "pending | captured | partial | failed | unsupported", entry_digest: null, reason: "", minimum_next_path: ""}
-  admission_digest: "sha256:<canonical record excluding admission_digest>"
+manual_qa_handoff:
+  schema_version: 3
+  status: "ready-for-manual-qa | manual-qa-not-required | manual-qa-not-evaluated"
+  run_id: "loki-run-v2:<64-lowercase-hex>"
+  execution_id: "loki-execution-v2:<64-lowercase-hex>"
+  plan_directory: "<canonical-plan-root>"
+  execution_input_ref: "<current execution input locator>"
+  execution_input_digest: "sha256:<exact current input bytes>"
+  automatic_evidence_refs: []
+  pending_human_gate_refs: []
+  changed_target_refs: []
+  reason: "<null for ready; non-empty otherwise>"
 ```
 
-The persisted admission is its own `administrative-admission` journal and may
-never reuse `initial`, `issue`, `terminal-reject` or `terminal`. Its only
-temporary is the exact normalized sibling
-`<plan_directory>/builds/manual-qa/admission.json.tmp`; final and temporary
-must resolve to distinct names in the same validated directory. Encode the
-complete validated admission as canonical indented JSON, create the temporary
-with exclusive-create semantics, flush it, reread and validate its exact
-bytes, then atomically create the final without overwrite by linking that
-sibling to `admission.json`. Remove only that owned temporary and only after
-its bytes equal the intended record and final bytes verify. An existing exact
-final is a no-op; an existing exact temporary with no final is an interrupted
-publication that resumes through the same validation and exclusive final
-creation. A divergent final, divergent/foreign temporary, directory/symlink or
-target/temp collision blocks and is never overwritten or cleaned. After
-publication, dispatch a lineage-bound material
-execution-knowledge capture using the admission as a `build-report`. Capture
-remains nonblocking, but `pending`, `partial`, `failed` or `unsupported` must
-remain visible with a reason and `minimum_next_path` in a reconciled admission.
+For `ready-for-manual-qa`, every array is ordered and duplicate-free,
+`automatic_evidence_refs` and `pending_human_gate_refs` are non-empty, and
+`reason` is null. The identities and plan root equal the containing state.
+Resolve the current input from `execution_input_ref`, require its exact bytes to
+match `execution_input_digest`, and never assume a filename.
+For `manual-qa-not-required`, `automatic_evidence_refs` is non-empty,
+`pending_human_gate_refs` is empty and `reason` is non-empty. It is admissible
+only with producer state `completed | completed-with-limitations`,
+`next_action: none`, identical identity/input digest and no human-validation
+gate record. `manual-qa-not-evaluated` is never an admission route.
+The handoff carries no manual result, attestation, session or transaction
+locator.
 
-Degraded admission permits source catalog/proposals, the complete dashboard,
-read-only help and issue/observation recording. It remains visible,
-non-successful and has non-empty blockers. It forbids semantic assessment,
-independent aggregate-attestation review, aggregate attestation, human-gate or
-canonical promotion, consistency publication and completion. After the
-administrative source is repaired, discard the degraded route and rerun the
-ordinary current-only preflight from bytes before any terminal batch.
+## Preflight
 
-## Runtime-QA proposal handoff
+Admission happens before showing a checklist:
 
-Only `loki-manual-qa` may dispatch `runtime-qa` for manual-source work. Send a
-self-contained envelope with plan/run/execution identity, candidate refs and
-exact-byte digests, source kinds, statements/provenance, target surface facts,
-automatic evidence, environment constraints, `allowed_writes: []`, all manual
-and production paths forbidden, validators, stop conditions and this schema:
+1. Resolve current LokiRunState v4, handoff v3 and the execution input from the
+   handoff locator. Require exact run/execution identity, plan containment and
+   equality among state/handoff input digests and current input bytes. Reject
+   unknown or superseded schemas before routing.
+2. Require every referenced automatic control to exist and be terminal
+   `passed` or `not-applicable`; require any associated digest to match current
+   bytes. Require exact order parity with LokiRunState
+   `terminal_evidence_refs`. Do not revalidate terminal demand bytes or
+   `demand_digest`.
+3. Resolve every LokiRunState gate ref to one current gate record and require
+   its digest to match `gate_digests`.
+4. If state is `completed | completed-with-limitations`, require
+   `manual-qa-not-required`, `next_action: none`, a non-empty reason and no
+   human-validation gate. Return `not-applicable` immediately with zero writes,
+   no checklist and no feedback prompt. Do not resolve or prepare promotion
+   targets and do not change any terminal field.
+5. Otherwise require state `awaiting-manual-qa`, handoff
+   `ready-for-manual-qa`, and `next_action: loki-manual-qa`. Resolve every
+   `pending_human_gate_ref` to one current gate record with
+   `kind: human-validation`, `status: pending`, a non-empty executable
+   `instruction`, and a non-empty observable `expected` result. Reject a
+   missing or vague field without inventing content. Require at least one such
+   gate.
+6. Resolve result, dashboard and consistency locators from the eligible
+   awaiting state. Require `changed_target_refs` to be ordered by first occurrence in completed
+   Writer handoffs and contained in the consumer project, but never write them.
 
-```yaml
-runtime_qa_source_proposal:
-  schema_version: 1
-  run_id: "loki-run-v2:<64 lowercase hex>"
-  execution_id: "loki-execution-v2:<64 lowercase hex>"
-  caller: "loki-manual-qa"
-  agent: "runtime-qa"
-  allowed_writes: []
-  candidate_ref: "one exact handoff candidate ref"
-  candidate_digest: "sha256:<current source bytes or canonical fragment>"
-  source_kind: "acceptance-criterion | human-gate | changed-surface"
-  applicability: "applicable | not-applicable"
-  not_applicable_reason: "non-empty only for not-applicable, otherwise null"
-  environment: "concrete non-generic environment"
-  prerequisites: "concrete non-generic prerequisites"
-  initial_state: "concrete observable start"
-  actions: ["concrete ordered reproduction action"]
-  expected_result: "concrete observable expected result"
-  success_signal: "concrete observable success"
-  failure_signal: "concrete observable failure"
-  cleanup: "concrete cleanup or explicit not-needed reason"
-  automation_limit: "concrete reason human observation remains material"
-  evidence_refs: ["read-only source/evidence locator"]
-  completion_record:
-    status: "completed | failed | blocked | stopped"
-    validators: ["executed proposal validator"]
-    gates: []
-    risks: []
-    next_destination: "loki-manual-qa orchestrator"
-```
+An automatic-control, identity, digest, branch mismatch or required-record failure returns
+`blocked-preflight`, shows no checklist, performs zero writes and returns a
+copyable `loki-feedback` prompt with the canonical plan root and a short safe
+summary. A ready handoff without a pending human-validation gate is malformed
+and blocks; only the validated direct terminal `manual-qa-not-required` branch
+returns `not-applicable`.
 
-`runtime-qa` is read-only/proposal-only: it does not observe runtime, ask the
-human, persist a catalog, mutate state or approve a gate. A non-completed
-handoff blocks dependent publication. The orchestrator rejects invented refs,
-short or placeholder fields, materially repeated guides across unrelated
-candidates, guides not bound to their candidate, non-observable steps,
-unsupported applicability and extra keys.
+## Ephemeral Checklist
 
-## Exhaustive source catalog
-
-The handoff v2 closed keys are `schema_version`, `status`, `run_id`,
-`execution_id`, `plan_directory`, `automatic_evidence_refs`,
-`manual_qa_result_ref`, `manual_qa_attestation_ref`, `task_refs`,
-`acceptance_criterion_refs`, `gate_refs`, `changed_target_refs`, and `reason`.
-Require schema 2, `ready-for-manual-qa`, technical/canonical status
-`awaiting-manual-qa`, exact anchors, unique ordered refs and byte equality in
-state/result/dashboard/consistency. No handoff v1 reader exists.
-
-The candidate set is exactly the ordered concatenation of:
-
-1. every `acceptance_criterion_ref` in handoff order;
-2. every `gate_ref` whose gate-record-v2 `kind` is `human-validation`, in
-   handoff order (automatic gates remain eligibility evidence);
-3. every `changed_target_ref` in handoff order, represented as changed-surface.
-
-Each changed-target ref is the exact production target path projected from
-completed handoff-record `target_digests` in task → handoff → target-row order,
-deduplicated by first occurrence. Read its current bytes, require equality with
-the corresponding automatic `path=digest` provenance, and use that byte digest
-as the candidate/source digest; never replace it with a composite provenance
-digest. The ref grants no production write.
-
-A changed-surface guide may state only observable behavior already bound to
-the owning task by a persisted acceptance-criterion statement or immutable
-human-gate source statement. Record the exact statement locator and digest in
-the proposal/source coverage. If no such observable fact exists, classify the
-changed surface `not-applicable` with that concrete absence as its reason;
-never invent behavior from a filename, implementation bytes or task title.
-Guides must retain real candidate/source locators and digests. Reject an
-unrelated source fact and reject near-duplicate guides even when paths or
-digests have merely been substituted.
-
-Require exact equality with task-validation ACs, all current gate refs and all
-changed targets in the upstream tree. No candidate may be missing, duplicated
-or synthesized. Persist:
+Build this in memory only:
 
 ```yaml
-manual_qa_source:
-  schema_version: 1
-  source_kind: "acceptance-criterion | human-gate | changed-surface"
-  source_ref: "exact current candidate locator"
-  source_digest: "sha256:<exact target bytes or canonical immutable AC/gate source fragment>"
-  source_order: "zero-based JSON integer in exhaustive candidate order"
-  applicability: "applicable | not-applicable"
-  not_applicable_reason: "non-empty evidence-based reason iff not-applicable; otherwise null"
-  task_refs: ["covered exact task locator"]
-  acceptance_criterion_refs: ["covered exact AC locator"]
-  gate_refs: ["covered exact gate-v2 locator"]
-  changed_surface_refs: ["covered exact changed-target locator"]
-  observable_fact_refs: ["exact immutable statement locator"]
-  observable_fact_digests: ["sha256:<exact immutable statement fragment>"]
-  observable_fact_statements: ["exact observable source statement"]
-  guide_fact_bindings:
-    environment: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    prerequisites: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    initial_state: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    actions: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    expected_result: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    success_signal: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    failure_signal: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    cleanup: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-    automation_limit: {fact_ref: "exact source fact", fact_digest: "sha256:<same fact>"}
-  environment: "concrete"
-  prerequisites: "concrete"
-  initial_state: "concrete"
-  actions: ["one or more concrete ordered actions"]
-  expected_result: "concrete observable outcome"
-  success_signal: "concrete observable signal"
-  failure_signal: "concrete observable signal"
-  cleanup: "concrete action or not-needed reason"
-  automation_limit: "concrete material human-observation limit"
-  runtime_qa_proposal_ref: "persisted sanitized proposal evidence locator"
-  runtime_qa_proposal_digest: "sha256:<exact proposal bytes>"
-
-manual_qa_source_catalog:
-  schema_version: 1
-  run_id: "loki-run-v2:<64 lowercase hex>"
-  execution_id: "loki-execution-v2:<64 lowercase hex>"
-  plan_directory: "canonical planos/<plan>"
-  state_ref: "<plan>/tasks.md#loki_run_state"
-  state_digest: "sha256:<canonical state>"
-  handoff_ref: "<plan>/tasks.md#loki_run_state.manual_qa_handoff"
-  handoff_digest: "sha256:<canonical handoff v2>"
-  candidate_refs: ["exact exhaustive ordered candidate refs"]
-  candidate_digests: ["sha256:<exact candidate source>"]
-  sources: ["exact ordered manual_qa_source v1 rows"]
-  applicable_source_refs: ["exact applicable subset in source order"]
-  not_applicable_source_refs: ["exact not-applicable subset in source order"]
-  coverage_digest: "sha256:<canonical candidate refs/digests + source coverage>"
-  catalog_digest: "sha256:<canonical record excluding catalog_digest>"
-```
-
-Every row is required. `not-applicable` requires a concrete proposal-supported
-reason and is preserved in the catalog but omitted from dashboard steps.
-`applicable` requires a null reason and a complete concrete guide. Reject empty
-applicable set, generic boilerplate, uncovered refs, extra rows or a coverage
-digest mismatch.
-
-A required pending human-validation gate v2 is always `applicable`;
-Runtime-QA and the orchestrator may never mark it `not-applicable`. Doing so
-would waive the gate that made the plan `awaiting-manual-qa` and is a hard
-schema/coverage failure.
-
-## Dashboard and interaction transition table
-
-Derive one `MQ-<n>` step for each applicable catalog row, preserving source
-order and its entire guide verbatim. IDs are consecutive in applicable order;
-`source_order` remains the catalog order and therefore need not equal the step
-array index when earlier sources are not applicable. Persist catalog ref/digest,
-all steps, applicable digest and the applicable/not-applicable source refs.
-Render every step without truncation or pagination.
-
-All current views are exact-key closed schema v1. Their keys are:
-
-```yaml
-manual_qa_step:
-  schema_version: 1
-  id: "MQ-<two-or-more digits>"
-  source_kind: "acceptance-criterion | human-gate | changed-surface"
-  source_ref: "exact catalog ref"
-  source_order: "exact catalog order"
-  title: "concrete expected-result title"
-  environment: "concrete"
-  prerequisites: "concrete"
-  initial_state: "concrete"
-  actions: ["concrete ordered action"]
-  expected_result: "concrete observable outcome"
-  success_signal: "concrete observable signal"
-  failure_signal: "concrete observable signal"
-  cleanup: "concrete action/reason"
-  automation_limit: "concrete human-observation limit"
-
-manual_qa_dashboard:
-  schema_version: 1
-  run_id: "typed run id"
-  execution_id: "typed execution id"
-  plan_directory: "canonical plan"
-  state_ref: "canonical state locator"
-  state_digest: "canonical state digest"
-  handoff_ref: "canonical handoff locator"
-  handoff_digest: "canonical handoff digest"
-  implementation_result_ref: "canonical ref"
-  implementation_result_digest: "exact-byte digest"
-  implementation_dashboard_ref: "canonical ref"
-  implementation_dashboard_digest: "exact-byte digest"
-  implementation_consistency_ref: "canonical ref"
-  implementation_consistency_digest: "exact-byte digest"
-  demand_ref: "canonical ref"
-  demand_digest: "exact-byte digest"
-  analysis_ref: "canonical ref"
-  analysis_digest: "exact-byte digest"
-  source_catalog_ref: "canonical ref"
-  source_catalog_digest: "exact-byte digest"
-  applicable_source_refs: []
-  not_applicable_source_refs: []
-  steps: []
-  applicable_steps_digest: "canonical steps digest"
-  dashboard_digest: "canonical self digest"
-
-manual_qa_attestation:
-  schema_version: 1
-  run_id: "typed run id"
-  execution_id: "typed execution id"
-  applicable_steps_digest: "canonical steps digest"
-  demand_digest: "exact demand-byte digest"
-  analysis_digest: "exact analysis-byte digest"
-  human_statement: "exact non-empty human statement"
-  declaration: "all-applicable-manual-tests-tested-and-approved"
-  attestation_review_ref: "exact independent review locator"
-  attestation_review_digest: "sha256:<exact review bytes>"
-  recorded_at: "RFC3339 UTC"
-
-manual_qa_attestation_review:
-  schema_version: 1
-  run_id: "typed run id"
-  execution_id: "typed execution id"
-  reviewer_identity: "manual-qa-attestation-auditor"
-  independent_agent_run_evidence_ref: "exact independent execution evidence locator"
-  independent_agent_run_evidence_digest: "sha256:<exact evidence bytes>"
-  statement_digest: "sha256:<exact raw statement bytes>"
-  dashboard_ref: "immutable dashboard-presentation locator"
-  dashboard_digest: "sha256:<exact presentation bytes>"
-  applicable_steps_digest: "canonical steps digest"
-  evaluator_policy_id: "manual-qa-semantic-policy-v1"
-  evaluator_policy_digest: "sha256:<pinned policy bytes>"
-  assessment_ref: "exact orchestrator assessment locator"
-  assessment_digest: "sha256:<exact assessment bytes>"
-  signals: "exact closed five-boolean mapping"
-  decision: "approve | reject"
-  rationale: "independent semantic rationale"
-  confidence: "low | medium | high"
-  completion_record: "closed status/validators/gates/risks/success/failure mapping"
-  review_digest: "canonical self digest"
-
-manual_qa_report:
-  schema_version: 1
-  report_id: "manual-qa-report-v1:<digest>"
-  run_id: "typed run id"
-  execution_id: "typed execution id"
-  status: "open | resolved"
-  kind: "failure | blocker"
-  summary: "1..280 Unicode code points"
-  impact: "non-empty"
-  next_action: "non-empty"
-  recorded_at: "RFC3339 UTC"
-  resolution_ref: "canonical ref or null"
-  resolution_digest: "exact bytes or null"
-  resolved_at: "RFC3339 UTC or null"
-  revalidation_refs: []
-  revalidation_digests: []
-
 manual_qa_interaction:
-  schema_version: 1
-  run_id: "typed run id"
-  execution_id: "typed execution id"
-  status: "in-progress | awaiting-attestation | paused | issue-open | issue-resolved | attested | stopped"
-  attestation_ref: "canonical ref or null"
-  attestation_digest: "exact bytes or null"
-  report_ref: "canonical ref or null"
-  report_digest: "exact bytes or null"
-  interaction_digest: "canonical self digest"
+  plan_root: "<canonical plan root>"
+  pending_human_gate_refs: []
+  checklist:
+    - id: "MQ-01"
+      kind: "human-gate | derived-test"
+      instruction: "<short executable instruction>"
+      expected: "<observable expected result>"
+  derived_test_count: "0..5"
 ```
 
-Persist separate interaction, attestation and report files under the handoff
-run directory. Enforce this closed table:
+Rules:
 
-Source catalog, dashboard, interaction, report and manual result are the
-current correlated views of the run. Publish their updates serially under the
-one orchestrator owner and treat the set atomically through transaction phase
-and exact parity; attestation alone is create-exclusive/immutable.
+- Project every pending human gate first and preserve its canonical order.
+- A gate item copies and preserves the gate record's exact `instruction` and
+  `expected` fields. Reject either field when missing or vague; do not derive,
+  rewrite or invent content.
+- Derived-test candidates come only from the validated demand relevance and
+  changed-target evidence. They complement and never replace a human gate.
+- Rank candidates by demand relevance descending, regression risk descending,
+  then changed-target order ascending. Stable source order breaks any remaining
+  tie. Select at most five and deduplicate equivalent behavior.
+- Each item exposes exactly `id`, `kind`, `instruction`, and `expected`.
+- Render the checklist once. Do not persist it or any per-item outcome.
 
-| Interaction | Attestation | Report | Result | Allowed meaning |
-| --- | --- | --- | --- | --- |
-| `in-progress` | absent | absent | `in-progress` | catalog/dashboard transaction is being published |
-| `awaiting-attestation` | absent | absent | `pending-input` | complete dashboard shown |
-| `paused` | absent | absent or resolved | `in-progress` | explicit pause; resume from disk |
-| `issue-open` | absent | open | `blocked` | failure or blocker requires external correction |
-| `issue-resolved` | absent | resolved | `in-progress` | revalidation/rederivation required |
-| `attested` | present | absent or resolved | `in-progress` | terminal commit not yet complete |
-| `attested` | present | absent or resolved | `completed` | transaction committed and consistent |
-| `stopped` | absent | absent or resolved | `stopped` | explicit safe stop with resume reason |
+An `MQ-ID` help request may explain prerequisites or execution detail already
+supported by the same sources. It is `help`, performs zero writes, does not
+approve any item and does not change the checklist.
 
-All other pairs fail. Help reads one step and changes no bytes. Pause writes
-only the correlated current interaction/result/transaction phase. Attestation
-is create-exclusive and immutable. The LLM accepts any unambiguous natural
-language statement that the human already tested everything; no approval word
-or magic token is required. It preserves `human_statement` and normalizes
-`declaration` to `all-applicable-manual-tests-tested-and-approved`. The
-deterministic validator checks the canonical record/correlation, not a lexical
-whitelist.
+## Aggregate Human Response
 
-The help handler snapshots every plan-tree file digest before lookup, resolves
-exactly one current MQ ID, and requires the complete after-snapshot to be
-identical. The command accepts only `human_statement` from the user; identity,
-owner, policy, decision, signals and review are never caller-controlled input.
-The orchestrator prepares the semantic assessment under the pinned current-only assessor,
-owner and evaluator-policy identity/digest after reading the current
-interaction and immutable `dashboard-presentation.json`. It records rationale
-and five signals: `explicit_completed_all`, `ambiguous`, `negated`,
-`future_intent` and `partial_scope`. The mechanical validator only checks the
-closed record, provenance, correlation, signal types and the decision implied
-by those persisted signals. It does not decide the meaning of free-form prose.
-Persist `semantic-assessment.json` with the exact
-statement/digest, persisted dashboard-presentation ref/digest,
-applicable-steps digest, pinned assessor/owner/policy, signals, derived
-decision, rationale and self-digest. Then dispatch the independent read-only,
-proposal-only `manual-qa-attestation-auditor` with raw statement, IDs,
-dashboard/applicable/policy bindings, orchestrator assessment ref/digest and
-collector-owned `agent_session_evidence` XML schema 1 ref/digest. The XML must
-bind typed run/agent-run/handoff/agent identity, terminal runtime parentage and
-locator, every completeness dimension and gap, pointer-only snapshot/security,
-verified canonical integrity, correlated completion and exact evidence-first
-collector-only policy. It does not review guides, observe
-runtime, ask the human, create per-test evidence, write, attest, approve gates
-or promote anything. It returns closed `manual_qa_attestation_review` v1 with
-the five signals, `approve|reject`, rationale, confidence, completion and
-destinations. The terminal journal is overwritten as the first terminal write,
-then assessment and review are published before any attestation; rejected
-reviews remain journaled and never create attestation bytes. The
-semantic phrase corpus is formal-audit material for the LLM policy, never an
-executable regex/whitelist classifier. Only exact assessment/review equality
-with independent decision `approve` creates the canonical attestation, which
-binds review ref/digest. Rejection commits a correlated current view with the
-assessment, review, interaction and pending result, and a later declaration starts a
-new terminal batch whose predecessor is that rejected transaction.
+Classify the natural-language response semantically against the current
+execution only. Deterministic phrase cases may guard critical boundaries, but
+they are not a universal natural-language classifier:
 
-Report identity material is immutable. The only issue transition is open to
-resolved with an externally produced resolution ref/exact-byte digest, resolved timestamp, and
-revalidation refs/digests equal to the new terminal technical projection.
-Resolution is input evidence, never an internal target or write.
-Resolution invalidates prior catalog/dashboard/result/consistency and requires
-complete re-enumeration, proposals and presentation before attestation.
+- `approved`: it clearly states the person already completed the applicable
+  checklist and the playtest passed.
+- `problem`: it reports any failure or blocker.
+- `help`: it asks how to perform an item.
+- `no-decision`: ambiguity, silence, praise, partial scope, future intent or a
+  statement that does not clearly say the applicable QA was completed.
 
-## Managed-state transaction and restricted terminal promotion
+Explicit negation, uncertainty, partial scope and future intent always remain
+`no-decision`; a matching positive phrase inside the same statement cannot
+override them. Problem language takes precedence over approval language. A
+natural help request tied to an `MQ-ID` is `help`.
 
-Outside a degraded admission, the recoverable transaction journal is the first manual-QA write, before any proposal,
-catalog, dashboard, interaction, assessment, attestation, report, manual
-result/consistency, gate or canonical write. Derive the complete unique target
-set and pre-write digests first. Before each target publication, persist its
-intended digest; after writing, verify exact bytes and advance the cursor and
-phase in the journal.
+There is no phrase magic, required checklist-ID recital, independent review or
+stored statement. Only `approved` may write. `problem`, `help` and
+`no-decision` are zero-write terminal responses for this invocation.
 
-Use exactly one current transaction journal file, overwritten first for each of four
-closed batches. Derive its `target_refs` from the requested transition:
+For `problem`, present but do not persist or dispatch this copyable prompt:
 
-- initial publication: proposals in candidate order, source catalog, manual
-  dashboard, immutable dashboard presentation, interaction, manual result;
-- issue transition: report, interaction, manual result; an external resolution
-  is validated by ref/digest but is not in `target_refs`;
-- terminal rejection: semantic assessment, independent attestation review,
-  interaction and manual result;
-- terminal attestation/promotion: semantic assessment, independent attestation
-  review, attestation,
-  human-validation gates in
-  handoff order, canonical whole `tasks.md`, implementation result,
-  implementation dashboard, implementation consistency, proposals in candidate order,
-  source catalog, manual dashboard, interaction, manual
-  result, manual consistency.
-
-The terminal batch rebuilds the dependent manual views after canonical
-promotion so their implementation digests are final. Task and AC refs are
-coverage inputs, never write targets. Omission of any applicable class,
-addition, duplication or reordering blocks before any target write.
-`before_digests` and
-`intended_after_digests` have exactly this cardinality/order; published and
-residue refs are order-preserving subsets of it.
-
-```yaml
-manual_qa_transaction:
-  schema_version: 1
-  transaction_id: "manual-qa-transaction-v1:<sha256(run_id, execution_id, batch_kind, transition_intent_digest, predecessor_transaction_id)>"
-  run_id: "loki-run-v2:<64 lowercase hex>"
-  execution_id: "loki-execution-v2:<64 lowercase hex>"
-  batch_kind: "initial | issue | terminal-reject | terminal"
-  transition_intent_digest: "sha256:<immutable batch kind and exact target refs>"
-  predecessor_transaction_id: "prior committed batch identity; null only for initial"
-  predecessor_transaction_digest: "sha256:<exact prior journal bytes>; null only for initial"
-  phase: "journal-created | manual-publishing | assessment-published | review-published | attested | gates-promoted | canonical-promoted | consistency-published | committed | recovery-required"
-  next_target_index: 0
-  owner: "loki-manual-qa-orchestrator"
-  target_refs: ["exact ordered manual outputs, human gates, state, result, dashboard, consistency"]
-  before_digests: ["sha256:<exact pre-write bytes/canonical fragment>"]
-  intended_after_digests: ["sha256:<validated intended bytes/canonical fragment>"]
-  published_refs: ["ordered refs already written"]
-  published_digests: ["sha256:<exact current bytes>"]
-  residue_refs: ["written refs not yet reconciled"]
-  residue_digests: ["sha256:<exact current bytes>"]
-  attestation_ref: "exact handoff v2 anchor after attestation, otherwise null"
-  attestation_digest: "sha256:<exact attestation bytes> after attestation, otherwise null"
-  transaction_digest: "sha256:<canonical record excluding transaction_digest>"
+```text
+Use loki-feedback for plan <canonical-plan-root>. Problem summary: <short human-reported failure or blocker>. Diagnose and recommend the next authorized workflow; do not transition the plan automatically.
 ```
 
-The closed batch/phase boundaries are:
+Never observe or wait for `loki-feedback`. Never diagnose or repair the problem
+inside this command.
 
-| Batch | Phase | Required cursor boundary |
-| --- | --- | --- |
-| initial | journal-created | `0` |
-| initial | manual-publishing | exact published prefix |
-| initial | committed | all initial targets |
-| issue | journal-created | `0` |
-| issue | manual-publishing | exact published prefix |
-| issue | committed | report, interaction and result all published |
-| terminal-reject | journal-created | `0` |
-| terminal-reject | assessment-published | `1` |
-| terminal-reject | review-published | `2` |
-| terminal-reject | committed | assessment, review, interaction and pending result all published |
-| terminal | journal-created | `0` |
-| terminal | assessment-published | `1` |
-| terminal | review-published | `2` |
-| terminal | attested | `3` |
-| terminal | gates-promoted | assessment, review, attestation and all human gates |
-| terminal | canonical-promoted | whole canonical batch through implementation consistency |
-| terminal | consistency-published or committed | every terminal target |
+## Restricted Terminal Promotion
 
-Every issue, terminal-reject or terminal overwrite records the exact predecessor transaction
-identity and journal-byte digest before the first new-batch write.
-`recovery-required` in any batch preserves the exact published prefix as the
-residue prefix with byte-equal digests and resumes only its next target.
-If a crash occurs after writing that next target but before advancing the
-journal, resume accepts it only when current bytes, persisted intended digest
-and freshly rederived digest are exactly equal; it then journals that target as
-published/residue and advances the cursor before processing another target.
-Any other post-write state is drift and blocks.
+On `approved`, compute the complete desired terminal projection before the
+first write:
 
-The batch identity is stable while its journal bytes advance, but distinct
-open/resolved, reject/reject and reject/approve transitions cannot collide
-because batch kind, immutable intent and predecessor are identity material.
-Manual result,
-manual consistency and terminal projections carry only `transaction_ref` and
-`transaction_id`; they never embed the mutable journal byte digest. Replay and
-Response validate the final exact journal bytes externally after commit. This
-current-only identity rule prevents a result/journal digest cycle.
+1. Change every referenced pending human-validation gate to `passed`, preserving
+   its exact `instruction`, `expected`, and all other fields. Do not add an
+   evidence locator.
+2. Change LokiRunState, implementation result and implementation dashboard from
+   `awaiting-manual-qa` to `completed`; set `next_action` to `none` where that
+   field exists; preserve the handoff and automatic evidence unchanged.
+3. Recompute the current canonical digests required by those schemas.
+4. Publish the exact gate records, state, result and dashboard using
+   replace-whole-file atomic writes scoped to their validated locators.
+5. Publish the consistency packet last. It is the sole commit marker and must
+   assert the same completed state and current digests.
 
-After attestation, promote every eligible pending human-validation gate v2 to
-`passed`, preserving its other fields and setting attestation ref/digest. Then
-publish the whole `tasks.md` with only LokiRunState v3 promoted, followed by
-implementation result v3, dashboard v3 and consistency v2, in that order, from
-`awaiting-manual-qa` to `completed`; preserve `manual_qa_handoff`
-byte-equivalent. Then rebuild the dependent manual views and publish manual
-consistency last.
-Only full parity permits `committed` and a completion claim.
+Before the first write, require that every desired byte sequence is valid and
+every target is on the closed allowlist. A failed preparation writes nothing.
+If publication is interrupted before consistency, the tree is nonterminal and
+must not be reported completed; replay may only finish the same already
+validated desired projection. A completed replay is an idempotent no-op.
 
-Journal and publish `tasks.md` as one whole file with whole-file before,
-intended and current digests; never journal a state fragment as the write
-target. Task and AC contracts were technically passed upstream: prove their
-exact bytes/semantic source digests unchanged,
-report them as covered/reconciled, and keep `promoted_task_refs` and
-`promoted_acceptance_criterion_refs` empty. Preserve YAML frontmatter, prose,
-all non-state sections and task contracts outside the one LokiRunState block
-byte-for-byte. Immediately before every target write, compare its current bytes
-to the frozen `before_digest`; any concurrent drift blocks publication. After
-every write, update phase,
-`next_target_index`, published refs/digests and residue. Recovery validates the
-exact published prefix and resumes the next index in every legal phase. A failure
-does not claim rollback or completion: set `recovery-required`, list exact
-residue and next safe idempotent action. Resume rederives the intended bytes
-under the pinned current builder, verifies every before/current/intended digest
-and persisted prefix, restores attestation correlation after its publication,
-and advances the legal assessment, attestation, gate, canonical and consistency
-boundaries while writing the actual remaining targets to committed. Every
-target boundary, including gates, whole `tasks.md`, implementation consistency
-and manual consistency, is resumable; an exact committed replay is a no-op. It
-blocks target drift, stale evidence, an unexpected write or arbitrary replay.
+The minimum canonical terminal set is exactly: referenced human gate records,
+LokiRunState in `tasks.md`, implementation result, implementation dashboard,
+and consistency packet last. Do not create any other manual-QA artifact.
 
-## Terminal result and consistency projections
+## Deterministic Validation
 
-The closed result and consistency records include all common identity/digest
-fields from the dashboard/interaction plus these mandatory terminal fields:
+Run:
 
-```yaml
-terminal_manual_qa_projection:
-  source_catalog_ref: "<plan>/builds/manual-qa/source-catalog.json"
-  source_catalog_digest: "sha256:<exact bytes>"
-  transaction_ref: "<plan>/builds/manual-qa/transaction.json"
-  transaction_id: "manual-qa-transaction-v1:<stable batch identity>"
-  covered_task_refs: []
-  covered_acceptance_criterion_refs: []
-  covered_gate_refs: []
-  covered_changed_surface_refs: []
-  promoted_task_refs: []
-  promoted_acceptance_criterion_refs: []
-  promoted_gate_refs: []
-  canonical_asset_refs: ["tasks.md", "implementation result", "implementation dashboard", "implementation consistency"]
-  canonical_asset_digests: ["sha256:<exact final bytes>"]
-  validator_refs: []
-  validator_digests: []
-  audit_refs: []
-  audit_digests: []
-  final_plan_status: "awaiting-manual-qa | completed"
-  blockers: []
-  resume: "non-empty disk-only resume condition"
+```bash
+python3 scripts/validate-manual-qa-contracts.py --self-test
+python3 scripts/validate-implement-feature-contracts.py --self-test
+python3 -m py_compile scripts/validate-manual-qa-contracts.py scripts/validate-implement-feature-contracts.py
 ```
 
-`manual_qa_result` has exactly the projection keys above plus `schema_version`,
-`run_id`, `execution_id`, `status`, `state_ref/digest`, `handoff_ref/digest`,
-`dashboard_ref/digest`, `interaction_ref/digest`, `attestation_ref/digest`,
-`report_ref/digest`, `applicable_steps_digest`,
-`demand_revalidation_digest`, `automatic_gate_refs/digests`,
-`reconciled_handoff_ref`, `next_action`, and `result_digest`.
-`manual_qa_consistency` has the same projection and common ref/digest keys,
-replaces result status/next-action/self-digest with `result_ref`, exact-byte
-`result_digest`, and `consistency_digest`, and exists only for completed state.
-All slash-pairs mean two distinct required keys; nullable ref/digest pairs are
-jointly null or non-null and every ref/digest array has identical order/length.
+The fixture corpus must cover a full current terminal v4 state plus
+`manual-qa-not-required` v3 handoff reaching zero-write `not-applicable`,
+terminal/handoff/identity/input/evidence mismatch rejection, current input
+locator resolution, automatic preflight, at least one pending and observable
+human gate, zero and five derived tests, deterministic truncation/ranking,
+help, clear approval, ambiguity, silence, future intent, failure/blocker
+feedback prompt, write containment, atomic consistency-last promotion and
+rejection of superseded forms. A gate-count helper alone does not prove the
+not-applicable branch.
 
-Before completion, all covered arrays are non-empty and equal catalog coverage,
-all promoted arrays are empty and status is not completed. Completed
-result/consistency require non-empty exact coverage; empty task/AC promotions;
-non-empty promoted human gates equal to covered human gates; exactly four
-canonical assets in tasks/result/dashboard/consistency order; non-empty paired
-validator and audit refs/digests; final status `completed`; blockers empty;
-transaction committed; attestation anchored/digested; and byte-equal handoff.
-Every ref array is unique and every ref/digest array is length-paired. Exact-key
-schemas in the validator are canonical; no distributed per-test outcomes or
-false completed projection is accepted.
+## Stops And Destinations
 
-## Validators, gates, stops and completion handoff
-
-Run the deterministic validator over closed schemas, containment, exhaustive
-coverage, source concreteness, transition pairs, refs/exact bytes, automatic
-evidence plus independent `agent_session_evidence` XML, target/commit drift,
-transaction phases/residue, promotion parity and fresh replay. Scan every live
-`skills/loki-*` bundle except this one and reject legacy `manual_steps`,
-`Playtest question`, `pending-human-validation`, or foreign derivation,
-presentation, collection, reconciliation or promotion semantics; explicit
-prohibitions, rejections and immutable handoffs remain allowed. Human gates are source applicability approval through the
-validated proposal contract and the one aggregate statement after dashboard
-presentation. Stop on missing input, proposal, ref, permission, validator,
-coverage, gate, attestation, transaction phase, byte parity or safe recovery
-path; on cancellation persist a stopped resumable current view only.
-
-Every runtime-qa handoff returns its terminal completion record. The command's
-own completion record contains status, exact artifacts/files, validators,
-human gates, handoffs, transaction phase/residue, covered/promoted refs, risks,
-next destination and the direct-write exception/future-writer opportunity.
-Formal independent quality approval is external and cannot be self-issued.
-
-Run `python3 scripts/validate-manual-qa-contracts.py --self-test`, then the
-upstream implementation validator, Python compilation, forbidden-reference
-scan and `git diff --check`. A failed check blocks completion.
-Validate a persisted degraded admission separately with
-`python3 scripts/validate-manual-qa-contracts.py --admission-tree <project-root> <plan_directory>`
-before publishing any manual source.
+- Failed automatic/identity/digest preflight or human-reported problem: zero
+  writes; destination is a copyable `loki-feedback` prompt.
+- Direct terminal `completed | completed-with-limitations` plus validated
+  `manual-qa-not-required`: `not-applicable`, zero writes, no checklist or
+  feedback prompt; destination is the human caller. A ready handoff with zero
+  pending human gates is blocked instead.
+- Help or no-decision: zero writes; destination is the human caller.
+- Approved and fully published projection: destination is the calling workflow
+  with status `completed`.
+- Any write failure, schema conflict or partial prefix: `blocked`; destination
+  is the orchestrator for deterministic recovery. Never claim completion.

@@ -5,7 +5,7 @@ status: active
 created: 2026-06-26
 doc_id: loki-implementation-workflow
 version: 1.0.0
-last_updated: 2026-08-01
+last_updated: 2026-08-03
 scope: Demand and Markdown analysis through persisted planning, implementation, automatic validation, manual-QA handoff, and learning handoff
 not_scope: Package installation, automatic durable-learning promotion, or compatibility with superseded command contracts
 authority: Approved Loki package policy and the current loki-implement-feature and loki-manual-qa command bundles
@@ -83,7 +83,7 @@ overwrite ou reparo por memoria da conversa.
 Quando a analise Markdown ja esta pronta, invoque `loki-implement-feature`. O
 comando planeja, valida o plano e executa o DAG na mesma execucao retomavel.
 Quando restar QA humano material, ele persiste `awaiting-manual-qa`, que nao e
-conclusao, junto do handoff v2 `ready-for-manual-qa`. Quando nao houver QA
+conclusao, junto do handoff v3 `ready-for-manual-qa`. Quando nao houver QA
 manual material, ele conclui depois dos gates tecnicos com
 `manual-qa-not-required` e motivo nao vazio.
 
@@ -133,7 +133,7 @@ proprio plano e o estado indicarem essa necessidade, sem promover norma.
     regressao pela mesma politica de severidade e retry.
 14. Nao derive, apresente, colete ou reconcilie QA manual. Quando ele for
     material depois dos gates automaticos, publique somente o handoff
-    estruturado v2 `ready-for-manual-qa` junto de `awaiting-manual-qa`, sem
+    estruturado v3 `ready-for-manual-qa` junto de `awaiting-manual-qa`, sem
     declarar conclusao; caso contrario, conclua e publique
     `manual-qa-not-required` com motivo nao vazio.
 
@@ -155,9 +155,9 @@ proprio plano e o estado indicarem essa necessidade, sem promover norma.
 
 `tasks.md` contem a autoridade do plano, DAG e LokiRunState. Task files mantem
 estado local e locators. O estado guarda digests e refs, nao payloads brutos.
-O estado atual e exclusivamente LokiRunState v3: inclui a configuracao de
+O estado atual e exclusivamente LokiRunState v4: inclui a configuracao de
 auditoria v1 completa e direta, os refs dos ultimos checkpoints ativos para
-fronteiras ja due, e os locators de result v3, dashboard v3 e consistency v2.
+fronteiras ja due, e os locators de result v4, dashboard v4 e consistency v3.
 Resume revalida identidades, schemas, digests, target decisions, records
 imutaveis e estado atual dos targets; continuidade de sessao do provider e
 apenas otimizacao.
@@ -172,7 +172,7 @@ pessoal for aplicavel.
 
 O orquestrador publica atomicamente
 `builds/metrics/execution-metrics.json` schema v1 e referencia seu digest no
-`LokiRunState` v3, `implement_feature_execution_result` v3 e dashboard v3. Spans
+`LokiRunState` v4, `implement_feature_execution_result` v4 e dashboard v4. Spans
 de run, phase, task, handoff, validator, gate, audit e reconciliation formam
 uma arvore aciclica com clock provenance, elapsed/active time e critical path;
 campos não observáveis ficam `unavailable` com motivo, nunca zero sintético.
@@ -241,30 +241,27 @@ inclui:
 - configuracao de auditoria v1 completa, fronteiras esperadas e seu estado
   due, checkpoints ativos, materialidade, independencia do Auditor,
   findings/corrections e cada replay completo apos correcao;
-- um unico handoff de QA manual: `ready-for-manual-qa`, com identidades do
-  plano/run/execution e evidencia automatica correlata, ou
+- um unico handoff de QA manual v3: `ready-for-manual-qa`, com identidades do
+  plano/run/execution, execution input ref/digest, evidencia automatica, gates
+  humanos pendentes e targets alterados, ou
   `manual-qa-not-required`, com motivo nao vazio.
 
-`loki-implement-feature` nao deriva passos manuais, nem coleta observacoes,
-evidencias ou atestacao humana. Quando o handoff for
+`loki-implement-feature` nao deriva passos manuais nem coleta observacoes ou
+evidencias humanas. Quando o handoff for
 `ready-for-manual-qa`, somente `loki-manual-qa` pode executar a transicao
-`awaiting-manual-qa -> completed`. Ele revalida o handoff e deriva um catalogo
-exaustivo, na ordem persistida, de todos os criterios de aceite, gates humanos
-e superficies alteradas. Cada fonte aplicavel produz um passo concreto com ID
-estavel, ambiente, precondicoes, estado inicial, acoes ordenadas, resultado
-observavel, sinais de sucesso e falha, cleanup e limite de automacao. O
-dashboard manual mostra todos os passos aplicaveis desde a primeira projecao;
-nao pagina nem revela testes apenas sob demanda.
+`awaiting-manual-qa -> completed`. Ele revalida o handoff e mostra um checklist
+efêmero com todos os gates humanos pendentes primeiro, seguido de zero a cinco
+testes derivados da demanda e dos targets alterados. Cada item contém somente
+ID, instrução executável e resultado observável; o checklist não é persistido.
 
-Ajuda por ID apenas reapresenta o guia do passo e nao altera bytes, status ou
-gates. O usuario confirma de forma agregada e inequivoca que ja testou e
-aprovou todos os itens aplicaveis do dashboard atual. Nao existe resultado,
-observacao, locator ou evidencia humana obrigatoria por teste. Falha ou blocker
-reportado persiste somente tipo, resumo livre curto, impacto e proxima acao, e
-bloqueia conclusao ate correcao externa e revalidacao. Com a atestacao valida e
-sem issue aberto, `loki-manual-qa` promove os gates humanos elegiveis e
-reconcilia LokiRunState, resultado v3, dashboard v3 e consistency v2; a
-consistency e publicada por ultimo como marcador da transacao.
+Ajuda por ID apenas detalha o item e nao altera bytes, status ou gates. O
+usuario confirma de forma agregada e inequivoca que ja testou e aprovou o
+checklist aplicavel. Não existe sessão, resultado, atestação ou evidência humana
+por teste persistida. Falha ou blocker retorna um prompt copiável para
+`loki-feedback`; ambiguidade, silêncio, ajuda e intenção futura fazem zero
+writes. Com aprovação clara, `loki-manual-qa` promove os gates humanos e
+reconcilia LokiRunState v4, resultado v4, dashboard v4 e consistency v3; a
+consistency é publicada por último como marcador da transação.
 
 Status persistidos sao `running`, `awaiting-manual-qa`, `completed`,
 `completed-with-limitations`, `partial`, `failed` e `cancelled`.
@@ -290,7 +287,7 @@ checkpoint invalidado ou replay incompleto permanece nao terminal.
 | Finding/reteste | Write Test Agent independente |
 | Auditoria material de fronteira due | Auditor independente de todos os Writers e primary validators cobertos |
 | Resposta de correcao e learned record opcional | Writer aplicavel |
-| Catalogo/dashboard, interacao, atestacao, promocao de gates humanos e reconciliacao terminal de estado/result/dashboard/consistency | `loki-manual-qa` |
+| Checklist efêmero, interação, promoção de gates humanos e reconciliação terminal de estado/result/dashboard/consistency | `loki-manual-qa` |
 | Execution knowledge entry | `execution-knowledge-cataloger` |
 
 Estado `.loki/analytic-inference/v2/` e `consumer-operational-state`, nao docs e
@@ -303,7 +300,7 @@ targets exatos, validators e approvals root-bound aplicaveis. `catalogador` e
 | Artefato | Papel |
 | --- | --- |
 | `loki-implement-feature` | Entrada publica unica para planejar e implementar demanda + analise Markdown. |
-| `loki-manual-qa` | QA manual pos-implementacao de um plano em `awaiting-manual-qa`; deriva catalogo/dashboard completos, aceita atestacao agregada e executa a promocao terminal restrita. |
+| `loki-manual-qa` | QA manual pos-implementacao de um plano em `awaiting-manual-qa`; mostra checklist efêmero, aceita aprovação agregada e executa a promoção terminal restrita sem artefatos administrativos de sessão. |
 | `lf-implement-feature-execution` | Autoridade reutilizavel de estado, DAG, preflight, validation cycles, retry, resume e terminal truth. |
 | `lf-action-plan-authoring` | Mantem o plano com fases, tasks, dependencias, targets, validators e gates. |
 | `lf-domain-context-preflight` | Seleciona contexto duradouro minimo do dominio sem autorizar escrita. |
@@ -312,10 +309,8 @@ targets exatos, validators e approvals root-bound aplicaveis. `catalogador` e
 
 `execution-context-reader` extrai contexto local read-only da demanda, analise,
 estado e task. `source-researcher` trata lacunas multi-fonte de planejamento ou
-replanejamento. `runtime-qa` propoe guias concretos para as fontes que
-`loki-manual-qa` enumerou, sem derivar o catalogo final, observar runtime,
-coletar atestacao ou promover status. Skills tecnicas entram somente quando a
-evidencia e a task exigem uma tecnologia concreta.
+replanejamento. Skills tecnicas entram somente quando a evidencia e a task
+exigem uma tecnologia concreta.
 
 ## Gates e paradas
 
@@ -341,8 +336,8 @@ Outra pessoa ou LLM consegue retomar somente pelo disco e descobrir: run e
 execution IDs, demanda e analise, plano/DAG, fase/task atual, target decisions,
 owners, preflights, ACs, validators, cycles, retries, arquivos alterados,
 evidence, gates, blockers, riscos, handoff de QA manual e proxima acao. No ramo
-manual, o disco tambem distingue o plano ainda `awaiting-manual-qa` do overlay
-final reconciliado por `loki-manual-qa`.
+manual, o disco distingue o plano ainda `awaiting-manual-qa` do conjunto
+terminal mínimo reconciliado por `loki-manual-qa`.
 
 ## Captura de evidencia ao concluir
 

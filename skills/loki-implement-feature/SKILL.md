@@ -4,7 +4,7 @@ description: Plan and implement a software or game feature from a non-empty dema
 doc_id: "loki-implement-feature"
 version: "2.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Public provider-neutral unified feature planning and implementation command"
 not_scope: "Technical-analysis authoring, package installation, consumer-specific technology rules, or compatibility with superseded commands or schemas"
 authority: "Approved Loki package policy, inherited validated restrictions, and this current command bundle"

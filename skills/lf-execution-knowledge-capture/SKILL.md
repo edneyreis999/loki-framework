@@ -4,7 +4,6 @@ description: Capture provider-neutral execution knowledge from persisted sanitiz
 when_to_use:
   - "Use when loki-implement-feature reaches a checkpoint with material attempts, errors, recovery, validation, environment, handoff, liveness or state friction."
   - "Use when an orchestrator must reconcile captured, partial, failed, unsupported or skipped-nonmaterial knowledge state without waiting at final completion."
-  - "Use when loki-manual-qa persists a material administrative-schema-degraded admission and must lineage-bind it without blocking source cataloging."
 argument-hint: "[calling_workflow, run_directory, capture_id, persisted_source_refs, target_entry]"
 arguments:
   required: [calling_workflow, run_directory, capture_id, persisted_source_refs, target_entry]
@@ -32,7 +31,7 @@ paths:
 shell: bash
 type: skill
 status: draft
-used_by: [loki-implement-feature, loki-manual-qa, execution-knowledge-cataloger]
+used_by: [loki-implement-feature, execution-knowledge-cataloger]
 ---
 
 # lf-execution-knowledge-capture
@@ -46,9 +45,8 @@ completion/evidence records and never copies their snapshots.
 
 ## Procedure
 
-1. At the normal task/agent checkpoint, or after a crash-safe manual-QA
-   administrative admission, persist the minimal sanitized completion/evidence
-   envelope before any knowledge handoff.
+1. At the normal task/agent checkpoint, persist the minimal sanitized
+   completion/evidence envelope before any knowledge handoff.
 2. Evaluate materiality using the shared contract. Record a reason when the
    work is intentionally `skipped-nonmaterial`.
 3. When supported, invoke `execution-knowledge-cataloger` in parallel with an
@@ -64,11 +62,7 @@ completion/evidence records and never copies their snapshots.
 7. Leave every entry unpromoted. Only `loki-continuous-improvement` may
    deduplicate, review and promote a candidate.
 
-Accepted callers are `loki-implement-feature` and `loki-manual-qa`. The latter
-uses the validated `admission.json` as source type `build-report`, records
-`pending` before dispatch, and reconciles `captured`, `partial`, `failed` or
-`unsupported` plus `minimum_next_path` in the admission journal. The capture
-never authorizes attestation or terminal manual-QA promotion.
+The only accepted workflow caller is `loki-implement-feature`.
 
 Read [capture-contract.md](references/capture-contract.md) completely before
 creating, reconciling or validating an entry.

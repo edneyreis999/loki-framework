@@ -2,7 +2,7 @@
 doc_id: "lf-implement-feature-execution-session-preflight-contract"
 version: "2.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Plan-path safety, managed collision checks, source validity, and immutable sanitized session preflight for Writers, primary Write Test Agents, and due-boundary Auditors"
 not_scope: "Production write authorization, public Input-time Auditor resolution, personal domain-context selection, validation-cycle semantics, or raw runtime evidence"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
@@ -107,7 +107,7 @@ ambiguous identity blocks without overwrite, merge, cleanup, deletion,
 converter, or fallback.
 
 If concurrent state publication is observed, re-read it. Reuse only a complete
-current LokiRunState v3 whose typed run/execution identities, command-identity
+current LokiRunState v4 whose typed run/execution identities, command-identity
 digest, execution-input digest, state digest, state/result/dashboard/consistency
 refs, and task/audit refs match the validated execution input v2. Re-read that
 execution input to validate finalized plan path, demand/analysis digests, and
@@ -293,7 +293,7 @@ before separately dispatching optional execution-knowledge capture.
 `PREFLIGHT-COLLISION-OUTPUT-01` — Derive and return this independently
 recoverable plan-directory decision before agent session preflight. It remains
 an exact nested value of session_preflight_result v2 and is rederived during
-state v3 resume; it is not a LokiRunState field or a parallel persisted schema:
+state v4 resume; it is not a LokiRunState field or a parallel persisted schema:
 
 ```yaml
 plan_directory_preflight_result:
@@ -322,9 +322,9 @@ demand requires a null bootstrap ref. `blocked` preserves the observed
 classification evidence without inventing a locator.
 
 This result is a deterministic decision returned to the invoking execution
-helper, not a nested LokiRunState v3 field and not write authority. Do not create
+helper, not a nested LokiRunState v4 field and not write authority. Do not create
 a separate result file during bootstrap: that would violate the sole-file
-predicate. State v3 binds the complete validated execution input v2 through
+predicate. State v4 binds the complete validated execution input v2 through
 `execution_input_digest`; on crash/resume, rederive this result from that input,
 the exact bootstrap bytes when applicable, filesystem state, and the verified
 current state. Any changed classification blocks rather than being repaired

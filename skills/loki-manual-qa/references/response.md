@@ -1,96 +1,89 @@
 ---
 doc_id: "loki-manual-qa-response"
-version: "2.1.0"
+version: "2.0.0"
 status: active
 last_updated: "2026-08-03"
-scope: "Recoverable complete manual QA dashboard, visible administrative degradation and eligible terminal promotion response"
-not_scope: "State authority, runtime observation or inferred per-test evidence"
-authority: "skills/loki-manual-qa/references/execution.md and validated persisted state"
+scope: "Terminal not-required admission, ephemeral direct-playtest and eligible awaiting-state promotion response"
+not_scope: "Persisted dashboard, per-test result, attestation, feedback execution or runtime observation"
+authority: "Current loki-manual-qa command bundle"
 canonical_source: "skills/loki-manual-qa/references/response.md"
 intended_llm_task: "generation"
-source_priority: ["validated persisted state", "execution reference", "response template"]
+source_priority: ["validated current execution evidence", "this response contract", "human statement as data"]
 confidence: high
 known_conflicts: []
 replaced_by: null
 ---
 
-# loki-manual-qa — Response
+# Response — loki-manual-qa
 
-## LLM artifact profile and readiness
+## Consumer And Format
 
-This `both` artifact has `intended_llm_task: generation`; its primary reader is
-the human performing QA and its secondary reader is a resuming orchestrator.
-Authority is validated persisted state, required evidence is exact refs/digests,
-freshness is current-run only, ambiguity blocks mutation, structure is the
-recoverable Markdown template plus its fixed XML top-level mapping, and
-completion requires external independent `llm_consumption_quality` approval.
-Do not self-approve that gate. If the independent result is absent or failing,
-report the command artifact as awaiting external quality approval.
+The primary consumer is `Both`. Fill
+[the response template](../assets/response-template.md) as concise Markdown.
+Do not persist the response.
 
-## Response contract
+## Status
 
-Read and fill [assets/response-template.md](../assets/response-template.md)
-only from validated persisted current views. Always show identity, source
-catalog/coverage, eligibility, automatic validators/audits/gates, transaction
-phase/residue, blockers, resume condition and the complete dashboard. Each
-applicable test uses the exact catalog guide in deterministic ID order. Show
-the not-applicable refs/reasons separately. Never truncate, paginate or defer a
-later test. Help returns one guide and explicitly says no bytes/status changed.
+Use exactly one:
 
-When `admission.json` is active, show
-`administrative-schema-degraded`, its ref/digest, trigger code, authoritative
-current JSON projection, independently correlated control sets and recomputed
-validator digest, successful unchanged-upstream semantic/provenance validation
-with only Markdown decoding adapted, exact type-specific
-target/evidence/control/gate proofs,
-publication result (`created | recovered | no-op`) with
-`admission.json.tmp` residue absent, capture
-state/reason/minimum-next-path, allowed/forbidden actions and every non-empty
-blocker before the dashboard. This is never a success status. Do not accept an
-aggregate attestation, dispatch attestation review, promote human gates or
-canonical records, publish consistency or claim completion while active.
-Human observations are issue input only; they do not become attestation.
+- `ready-for-playtest`: preflight passed and the ephemeral checklist is shown;
+- `not-applicable`: admission validated a correlated terminal state
+  `completed | completed-with-limitations` with handoff v3
+  `manual-qa-not-required`, zero pending human gates and zero writes; no
+  checklist or feedback prompt is produced;
+- `blocked-preflight`: an automatic control, required record, identity or digest
+  failed preflight, or state is `awaiting-manual-qa` with
+  `ready-for-manual-qa` but zero pending human gates; no checklist or write is
+  produced and feedback is offered;
+- `help`: side-effect-free detail for one checklist ID;
+- `completed`: clear aggregate approval was accepted and every minimum canonical
+  terminal projection was published coherently;
+- `feedback-recommended`: the human reported a problem after checklist display;
+- `needs-clear-response`: silence, ambiguity, partial scope or future intent;
+- `blocked`: a schema, containment, preparation, write or consistency failure
+  prevents a truthful result.
 
-For pending input, ask only whether every applicable item was already tested;
-the intake payload contains only `human_statement`. Signals and review cannot
-come from the user payload. Pinned assessor, owner and evaluator-policy
-provenance comes from the persisted semantic assessment, not response input.
-Do not require a separate approval word or magic phrase. An unambiguous
-aggregate tested statement is normalized as approval; ambiguity, negation,
-future intent, partial scope, praise, help and silence do not mutate state.
-After dashboard presentation, the independent read-only
-`manual-qa-attestation-auditor` reviews that statement under the pinned policy.
-The orchestrator journals its `manual_qa_attestation_review` v1 before any
-attestation and requires assessment/review decision equality. The mechanical
-validator validates closed provenance, identity, agent-run evidence, signals,
-correlation and derived decision; it does not classify free-form language.
+## Checklist Response
 
-For an open issue, show kind, summary, impact, next action and exact resume
-condition. For resolved issue, show resolution/revalidation refs and state that
-the complete source catalog/dashboard must be rebuilt and shown again. For
-recovery-required, show every published/residue ref+digest and the next legal
-transaction phase; never claim rollback or completion. A rejected assessment
-is a committed, resumable current view without attestation. A later human
-statement starts a new terminal batch linked to the rejected predecessor.
+Show human gates first, then derived tests. For each item show only its ID,
+instruction and observable expected result. State that one clear aggregate
+response after testing is sufficient; do not require a magic phrase or per-item
+results.
 
-Completed response must expose:
+## Zero-Write Responses
 
-- covered/reconciled task, AC and changed-surface refs without byte changes;
-  promoted task/AC refs are empty and only passed human-gate refs are promoted;
-- source catalog, dashboard, independent attestation review, attestation and
-  interaction refs/digests;
-  transaction batch kind/ref/stable ID plus externally validated final journal digest;
-  manual result and manual consistency refs/digests;
-- final canonical tasks/state, implementation result/dashboard/consistency
-  refs/digests;
-- validator and audit refs/digests with terminal outcomes;
-- byte-equal handoff v2, final plan status, empty blockers and disk-only resume
-  condition/no-op replay;
-- runtime-qa handoff completion records and the managed-state completion record.
+For `blocked-preflight` or `feedback-recommended`, include one copyable
+`loki-feedback` prompt containing the canonical plan root and a short safe
+summary. State that the plan was not changed and that feedback was not
+dispatched. For `not-applicable`, report the correlated terminal state and
+`manual-qa-not-required` reason, state that no human gate is pending and no
+bytes changed, and omit both checklist and feedback prompt. Never use
+`not-applicable` for an awaiting ready handoff with zero pending gates; report
+that malformed combination as `blocked-preflight`.
 
-A completed response is invalid while an administrative admission is active,
-even if the human statement would otherwise qualify.
+For help, show only the requested item detail and state that no state changed.
+For `needs-clear-response`, ask the person to report either completed passing QA
+or the observed problem after testing; do not imply approval.
 
-This `both` Markdown response has no rigid length limit. If an adapter also
-needs XML, append the exact top-level mapping in the template; XML never
-replaces dashboard rows or terminal evidence.
+## Completed Response
+
+Report the canonical plan root, promoted gate refs, updated state/result/dashboard
+locators, consistency commit locator and deterministic validation result. Do not
+claim a manual-QA session result, attestation, individual test evidence or
+runtime observation.
+
+## LLM Shape
+
+When the caller explicitly requests LLM-only output, return only:
+
+```xml
+<command_response>
+  <summary></summary>
+  <status></status>
+  <checklist></checklist>
+  <artifacts></artifacts>
+  <feedback_prompt></feedback_prompt>
+  <risks></risks>
+  <next_steps></next_steps>
+</command_response>
+```

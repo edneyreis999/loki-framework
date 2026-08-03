@@ -218,22 +218,6 @@ agentic_agent_metadata:
     risk_tags: ["source-integrity", "batch-coverage", "untrusted-data"]
     parallel_safe: true
     technology_skill_routes: []
-  runtime-qa:
-    capability_tags: ["manual-qa-source-proposal", "source-applicability", "reproduction-guide"]
-    phase_roles: ["manual-qa-source-proposal"]
-    agentic_modes: ["read-only", "proposal"]
-    write_classes: []
-    risk_tags: ["source-integrity", "human-validation"]
-    parallel_safe: true
-    technology_skill_routes: []
-  manual-qa-attestation-auditor:
-    capability_tags: ["manual-qa-attestation-review", "semantic-attestation-judgment", "independent-review"]
-    phase_roles: ["manual-qa-attestation-review"]
-    agentic_modes: ["read-only", "proposal"]
-    write_classes: []
-    risk_tags: ["human-validation", "semantic-ambiguity", "independent-review"]
-    parallel_safe: false
-    technology_skill_routes: []
   execution-context-reader:
     capability_tags: ["context-extraction", "source-map", "preflight"]
     phase_roles: ["analysis", "execution-context"]
@@ -499,11 +483,11 @@ scripts:
   - name: "validate-implement-feature-contracts"
     file: "scripts/validate-implement-feature-contracts.py"
     status: draft
-    purpose: "Validate only command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v3, consistency packet v2, task_validation v1 and execution metrics v1, including due-boundary coverage, full replay, liveness and measurement-only cost policy."
+    purpose: "Validate only command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v4, consistency packet v3, gate record v3, task_validation v1, execution metrics v1 and manual-QA handoff v3, including due-boundary coverage, full replay, liveness and measurement-only cost policy."
   - name: "validate-manual-qa-contracts"
     file: "scripts/validate-manual-qa-contracts.py"
     status: draft
-    purpose: "Validate current-only manual-QA handoff, closed administrative-schema-degraded admission, exact split-root administrative Markdown and derived YAML controls, explicit current-byte semantic/provenance correlation without invented legacy records, exclusive atomic admission publication, source guides, attestation review, crash recovery, terminal consistency, drift and adversarial fixtures."
+    purpose: "Validate current-only manual-QA handoff v3, execution-input drift, automatic evidence, pending human gates, ephemeral checklist derivation, direct aggregate response classification, zero-write routes, restricted consistency-last terminal promotion and rejection of superseded administrative/session forms."
   - name: "validate-llm-artifact-precheck"
     file: "scripts/validate-llm-artifact-precheck.py"
     status: draft
@@ -645,7 +629,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
   - name: "loki-manual-qa"
     file: "skills/loki-manual-qa/SKILL.md"
     status: active
@@ -656,7 +640,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["manual-qa-handoff-v2", "manual-qa-admission-v1", "manual-qa-source-v1", "manual-qa-source-catalog-v1", "runtime-qa-source-proposal-v1", "manual-qa-transaction-v1", "manual-qa-semantic-assessment-v1", "manual-qa-attestation-review-v1", "agent-session-evidence-v1", "manual-qa-dashboard-v1", "manual-qa-step-v1", "manual-qa-attestation-v1", "manual-qa-report-v1", "manual-qa-interaction-v1", "manual-qa-result-v1", "manual-qa-consistency-v1"]
+    current_contracts: ["manual-qa-handoff-v3", "manual-qa-interaction-ephemeral", "gate-record-v3", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3"]
   - name: "lf-agent-execution-evidence"
     file: "skills/lf-agent-execution-evidence/SKILL.md"
     status: draft
@@ -676,7 +660,7 @@ skills:
   - name: "lf-implement-feature-execution"
     file: "skills/lf-implement-feature-execution/SKILL.md"
     status: active
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v3", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
   - name: "lf-domain-context-preflight"
     file: "skills/lf-domain-context-preflight/SKILL.md"
     status: draft
@@ -874,16 +858,6 @@ agents:
     status: draft-read-only
     project_tags:
       - "core"
-  - name: "runtime-qa"
-    file: "agents/runtime-qa.md"
-    status: draft-read-only
-    project_tags:
-      - "core"
-  - name: "manual-qa-attestation-auditor"
-    file: "agents/manual-qa-attestation-auditor.md"
-    status: draft-read-only
-    project_tags:
-      - "core"
   - name: "execution-context-reader"
     file: "agents/execution-context-reader.md"
     status: draft-read-only
@@ -1013,14 +987,6 @@ codex_agents:
     file: "codex/agents/execution-context-reader.toml"
     source_agent: "agents/execution-context-reader.md"
     status: draft-derived
-  - name: "runtime-qa"
-    file: "codex/agents/runtime-qa.toml"
-    source_agent: "agents/runtime-qa.md"
-    status: draft-derived
-  - name: "manual-qa-attestation-auditor"
-    file: "codex/agents/manual-qa-attestation-auditor.toml"
-    source_agent: "agents/manual-qa-attestation-auditor.md"
-    status: draft-derived
   - name: "retrospective-digester"
     file: "codex/agents/retrospective-digester.toml"
     source_agent: "agents/retrospective-digester.md"
@@ -1116,11 +1082,10 @@ templates:
   - name: "tasks-template"
     file: "templates/tasks-template.md"
     status: draft
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v3", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v3", "dashboard-v3", "implement-feature-consistency-v2", "task-validation-v1", "gate-record-v2", "execution-metrics-v1", "manual-qa-handoff-v2"]
+    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v4", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
   - name: "task-template"
     file: "templates/task-template.md"
     status: draft
-    current_contracts: ["gate-record-v2"]
   - name: "technical-analysis-template"
     file: "templates/technical-analysis-template.md"
     status: draft

@@ -1,184 +1,58 @@
 {
   "schema_version": 1,
-  "fixture_group": "input-path-and-preflight",
   "cases": [
     {
-      "id": "matrix-01-empty-demand",
-      "matrix": true,
-      "scenario": "Empty demand",
-      "rule": "demand",
-      "expect": "reject",
-      "error": "DEMAND_EMPTY",
-      "payload": {"kind": "inline", "valid_utf8": true, "content": "", "classification_source": "explicit-caller-or-adapter"}
-    },
-    {
-      "id": "matrix-02-invalid-analysis",
-      "matrix": true,
-      "scenario": "Missing/unreadable/non-Markdown analysis",
-      "rule": "analysis",
-      "expect": "reject",
-      "error": "ANALYSIS_INVALID",
-      "payload": {"exists": false, "readable": false, "regular": false, "nonempty": false, "path": "analysis.txt"}
-    },
-    {
-      "id": "matrix-03-material-contradiction",
-      "matrix": true,
-      "scenario": "Material contradiction",
-      "rule": "contradiction",
-      "expect": "reject",
-      "error": "MATERIAL_CONTRADICTION",
-      "payload": {"material": true, "source_refs": ["demand#line-1", "analysis.md#restriction"]}
-    },
-    {
-      "id": "matrix-04-inferred-target",
-      "matrix": true,
-      "scenario": "Target inferred beyond explicit demand",
-      "rule": "target",
-      "expect": "accept",
-      "payload": {
-        "target": "src/inferred.py",
-        "planned_targets": ["src/inferred.py"],
-        "inferred": true,
-        "decision": {"rationale": "required integration", "demand_or_ac_relation": "AC-4", "evidence": "analysis.md#integration", "impact": "adds route", "validator": "pytest route"}
+      "id": "execution-input-path-current",
+      "validator": "execution-input",
+      "accept": true,
+      "input": {
+        "schema_version": 2,
+        "command_identity": {
+          "schema_version": 2,
+          "command": "loki-implement-feature",
+          "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "analysis_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "plan_directory": "planos/p",
+          "retry_limit": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
+        },
+        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "demand_kind": "path",
+        "demand_ref": "demands/feature.txt",
+        "analysis_ref": "analysis/feature.md",
+        "state_ref": "planos/p/tasks.md",
+        "result_ref": "planos/p/builds/result.json",
+        "dashboard_ref": "planos/p/builds/dashboard.json",
+        "consistency_packet_ref": "planos/p/builds/consistency.json"
       }
     },
     {
-      "id": "matrix-05-unplanned-target",
-      "matrix": true,
-      "scenario": "Target absent from validated plan",
-      "rule": "target",
-      "expect": "reject",
-      "error": "TARGET_UNPLANNED",
-      "payload": {"target": "src/unplanned.py", "planned_targets": ["src/planned.py"], "inferred": false, "bytes_unchanged_on_rejection": true}
-    },
-    {
-      "id": "matrix-06-unsafe-plan-path",
-      "matrix": true,
-      "scenario": "Absolute/traversing/backslash/symlink plan path",
-      "rule": "plan-path",
-      "expect": "reject",
-      "error": "PLAN_PATH_UNSAFE",
-      "payload": {"path": "/tmp/escape", "symlink_ancestor": false, "destination_symlink": false, "canonical_contained": false, "base_usable": true}
-    },
-    {
-      "id": "matrix-07-source-only-cold-start",
-      "matrix": true,
-      "scenario": "Source-only valid plan directory",
-      "rule": "plan-directory",
-      "expect": "accept",
-      "payload": {"mode": "cold-start", "managed_entries": [], "source_entries": ["technical-analysis.md"], "create_exclusive": true}
-    },
-    {
-      "id": "matrix-08-managed-collision",
-      "matrix": true,
-      "scenario": "Managed plan collision",
-      "rule": "plan-directory",
-      "expect": "reject",
-      "error": "RESUME_STATE_MISSING",
-      "payload": {"mode": "resume", "authoritative_state": false, "matching_identity": false, "matching_input_digests": false}
-    },
-    {
-      "id": "matrix-11-new-preflight",
-      "matrix": true,
-      "scenario": "New preflight",
-      "rule": "preflight",
-      "expect": "accept",
-      "payload": {"event": "created", "locator": "preflights/run-0123456789abcdef0123456789abcdef/writer/preflight-v1.md", "digest": "sha256:preflight", "agent_name_path": "writer", "run_path_id": "run-0123456789abcdef0123456789abcdef"}
-    },
-    {
-      "id": "matrix-12-reused-preflight",
-      "matrix": true,
-      "scenario": "Reused preflight",
-      "rule": "preflight",
-      "expect": "accept",
-      "payload": {"event": "reused", "locator": "preflights/run-0123456789abcdef0123456789abcdef/writer/preflight-v1.md", "digest": "sha256:preflight", "agent_name_path": "writer", "run_path_id": "run-0123456789abcdef0123456789abcdef", "new_record": false, "coverage_contained": true, "sources_valid": true}
-    },
-    {
-      "id": "matrix-13-refreshed-preflight",
-      "matrix": true,
-      "scenario": "Stale/expanded preflight",
-      "rule": "preflight",
-      "expect": "accept",
-      "payload": {"event": "refreshed", "locator": "preflights/run-0123456789abcdef0123456789abcdef/writer/preflight-v2.md", "digest": "sha256:preflight-v2", "agent_name_path": "writer", "run_path_id": "run-0123456789abcdef0123456789abcdef", "old_immutable": true, "old_version": 1, "new_version": 2}
-    },
-    {
-      "id": "matrix-14-sensitive-preflight",
-      "matrix": true,
-      "scenario": "Raw/private/secret preflight content",
-      "rule": "preflight",
-      "expect": "reject",
-      "error": "PREFLIGHT_CONTENT_SENSITIVE",
-      "payload": {"event": "created", "locator": "preflights/run-0123456789abcdef0123456789abcdef/writer/preflight-v1.md", "digest": "sha256:preflight", "agent_name_path": "writer", "run_path_id": "run-0123456789abcdef0123456789abcdef", "summary": "raw transcript: private chain-of-thought"}
-    },
-    {
-      "id": "matrix-15-unsafe-agent-identity",
-      "matrix": true,
-      "scenario": "Unsafe agent/run path identity",
-      "rule": "preflight",
-      "expect": "reject",
-      "error": "PREFLIGHT_PATH_UNSAFE",
-      "payload": {"event": "created", "locator": "preflights/escape", "digest": "sha256:x", "agent_name_path": "../writer", "run_path_id": "run-0123456789abcdef0123456789abcdef"}
-    },
-    {
-      "id": "matrix-16-concurrent-preflight",
-      "matrix": true,
-      "scenario": "Concurrent preflight publication",
-      "rule": "preflight",
-      "expect": "accept",
-      "payload": {"event": "published", "locator": "preflights/run-0123456789abcdef0123456789abcdef/writer/preflight-v2.md", "digest": "sha256:winner", "agent_name_path": "writer", "run_path_id": "run-0123456789abcdef0123456789abcdef", "overwrite": false, "identical_reused": true, "different_digest_next_version": true}
-    },
-    {
-      "id": "matrix-17-writer-conflict",
-      "matrix": true,
-      "scenario": "Writer conflict",
-      "rule": "ownership",
-      "expect": "reject",
-      "error": "WRITER_CONFLICT",
-      "payload": {"owners": ["writer-a", "writer-b"], "serialized": false}
-    },
-    {
-      "id": "invalid-demand-kind",
-      "matrix": false,
-      "scenario": "Demand kind discrimination rejects unknown kinds",
-      "rule": "demand",
-      "expect": "reject",
-      "error": "DEMAND_KIND_INVALID",
-      "payload": {"kind": "guess", "valid_utf8": true, "content": "feature", "classification_source": "explicit-caller-or-adapter"}
-    },
-    {
-      "id": "invalid-demand-utf8",
-      "matrix": false,
-      "scenario": "Demand bytes must decode as UTF-8",
-      "rule": "demand",
-      "expect": "reject",
-      "error": "DEMAND_UTF8_INVALID",
-      "payload": {"kind": "path", "valid_utf8": false, "content": "invalid bytes", "readable_regular_file": true, "classification_source": "explicit-caller-or-adapter"}
-    },
-    {
-      "id": "valid-demand-explicit-path",
-      "matrix": false,
-      "scenario": "Explicit caller or adapter kind deterministically selects path interpretation",
-      "rule": "demand",
-      "expect": "accept",
-      "payload": {"kind": "path", "valid_utf8": true, "content": "implement feature", "readable_regular_file": true, "classification_source": "explicit-caller-or-adapter"}
-    },
-    {
-      "id": "ambiguous-demand-kind",
-      "matrix": false,
-      "scenario": "Filesystem appearance cannot establish demand kind",
-      "rule": "demand",
-      "expect": "reject",
-      "error": "DEMAND_KIND_AMBIGUOUS",
-      "payload": {"kind": "path", "valid_utf8": true, "content": "looks/like/a/path.md", "readable_regular_file": true, "classification_source": "filesystem-guess"}
-    },
-    {
-      "id": "planos-root-is-not-plan-directory",
-      "matrix": false,
-      "scenario": "The planos container itself is not a plan directory",
-      "rule": "plan-path",
-      "expect": "reject",
-      "error": "PLAN_PATH_UNSAFE",
-      "payload": {"path": "planos", "symlink_ancestor": false, "destination_symlink": false, "canonical_contained": true, "base_usable": true}
+      "id": "execution-input-inline-ref-rejected",
+      "validator": "execution-input",
+      "accept": false,
+      "error": "EXECUTION_INPUT_INLINE_REF_INVALID",
+      "input": {
+        "schema_version": 2,
+        "command_identity": {
+          "schema_version": 2,
+          "command": "loki-implement-feature",
+          "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "analysis_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "plan_directory": "planos/p",
+          "retry_limit": 3,
+          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
+        },
+        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "demand_kind": "inline",
+        "demand_ref": "demands/feature.txt",
+        "analysis_ref": "analysis/feature.md",
+        "state_ref": "planos/p/tasks.md",
+        "result_ref": "planos/p/builds/result.json",
+        "dashboard_ref": "planos/p/builds/dashboard.json",
+        "consistency_packet_ref": "planos/p/builds/consistency.json"
+      }
     }
   ]
 }

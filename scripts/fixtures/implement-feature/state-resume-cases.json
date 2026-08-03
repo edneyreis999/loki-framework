@@ -1,198 +1,36 @@
 {
   "schema_version": 1,
-  "fixture_group": "state-resume-and-task",
   "cases": [
+    {"id": "state-v4-canonical", "validator": "state", "factory": "state", "mutation": "none", "accept": true},
+    {"id": "state-v4-extra-field", "validator": "state", "factory": "state", "mutation": "state:extra-field", "accept": false, "error": "STATE_SHAPE_INVALID"},
+    {"id": "state-v4-missing-command-identity-digest", "validator": "state", "factory": "state", "mutation": "state:remove-command_identity_digest", "accept": false, "error": "STATE_SHAPE_INVALID"},
     {
-      "id": "matrix-09-valid-resume",
-      "matrix": true,
-      "scenario": "Valid resume",
-      "rule": "resume",
-      "expect": "accept",
-      "payload": {"state_schema_version": 3, "source": "persisted-files", "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+      "id": "handoff-input-digest-required", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_SHAPE_INVALID",
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}
     },
     {
-      "id": "matrix-10-corrupt-state",
-      "matrix": true,
-      "scenario": "Corrupt state",
-      "rule": "resume",
-      "expect": "reject",
-      "error": "RESUME_SELF_ATTESTATION_FORBIDDEN",
-      "payload": {"state_schema_version": 3, "source": "persisted-files", "state_digest_valid": false, "duplicate_production_writes": 0, "duplicate_preflights": 0, "duplicate_cycles": 0, "chat_reconstruction": false}
+      "id": "handoff-input-byte-drift", "validator": "handoff-input-bytes", "accept": false, "error": "MANUAL_QA_HANDOFF_INPUT_DIGEST_MISMATCH",
+      "input": {"handoff": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}, "execution_input_text": "{\"schema_version\":2}"}
     },
     {
-      "id": "matrix-18-task-missing-ac",
-      "matrix": true,
-      "scenario": "Task without acceptance criterion",
-      "rule": "task",
-      "expect": "reject",
-      "error": "TASK_AC_MISSING",
-      "payload": {"acceptance_criteria": [], "primary_route": {"type": "deterministic", "validator_ref": "test"}, "status": "pending"}
+      "id": "handoff-consumer-target-positive", "validator": "handoff", "accept": true,
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}
     },
     {
-      "id": "matrix-19-task-missing-route",
-      "matrix": true,
-      "scenario": "Task without validation route",
-      "rule": "task",
-      "expect": "reject",
-      "error": "TASK_ROUTE_MISSING",
-      "payload": {"acceptance_criteria": [{"id": "AC-1", "statement": "observable"}], "primary_route": {}, "status": "pending"}
+      "id": "handoff-consumer-target-traversal", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["../src/app.py"], "reason": null}
     },
     {
-      "id": "matrix-20-deterministic-validation",
-      "matrix": true,
-      "scenario": "Deterministic validation",
-      "rule": "deterministic-validation",
-      "expect": "accept",
-      "payload": {"command": "python3 validator.py", "result": "passed", "acceptance_criterion_refs": ["task.md#AC-1"], "evidence_refs": ["builds/task-validator.json"]}
+      "id": "handoff-consumer-target-absolute", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["/src/app.py"], "reason": null}
     },
     {
-      "id": "reject-command-identity-v1",
-      "matrix": false,
-      "scenario": "Command identity v1 is superseded",
-      "rule": "current-schema",
-      "expect": "reject",
-      "error": "COMMAND-IDENTITY_SCHEMA_SUPERSEDED",
-      "payload": {"artifact": "command-identity", "schema_version": 1}
+      "id": "handoff-consumer-target-backslash", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src\\app.py"], "reason": null}
     },
     {
-      "id": "reject-execution-input-v1",
-      "matrix": false,
-      "scenario": "Execution input v1 is superseded",
-      "rule": "current-schema",
-      "expect": "reject",
-      "error": "EXECUTION-INPUT_SCHEMA_SUPERSEDED",
-      "payload": {"artifact": "execution-input", "schema_version": 1}
-    },
-    {
-      "id": "reject-state-v2",
-      "matrix": false,
-      "scenario": "LokiRunState v2 is superseded",
-      "rule": "current-schema",
-      "expect": "reject",
-      "error": "STATE_SCHEMA_SUPERSEDED",
-      "payload": {"artifact": "state", "schema_version": 2}
-    },
-    {
-      "id": "reject-result-v2",
-      "matrix": false,
-      "scenario": "Execution result v2 is superseded",
-      "rule": "current-schema",
-      "expect": "reject",
-      "error": "RESULT_SCHEMA_SUPERSEDED",
-      "payload": {"artifact": "result", "schema_version": 2}
-    },
-    {
-      "id": "reject-consistency-v1",
-      "matrix": false,
-      "scenario": "Consistency packet v1 is superseded",
-      "rule": "current-schema",
-      "expect": "reject",
-      "error": "CONSISTENCY_SCHEMA_SUPERSEDED",
-      "payload": {"artifact": "consistency", "schema_version": 1}
-    },
-    {
-      "id": "audit-frequency-default-phase",
-      "matrix": false,
-      "scenario": "Absent audit frequency normalizes to phase/default without dispatch",
-      "rule": "audit-configuration",
-      "expect": "accept",
-      "payload": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
-    },
-    {
-      "id": "audit-frequency-explicit-task",
-      "matrix": false,
-      "scenario": "Explicit task audit frequency is current",
-      "rule": "audit-configuration",
-      "expect": "accept",
-      "payload": {"schema_version": 1, "frequency": "task", "source": "explicit", "policy_digest": "sha256:25878123df6e39de62537b0bb4e3617d1e596d1326cfece150078ab12c1d04fc"}
-    },
-    {
-      "id": "audit-frequency-explicit-plan",
-      "matrix": false,
-      "scenario": "Explicit plan audit frequency is current",
-      "rule": "audit-configuration",
-      "expect": "accept",
-      "payload": {"schema_version": 1, "frequency": "plan", "source": "explicit", "policy_digest": "sha256:a06cd4221eb61a8e544fdee497cb91f9b92b3d5d590259c37f86a2a50501bd26"}
-    },
-    {
-      "id": "audit-frequency-alias-rejected",
-      "matrix": false,
-      "scenario": "Localized audit frequency aliases are rejected",
-      "rule": "audit-configuration",
-      "expect": "reject",
-      "error": "AUDIT_FREQUENCY_INVALID",
-      "payload": {"schema_version": 1, "frequency": "fase", "source": "explicit", "policy_digest": "sha256:285796c03a29636b45bfbdacee44de3111e85b34191a281579cd8a45c756ce7f"}
-    },
-    {
-      "id": "audit-checkpoint-current",
-      "matrix": false,
-      "scenario": "Audit checkpoint v1 preserves coverage and independent identity",
-      "rule": "audit-checkpoint",
-      "expect": "accept",
-      "payload": {
-        "schema_version": 1,
-        "audit_id": "execution-audit-v1:0b36e6bf99181e7e752c2601e9fb579a4ed4426de70df5d00ba810a377a1e781",
-        "run_id": "loki-run-v2:1111111111111111111111111111111111111111111111111111111111111111",
-        "execution_id": "loki-execution-v2:2222222222222222222222222222222222222222222222222222222222222222",
-        "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78",
-        "frequency": "phase",
-        "boundary_type": "phase",
-        "boundary_ref": "phase:fase1",
-        "iteration": 0,
-        "predecessor_audit_ref": null,
-        "replay": false,
-        "replay_cause": null,
-        "membership_refs": ["planos/run/task-1.md"],
-        "coverage_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "covered_handoff_refs": ["evidence/handoff.json"],
-        "covered_target_digests": ["src/a.py=sha256:4444444444444444444444444444444444444444444444444444444444444444"],
-        "primary_validation_refs": ["evidence/validator.json"],
-        "final_validator_refs": ["evidence/final.json"],
-        "auditor_identity": "auditor:independent",
-        "writer_identities": ["writer:task-1"],
-        "auditor_run_refs": ["evidence/auditor.log"],
-        "finding_refs": [],
-        "correction_refs": [],
-        "evidence_refs": ["evidence/audit.log"],
-        "status": "approved",
-        "next_action": "continue"
-      }
-    },
-    {
-      "id": "audit-checkpoint-writer-is-auditor",
-      "matrix": false,
-      "scenario": "A Writer cannot independently audit its own boundary",
-      "rule": "audit-checkpoint",
-      "expect": "reject",
-      "error": "AUDIT_CHECKPOINT_NOT_INDEPENDENT",
-      "payload": {
-        "schema_version": 1,
-        "audit_id": "execution-audit-v1:0b36e6bf99181e7e752c2601e9fb579a4ed4426de70df5d00ba810a377a1e781",
-        "run_id": "loki-run-v2:1111111111111111111111111111111111111111111111111111111111111111",
-        "execution_id": "loki-execution-v2:2222222222222222222222222222222222222222222222222222222222222222",
-        "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78",
-        "frequency": "phase",
-        "boundary_type": "phase",
-        "boundary_ref": "phase:fase1",
-        "iteration": 0,
-        "predecessor_audit_ref": null,
-        "replay": false,
-        "replay_cause": null,
-        "membership_refs": ["planos/run/task-1.md"],
-        "coverage_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-        "covered_handoff_refs": ["evidence/handoff.json"],
-        "covered_target_digests": ["src/a.py=sha256:4444444444444444444444444444444444444444444444444444444444444444"],
-        "primary_validation_refs": ["evidence/validator.json"],
-        "final_validator_refs": ["evidence/final.json"],
-        "auditor_identity": "writer:task-1",
-        "writer_identities": ["writer:task-1"],
-        "auditor_run_refs": ["evidence/auditor.log"],
-        "finding_refs": [],
-        "correction_refs": [],
-        "evidence_refs": ["evidence/audit.log"],
-        "status": "approved",
-        "next_action": "continue"
-      }
+      "id": "handoff-consumer-target-fragment", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
+      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py#fragment"], "reason": null}
     }
   ]
 }

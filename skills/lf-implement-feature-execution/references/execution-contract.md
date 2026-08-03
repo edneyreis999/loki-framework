@@ -2,7 +2,7 @@
 doc_id: "lf-implement-feature-execution-execution-contract"
 version: "3.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Current unified execution identity/input, audit-boundary scheduling, state, hierarchical execution metrics, plan artifacts, target decisions, ownership, liveness, cancellation, resume, and terminal projection"
 not_scope: "Public command inputs, session-preflight record internals, validation-cycle record internals, installation, or superseded execution contracts"
 authority: "skills/lf-implement-feature-execution/SKILL.md and this current contract"
@@ -23,9 +23,9 @@ replaced_by: null
 
 <summary>
 Define the only current command identity v2, execution input v2, audit
-configuration v1, LokiRunState v3, execution_audit_checkpoint v1,
-execution_metrics v1, gate record v2, implement_feature_execution_result v3,
-consistency packet v2, managed layout, DAG/boundary schedulers, and terminal
+configuration v1, LokiRunState v4, execution_audit_checkpoint v1,
+execution_metrics v1, gate record v3, implement_feature_execution_result v4,
+consistency packet v3, managed layout, DAG/boundary schedulers, and terminal
 projection.
 </summary>
 
@@ -98,9 +98,9 @@ execution_input:
   demand_ref: "<readable locator>"
   analysis_ref: "<readable non-empty Markdown locator>"
   state_ref: "<normalized tasks.md locator>"
-  result_ref: "<normalized result v3 locator>"
-  dashboard_ref: "<normalized dashboard locator>"
-  consistency_packet_ref: "<normalized consistency v2 locator>"
+  result_ref: "<normalized result v4 locator>"
+  dashboard_ref: "<normalized dashboard v4 locator>"
+  consistency_packet_ref: "<normalized consistency v3 locator>"
 ```
 
 All keys at both levels are required and extra keys fail closed. `retry_limit`
@@ -441,13 +441,13 @@ threshold. The dashboard reports resources and cost only from these proven
 categories; monetary cost is unavailable unless a separately proven pricing
 source and scope exist.
 
-## LokiRunState v3
+## LokiRunState v4
 
 `EXEC-STATE-01` — Persist exactly one plan-level current state with every key:
 
 ```yaml
 loki_run_state:
-  schema_version: 3
+  schema_version: 4
   run_id: "loki-run-v2:<64 lowercase hex>"
   execution_id: "loki-execution-v2:<64 lowercase hex>"
   command_identity_digest: "sha256:<64 lowercase hex>"
@@ -462,11 +462,11 @@ loki_run_state:
   gate_refs: []
   gate_digests: []
   audit_checkpoint_refs: []
-  result_ref: "<result v3 locator>"
+  result_ref: "<result v4 locator>"
   dashboard_ref: "<dashboard locator>"
-  consistency_packet_ref: "<consistency v2 locator>"
+  consistency_packet_ref: "<consistency v3 locator>"
   terminal_evidence_refs: []
-  manual_qa_handoff: "<closed manual_qa_handoff v2 mapping>"
+  manual_qa_handoff: "<closed manual_qa_handoff v3 mapping>"
   execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
   execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
   execution_metrics_status: "complete | partial | unavailable"
@@ -495,7 +495,7 @@ cycle, terminal evidence, or audit checkpoint.
 `EXEC-STATE-02` — Before any resume or dispatch, validate the state
 `audit_configuration` as the exact closed four-field v1 mapping, recompute its
 policy digest, and require exact equality with command identity v2/execution
-input v2, result v3, dashboard v3, and consistency packet v2. An absent or
+input v2, result v4, dashboard v4, and consistency packet v3. An absent or
 extra state field, missing/extra/malformed configuration field, or divergent
 frequency, source, or policy digest blocks. Transitive-only acceptance through
 `command_identity_digest` is forbidden.
@@ -504,7 +504,7 @@ frequency, source, or policy digest blocks. Transitive-only acceptance through
 `gate_refs` equals every task gate ref in task order then local declared order,
 without duplicates. `gate_digests` has the same length/order and contains the
 SHA-256 digest of each gate record's exact current bytes. Every locator resolves
-only gate record v2. Feature execution owns automatic outcomes and pending human
+only gate record v3. Feature execution owns automatic outcomes and pending human
 gates; `loki-manual-qa` may change the digest projection only through the
 restricted pending-human-gate promotion and terminal transaction below.
 `audit_checkpoint_refs` equals exactly the latest active checkpoint for each
@@ -539,7 +539,7 @@ global stop unless it invalidates the overall result or state integrity.
 | Loki package targets | approved framework-artifact-writer |
 | Cycle finding/retest record | independent primary Write Test Agent |
 | Cycle writer response | applicable Write Agent |
-| Automatic gate record v2 and pending human-validation gate initialization | invoking orchestrator from validated gate evidence/plan |
+| Automatic gate record v3 and pending human-validation gate initialization | invoking orchestrator from validated gate evidence/plan |
 | Pending-to-passed human-validation gate promotion and correlated terminal projection | `loki-manual-qa` only, under `EXEC-MANUAL-QA-TXN-01` |
 | Optional resolved learned record | applicable Write Agent |
 | Audit checkpoint content/result | applicable independent Auditor; orchestrator publishes the derived immutable envelope/path |
@@ -603,7 +603,7 @@ authority cannot create this record or stop dispatch.
 
 `EXEC-RESUME-01` — Resume exclusively from disk:
 
-1. Revalidate command identity v2, execution input v2, path safety, state v3
+1. Revalidate command identity v2, execution input v2, path safety, state v4
    digest, the complete direct state `audit_configuration` and its exact parity
    with identity/input/result/dashboard/consistency, source digests,
    plan-directory classification evidence, DAG, target decisions, owner
@@ -632,7 +632,7 @@ then automatic approval and its closed manual-QA decision.
 | Status | Required meaning |
 | --- | --- |
 | `awaiting-manual-qa` | Every required task/AC/final validator and automatic gate passed, every expected audit boundary is approved or not-applicable, and at least one exact human-validation gate remains pending under a ready handoff. This is not completion. |
-| `completed` | Either no manual QA was required after full automatic approval, or `loki-manual-qa` completed the restricted transaction and every eligible human-validation gate now has the correlated aggregate attestation. |
+| `completed` | Either no manual QA was required after full automatic approval, or `loki-manual-qa` completed the restricted consistency-last transaction and every eligible human-validation gate is now passed. |
 | `completed-with-limitations` | No manual QA is required; every required AC/automatic gate/audit boundary passed and only optional soft failures or proven non-worsened pre-existing failures remain. |
 | `partial` | Useful validated units remain trustworthy and resumable, but required scope is unresolved. |
 | `failed` | No useful result remains trustworthy, the failure invalidates the whole result, or state/evidence integrity is unrecoverable. |
@@ -642,8 +642,8 @@ An unmet required AC, validator, automatic gate, or due audit boundary cannot
 map to `awaiting-manual-qa` or completion. Feature execution never accumulates
 or interprets human QA. When pending human-validation gates are the sole
 remaining material conditions, it persists `awaiting-manual-qa` and a
-`ready-for-manual-qa` handoff. `loki-manual-qa` owns their later attestation and
-the only transition to completed.
+`ready-for-manual-qa` handoff. `loki-manual-qa` owns their later direct human
+confirmation and the only transition to completed.
 
 `EXEC-MANUAL-QA-01` — Persist exactly one closed manual-QA projection in every
 state, result, dashboard, and consistency packet. Before successful technical
@@ -654,41 +654,34 @@ record a ready or not-required decision:
 
 ```yaml
 manual_qa_handoff:
-  schema_version: 2
+  schema_version: 3
   status: "manual-qa-not-evaluated | ready-for-manual-qa | manual-qa-not-required"
   run_id: "loki-run-v2:<64 lowercase hex>"
   execution_id: "loki-execution-v2:<64 lowercase hex>"
   plan_directory: "<normalized plan directory>"
+  execution_input_ref: "<current execution input v2 locator>"
+  execution_input_digest: "sha256:<exact current execution input bytes>"
   automatic_evidence_refs: []
-  manual_qa_result_ref: "<plan_directory>/builds/manual-qa/result.json"
-  manual_qa_attestation_ref: "<plan_directory>/interaction/manual-qa/<run_id>/attestation.json"
-  task_refs: []
-  acceptance_criterion_refs: []
-  gate_refs: []
+  pending_human_gate_refs: []
   changed_target_refs: []
   reason: "<null for ready-for-manual-qa; non-empty reason otherwise>"
 ```
 
-All thirteen keys are required and extra keys fail. The two manual locators are
-derived exactly from `plan_directory` and `run_id`, are reserved anchors rather
-than existence claims, and are identical in state, result, dashboard, and
-consistency. They intentionally carry no digest because no later overlay bytes
-exist for the implementation command to prove. `loki-manual-qa` may publish its
-current result and aggregate attestation only at those destinations and records
-their exact-byte digests in its own result/consistency. Separately, only under
-`EXEC-MANUAL-QA-TXN-01`, it may rewrite the eligible human-validation gate
-records and only the terminal-promotion fields and dependent canonical digests
-required in implementation state, result, dashboard, and consistency. It must
-not change the complete handoff v2, automatic evidence or its digests, source
-arrays, task/AC results, target bytes, validator/audit/metrics projections, or
-any field or asset outside that restricted promotion.
-Its own current consistency record reconciles the immutable handoff locator to
-the published manual result and attestation. `task_refs` is exact state task
-order; `acceptance_criterion_refs` is task order then declared AC order;
-`gate_refs` is exact state gate order; and `changed_target_refs` is first
-occurrence order across the correlated completed Writer handoffs' target
-digests. These source arrays are duplicate-free, resolve current records, and
-remain unchanged during manual reconciliation. `automatic_evidence_refs` is
+All eleven keys are required and extra keys fail. `execution_input_ref` equals
+the current execution input v2 locator and `execution_input_digest` equals its
+exact current bytes. Both fields are identical in state, result, dashboard, and
+consistency; drift blocks before the checklist. `pending_human_gate_refs`
+contains exactly the pending human-validation gate locators in state gate
+order, and `changed_target_refs` is first-occurrence order across completed
+Writer handoffs. The arrays are duplicate-free, resolve current records, and
+remain unchanged during manual reconciliation. The handoff contains no manual
+result, attestation, review, session, dashboard, catalog, transaction, or
+per-test evidence locator. Only under `EXEC-MANUAL-QA-TXN-01`,
+`loki-manual-qa` may rewrite the eligible human gate records and the
+terminal-promotion fields plus dependent canonical digests in state, result,
+dashboard, and consistency. It must not change handoff v3, automatic evidence,
+execution input, task/AC results, target bytes, validator/audit/metrics
+projections, or any field outside that promotion. `automatic_evidence_refs` is
 the exact ordered automatic terminal-evidence projection. It may be empty only
 for `manual-qa-not-evaluated`; both ready and not-required require it non-empty.
 A ready handoff uses `reason: null`; both other statuses have a non-empty
@@ -709,16 +702,17 @@ steps or consumes a human declaration.
 together with direct completion. It cannot publish ready plus completed or pass
 a human-validation gate. The ready handoff and every automatic evidence/source
 array become immutable eligibility authority for the manual command. No
-compatibility reader accepts handoff v1 or gate record v1.
+compatibility reader accepts older handoff or gate schemas.
 
 `EXEC-MANUAL-QA-TXN-01` — `loki-manual-qa` is the sole owner of the restricted
 current transition `awaiting-manual-qa -> completed`. Immediately before it,
-revalidate the exact ready handoff, aggregate attestation, unchanged automatic
-evidence, task/AC/gate/changed-target sources, target bytes, validators and
-audits. Compute the complete desired bytes and digests for exactly: every
-eligible pending human-validation gate record v2, the LokiRunState block in
-`tasks.md`, implementation result v3, dashboard v3, and consistency v2. Gate
-identity/statement/evidence and the complete handoff remain unchanged.
+revalidate the exact ready handoff, current execution input bytes/digest,
+unchanged automatic evidence, pending-gate and changed-target sources, target
+bytes, validators and audits. Compute the complete desired bytes and digests
+for exactly: every eligible pending human-validation gate record v3, the
+LokiRunState v4 block in `tasks.md`, implementation result v4, dashboard v4,
+and consistency v3. Gate identity/instruction/expected/evidence and the
+complete handoff remain unchanged.
 
 Publish promoted human gates first, then `tasks.md`, result and dashboard, and
 publish consistency last as the commit marker. The final consistency recomputes
@@ -726,9 +720,9 @@ exact tasks/result/dashboard/gate byte digests and proves status `completed`
 across all four projections. A reader must reject completion unless that final
 packet validates; a partially published prefix is an incomplete transaction,
 never success. Replay may only finish or no-op the same transaction when the
-same attestation digest, handoff, automatic evidence, source arrays and desired
-bytes still correlate. Mixed/new authority, changed sources or a different
-attestation blocks without rollback, translation, or invented completion.
+same handoff, execution input, automatic evidence, pending gates, changed
+targets and desired bytes still correlate. Mixed/new authority or changed
+sources block without rollback, translation, or invented completion.
 
 ## Exact Execution Result And Dashboard
 
@@ -736,7 +730,7 @@ attestation blocks without rollback, translation, or invented completion.
 
 ```yaml
 implement_feature_execution_result:
-  schema_version: 3
+  schema_version: 4
   run_id: "loki-run-v2:<64 lowercase hex>"
   execution_id: "loki-execution-v2:<64 lowercase hex>"
   status: "running | awaiting-manual-qa | completed | completed-with-limitations | partial | failed | cancelled"
@@ -755,7 +749,7 @@ implement_feature_execution_result:
       evidence_refs: []
   final_validator_refs: []
   terminal_evidence_refs: []
-  manual_qa_handoff: "<closed manual_qa_handoff v2 mapping>"
+  manual_qa_handoff: "<closed manual_qa_handoff v3 mapping>"
   execution_metrics_ref: "<builds/metrics/execution-metrics.json or null only for total publication failure>"
   execution_metrics_digest: "<sha256:64-lowercase-hex or null only for total publication failure>"
   execution_metrics_status: "complete | partial | unavailable"
@@ -767,13 +761,13 @@ implement_feature_execution_result:
 All keys are required and extra keys fail. `task_results` is the exact task
 order and each row is derivable from task_validation v1. Audit configuration is
 byte-equivalent to command identity v2; checkpoint refs are the exact latest
-active expected-boundary refs from state v3. Compute `result_digest` as SHA-256
+active expected-boundary refs from state v4. Compute `result_digest` as SHA-256
 of canonical UTF-8 JSON of the complete mapping excluding `result_digest`.
 Metrics are an exact projection and cannot be repaired, combined, or converted
 to zero. Telemetry degradation does not alter functional `status`. No reader
 for a prior result shape exists.
 
-Dashboard v3 is the closed sibling projection with the same identity, status,
+Dashboard v4 is the closed sibling projection with the same identity, status,
 audit configuration, audit checkpoint refs, `gate_refs`, `gate_digests`, final
 validator refs, terminal evidence, handoff, metrics and next action. Its `tasks`
 rows contain exactly `task_ref` and persisted task status; `dashboard_digest`
@@ -785,14 +779,14 @@ validator over this exact closed schema:
 
 ```yaml
 implement_feature_consistency_packet:
-  schema_version: 2
+  schema_version: 3
   run_id: "loki-run-v2:<64 lowercase hex>"
   execution_id: "loki-execution-v2:<64 lowercase hex>"
   status: "running | awaiting-manual-qa | completed | completed-with-limitations | partial | failed | cancelled"
   audit_configuration: "<complete audit_configuration v1 mapping>"
   state_digest: "sha256:<64 lowercase hex>"
   tasks_md_digest: "sha256:<64 lowercase hex>"
-  result_ref: "<result v3 locator>"
+  result_ref: "<result v4 locator>"
   result_digest: "sha256:<exact result file bytes>"
   dashboard_ref: "<dashboard locator>"
   dashboard_digest: "sha256:<exact dashboard file bytes>"
@@ -804,20 +798,20 @@ implement_feature_consistency_packet:
   audit_checkpoint_digests: []
   terminal_evidence_refs: []
   terminal_evidence_digests: []
-  manual_qa_handoff: "<closed manual_qa_handoff v2 mapping>"
+  manual_qa_handoff: "<closed manual_qa_handoff v3 mapping>"
   validator_digest: "sha256:<64 lowercase hex>"
 ```
 
 All keys are required and extra keys fail. Recompute every referenced file
 digest from exact bytes. `validator_digest` is SHA-256 of canonical UTF-8 JSON
 mapping each normalized primary then final validator ref to its exact file-byte
-digest. Require exact equality across execution input v2, state v3, tasks,
-result v3, dashboard, metrics v1, terminal evidence, expected boundary order,
+digest. Require exact equality across execution input v2, state v4, tasks,
+result v4, dashboard v4, metrics v1, terminal evidence, expected boundary order,
 latest checkpoint refs/digests, audit configuration, typed identities, exact
 gate refs/digests/outcomes, functional status, metrics status/degradation, and
-`next_action`. Also require both manual-QA anchors to equal their deterministic
-paths even when overlay targets already exist; do not read them as technical
-completion evidence or backfill their later digests. Every terminal-success
+`next_action`. Also require the handoff execution-input ref/digest to match the
+current input and its pending-gate and changed-target refs to resolve in
+canonical order. Every terminal-success
 audit checkpoint is `approved` or
 `not-applicable`. Any divergence blocks response rendering and names conflicting
 locators. The packet is validation data, grants no write/status authority, and
@@ -838,9 +832,9 @@ The result carries exactly one closed manual-QA projection. A non-successful
 automatic run carries `manual-qa-not-evaluated`; `awaiting-manual-qa` carries
 `ready-for-manual-qa`; direct completion carries `manual-qa-not-required`.
 Completion after manual QA retains the ready handoff unchanged and is proven by
-passed human gate attestation pairs plus final consistency. It never embeds
+passed human gates plus final consistency. It never embeds
 manual steps or observations. Prose cannot override a contradiction between
-status, AC, required validator, gate, cancellation, attestation, or evidence.
+status, AC, required validator, gate, cancellation, or evidence.
 
 <examples>
 The examples are non-normative and grant no permission.

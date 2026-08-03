@@ -2,14 +2,14 @@
 doc_id: "loki-implement-feature-response-template"
 version: "3.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Complete recoverable Markdown skeleton for the loki-implement-feature terminal response"
 not_scope: "Execution authority, evidence creation, validator decisions, or status derivation"
 authority: "skills/loki-implement-feature/references/response.md and the validated persisted execution result"
 canonical_source: "skills/loki-implement-feature/assets/response-template.md"
 intended_llm_task: "generation"
 source_priority:
-  - "validated persisted command identity v2, execution input v2, LokiRunState v3, implement_feature_execution_result v3, dashboard v3, consistency packet v2, execution_audit_checkpoint v1, and execution_metrics v1"
+  - "validated persisted command identity v2, execution input v2, LokiRunState v4, implement_feature_execution_result v4, dashboard v4, consistency packet v3, execution_audit_checkpoint v1, and execution_metrics v1"
   - "skills/loki-implement-feature/references/response.md"
   - "this output skeleton"
 confidence: high
@@ -28,13 +28,13 @@ replaced_by: null
 - Run ID: `<typed run ID | unavailable + reason>`
 - Execution ID: `<typed execution ID>`
 - State: `<locator + sha256 digest>`
-- Result v3: `<locator + sha256 digest>`
-- Dashboard v3: `<locator + sha256 digest>`
-- Consistency v2: `<locator + sha256 digest + passed>`
+- Result v4: `<locator + sha256 digest>`
+- Dashboard v4: `<locator + sha256 digest>`
+- Consistency v3: `<locator + sha256 digest + passed>`
 - Audit configuration v1: `<schema_version=1 + frequency=task|phase|plan + source=default|explicit + policy_digest>`
 - Active audit checkpoints: `<ordered refs + digests or none because no boundary is due>`
 - Metrics: `<ref + sha256 digest + status/reason; or null/null + unavailable + explicit publication failure reason>`
-- Gate parity: `<ordered gate refs + exact byte digests + v2 kinds/statuses/attestation pairs>`
+- Gate parity: `<ordered gate refs + exact byte digests + v3 kinds/statuses/evidence relations>`
 
 When and only when response status is `needs-human-review`, include:
 
@@ -64,7 +64,7 @@ an uncorrelated source. Omit the entire block for every other response status.
 | `<task ref>` | `<completed/skipped-dependency/unresolved/cancelled/pending>` | `<task_validation locator + persisted status>` | `<refs or none>` | `<owner>` | `<paths or none>` | `<locators or unavailable + reason>` | `<action or none>` |
 
 Render only task rows derived from persisted task_validation v1. Do not invent a
-scope row, depend on fields absent from LokiRunState v3, or relabel a task.
+scope row, depend on fields absent from LokiRunState v4, or relabel a task.
 
 ## Audit boundaries and checkpoints
 
@@ -72,7 +72,7 @@ scope row, depend on fields absent from LokiRunState v3, or relabel a task.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `<type + ref>` | `<not-due/due/terminal>` | `<ordered task refs>` | `<material/no-material + evidence>` | `<latest active ref + digest or none + reason>` | `<approved/not-applicable/unavailable/finding/inconclusive/invalidated/not-due>` | `<Auditor identity/run refs differ from all Writer and primary-validator identities/lineages, or not-applicable reason>` | `<finding refs + correction refs or none>` | `<initial or full replay + predecessor ref + replay cause>` | `<coverage/validator/Auditor refs + next action>` |
 
-- Configuration parity: `<complete audit_configuration v1 equals command identity v2, execution input v2, state v3, result v3, dashboard v3 and consistency v2>`
+- Configuration parity: `<complete audit_configuration v1 equals command identity v2, execution input v2, state v4, result v4, dashboard v4 and consistency v3>`
 - Due-boundary terminal truth: `<every due boundary approved or not-applicable; otherwise exact unresolved boundary + effect on status>`
 - Active checkpoint order: `<exact scheduler order and state/result/dashboard/consistency parity>`
 - Invalidated checkpoints: `<predecessor -> correction refs -> replacement full replay ref, or none + reason>`
@@ -109,13 +109,13 @@ replayed deterministic/final-validator evidence; delta-only review is invalid.
 
 ## Gates
 
-| Gate ref/digest | Task | Kind | Statement | Status | Evidence | Attestation pair |
+| Gate ref/digest | Task | Kind | Instruction | Expected | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| `<locator + exact-byte digest>` | `<task ref>` | `<automatic|human-validation>` | `<persisted statement>` | `<pending|passed|failed>` | `<refs or none>` | `<null/null unless passed human gate; then exact ref/digest>` |
+| `<locator + exact-byte digest>` | `<task ref>` | `<automatic|human-validation>` | `<persisted instruction>` | `<observable result>` | `<pending|passed|not-applicable>` | `<automatic refs or none for human-validation>` |
 
-Reject gate record v1. `awaiting-manual-qa` requires all automatic gates passed
-and at least one human-validation gate pending. Completed plus a ready handoff
-requires those same human gates passed with the aggregate attestation.
+Reject older gate records. `awaiting-manual-qa` requires all automatic gates
+passed or not-applicable and at least one human-validation gate pending.
+Completed plus a ready handoff requires those same human gates passed.
 
 ## Validation cycles, severity, and retries
 
@@ -181,28 +181,28 @@ If none: `<No target was inferred beyond the explicit demand + evidence.>`
 
 ```yaml
 manual_qa_handoff:
-  schema_version: 2
+  schema_version: 3
   status: "<manual-qa-not-evaluated | ready-for-manual-qa | manual-qa-not-required>"
   run_id: "<loki-run-v2 identity>"
   execution_id: "<loki-execution-v2 identity>"
   plan_directory: "<normalized plan directory>"
+  execution_input_ref: "<current execution input v2 locator>"
+  execution_input_digest: "sha256:<exact current execution input bytes>"
   automatic_evidence_refs: ["<exact ordered terminal evidence locators; may be empty only when not evaluated>"]
-  manual_qa_result_ref: "<plan_directory>/builds/manual-qa/result.json"
-  manual_qa_attestation_ref: "<plan_directory>/interaction/manual-qa/<run_id>/attestation.json"
-  task_refs: ["<exact state task order>"]
-  acceptance_criterion_refs: ["<exact task order then AC order>"]
-  gate_refs: ["<exact state gate order>"]
+  pending_human_gate_refs: ["<exact pending human-validation gate order>"]
   changed_target_refs: ["<first-occurrence changed target paths from completed Writer handoffs>"]
   reason: "<null when ready; non-empty reason when not evaluated or not required>"
 ```
 
-This is the exact persisted closed current-only v2 projection, not a test
-dashboard. The overlay refs are deterministic reserved destinations, not claims
-that files or digests already exist. Ready is paired with
+This is the exact persisted closed current-only v3 projection, not a test
+dashboard. The execution-input locator and digest must resolve the current
+bytes. Ready is paired with
 `awaiting-manual-qa`, never direct completion. `loki-manual-qa` is the sole
-owner of manual-test steps, aggregate attestation, eligible human-gate
+owner of the ephemeral checklist, clear aggregate approval, eligible human-gate
 promotion, and the restricted completed transaction; the handoff itself and
-automatic evidence/source arrays remain unchanged.
+automatic evidence/source arrays remain unchanged. No manual-QA result,
+attestation, review, session, dashboard, catalog, transaction, or per-test
+evidence artifact is created.
 
 ## Evidence and handoffs
 
@@ -217,7 +217,7 @@ automatic evidence/source arrays remain unchanged.
 
 - Blockers: `<items + minimum next input or none>`
 - Residual risks: `<items + evidence or none>`
-- Manual-QA handoff: `<manual-qa-not-evaluated + reason | ready-for-manual-qa + identity/evidence/overlay refs | manual-qa-not-required + reason>`
+- Manual-QA handoff: `<manual-qa-not-evaluated + reason | ready-for-manual-qa + identity/input/evidence/pending-gate/target refs | manual-qa-not-required + reason>`
 
 ## Resume and next steps
 

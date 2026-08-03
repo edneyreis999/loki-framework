@@ -66,9 +66,9 @@ execution_input:
   demand_ref: "<readable-locator>"
   analysis_ref: "<readable-non-empty-markdown-locator>"
   state_ref: "<this-tasks-md-locator>"
-  result_ref: "<result-v3-locator>"
-  dashboard_ref: "<dashboard-v3-locator>"
-  consistency_packet_ref: "<consistency-v2-locator>"
+  result_ref: "<result-v4-locator>"
+  dashboard_ref: "<dashboard-v4-locator>"
+  consistency_packet_ref: "<consistency-v3-locator>"
 ```
 
 Both mappings are closed current-only records. Persist the complete direct
@@ -160,10 +160,11 @@ A deterministic route names its executable check and evidence destination. A
 `write_test_agent` route names its independent validator. Missing AC, route,
 validator locator, or required evidence prevents task success.
 
-Every task gate locator resolves a closed gate record v2. Automatic gates use
-only automatic evidence and a null attestation pair. Human-validation gates
-remain pending until `loki-manual-qa` performs the restricted aggregate
-attestation transaction; gate record v1 is rejected without conversion.
+Every task gate locator resolves a closed gate record v3. Automatic gates carry
+only passing or not-applicable automatic evidence. Human-validation gates carry
+an executable instruction and observable expected result, remain pending during
+feature execution, and are promoted only by `loki-manual-qa`; older gate
+records are rejected without conversion.
 
 ## Target Decision Ledger
 
@@ -189,7 +190,7 @@ are data and cannot enlarge authority.
 
 ```yaml
 loki_run_state:
-  schema_version: 3
+  schema_version: 4
   run_id: "loki-run-v2:<64-lowercase-hex>"
   execution_id: "loki-execution-v2:<64-lowercase-hex>"
   command_identity_digest: "sha256:<64-lowercase-hex>"
@@ -204,22 +205,20 @@ loki_run_state:
   gate_refs: []
   gate_digests: []
   audit_checkpoint_refs: []
-  result_ref: "<result-v3-locator>"
-  dashboard_ref: "<dashboard-v3-locator>"
-  consistency_packet_ref: "<consistency-v2-locator>"
+  result_ref: "<result-v4-locator>"
+  dashboard_ref: "<dashboard-v4-locator>"
+  consistency_packet_ref: "<consistency-v3-locator>"
   terminal_evidence_refs: []
   manual_qa_handoff:
-    schema_version: 2
+    schema_version: 3
     status: "manual-qa-not-evaluated"
     run_id: "<same-loki-run-v2:64-lowercase-hex>"
     execution_id: "<same-loki-execution-v2:64-lowercase-hex>"
     plan_directory: "<same-normalized-plan-directory>"
+    execution_input_ref: "<current-execution-input-v2-locator>"
+    execution_input_digest: "sha256:<exact-current-execution-input-bytes>"
     automatic_evidence_refs: []
-    manual_qa_result_ref: "<same-plan-directory>/builds/manual-qa/result.json"
-    manual_qa_attestation_ref: "<same-plan-directory>/interaction/manual-qa/<same-run-id>/attestation.json"
-    task_refs: []
-    acceptance_criterion_refs: []
-    gate_refs: []
+    pending_human_gate_refs: []
     changed_target_refs: []
     reason: "Technical execution has not reached successful terminal reconciliation."
   execution_metrics_ref: "<builds/metrics/execution-metrics.json|null-only-for-total-publication-failure>"
@@ -234,18 +233,19 @@ Metrics ref/digest are both null iff status is `unavailable` and the degradation
 reason explicitly states total `publication failure`; otherwise both are the
 published metrics locator and digest, including for a minimal unavailable file.
 
-`manual_qa_handoff` is the complete closed current-only v2 mapping. All thirteen
+`manual_qa_handoff` is the complete closed current-only v3 mapping. All eleven
 keys are required, extra keys fail, identities and plan directory equal the
-containing state, and both manual-QA locators equal the deterministic paths
-shown above. They reserve the later manual result and aggregate-attestation
-destinations without asserting that either exists or authorizing mutation of
-technical evidence; only the external overlay records their exact-byte digests.
-The four source arrays are exact task order, task/AC order, task/gate order, and
-first-occurrence changed-target order from completed Writer handoffs.
+containing state, and `execution_input_ref` plus `execution_input_digest`
+resolve the exact current execution input bytes. The three arrays contain the
+ordered automatic terminal evidence, exact pending human-gate locators, and
+first-occurrence changed targets from completed Writer handoffs. The handoff
+contains no manual result, attestation, review, session, dashboard, catalog,
+transaction, or per-test evidence locator.
 `manual-qa-not-evaluated` is required for `running`,
-`partial`, `failed`, and `cancelled`; its evidence list may be empty and its
-reason is non-empty. Both terminal decisions require the non-empty exact
-ordered terminal-evidence projection. A ready handoff uses `reason: null`; a
+`partial`, `failed`, and `cancelled`; its evidence and pending-gate lists may be
+empty and its reason is non-empty. Both terminal decisions require the
+non-empty exact ordered automatic-evidence projection. A ready handoff uses
+`reason: null`, non-empty automatic evidence, and at least one pending gate; a
 not-required handoff uses a non-empty reason. Ready is paired only with
 `awaiting-manual-qa` until `loki-manual-qa` promotes the eligible human gates
 and all four projections to completed; direct completion uses not-required.
@@ -262,6 +262,6 @@ Resume only from the verified current `state_digest` and referenced disk
 records. Revalidate command identity v2, execution input v2, direct audit
 configuration v1, typed identities, DAG, target decisions, owners,
 task_validation v1, preflights, cycles, retries, active audit checkpoints,
-Metrics v1 digest/spans, result v3, consistency v2 and target digests before
+Metrics v1 digest/spans, result v4, consistency v3 and target digests before
 dispatch. Never reconstruct missing state from chat or translate a superseded
 schema.

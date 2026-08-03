@@ -46,9 +46,9 @@ Fluxos principais:
 - `loki-implement-feature`: caminho publico direto de demanda + analise
   Markdown para plano persistido, implementacao autonoma, validacao por task,
   e handoff estruturado para QA manual quando ele for material.
-- `loki-manual-qa`: QA manual pós-implementação com dashboard completo,
-  ajuda por ID sem mutacao e atestacao humana agregada, sem resultado ou
-  evidencia humana por teste.
+- `loki-manual-qa`: QA manual pós-implementação com checklist efêmero,
+  ajuda por ID sem mutacao e aprovação humana agregada, sem sessão, resultado,
+  atestação ou evidencia humana por teste persistida.
 - `loki-deep-research`: pesquisa profunda na internet com fontes citadas,
   verificacao cruzada, contradicoes e handoff para analise ou plano.
 - `loki-continuous-improvement`: recebe fontes aprovadas ou um plano completo,
@@ -93,20 +93,21 @@ Findings minor nao consomem o budget e cedem o scheduler entre ciclos.
 A resposta final deriva status, units, targets alterados e inferidos, ACs e
 evidencias, validators, retries, riscos e resume. Quando QA humano material e a
 unica condicao restante, a implementacao persiste `awaiting-manual-qa` —
-explicitamente nao concluido — junto do handoff v2
+explicitamente nao concluido — junto do handoff v3
 `ready-for-manual-qa`. Quando QA manual nao e material, conclui depois dos
 gates tecnicos com `manual-qa-not-required` e motivo nao vazio.
 
 Somente `loki-manual-qa` promove `awaiting-manual-qa` para `completed`. Ele
-revalida o plano, deriva um catalogo exaustivo de criterios de aceite, gates
-humanos e superficies alteradas, e mostra todos os testes aplicaveis com
-ambiente, precondicoes, estado inicial, acoes concretas, resultado esperado,
-sinais, cleanup e limite de automacao. Ajuda por ID nao altera bytes ou status.
+revalida o estado e o handoff, mostra primeiro todos os gates humanos pendentes
+e pode acrescentar até cinco testes derivados da demanda e dos targets
+alterados. O checklist existe apenas na resposta. Ajuda por ID nao altera bytes
+ou status.
 O gate humano aceita uma confirmacao inequivoca de que todos os itens
 aplicaveis foram testados e aprovados; nao coleta resultado ou evidencia por
-teste. Falha ou blocker registra somente tipo, resumo curto, impacto e proxima
-acao. Depois da atestacao, o comando reconcilia gates humanos, estado,
-resultado, dashboard e consistency antes de declarar conclusao.
+teste. Falha ou blocker recomenda um prompt copiável para `loki-feedback`, sem
+persistir ou despachar feedback. Depois da aprovação clara, o comando promove
+os gates humanos e publica estado, resultado e dashboard, com consistency por
+último; não cria artefato administrativo de QA manual.
 
 Este e um contrato current-only: nao ha alias, wrapper, conversor, fallback ou
 segunda autoridade publica para formatos e comandos substituidos.
@@ -317,7 +318,7 @@ status e modo aplicado antes de qualquer remocao manual.
 Rollback simples:
 
 ```bash
-rm -f .claude/agents/standards-curator.md .claude/agents/retrospective-digester.md .claude/agents/runtime-qa.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
+rm -f .claude/agents/standards-curator.md .claude/agents/retrospective-digester.md .claude/agents/execution-context-reader.md .claude/agents/source-researcher.md .claude/agents/technical-implementer.md .claude/agents/bibliotecario.md .claude/agents/catalogador.md
 rm -rf .claude/skills/loki-feedback .claude/skills/loki-enrich-tasks .claude/skills/loki-implement-feature .claude/skills/lf-implement-feature-execution .claude/skills/loki-retrospectiva-tecnica .claude/skills/lf-command-creator .claude/skills/lf-agent-creator .claude/skills/lf-skill-creator .claude/skills/lf-index-navigator .claude/skills/lf-tech-analysis-authoring .claude/skills/lf-action-plan-authoring .claude/skills/rpg-maker-mz-data-json .claude/skills/rpg-maker-mz-plugin-workflow
 ```
 

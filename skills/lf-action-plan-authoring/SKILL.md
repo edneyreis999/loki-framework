@@ -4,7 +4,7 @@ description: Create or review executable Loki action plans from a validated dema
 doc_id: "lf-action-plan-authoring"
 version: "1.0.0"
 status: active
-last_updated: "2026-07-24"
+last_updated: "2026-08-03"
 scope: "Current action-plan materialization inside unified feature execution"
 not_scope: "Public input routing, production writes or compatibility planning"
 authority: "Approved decisions and current lf-implement-feature-execution contracts"
@@ -90,10 +90,10 @@ an unresolved material conflict instead of inventing precedence.
    invent a second directory approval.
 5. Generate `tasks.md`, one `task-N.M.md` per task, phase subfolders under
    `interaction/`, `builds/`, and `retrospetivas/`, and the current plan-level
-   DAG, target-decision ledger and exact `loki_run_state` v3. Persist the
+   DAG, target-decision ledger and exact `loki_run_state` v4. Persist the
    command identity v2, execution input v2, complete direct audit configuration
-   v1, active audit checkpoint refs, result v3 locator, dashboard locator and
-   consistency packet v2 locator without compatibility fields. Add
+   v1, active audit checkpoint refs, result v4 locator, dashboard v4 locator and
+   consistency packet v3 locator without compatibility fields. Add
    `preflights/` before agent dispatch and create
    `execution-knowledge/entries/` only when optional non-blocking capture
    applies.
@@ -135,6 +135,6 @@ The final plan must let `loki-implement-feature` resume from verified disk state
 without conversation memory. Include command identity v2, execution input v2,
 direct audit configuration v1, typed identities, DAG, target decisions, next
 action, human validation, owners, target files, ACs, exactly one validation
-route per task, audit checkpoint/evidence/cycle locators, result v3 and
-consistency v2 locators, and the current state digest in the files themselves.
+route per task, audit checkpoint/evidence/cycle locators, result v4 and
+consistency v3 locators, and the current state digest in the files themselves.
 Preserve Metrics v1 and task_validation v1 unchanged.
