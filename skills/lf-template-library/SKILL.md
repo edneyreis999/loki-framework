@@ -103,9 +103,10 @@ inspection mirror.
 4. Preserve required headings, frontmatter fields, validators, gates, and resume
    information unless the user explicitly changes the contract.
 5. For action plans created inside unified feature execution, preserve the
-   current `lf-implement-feature-execution` DAG, target-decision,
-   `task_validation`, validation-cycle, and `loki_run_state` schemas. Do not
-   translate or emit a superseded planning or execution schema.
+   current `lf-implement-feature-execution` immutable DAG, target-decision,
+   `task_validation`, closed execution-policy limits, audit boundaries and
+   canonical execution-state v1 authority. The templates never copy mutable
+   progress or emit another planning/execution form.
 
 ## Limits
 

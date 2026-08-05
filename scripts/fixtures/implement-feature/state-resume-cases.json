@@ -1,36 +1,26 @@
 {
   "schema_version": 1,
   "cases": [
-    {"id": "state-v4-canonical", "validator": "state", "factory": "state", "mutation": "none", "accept": true},
-    {"id": "state-v4-extra-field", "validator": "state", "factory": "state", "mutation": "state:extra-field", "accept": false, "error": "STATE_SHAPE_INVALID"},
-    {"id": "state-v4-missing-command-identity-digest", "validator": "state", "factory": "state", "mutation": "state:remove-command_identity_digest", "accept": false, "error": "STATE_SHAPE_INVALID"},
-    {
-      "id": "handoff-input-digest-required", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_SHAPE_INVALID",
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}
-    },
-    {
-      "id": "handoff-input-byte-drift", "validator": "handoff-input-bytes", "accept": false, "error": "MANUAL_QA_HANDOFF_INPUT_DIGEST_MISMATCH",
-      "input": {"handoff": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}, "execution_input_text": "{\"schema_version\":2}"}
-    },
-    {
-      "id": "handoff-consumer-target-positive", "validator": "handoff", "accept": true,
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py"], "reason": null}
-    },
-    {
-      "id": "handoff-consumer-target-traversal", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["../src/app.py"], "reason": null}
-    },
-    {
-      "id": "handoff-consumer-target-absolute", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["/src/app.py"], "reason": null}
-    },
-    {
-      "id": "handoff-consumer-target-backslash", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src\\app.py"], "reason": null}
-    },
-    {
-      "id": "handoff-consumer-target-fragment", "validator": "handoff", "accept": false, "error": "MANUAL_QA_HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "plan_directory": "planos/p", "execution_input_ref": "planos/p/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "automatic_evidence_refs": ["planos/p/builds/automatic.json"], "pending_human_gate_refs": ["planos/p/task-1.md#gate:g1"], "changed_target_refs": ["src/app.py#fragment"], "reason": null}
-    }
+    {"id": "interrupt-after-handoff", "last_operation": "record_dispatch", "expected_resume_data": ["handoff_id", "agent_label", "called_at", "status"]},
+    {"id": "interrupt-after-task", "last_operation": "commit_task_phase", "expected_resume_data": ["task.status", "task.validation", "last_compact_transition"]},
+    {"id": "interrupt-after-phase", "last_operation": "commit_task_phase", "expected_resume_data": ["phase.status", "phase.result", "last_compact_transition"]},
+    {"id": "resume-renders-before-effects", "order": ["validate-state", "validate-plan", "render-resume", "preflight", "dispatch-or-write"]},
+    {"id": "stale-revision-zero-write", "expected_error": "REVISION_CAS_MISMATCH", "expected_writes": 0},
+    {"id": "exact-replay-zero-write", "expected_status": "replayed", "expected_writes": 0},
+    {"id": "terminal-state-immutable", "expected_error": "TERMINAL_STATE_IMMUTABLE", "expected_writes": 0},
+    {"id": "all-operations-exact-replay", "expected_operation_count": 14, "expected_writes_per_replay": 0},
+    {"id": "all-operations-changed-request-conflict", "expected_operation_count": 14, "expected_error": "TRANSITION_REPLAY_CONFLICT", "expected_writes": 0},
+    {"id": "initialize-changed-task-set-conflict", "expected_error": "TRANSITION_REPLAY_CONFLICT", "expected_writes": 0},
+    {"id": "replan-existing-task-spec-exact-replay", "expected_writes_per_replay": 0},
+    {"id": "replan-existing-task-spec-mismatch-zero-write", "fields": ["required", "phase_ref", "validator_ref"], "expected_error": "REPLAN_EXISTING_TASK_SPEC_MISMATCH", "expected_writes": 0},
+    {"id": "replan-existing-task-spec-changed-replay-conflict", "fields": ["required", "phase_ref", "validator_ref"], "expected_error": "TRANSITION_REPLAY_CONFLICT", "expected_writes": 0},
+    {"id": "commit-task-no-pending-verified-exact-replay", "desired_targets_verified": true, "expected_writes_per_replay": 0},
+    {"id": "commit-task-no-pending-unverified-zero-write", "desired_targets_verified": false, "expected_error": "DESIRED_TARGETS_NOT_VERIFIED", "expected_writes": 0},
+    {"id": "commit-task-no-pending-changed-replay-conflict", "changed_field": "desired_targets_verified", "changed_value": false, "expected_error": "TRANSITION_REPLAY_CONFLICT", "expected_writes": 0},
+    {"id": "commit-task-pending-verified-exact-replay", "desired_targets_verified": true, "expected_writes_per_replay": 0},
+    {"id": "commit-task-pending-unverified-zero-write", "desired_targets_verified": false, "expected_error": "DESIRED_TARGETS_NOT_VERIFIED", "expected_writes": 0},
+    {"id": "qa-complete-pending-gate-set", "pending_gate_refs": ["gate-a", "gate-b"], "submitted_gate_refs": ["gate-a", "gate-b"], "accept": true},
+    {"id": "qa-incomplete-pending-gate-set", "pending_gate_refs": ["gate-a", "gate-b"], "submitted_gate_refs": ["gate-a"], "accept": false, "error": "QA_APPLICABLE_GATE_SET_MISMATCH"},
+    {"id": "terminal-pending-human-gate-rejected", "pending_gate_refs": ["gate-a"], "error": "TERMINAL_WITH_PENDING_HUMAN_GATE", "expected_writes": 0}
   ]
 }

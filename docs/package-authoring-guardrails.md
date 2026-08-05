@@ -342,6 +342,21 @@ Ao auditar uma referencia fora do pacote, classifique antes de editar:
 
 ## Validacoes Minimas
 
+### Paridade pré-auditoria de contratos
+
+Antes de entregar uma mudança material do pacote ao Auditor independente,
+valide todas as relações aplicáveis entre a fonte normativa e seus consumidores
+mecânicos:
+
+- campos condicionais devem coincidir entre contrato, validator e fixtures;
+- cada contrato de resposta deve referenciar explicitamente seu asset de
+  renderização quando esse asset existir;
+- workflows LLM-facing devem expor como valores recuperáveis tanto o destino
+  nominal quanto o destino bloqueante.
+
+Uma relação inexistente ou não aplicável deve ser registrada como tal; ela não
+autoriza inventar um par, omitir outro par material ou substituir o audit
+independente. Falha de paridade retorna ao Writer antes do audit.
 ### Qualidade de artefatos para consumo por LLM
 
 Classifique a aplicabilidade LLM-facing separadamente do modo documental e

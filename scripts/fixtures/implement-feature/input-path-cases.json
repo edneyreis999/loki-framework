@@ -1,58 +1,14 @@
 {
   "schema_version": 1,
   "cases": [
-    {
-      "id": "execution-input-path-current",
-      "validator": "execution-input",
-      "accept": true,
-      "input": {
-        "schema_version": 2,
-        "command_identity": {
-          "schema_version": 2,
-          "command": "loki-implement-feature",
-          "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-          "analysis_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-          "plan_directory": "planos/p",
-          "retry_limit": 3,
-          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
-        },
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "demand_kind": "path",
-        "demand_ref": "demands/feature.txt",
-        "analysis_ref": "analysis/feature.md",
-        "state_ref": "planos/p/tasks.md",
-        "result_ref": "planos/p/builds/result.json",
-        "dashboard_ref": "planos/p/builds/dashboard.json",
-        "consistency_packet_ref": "planos/p/builds/consistency.json"
-      }
-    },
-    {
-      "id": "execution-input-inline-ref-rejected",
-      "validator": "execution-input",
-      "accept": false,
-      "error": "EXECUTION_INPUT_INLINE_REF_INVALID",
-      "input": {
-        "schema_version": 2,
-        "command_identity": {
-          "schema_version": 2,
-          "command": "loki-implement-feature",
-          "demand_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-          "analysis_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-          "plan_directory": "planos/p",
-          "retry_limit": 3,
-          "audit_configuration": {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
-        },
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "demand_kind": "inline",
-        "demand_ref": "demands/feature.txt",
-        "analysis_ref": "analysis/feature.md",
-        "state_ref": "planos/p/tasks.md",
-        "result_ref": "planos/p/builds/result.json",
-        "dashboard_ref": "planos/p/builds/dashboard.json",
-        "consistency_packet_ref": "planos/p/builds/consistency.json"
-      }
-    }
+    {"id": "normalized-relative-state-path", "path": "planos/001-feature/builds/execution-state.json", "accept": true},
+    {"id": "path-traversal-rejected", "path": "planos/001-feature/../outside.json", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "absolute-path-rejected", "path": "/tmp/execution-state.json", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "backslash-path-rejected", "path": "planos\\001-feature\\builds\\execution-state.json", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "parallel-result-path-rejected", "path": "planos/001-feature/builds/implementation-result.json", "accept": false, "error": "STATE_BASENAME_INVALID"},
+    {"id": "repeated-separator-rejected", "path": "planos//001-feature/builds/execution-state.json", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "trailing-separator-rejected", "path": "planos/001-feature/builds/execution-state.json/", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "dot-segment-rejected", "path": "planos/001-feature/./builds/execution-state.json", "accept": false, "error": "STATE_PATH_INVALID"},
+    {"id": "equivalent-alias-rejected", "path": "planos/001-feature/builds/../builds/execution-state.json", "accept": false, "error": "STATE_PATH_INVALID"}
   ]
 }

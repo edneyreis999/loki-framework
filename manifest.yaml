@@ -2,7 +2,7 @@ llm_metadata:
   doc_id: loki-framework-package-manifest
   version: "1.0.0"
   status: active
-  last_updated: "2026-07-24"
+  last_updated: "2026-08-04"
   scope: "Canonical package inventory, artifact routing, installation policy and package guardrails."
   not_scope: "Consumer runtime truth, consumer-local policy, write approval or evidence of completed installation."
   authority: "Approved human decisions and package-authoring guardrails govern this manifest; unresolved normative conflicts require human review."
@@ -483,11 +483,11 @@ scripts:
   - name: "validate-implement-feature-contracts"
     file: "scripts/validate-implement-feature-contracts.py"
     status: draft
-    purpose: "Validate only command identity v2, execution input v2, audit configuration/checkpoint v1, LokiRunState/result/dashboard v4, consistency packet v3, gate record v3, task_validation v1, execution metrics v1 and manual-QA handoff v3, including due-boundary coverage, full replay, liveness and measurement-only cost policy."
+    purpose: "Validate canonical_execution_state v1, real typed operations, atomic CAS/replay behavior, pure views, resume order, optional artifacts and the current-only cutover."
   - name: "validate-manual-qa-contracts"
     file: "scripts/validate-manual-qa-contracts.py"
     status: draft
-    purpose: "Validate current-only manual-QA handoff v3, execution-input drift, automatic evidence, pending human gates, ephemeral checklist derivation, direct aggregate response classification, zero-write routes, restricted consistency-last terminal promotion and rejection of superseded administrative/session forms."
+    purpose: "Validate state-only Manual QA eligibility, ephemeral checklist rendering, closed feedback payloads, zero-write routes and real approve_manual_qa behavior against the canonical state helper."
   - name: "validate-llm-artifact-precheck"
     file: "scripts/validate-llm-artifact-precheck.py"
     status: draft
@@ -629,7 +629,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
+    current_contracts: ["canonical-execution-state-v1", "typed-execution-operations-v1", "pure-execution-views-v1"]
   - name: "loki-manual-qa"
     file: "skills/loki-manual-qa/SKILL.md"
     status: active
@@ -640,7 +640,7 @@ skills:
       execution: "references/execution.md"
       response: "references/response.md"
       response_template: "assets/response-template.md"
-    current_contracts: ["manual-qa-handoff-v3", "manual-qa-interaction-ephemeral", "gate-record-v3", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3"]
+    current_contracts: ["canonical-execution-state-v1", "manual-qa-state-only-v1", "manual-qa-checklist-feedback-v1", "manual-qa-interaction-ephemeral"]
   - name: "lf-agent-execution-evidence"
     file: "skills/lf-agent-execution-evidence/SKILL.md"
     status: draft
@@ -660,7 +660,8 @@ skills:
   - name: "lf-implement-feature-execution"
     file: "skills/lf-implement-feature-execution/SKILL.md"
     status: active
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "execution-audit-checkpoint-v1", "loki-run-state-v4", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
+    executable_helper: "skills/lf-implement-feature-execution/scripts/loki_execution_state.py"
+    current_contracts: ["canonical-execution-state-v1", "typed-execution-operations-v1", "atomic-state-writer-v1", "pure-execution-views-v1"]
   - name: "lf-domain-context-preflight"
     file: "skills/lf-domain-context-preflight/SKILL.md"
     status: draft
@@ -1085,7 +1086,7 @@ templates:
   - name: "tasks-template"
     file: "templates/tasks-template.md"
     status: draft
-    current_contracts: ["command-identity-v2", "execution-input-v2", "audit-configuration-v1", "loki-run-state-v4", "execution-audit-checkpoint-v1", "implement-feature-execution-result-v4", "dashboard-v4", "implement-feature-consistency-v3", "task-validation-v1", "gate-record-v3", "execution-metrics-v1", "manual-qa-handoff-v3"]
+    current_contracts: ["canonical-execution-state-v1"]
   - name: "task-template"
     file: "templates/task-template.md"
     status: draft

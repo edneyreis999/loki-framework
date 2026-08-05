@@ -1,525 +1,499 @@
 #!/usr/bin/env python3
-"""Validate current loki-implement-feature execution and manual-QA handoff records."""
+"""Execute the complete current-only feature-contract fixture and AC matrix."""
 
 from __future__ import annotations
 
 import argparse
-import hashlib
+import copy
+import importlib.util
 import json
-import re
 import sys
-from copy import deepcopy
-from pathlib import Path, PurePosixPath
+import tempfile
+from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+HELPER_PATH = ROOT / "skills/lf-implement-feature-execution/scripts/loki_execution_state.py"
 FIXTURE_ROOT = ROOT / "scripts/fixtures/implement-feature"
-FIXTURE_FILES = (
-    "input-path-cases.json",
-    "state-resume-cases.json",
-    "validation-cycle-cases.json",
-    "response-dashboard-cases.json",
+FIXTURE_IDS = {
+    "input-path-cases.json": (
+        "normalized-relative-state-path", "path-traversal-rejected", "absolute-path-rejected",
+        "backslash-path-rejected", "parallel-result-path-rejected", "repeated-separator-rejected",
+        "trailing-separator-rejected", "dot-segment-rejected", "equivalent-alias-rejected",
+    ),
+    "optional-metrics-cases.json": (
+        "default-does-not-create-metrics", "explicit-metrics-artifact-has-consumer",
+        "missing-observation-is-not-zero", "observed-effort-is-non-negative",
+    ),
+    "recovery-limitation-cases.json": (
+        "all-before-allows-explicit-abandon", "all-desired-allows-validation",
+        "mixed-blocks-without-repair", "unknown-blocks-without-repair", "open-handoff-remains-open",
+    ),
+    "response-dashboard-cases.json": (
+        "one-of-three-required-passed", "replan-may-reduce-percent",
+        "overlapping-handoffs-chronological", "same-agent-separate-handoffs",
+        "unavailable-clock-is-not-estimated", "compact-transition-timestamp-stable",
+        "compact-transition-local-clock-pm",
+        "final-only-terminal", "requested-read-only", "equal-clock-endpoints",
+        "offsets-sort-by-instant", "negative-handoff-chronology-rejected",
+        "d001-d025-final-order", "frictions-omitted-when-empty", "resume-includes-completed-details",
+    ),
+    "state-resume-cases.json": (
+        "interrupt-after-handoff", "interrupt-after-task", "interrupt-after-phase",
+        "resume-renders-before-effects", "stale-revision-zero-write", "exact-replay-zero-write",
+        "terminal-state-immutable", "all-operations-exact-replay",
+        "all-operations-changed-request-conflict", "initialize-changed-task-set-conflict",
+        "replan-existing-task-spec-exact-replay", "replan-existing-task-spec-mismatch-zero-write",
+        "replan-existing-task-spec-changed-replay-conflict",
+        "commit-task-no-pending-verified-exact-replay", "commit-task-no-pending-unverified-zero-write",
+        "commit-task-no-pending-changed-replay-conflict", "commit-task-pending-verified-exact-replay",
+        "commit-task-pending-unverified-zero-write",
+        "qa-complete-pending-gate-set", "qa-incomplete-pending-gate-set",
+        "terminal-pending-human-gate-rejected",
+    ),
+    "validation-cycle-cases.json": (
+        "task-pass-requires-validator-evidence", "task-pass-with-failed-validator-rejected",
+        "audit-task-frequency", "audit-phase-frequency", "audit-plan-frequency",
+        "audit-rejection-blocks", "manual-qa-approval-single-operation",
+        "ambiguous-manual-qa-zero-write",
+    ),
+}
+OWNED_CONTRACTS = (
+    "skills/lf-implement-feature-execution/SKILL.md",
+    "skills/lf-implement-feature-execution/references/execution-contract.md",
+    "skills/lf-implement-feature-execution/references/session-preflight-contract.md",
+    "skills/lf-implement-feature-execution/references/validation-cycle-contract.md",
+    "skills/loki-implement-feature/SKILL.md",
+    "skills/loki-implement-feature/references/execution.md",
+    "skills/loki-implement-feature/references/response.md",
+    "skills/loki-implement-feature/assets/response-template.md",
+    "skills/lf-action-plan-authoring/SKILL.md",
+    "skills/lf-action-plan-authoring/references/action-plan-contract.md",
+    "skills/lf-template-library/SKILL.md",
+    "templates/tasks-template.md", "templates/task-template.md",
+    "skills/lf-template-library/references/templates/tasks-template.md",
+    "skills/lf-template-library/references/templates/task-template.md",
 )
-HEX = r"[0-9a-f]{64}"
-SHA256_RE = re.compile(rf"sha256:{HEX}\Z")
-RUN_RE = re.compile(rf"loki-run-v2:{HEX}\Z")
-EXECUTION_RE = re.compile(rf"loki-execution-v2:{HEX}\Z")
+REMOVED_SEEDS = (
+    "loki_execution_" + "projections", "implementation-result" + "-v",
+    "implementation-dashboard" + "-v", "implementation-consistency" + "-v",
+    "terminal-evidence" + "-v", "manual_qa_" + "handoff",
+    "required_projection_" + "closure", "repairable-administrative-" + "projection",
+    "unrepaired-promotion-" + "projection", "consistency-" + "last",
+    "projection-byte-real-" + "cases",
+)
+SHA = "sha256:" + "1" * 64
 
 
-class ContractError(ValueError):
+class ContractError(RuntimeError):
     pass
 
 
-def require(code: str, condition: bool) -> None:
+def require(code: str, condition: bool, detail: str = "") -> None:
     if not condition:
-        raise ContractError(code)
+        raise ContractError(code if not detail else f"{code}: {detail}")
 
 
-def nonempty(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
+def load_helper() -> Any:
+    spec = importlib.util.spec_from_file_location("loki_execution_state", HELPER_PATH)
+    require("HELPER_LOAD_INVALID", spec is not None and spec.loader is not None)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-def closed(code: str, value: Any, keys: set[str]) -> dict[str, Any]:
-    require(code, isinstance(value, dict) and set(value) == keys)
-    return value
+def load_fixtures() -> dict[str, list[dict[str, Any]]]:
+    loaded: dict[str, list[dict[str, Any]]] = {}
+    for name, expected_ids in FIXTURE_IDS.items():
+        value = json.loads((FIXTURE_ROOT / name).read_text(encoding="utf-8"))
+        require("FIXTURE_ROOT_INVALID", isinstance(value, dict) and set(value) == {"schema_version", "cases"}, name)
+        require("FIXTURE_SCHEMA_INVALID", value["schema_version"] == 1 and isinstance(value["cases"], list) and value["cases"], name)
+        ids = [case.get("id") for case in value["cases"]]
+        require("FIXTURE_ID_TYPE_INVALID", all(isinstance(item, str) and item for item in ids), name)
+        require("FIXTURE_ID_DUPLICATED", len(ids) == len(set(ids)), name)
+        missing = sorted(set(expected_ids) - set(ids)); unknown = sorted(set(ids) - set(expected_ids))
+        require("FIXTURE_ID_SET_INVALID", not missing and not unknown and len(ids) == len(expected_ids), f"{name}:missing={missing}:unknown={unknown}")
+        loaded[name] = value["cases"]
+    return loaded
 
 
-def canonical_bytes(value: Any) -> bytes:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+def initial_state(helper: Any, *, task_count: int = 1, gates: list[dict[str, str]] | None = None, boundaries: list[str] | None = None) -> dict[str, Any]:
+    request = {
+        "operation": "initialize", "transition_id": "tx.fixture.init", "expected_revision": 0,
+        "occurred_at": "2026-08-04T10:00:00-03:00",
+        "payload": {
+            "identity": {"run_id": "run.fixture", "execution_id": "exec.fixture", "command_identity": {"command": "loki-implement-feature", "adapter": "codex"}, "demand_ref": "plan/demand.md", "demand_digest": SHA, "analysis_ref": "plan/analysis.md", "analysis_digest": SHA, "audit_configuration": {"frequency": "plan", "auditor_source": "agents/auditor.md", "policy_ref": "plan/tasks.md"}},
+            "plan_revision": {"plan_revision_ref": "plan/tasks.md", "plan_revision_digest": SHA},
+            "tasks": [{"task_ref": f"task-{index + 1}", "phase_ref": "phase-1", "required": True, "validator_ref": f"validator-{index + 1}"} for index in range(task_count)],
+            "phases": ["phase-1"], "gates": gates or [], "audit_boundaries": boundaries or [],
+        },
+    }
+    return helper._initial_state(request)
 
 
-def digest(value: Any, *, omit: str | None = None) -> str:
-    material = deepcopy(value)
-    if omit is not None:
-        material.pop(omit, None)
-    return "sha256:" + hashlib.sha256(canonical_bytes(material)).hexdigest()
+def finalize_state(helper: Any, state: dict[str, Any]) -> dict[str, Any]:
+    state["state_digest"] = helper.state_digest(state)
+    return helper.validate_state(state)
 
 
-def validate_digest(value: Any, code: str) -> None:
-    require(code, isinstance(value, str) and SHA256_RE.fullmatch(value) is not None)
+def set_task(state: dict[str, Any], index: int, status: str, *, occurred_at: str = "2026-08-04T10:05:00-03:00") -> None:
+    task = state["tasks"][index]
+    if status == "pending": return
+    task["status"] = status; task["transition_id"] = f"tx.task.{index + 1}"; task["transitioned_at"] = occurred_at
+    if status == "running": return
+    task["result"] = {"summary": f"task {index + 1} {status}", "responsible": "technical-implementer", "delivery_refs": []}
+    task["validation"] = {"status": "passed" if status == "passed" else "failed", "validator_ref": task["validation"]["validator_ref"], "evidence_refs": [f"evidence/task-{index + 1}.txt"], "limitation": None}
 
 
-def validate_project_path(value: Any, code: str, *, below_planos: bool = False, fragment: bool = False) -> None:
-    require(code, nonempty(value) and "\\" not in value)
-    path, marker, suffix = value.partition("#")
-    require(code, not marker or fragment)
-    require(code, not marker or bool(suffix))
-    pure = PurePosixPath(path)
-    require(code, not pure.is_absolute() and ".." not in pure.parts and "." not in pure.parts)
-    if below_planos:
-        require(code, len(pure.parts) >= 2 and pure.parts[0] == "planos")
+def set_phase(state: dict[str, Any], status: str, *, occurred_at: str = "2026-08-04T10:05:00-03:00") -> None:
+    phase = state["phases"][0]
+    if status == "pending": return
+    phase["status"] = status; phase["transition_id"] = "tx.phase.1"; phase["transitioned_at"] = occurred_at
+    if status != "running": phase["result"] = {"summary": f"phase {status}"}; phase["evidence_refs"] = ["evidence/phase.txt"]
 
 
-def require_contained(ref: str, plan_directory: str, code: str) -> None:
-    validate_project_path(ref, code, fragment=True)
-    path = PurePosixPath(ref.partition("#")[0])
-    root = PurePosixPath(plan_directory)
-    require(code, path == root or root in path.parents)
+def handoff(handoff_id: str, called_at: str | None, delivered_at: str | None, *, agent: str = "technical-implementer", unavailable_reason: str | None = None) -> dict[str, Any]:
+    called = {"status": "observed", "value": called_at, "reason": None} if called_at else {"status": "unavailable", "value": None, "reason": unavailable_reason or "dispatch time unavailable"}
+    if delivered_at is None:
+        return {"handoff_id": handoff_id, "task_ref": "task-1", "phase_ref": "phase-1", "agent_label": agent, "objective": "implement", "status": "open", "called_at": called, "delivered_at": {"status": "pending", "value": None, "reason": None}, "delivery": {"status": "pending", "summary": None, "reason": None}, "result": {"status": "pending", "summary": None}, "evidence_refs": []}
+    return {"handoff_id": handoff_id, "task_ref": "task-1", "phase_ref": "phase-1", "agent_label": agent, "objective": "implement", "status": "delivered", "called_at": called, "delivered_at": {"status": "observed", "value": delivered_at, "reason": None}, "delivery": {"status": "delivered", "summary": f"delivery {handoff_id}", "reason": None}, "result": {"status": "passed", "summary": "passed"}, "evidence_refs": []}
 
 
-AUDIT_KEYS = {"schema_version", "frequency", "source", "policy_digest"}
-IDENTITY_KEYS = {"schema_version", "command", "demand_digest", "analysis_digest", "plan_directory", "retry_limit", "audit_configuration"}
-INPUT_KEYS = {"schema_version", "command_identity", "run_id", "execution_id", "demand_kind", "demand_ref", "analysis_ref", "state_ref", "result_ref", "dashboard_ref", "consistency_packet_ref"}
+def renderable_state(helper: Any, statuses: list[str], *, terminal_status: str | None = None, handoffs: list[dict[str, Any]] | None = None, frictions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    state = initial_state(helper, task_count=len(statuses))
+    for index, status in enumerate(statuses): set_task(state, index, status)
+    set_phase(state, "passed" if all(item == "passed" for item in statuses) else "running")
+    state["handoffs"] = handoffs or []
+    state["execution_summary"]["implemented_outcomes"] = [{"outcome_ref": row["task_ref"], "summary": row["result"]["summary"], "source_refs": []} for row in state["tasks"] if row["result"]]
+    state["effort_observations"] = [{"observation_id": "effort-writing", "category": "writing", "status": "unavailable", "value": None, "unit": None, "reason": "telemetry not requested", "evidence_refs": []}]
+    state["material_frictions"] = frictions or []
+    state["blockers"] = {"assessment": "none-confirmed", "reason": None, "items": []}
+    state["residual_risks"] = {"assessment": "none-confirmed", "reason": None, "items": []}
+    state["last_compact_transition"] = {"transition_id": "tx.compact", "kind": "commit_task_phase", "ref": "task-1", "result": statuses[0] if statuses[0] in {"passed", "failed", "blocked", "skipped", "cancelled"} else "blocked", "occurred_at": "2026-08-04T10:05:00-03:00"}
+    if terminal_status:
+        state["status"] = terminal_status
+        state["manual_qa"] = {"applicability": "not-required", "eligibility_status": "not-applicable", "eligibility_basis_digest": None, "eligible_revision": None, "applicable_gate_refs": [], "limitation_refs": [], "transitioned_at": "2026-08-04T10:06:00-03:00"}
+        state["execution_summary"]["terminal_reason"] = {"status": "observed", "summary": f"terminal {terminal_status}", "reason": None}
+    return finalize_state(helper, state)
 
 
-def validate_audit_configuration(value: Any) -> dict[str, Any]:
-    audit = closed("AUDIT_CONFIGURATION_SHAPE_INVALID", value, AUDIT_KEYS)
-    require("AUDIT_CONFIGURATION_SCHEMA_INVALID", audit["schema_version"] == 1)
-    require("AUDIT_FREQUENCY_INVALID", audit["frequency"] in {"task", "phase", "plan"})
-    require("AUDIT_SOURCE_INVALID", audit["source"] in {"default", "explicit"})
-    require("AUDIT_DEFAULT_INVALID", not (audit["source"] == "default" and audit["frequency"] != "phase"))
-    expected = digest({"schema_version": 1, "frequency": audit["frequency"], "source": audit["source"]})
-    require("AUDIT_POLICY_DIGEST_INVALID", audit["policy_digest"] == expected)
-    return audit
+def expect_state_error(helper: Any, state: dict[str, Any], code: str) -> None:
+    state["state_digest"] = helper.state_digest(state)
+    try: helper.validate_state(state)
+    except helper.StateContractError as exc: require("EXPECTED_STATE_ERROR_MISMATCH", exc.code == code, f"expected={code}:actual={exc.code}")
+    else: raise ContractError(f"EXPECTED_STATE_ERROR_MISSING: {code}")
 
 
-def validate_command_identity(value: Any) -> dict[str, Any]:
-    identity = closed("COMMAND_IDENTITY_SHAPE_INVALID", value, IDENTITY_KEYS)
-    require("COMMAND_IDENTITY_SCHEMA_INVALID", identity["schema_version"] == 2 and identity["command"] == "loki-implement-feature")
-    validate_digest(identity["demand_digest"], "COMMAND_DEMAND_DIGEST_INVALID")
-    validate_digest(identity["analysis_digest"], "COMMAND_ANALYSIS_DIGEST_INVALID")
-    validate_project_path(identity["plan_directory"], "COMMAND_PLAN_DIRECTORY_INVALID", below_planos=True)
-    require("COMMAND_RETRY_LIMIT_INVALID", isinstance(identity["retry_limit"], int) and not isinstance(identity["retry_limit"], bool) and identity["retry_limit"] >= 0)
-    validate_audit_configuration(identity["audit_configuration"])
-    return identity
+def execute_input_cases(helper: Any, cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        try:
+            normalized = helper.normalize_relative_path(case["path"])
+            if Path(normalized).name != "execution-state.json": raise helper.StateContractError("STATE_BASENAME_INVALID")
+        except helper.StateContractError as exc:
+            require("INPUT_PATH_CASE_MISMATCH", case["accept"] is False and exc.code == case["error"], case["id"])
+        else:
+            require("INPUT_PATH_CASE_MISMATCH", case["accept"] is True and normalized == case["path"], case["id"])
+        executed.add(case["id"])
 
 
-def validate_execution_input(value: Any) -> dict[str, Any]:
-    record = closed("EXECUTION_INPUT_SHAPE_INVALID", value, INPUT_KEYS)
-    require("EXECUTION_INPUT_SCHEMA_INVALID", record["schema_version"] == 2)
-    identity = validate_command_identity(record["command_identity"])
-    require("EXECUTION_INPUT_RUN_ID_INVALID", isinstance(record["run_id"], str) and RUN_RE.fullmatch(record["run_id"]) is not None)
-    require("EXECUTION_INPUT_EXECUTION_ID_INVALID", isinstance(record["execution_id"], str) and EXECUTION_RE.fullmatch(record["execution_id"]) is not None)
-    require("EXECUTION_INPUT_DEMAND_KIND_INVALID", record["demand_kind"] in {"inline", "path"})
-    if record["demand_kind"] == "inline":
-        require("EXECUTION_INPUT_INLINE_REF_INVALID", record["demand_ref"] is None)
-    else:
-        validate_project_path(record["demand_ref"], "EXECUTION_INPUT_DEMAND_REF_INVALID")
-    validate_project_path(record["analysis_ref"], "EXECUTION_INPUT_ANALYSIS_REF_INVALID")
-    require("EXECUTION_INPUT_ANALYSIS_SUFFIX_INVALID", PurePosixPath(record["analysis_ref"]).suffix == ".md")
-    for key in ("state_ref", "result_ref", "dashboard_ref", "consistency_packet_ref"):
-        require_contained(record[key], identity["plan_directory"], f"EXECUTION_INPUT_{key.upper()}_INVALID")
-    return record
+def execute_recovery_cases(helper: Any, cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        if "observed" in case:
+            require("RECOVERY_CASE_MISMATCH", helper.classify_pending_targets(case["observed"]) == case["outcome"], case["id"])
+        else:
+            state = renderable_state(helper, ["running"], handoffs=[handoff("handoff-open", "2026-08-04T10:00:00-03:00", None)])
+            rendered = helper.render_dashboard(state, mode="resume")
+            require("RECOVERY_OPEN_HANDOFF_INVALID", "handoff-open" in rendered and "pendente" in rendered and state["handoffs"][0]["status"] == "open")
+        executed.add(case["id"])
 
 
-HANDOFF_KEYS = {
-    "schema_version", "status", "run_id", "execution_id", "plan_directory",
-    "execution_input_ref", "execution_input_digest", "automatic_evidence_refs", "pending_human_gate_refs",
-    "changed_target_refs", "reason",
-}
+def execute_metrics_cases(helper: Any, cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        state = renderable_state(helper, ["passed"])
+        if case["id"] == "explicit-metrics-artifact-has-consumer":
+            state["optional_artifacts"] = [{"artifact_id": "metrics-explicit", "kind": case["kind"], "ref": "builds/metrics.json", "digest": SHA, "consumer": case["consumer"], "authority": case["authority"], "retention_basis": case["retention_basis"]}]
+            finalize_state(helper, state)
+        else:
+            state["effort_observations"] = [{"observation_id": "effort-case", "category": "writing", "status": case.get("status", "unavailable"), "value": case.get("value"), "unit": case.get("unit"), "reason": case.get("reason", "telemetry not requested"), "evidence_refs": []}]
+            state = finalize_state(helper, state); rendered = helper.render_dashboard(state, mode="requested")
+            if case["id"] in {"default-does-not-create-metrics", "missing-observation-is-not-zero"}: require("OPTIONAL_METRICS_UNAVAILABLE_INVALID", "indisponível" in rendered and "0 ms" not in rendered)
+            if case["id"] == "observed-effort-is-non-negative": require("OPTIONAL_METRICS_OBSERVED_INVALID", "1250 ms" in rendered)
+        executed.add(case["id"])
 
 
-def validate_manual_qa_handoff(value: Any, *, run_id: str | None = None, execution_id: str | None = None, plan_directory: str | None = None) -> dict[str, Any]:
-    handoff = closed("MANUAL_QA_HANDOFF_SHAPE_INVALID", value, HANDOFF_KEYS)
-    require("MANUAL_QA_HANDOFF_SCHEMA_INVALID", handoff["schema_version"] == 3)
-    require("MANUAL_QA_HANDOFF_STATUS_INVALID", handoff["status"] in {"ready-for-manual-qa", "manual-qa-not-required", "manual-qa-not-evaluated"})
-    require("MANUAL_QA_HANDOFF_RUN_ID_INVALID", isinstance(handoff["run_id"], str) and RUN_RE.fullmatch(handoff["run_id"]) is not None)
-    require("MANUAL_QA_HANDOFF_EXECUTION_ID_INVALID", isinstance(handoff["execution_id"], str) and EXECUTION_RE.fullmatch(handoff["execution_id"]) is not None)
-    validate_project_path(handoff["plan_directory"], "MANUAL_QA_HANDOFF_PLAN_INVALID", below_planos=True)
-    require("MANUAL_QA_HANDOFF_IDENTITY_MISMATCH", (run_id is None or handoff["run_id"] == run_id) and (execution_id is None or handoff["execution_id"] == execution_id) and (plan_directory is None or handoff["plan_directory"] == plan_directory))
-    require_contained(handoff["execution_input_ref"], handoff["plan_directory"], "MANUAL_QA_HANDOFF_INPUT_REF_INVALID")
-    validate_digest(handoff["execution_input_digest"], "MANUAL_QA_HANDOFF_INPUT_DIGEST_INVALID")
-    for key in ("automatic_evidence_refs", "pending_human_gate_refs", "changed_target_refs"):
-        refs = handoff[key]
-        require(f"MANUAL_QA_HANDOFF_{key.upper()}_INVALID", isinstance(refs, list) and len(refs) == len(set(refs)))
-        for ref in refs:
-            if key != "changed_target_refs":
-                require_contained(ref, handoff["plan_directory"], f"MANUAL_QA_HANDOFF_{key.upper()}_INVALID")
+def execute_dashboard_cases(helper: Any, cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        case_id = case["id"]
+        if case_id == "one-of-three-required-passed":
+            state = renderable_state(helper, case["required_statuses"]); rendered = helper.render_compact(state); require("DASHBOARD_PROGRESS_MISMATCH", case["expected_progress"] in rendered)
+        elif case_id == "replan-may-reduce-percent":
+            before = renderable_state(helper, ["passed", "passed", "running"]); after = renderable_state(helper, ["passed", "passed", "running", "pending"])
+            require("REPLAN_PROGRESS_MISMATCH", f"({case['expected_before']}%)" in helper.render_compact(before) and f"({case['expected_after']}%)" in helper.render_compact(after))
+        elif case_id in {"overlapping-handoffs-chronological", "same-agent-separate-handoffs"}:
+            if case_id.startswith("overlapping"):
+                rows = [handoff(f"handoff-{i+1}", case["called_at"][i], case["delivered_at"][i]) for i in range(2)]
             else:
-                validate_project_path(ref, f"MANUAL_QA_HANDOFF_{key.upper()}_INVALID")
-    if handoff["status"] == "ready-for-manual-qa":
-        require("MANUAL_QA_READY_AUTOMATIC_EVIDENCE_EMPTY", bool(handoff["automatic_evidence_refs"]))
-        require("MANUAL_QA_READY_HUMAN_GATES_EMPTY", bool(handoff["pending_human_gate_refs"]))
-        require("MANUAL_QA_READY_REASON_INVALID", handoff["reason"] is None)
-    else:
-        require("MANUAL_QA_NONREADY_REASON_INVALID", nonempty(handoff["reason"]))
-        require("MANUAL_QA_NONREADY_PENDING_GATES_INVALID", handoff["pending_human_gate_refs"] == [])
-    return handoff
+                rows = [handoff(case["handoff_ids"][i], f"2026-08-04T10:0{i}:00-03:00", f"2026-08-04T10:0{i+1}:00-03:00", agent=case["agent_labels"][i]) for i in range(2)]
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], handoffs=rows), mode="requested")
+            table_rows = [line for line in rendered.splitlines() if line.startswith("| handoff-")]
+            require("HANDOFF_ROWS_INVALID", len(table_rows) == 2 and all(any(f"| {row['handoff_id']} |" in line for line in table_rows) for row in rows) and rendered.index(rows[0]["handoff_id"]) < rendered.index(rows[1]["handoff_id"]))
+            if "expected_seconds" in case: require("HANDOFF_DURATION_INVALID", all(f"{seconds}s" in rendered for seconds in case["expected_seconds"]))
+        elif case_id == "unavailable-clock-is-not-estimated":
+            row = handoff("handoff-unavailable", None, "2026-08-04T10:02:00-03:00", unavailable_reason=case["called_reason"])
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], handoffs=[row]), mode="requested"); require("UNAVAILABLE_CLOCK_INVALID", case["expected_contains"] in rendered and case["called_reason"] in rendered)
+        elif case_id in {"compact-transition-timestamp-stable", "compact-transition-local-clock-pm"}:
+            state = renderable_state(helper, ["passed"]); state["last_compact_transition"]["occurred_at"] = case["occurred_at"]; state = finalize_state(helper, state)
+            before = helper.canonical_bytes(state); first = helper.render_compact(state); second = helper.render_compact(copy.deepcopy(state)); updated_first = first.rsplit("Atualizado em: ", 1)[-1]; updated_second = second.rsplit("Atualizado em: ", 1)[-1]
+            require("COMPACT_TIMESTAMP_INVALID", updated_first == case["expected_updated_at"] == updated_second and all(value not in updated_first for value in case["forbidden_updated_at"]) and helper.canonical_bytes(state) == before and ("rerendered_at" not in case or case["rerendered_at"] not in second))
+        elif case_id == "final-only-terminal":
+            for status in case["statuses"]:
+                statuses = ["passed"] if status in {"completed", "completed-with-limitations", "cancelled"} else ["passed", "failed"]
+                state = renderable_state(helper, statuses, terminal_status=status); require("FINAL_STATUS_INVALID", "# Dashboard final" in helper.render_dashboard(state, mode="final"), status)
+            running = renderable_state(helper, ["running"])
+            try: helper.render_dashboard(running, mode="final")
+            except helper.StateContractError as exc: require("FINAL_NONTERMINAL_CODE_INVALID", exc.code == "FINAL_RENDER_NOT_TERMINAL")
+            else: raise ContractError("FINAL_NONTERMINAL_ACCEPTED")
+        elif case_id == "requested-read-only":
+            state = renderable_state(helper, ["running"]); before = helper.canonical_bytes(state); helper.render_dashboard(state, mode=case["mode"]); require("REQUESTED_RENDER_MUTATED_STATE", helper.canonical_bytes(state) == before and case["expected_writes"] == 0)
+        elif case_id == "equal-clock-endpoints":
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], handoffs=[handoff("handoff-equal", case["called_at"], case["delivered_at"])]), mode="requested"); require("EQUAL_ENDPOINT_INVALID", case["expected_duration"] in rendered)
+        elif case_id == "offsets-sort-by-instant":
+            rows = [handoff(case["handoff_ids"][0], case["called_at"][0], "2026-08-04T12:01:00+02:00"), handoff(case["handoff_ids"][1], case["called_at"][1], "2026-08-04T08:31:00-03:00")]
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], handoffs=list(reversed(rows))), mode="requested"); require("OFFSET_SORT_INVALID", rendered.index(case["expected_order"][0]) < rendered.index(case["expected_order"][1]))
+        elif case_id == "negative-handoff-chronology-rejected":
+            state = initial_state(helper); state["handoffs"] = [handoff("handoff-negative", case["called_at"], case["delivered_at"])]; expect_state_error(helper, state, case["error"])
+        elif case_id == "d001-d025-final-order":
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], terminal_status="completed"), mode="final"); lines = rendered.splitlines()
+            require("FINAL_HANDOFF_NOT_IMMEDIATE", lines[2].startswith("task 1 passed") and lines[4].startswith("| Handoff |"))
+            positions = [rendered.index("| Handoff |"), rendered.index("| Categoria |"), rendered.index("## Bloqueadores técnicos"), rendered.index("## Próximos passos")]
+            require("FINAL_SECTION_ORDER_INVALID", positions == sorted(positions) and all(section not in rendered for section in case["forbidden_sections"]))
+        elif case_id == "frictions-omitted-when-empty":
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"], terminal_status="completed"), mode="final"); require("FRICTION_OMISSION_INVALID", (case["expected_heading"] in rendered) is case["present"])
+        elif case_id == "resume-includes-completed-details":
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"]), mode="resume"); require("RESUME_DETAIL_INVALID", all(section in rendered for section in case["expected_sections"]) and "task 1 passed" in rendered and "phase passed" in rendered)
+        else: raise ContractError(f"UNEXECUTED_DASHBOARD_FIXTURE: {case_id}")
+        executed.add(case_id)
 
 
-def validate_handoff_input_bytes(value: Any) -> None:
-    pair = closed("MANUAL_QA_INPUT_PAIR_SHAPE_INVALID", value, {"handoff", "execution_input_text"})
-    handoff = validate_manual_qa_handoff(pair["handoff"])
-    require("MANUAL_QA_INPUT_TEXT_INVALID", isinstance(pair["execution_input_text"], str) and bool(pair["execution_input_text"]))
-    observed = "sha256:" + hashlib.sha256(pair["execution_input_text"].encode("utf-8")).hexdigest()
-    require("MANUAL_QA_HANDOFF_INPUT_DIGEST_MISMATCH", handoff["execution_input_digest"] == observed)
+def write_state(path: Path, helper: Any, state: dict[str, Any]) -> None:
+    path.write_bytes(helper.canonical_bytes(state) + b"\n")
 
 
-GATE_KEYS = {"schema_version", "gate_id", "task_ref", "kind", "instruction", "expected", "status", "evidence_refs"}
+def eligibility_request(state: dict[str, Any], refs: list[str]) -> dict[str, Any]:
+    return {"operation": "publish_manual_qa_eligibility", "transition_id": "tx.fixture.eligibility", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:07:00-03:00", "payload": {"basis_digest": "sha256:" + "4" * 64, "applicable_gate_refs": refs, "limitation_refs": []}}
 
 
-def validate_gate_record(value: Any) -> dict[str, Any]:
-    gate = closed("GATE_RECORD_SHAPE_INVALID", value, GATE_KEYS)
-    require("GATE_RECORD_SCHEMA_INVALID", gate["schema_version"] == 3)
-    require("GATE_RECORD_ID_INVALID", nonempty(gate["gate_id"]))
-    validate_project_path(gate["task_ref"], "GATE_RECORD_TASK_REF_INVALID")
-    require("GATE_RECORD_KIND_INVALID", gate["kind"] in {"automatic", "human-validation"})
-    require("GATE_RECORD_INSTRUCTION_INVALID", nonempty(gate["instruction"]))
-    require("GATE_RECORD_EXPECTED_INVALID", nonempty(gate["expected"]))
-    require("GATE_RECORD_EVIDENCE_INVALID", isinstance(gate["evidence_refs"], list) and len(gate["evidence_refs"]) == len(set(gate["evidence_refs"])))
-    if gate["kind"] == "automatic":
-        require("AUTOMATIC_GATE_STATUS_INVALID", gate["status"] in {"passed", "not-applicable"})
-        require("AUTOMATIC_GATE_EVIDENCE_EMPTY", bool(gate["evidence_refs"]))
-    else:
-        require("HUMAN_GATE_STATUS_INVALID", gate["status"] in {"pending", "passed"})
-        require("HUMAN_GATE_EVIDENCE_FORBIDDEN", gate["evidence_refs"] == [])
-    return gate
+def qa_ready_state(helper: Any, refs: list[str]) -> dict[str, Any]:
+    state = initial_state(helper, gates=[{"gate_ref": ref, "kind": "human-validation"} for ref in refs]); set_task(state, 0, "passed"); set_phase(state, "passed")
+    state["blockers"] = {"assessment": "none-confirmed", "reason": None, "items": []}; state["residual_risks"] = {"assessment": "none-confirmed", "reason": None, "items": []}
+    return finalize_state(helper, state)
 
 
-STATE_KEYS = {
-    "schema_version", "run_id", "execution_id", "command_identity_digest", "execution_input_digest",
-    "audit_configuration", "status", "task_refs", "gate_refs", "gate_digests",
-    "audit_checkpoint_refs", "result_ref", "dashboard_ref", "consistency_packet_ref",
-    "terminal_evidence_refs", "manual_qa_handoff", "execution_metrics_ref",
-    "execution_metrics_digest", "execution_metrics_status", "execution_metrics_degradation_reason",
-    "next_action", "state_digest",
-}
-
-RESULT_KEYS = {
-    "schema_version", "run_id", "execution_id", "status", "state_digest", "audit_configuration",
-    "audit_checkpoint_refs", "gate_refs", "gate_digests", "task_results", "final_validator_refs",
-    "terminal_evidence_refs", "manual_qa_handoff", "execution_metrics_ref", "execution_metrics_digest",
-    "execution_metrics_status", "execution_metrics_degradation_reason", "next_action", "result_digest",
-}
-
-DASHBOARD_KEYS = {
-    "schema_version", "run_id", "execution_id", "status", "audit_configuration",
-    "audit_checkpoint_refs", "gate_refs", "gate_digests", "tasks", "final_validator_refs",
-    "terminal_evidence_refs", "manual_qa_handoff", "execution_metrics_ref", "execution_metrics_digest",
-    "execution_metrics_status", "execution_metrics_degradation_reason", "next_action", "dashboard_digest",
-}
-
-CONSISTENCY_KEYS = {
-    "schema_version", "run_id", "execution_id", "status", "audit_configuration", "state_digest",
-    "tasks_md_digest", "result_ref", "result_digest", "dashboard_ref", "dashboard_digest",
-    "metrics_ref", "metrics_digest", "gate_refs", "gate_digests", "audit_checkpoint_refs",
-    "audit_checkpoint_digests", "terminal_evidence_refs", "terminal_evidence_digests",
-    "manual_qa_handoff", "validator_digest",
-}
-
-EXECUTION_STATUSES = {"running", "awaiting-manual-qa", "completed", "completed-with-limitations", "partial", "failed", "cancelled"}
-TASK_STATUSES = {"pending", "passed", "unresolved", "skipped-dependency", "cancelled"}
-
-
-def validate_ref_list(value: Any, plan_directory: str, code: str, *, fragment: bool = False) -> list[str]:
-    require(code, isinstance(value, list) and len(value) == len(set(value)))
-    for ref in value:
-        require_contained(ref, plan_directory, code)
-        if not fragment:
-            require(code, "#" not in ref)
-    return value
-
-
-def validate_metrics_projection(record: dict[str, Any], *, prefix: str) -> None:
-    status = record["execution_metrics_status"]
-    ref = record["execution_metrics_ref"]
-    value_digest = record["execution_metrics_digest"]
-    reason = record["execution_metrics_degradation_reason"]
-    require(f"{prefix}_METRICS_STATUS_INVALID", status in {"complete", "partial", "unavailable"})
-    if status == "complete":
-        require(f"{prefix}_METRICS_REASON_INVALID", reason is None)
-        require(f"{prefix}_METRICS_REF_INVALID", nonempty(ref))
-        validate_digest(value_digest, f"{prefix}_METRICS_DIGEST_INVALID")
-    elif status == "partial":
-        require(f"{prefix}_METRICS_REASON_INVALID", nonempty(reason))
-        require(f"{prefix}_METRICS_REF_INVALID", nonempty(ref))
-        validate_digest(value_digest, f"{prefix}_METRICS_DIGEST_INVALID")
-    else:
-        require(f"{prefix}_METRICS_REASON_INVALID", nonempty(reason))
-        publication_failure = "publication failure" in reason.casefold()
-        require(f"{prefix}_METRICS_PAIR_INVALID", (ref is None and value_digest is None) if publication_failure else (nonempty(ref) and isinstance(value_digest, str) and SHA256_RE.fullmatch(value_digest) is not None))
-
-
-def validate_status_handoff(record: dict[str, Any], handoff: dict[str, Any], *, prefix: str) -> None:
-    status = record["status"]
-    require(f"{prefix}_STATUS_INVALID", status in EXECUTION_STATUSES)
-    if status == "awaiting-manual-qa":
-        require(f"{prefix}_READY_HANDOFF_REQUIRED", handoff["status"] == "ready-for-manual-qa" and record["next_action"] == "loki-manual-qa")
-    elif status == "completed":
-        require(f"{prefix}_COMPLETED_HANDOFF_INVALID", handoff["status"] in {"ready-for-manual-qa", "manual-qa-not-required"} and record["next_action"] == "none")
-    elif status == "completed-with-limitations":
-        require(f"{prefix}_LIMITED_HANDOFF_INVALID", handoff["status"] == "manual-qa-not-required" and record["next_action"] == "none")
-    else:
-        require(f"{prefix}_NONTERMINAL_HANDOFF_INVALID", handoff["status"] == "manual-qa-not-evaluated" and nonempty(record["next_action"]))
-
-
-def validate_state(value: Any) -> dict[str, Any]:
-    state = closed("STATE_SHAPE_INVALID", value, STATE_KEYS)
-    require("STATE_SCHEMA_INVALID", state["schema_version"] == 4)
-    require("STATE_RUN_ID_INVALID", isinstance(state["run_id"], str) and RUN_RE.fullmatch(state["run_id"]) is not None)
-    require("STATE_EXECUTION_ID_INVALID", isinstance(state["execution_id"], str) and EXECUTION_RE.fullmatch(state["execution_id"]) is not None)
-    validate_digest(state["command_identity_digest"], "STATE_COMMAND_IDENTITY_DIGEST_INVALID")
-    validate_digest(state["execution_input_digest"], "STATE_EXECUTION_INPUT_DIGEST_INVALID")
-    validate_audit_configuration(state["audit_configuration"])
-    handoff = validate_manual_qa_handoff(state["manual_qa_handoff"], run_id=state["run_id"], execution_id=state["execution_id"])
-    plan_directory = handoff["plan_directory"]
-    validate_ref_list(state["task_refs"], plan_directory, "STATE_TASK_REFS_INVALID")
-    validate_ref_list(state["gate_refs"], plan_directory, "STATE_GATE_REFS_INVALID", fragment=True)
-    validate_ref_list(state["audit_checkpoint_refs"], plan_directory, "STATE_AUDIT_REFS_INVALID")
-    validate_ref_list(state["terminal_evidence_refs"], plan_directory, "STATE_TERMINAL_EVIDENCE_REFS_INVALID")
-    require("STATE_GATE_DIGESTS_INVALID", isinstance(state["gate_digests"], list) and len(state["gate_digests"]) == len(state["gate_refs"]) and all(SHA256_RE.fullmatch(item or "") for item in state["gate_digests"]))
-    for key in ("result_ref", "dashboard_ref", "consistency_packet_ref"):
-        require_contained(state[key], plan_directory, f"STATE_{key.upper()}_INVALID")
-    require("STATE_HANDOFF_INPUT_DIGEST_MISMATCH", handoff["execution_input_digest"] == state["execution_input_digest"])
-    require("STATE_HANDOFF_AUTOMATIC_EVIDENCE_MISMATCH", handoff["automatic_evidence_refs"] == state["terminal_evidence_refs"] or handoff["status"] == "manual-qa-not-evaluated")
-    require("STATE_PENDING_GATE_REFS_INVALID", all(ref in state["gate_refs"] for ref in handoff["pending_human_gate_refs"]))
-    validate_metrics_projection(state, prefix="STATE")
-    if state["execution_metrics_ref"] is not None:
-        require_contained(state["execution_metrics_ref"], plan_directory, "STATE_METRICS_REF_INVALID")
-    validate_status_handoff(state, handoff, prefix="STATE")
-    require("STATE_DIGEST_INVALID", state["state_digest"] == digest(state, omit="state_digest"))
-    return state
-
-
-def validate_shared_output(record: dict[str, Any], *, prefix: str) -> tuple[dict[str, Any], str]:
-    require(f"{prefix}_RUN_ID_INVALID", isinstance(record["run_id"], str) and RUN_RE.fullmatch(record["run_id"]) is not None)
-    require(f"{prefix}_EXECUTION_ID_INVALID", isinstance(record["execution_id"], str) and EXECUTION_RE.fullmatch(record["execution_id"]) is not None)
-    validate_audit_configuration(record["audit_configuration"])
-    handoff = validate_manual_qa_handoff(record["manual_qa_handoff"], run_id=record["run_id"], execution_id=record["execution_id"])
-    plan_directory = handoff["plan_directory"]
-    validate_ref_list(record["audit_checkpoint_refs"], plan_directory, f"{prefix}_AUDIT_REFS_INVALID")
-    validate_ref_list(record["gate_refs"], plan_directory, f"{prefix}_GATE_REFS_INVALID", fragment=True)
-    require(f"{prefix}_GATE_DIGESTS_INVALID", isinstance(record["gate_digests"], list) and len(record["gate_digests"]) == len(record["gate_refs"]) and all(SHA256_RE.fullmatch(item or "") for item in record["gate_digests"]))
-    validate_ref_list(record["final_validator_refs"], plan_directory, f"{prefix}_FINAL_VALIDATOR_REFS_INVALID")
-    validate_ref_list(record["terminal_evidence_refs"], plan_directory, f"{prefix}_TERMINAL_EVIDENCE_REFS_INVALID")
-    validate_metrics_projection(record, prefix=prefix)
-    if record["execution_metrics_ref"] is not None:
-        require_contained(record["execution_metrics_ref"], plan_directory, f"{prefix}_METRICS_REF_INVALID")
-    validate_status_handoff(record, handoff, prefix=prefix)
-    return handoff, plan_directory
-
-
-def validate_result(value: Any) -> dict[str, Any]:
-    result = closed("RESULT_SHAPE_INVALID", value, RESULT_KEYS)
-    require("RESULT_SCHEMA_INVALID", result["schema_version"] == 4)
-    validate_digest(result["state_digest"], "RESULT_STATE_DIGEST_INVALID")
-    _, plan_directory = validate_shared_output(result, prefix="RESULT")
-    require("RESULT_TASK_RESULTS_INVALID", isinstance(result["task_results"], list) and bool(result["task_results"]))
-    seen: set[str] = set()
-    for row in result["task_results"]:
-        closed("RESULT_TASK_ROW_SHAPE_INVALID", row, {"task_ref", "status", "evidence_refs"})
-        require_contained(row["task_ref"], plan_directory, "RESULT_TASK_REF_INVALID")
-        require("RESULT_TASK_DUPLICATE", row["task_ref"] not in seen); seen.add(row["task_ref"])
-        require("RESULT_TASK_STATUS_INVALID", row["status"] in TASK_STATUSES)
-        validate_ref_list(row["evidence_refs"], plan_directory, "RESULT_TASK_EVIDENCE_INVALID")
-    require("RESULT_DIGEST_INVALID", result["result_digest"] == digest(result, omit="result_digest"))
+def start_fixture_task(helper: Any, path: Path, state: dict[str, Any], suffix: str) -> dict[str, Any]:
+    request = {"operation": "start_task_phase", "transition_id": f"tx.fixture.start.{suffix}", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:01:00-03:00", "payload": {"task_ref": "task-1", "phase_ref": "phase-1", "dependencies_passed": True, "prior_gates_passed": True}}
+    result, wrote = helper.apply_operation(path, request, actor="orchestrator", exclusive_owner=True)
+    require("FIXTURE_START_NOT_WRITTEN", wrote)
     return result
 
 
-def validate_dashboard(value: Any) -> dict[str, Any]:
-    dashboard = closed("DASHBOARD_SHAPE_INVALID", value, DASHBOARD_KEYS)
-    require("DASHBOARD_SCHEMA_INVALID", dashboard["schema_version"] == 4)
-    _, plan_directory = validate_shared_output(dashboard, prefix="DASHBOARD")
-    require("DASHBOARD_TASKS_INVALID", isinstance(dashboard["tasks"], list) and bool(dashboard["tasks"]))
-    seen: set[str] = set()
-    for row in dashboard["tasks"]:
-        closed("DASHBOARD_TASK_ROW_SHAPE_INVALID", row, {"task_ref", "status"})
-        require_contained(row["task_ref"], plan_directory, "DASHBOARD_TASK_REF_INVALID")
-        require("DASHBOARD_TASK_DUPLICATE", row["task_ref"] not in seen); seen.add(row["task_ref"])
-        require("DASHBOARD_TASK_STATUS_INVALID", row["status"] in TASK_STATUSES)
-    require("DASHBOARD_DIGEST_INVALID", dashboard["dashboard_digest"] == digest(dashboard, omit="dashboard_digest"))
-    return dashboard
+def replan_fixture_request(state: dict[str, Any]) -> dict[str, Any]:
+    return {"operation": "commit_replan_ref", "transition_id": "tx.fixture.replan", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:02:00-03:00", "payload": {"plan_revision": {"plan_revision_ref": "plan/tasks-v2.md", "plan_revision_digest": "sha256:" + "3" * 64}, "tasks": [{"task_ref": "task-1", "phase_ref": "phase-1", "required": True, "validator_ref": "validator-1"}, {"task_ref": "task-2", "phase_ref": "phase-1", "required": True, "validator_ref": "validator-2"}], "phases": copy.deepcopy(state["phases"]), "gates": copy.deepcopy(state["gates"]), "audit_boundaries": copy.deepcopy(state["audit_boundaries"]), "blockers": copy.deepcopy(state["blockers"]), "next_steps": copy.deepcopy(state["next_steps"])}}
 
 
-def validate_consistency(value: Any) -> dict[str, Any]:
-    packet = closed("CONSISTENCY_SHAPE_INVALID", value, CONSISTENCY_KEYS)
-    require("CONSISTENCY_SCHEMA_INVALID", packet["schema_version"] == 3)
-    require("CONSISTENCY_RUN_ID_INVALID", isinstance(packet["run_id"], str) and RUN_RE.fullmatch(packet["run_id"]) is not None)
-    require("CONSISTENCY_EXECUTION_ID_INVALID", isinstance(packet["execution_id"], str) and EXECUTION_RE.fullmatch(packet["execution_id"]) is not None)
-    require("CONSISTENCY_STATUS_INVALID", packet["status"] in EXECUTION_STATUSES)
-    validate_audit_configuration(packet["audit_configuration"])
-    handoff = validate_manual_qa_handoff(packet["manual_qa_handoff"], run_id=packet["run_id"], execution_id=packet["execution_id"])
-    plan_directory = handoff["plan_directory"]
-    for key in ("state_digest", "tasks_md_digest", "result_digest", "dashboard_digest", "validator_digest"):
-        validate_digest(packet[key], f"CONSISTENCY_{key.upper()}_INVALID")
-    for key in ("result_ref", "dashboard_ref"):
-        require_contained(packet[key], plan_directory, f"CONSISTENCY_{key.upper()}_INVALID")
-    if packet["metrics_ref"] is None:
-        require("CONSISTENCY_METRICS_PAIR_INVALID", packet["metrics_digest"] is None)
-    else:
-        require_contained(packet["metrics_ref"], plan_directory, "CONSISTENCY_METRICS_REF_INVALID")
-        validate_digest(packet["metrics_digest"], "CONSISTENCY_METRICS_DIGEST_INVALID")
-    validate_ref_list(packet["gate_refs"], plan_directory, "CONSISTENCY_GATE_REFS_INVALID", fragment=True)
-    require("CONSISTENCY_GATE_DIGESTS_INVALID", isinstance(packet["gate_digests"], list) and len(packet["gate_digests"]) == len(packet["gate_refs"]) and all(SHA256_RE.fullmatch(item or "") for item in packet["gate_digests"]))
-    validate_ref_list(packet["audit_checkpoint_refs"], plan_directory, "CONSISTENCY_AUDIT_REFS_INVALID")
-    require("CONSISTENCY_AUDIT_DIGESTS_INVALID", isinstance(packet["audit_checkpoint_digests"], list) and len(packet["audit_checkpoint_digests"]) == len(packet["audit_checkpoint_refs"]) and all(SHA256_RE.fullmatch(item or "") for item in packet["audit_checkpoint_digests"]))
-    validate_ref_list(packet["terminal_evidence_refs"], plan_directory, "CONSISTENCY_TERMINAL_REFS_INVALID")
-    require("CONSISTENCY_TERMINAL_DIGESTS_INVALID", isinstance(packet["terminal_evidence_digests"], list) and len(packet["terminal_evidence_digests"]) == len(packet["terminal_evidence_refs"]) and all(SHA256_RE.fullmatch(item or "") for item in packet["terminal_evidence_digests"]))
-    return packet
+def commit_fixture_request(state: dict[str, Any], *, desired_targets_verified: bool) -> dict[str, Any]:
+    return {"operation": "commit_task_phase", "transition_id": "tx.fixture.commit", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:03:00-03:00", "payload": {"task_ref": "task-1", "task_status": "passed", "task_result": {"summary": "implemented", "responsible": "technical-implementer", "delivery_refs": []}, "validation": {"status": "passed", "validator_ref": "validator-1", "evidence_refs": ["evidence/task-1.txt"], "limitation": None}, "target_digests": [], "phase": None, "gates": copy.deepcopy(state["gates"]), "implemented_outcomes": [{"outcome_ref": "task-1", "summary": "implemented", "source_refs": []}], "effort_observations": [], "material_frictions": [], "blockers": {"assessment": "none-confirmed", "reason": None, "items": []}, "residual_risks": {"assessment": "none-confirmed", "reason": None, "items": []}, "next_steps": [], "optional_artifacts": [], "desired_targets_verified": desired_targets_verified}}
 
 
-def validate_consistency_bundle(value: Any) -> None:
-    bundle = closed("BUNDLE_SHAPE_INVALID", value, {"command_identity", "execution_input_text", "tasks_md_text", "validator_digests", "state", "result", "dashboard", "consistency"})
-    identity = validate_command_identity(bundle["command_identity"])
-    require("BUNDLE_INPUT_TEXT_INVALID", isinstance(bundle["execution_input_text"], str) and bool(bundle["execution_input_text"]))
-    require("BUNDLE_TASKS_TEXT_INVALID", isinstance(bundle["tasks_md_text"], str) and bool(bundle["tasks_md_text"]))
-    require("BUNDLE_VALIDATOR_DIGESTS_INVALID", isinstance(bundle["validator_digests"], dict) and all(nonempty(k) and isinstance(v, str) and SHA256_RE.fullmatch(v) for k, v in bundle["validator_digests"].items()))
-    state = validate_state(bundle["state"]); result = validate_result(bundle["result"]); dashboard = validate_dashboard(bundle["dashboard"]); packet = validate_consistency(bundle["consistency"])
-    expected_input_digest = "sha256:" + hashlib.sha256(bundle["execution_input_text"].encode("utf-8")).hexdigest()
-    require("BUNDLE_COMMAND_IDENTITY_DIGEST_MISMATCH", state["command_identity_digest"] == digest(identity))
-    require("BUNDLE_EXECUTION_INPUT_DIGEST_MISMATCH", state["execution_input_digest"] == expected_input_digest == state["manual_qa_handoff"]["execution_input_digest"])
-    for projection, prefix in ((result, "RESULT"), (dashboard, "DASHBOARD"), (packet, "CONSISTENCY")):
-        require(f"BUNDLE_{prefix}_IDENTITY_MISMATCH", (projection["run_id"], projection["execution_id"]) == (state["run_id"], state["execution_id"]))
-        require(f"BUNDLE_{prefix}_STATUS_MISMATCH", projection["status"] == state["status"])
-        require(f"BUNDLE_{prefix}_AUDIT_CONFIGURATION_MISMATCH", projection["audit_configuration"] == state["audit_configuration"])
-        require(f"BUNDLE_{prefix}_GATE_PARITY_MISMATCH", projection["gate_refs"] == state["gate_refs"] and projection["gate_digests"] == state["gate_digests"])
-        require(f"BUNDLE_{prefix}_HANDOFF_MISMATCH", projection["manual_qa_handoff"] == state["manual_qa_handoff"])
-    require("BUNDLE_RESULT_STATE_DIGEST_MISMATCH", result["state_digest"] == state["state_digest"])
-    require("BUNDLE_TASK_PARITY_MISMATCH", [{"task_ref": row["task_ref"], "status": row["status"]} for row in result["task_results"]] == dashboard["tasks"])
-    require("BUNDLE_AUDIT_REFS_MISMATCH", result["audit_checkpoint_refs"] == dashboard["audit_checkpoint_refs"] == packet["audit_checkpoint_refs"] == state["audit_checkpoint_refs"])
-    require("BUNDLE_TERMINAL_REFS_MISMATCH", result["terminal_evidence_refs"] == dashboard["terminal_evidence_refs"] == packet["terminal_evidence_refs"] == state["terminal_evidence_refs"])
-    require("BUNDLE_METRICS_PARITY_MISMATCH", (result["execution_metrics_ref"], result["execution_metrics_digest"], result["execution_metrics_status"], result["execution_metrics_degradation_reason"]) == (dashboard["execution_metrics_ref"], dashboard["execution_metrics_digest"], dashboard["execution_metrics_status"], dashboard["execution_metrics_degradation_reason"]) == (state["execution_metrics_ref"], state["execution_metrics_digest"], state["execution_metrics_status"], state["execution_metrics_degradation_reason"]))
-    require("BUNDLE_CONSISTENCY_STATE_DIGEST_MISMATCH", packet["state_digest"] == state["state_digest"])
-    require("BUNDLE_CONSISTENCY_TASKS_DIGEST_MISMATCH", packet["tasks_md_digest"] == "sha256:" + hashlib.sha256(bundle["tasks_md_text"].encode("utf-8")).hexdigest())
-    require("BUNDLE_CONSISTENCY_RESULT_REF_MISMATCH", packet["result_ref"] == state["result_ref"])
-    require("BUNDLE_CONSISTENCY_RESULT_DIGEST_MISMATCH", packet["result_digest"] == "sha256:" + hashlib.sha256(canonical_bytes(result)).hexdigest())
-    require("BUNDLE_CONSISTENCY_DASHBOARD_REF_MISMATCH", packet["dashboard_ref"] == state["dashboard_ref"])
-    require("BUNDLE_CONSISTENCY_DASHBOARD_DIGEST_MISMATCH", packet["dashboard_digest"] == "sha256:" + hashlib.sha256(canonical_bytes(dashboard)).hexdigest())
-    require("BUNDLE_CONSISTENCY_METRICS_MISMATCH", (packet["metrics_ref"], packet["metrics_digest"]) == (state["execution_metrics_ref"], state["execution_metrics_digest"]))
-    require("BUNDLE_AUDIT_DIGEST_COUNT_MISMATCH", len(packet["audit_checkpoint_digests"]) == len(state["audit_checkpoint_refs"]))
-    require("BUNDLE_TERMINAL_DIGEST_COUNT_MISMATCH", len(packet["terminal_evidence_digests"]) == len(state["terminal_evidence_refs"]))
-    require("BUNDLE_VALIDATOR_DIGEST_MISMATCH", packet["validator_digest"] == digest(bundle["validator_digests"]))
+def prepare_fixture_write(helper: Any, path: Path, state: dict[str, Any], suffix: str) -> dict[str, Any]:
+    request = {"operation": "prepare_task_write", "transition_id": f"tx.fixture.prepare.{suffix}", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:02:00-03:00", "payload": {"task_ref": "task-1", "targets": [{"target_ref": "scripts/example.py", "before_digest": SHA, "desired_digest": "sha256:" + "2" * 64}]}}
+    result, wrote = helper.apply_operation(path, request, actor="state-writer", exclusive_owner=True)
+    require("FIXTURE_PREPARE_NOT_WRITTEN", wrote)
+    return result
 
 
-def canonical_fixture_bundle() -> dict[str, Any]:
-    plan = "planos/p"
-    run_id = "loki-run-v2:" + "a" * 64
-    execution_id = "loki-execution-v2:" + "b" * 64
-    audit = {"schema_version": 1, "frequency": "phase", "source": "default", "policy_digest": "sha256:e3aeea217ca7881865de40d29e0e28e95bc32f4255e2488597801a8909e3bd78"}
-    identity = {"schema_version": 2, "command": "loki-implement-feature", "demand_digest": "sha256:" + "1" * 64, "analysis_digest": "sha256:" + "2" * 64, "plan_directory": plan, "retry_limit": 3, "audit_configuration": audit}
-    execution_input_text = '{"schema_version":2}'
-    input_digest = "sha256:" + hashlib.sha256(execution_input_text.encode("utf-8")).hexdigest()
-    gate_ref = f"{plan}/task-1.md#gate:g1"
-    terminal_ref = f"{plan}/builds/automatic.json"
-    audit_ref = f"{plan}/builds/audit.json"
-    metrics_ref = f"{plan}/builds/metrics/execution-metrics.json"
-    handoff = {"schema_version": 3, "status": "ready-for-manual-qa", "run_id": run_id, "execution_id": execution_id, "plan_directory": plan, "execution_input_ref": f"{plan}/builds/execution-input-v2.json", "execution_input_digest": input_digest, "automatic_evidence_refs": [terminal_ref], "pending_human_gate_refs": [gate_ref], "changed_target_refs": ["src/app.py"], "reason": None}
-    state = {"schema_version": 4, "run_id": run_id, "execution_id": execution_id, "command_identity_digest": digest(identity), "execution_input_digest": input_digest, "audit_configuration": audit, "status": "awaiting-manual-qa", "task_refs": [f"{plan}/task-1.md"], "gate_refs": [gate_ref], "gate_digests": ["sha256:" + "3" * 64], "audit_checkpoint_refs": [audit_ref], "result_ref": f"{plan}/builds/result.json", "dashboard_ref": f"{plan}/builds/dashboard.json", "consistency_packet_ref": f"{plan}/builds/consistency.json", "terminal_evidence_refs": [terminal_ref], "manual_qa_handoff": handoff, "execution_metrics_ref": metrics_ref, "execution_metrics_digest": "sha256:" + "4" * 64, "execution_metrics_status": "complete", "execution_metrics_degradation_reason": None, "next_action": "loki-manual-qa", "state_digest": ""}
-    state["state_digest"] = digest(state, omit="state_digest")
-    result = {"schema_version": 4, "run_id": run_id, "execution_id": execution_id, "status": state["status"], "state_digest": state["state_digest"], "audit_configuration": audit, "audit_checkpoint_refs": [audit_ref], "gate_refs": [gate_ref], "gate_digests": list(state["gate_digests"]), "task_results": [{"task_ref": f"{plan}/task-1.md", "status": "passed", "evidence_refs": [f"{plan}/builds/task-evidence.json"]}], "final_validator_refs": [f"{plan}/builds/final-validator.json"], "terminal_evidence_refs": [terminal_ref], "manual_qa_handoff": handoff, "execution_metrics_ref": metrics_ref, "execution_metrics_digest": state["execution_metrics_digest"], "execution_metrics_status": "complete", "execution_metrics_degradation_reason": None, "next_action": "loki-manual-qa", "result_digest": ""}
-    result["result_digest"] = digest(result, omit="result_digest")
-    dashboard = {"schema_version": 4, "run_id": run_id, "execution_id": execution_id, "status": state["status"], "audit_configuration": audit, "audit_checkpoint_refs": [audit_ref], "gate_refs": [gate_ref], "gate_digests": list(state["gate_digests"]), "tasks": [{"task_ref": f"{plan}/task-1.md", "status": "passed"}], "final_validator_refs": [f"{plan}/builds/final-validator.json"], "terminal_evidence_refs": [terminal_ref], "manual_qa_handoff": handoff, "execution_metrics_ref": metrics_ref, "execution_metrics_digest": state["execution_metrics_digest"], "execution_metrics_status": "complete", "execution_metrics_degradation_reason": None, "next_action": "loki-manual-qa", "dashboard_digest": ""}
-    dashboard["dashboard_digest"] = digest(dashboard, omit="dashboard_digest")
-    validator_digests = {f"{plan}/builds/primary-validator.json": "sha256:" + "5" * 64, f"{plan}/builds/final-validator.json": "sha256:" + "6" * 64}
-    tasks_md_text = "# Canonical fixture tasks v4\n"
-    consistency = {"schema_version": 3, "run_id": run_id, "execution_id": execution_id, "status": state["status"], "audit_configuration": audit, "state_digest": state["state_digest"], "tasks_md_digest": "sha256:" + hashlib.sha256(tasks_md_text.encode("utf-8")).hexdigest(), "result_ref": state["result_ref"], "result_digest": "sha256:" + hashlib.sha256(canonical_bytes(result)).hexdigest(), "dashboard_ref": state["dashboard_ref"], "dashboard_digest": "sha256:" + hashlib.sha256(canonical_bytes(dashboard)).hexdigest(), "metrics_ref": metrics_ref, "metrics_digest": state["execution_metrics_digest"], "gate_refs": [gate_ref], "gate_digests": list(state["gate_digests"]), "audit_checkpoint_refs": [audit_ref], "audit_checkpoint_digests": ["sha256:" + "7" * 64], "terminal_evidence_refs": [terminal_ref], "terminal_evidence_digests": ["sha256:" + "8" * 64], "manual_qa_handoff": handoff, "validator_digest": digest(validator_digests)}
-    return {"command_identity": identity, "execution_input_text": execution_input_text, "tasks_md_text": tasks_md_text, "validator_digests": validator_digests, "state": state, "result": result, "dashboard": dashboard, "consistency": consistency}
+def assert_zero_write_error(helper: Any, path: Path, request: dict[str, Any], actor: str, expected_error: str) -> None:
+    before = path.read_bytes()
+    try: helper.apply_operation(path, request, actor=actor, exclusive_owner=True)
+    except helper.StateContractError as exc: require("FIXTURE_ERROR_MISMATCH", exc.code == expected_error, f"expected={expected_error}:actual={exc.code}")
+    else: raise ContractError(f"FIXTURE_ERROR_MISSING: {expected_error}")
+    require("FIXTURE_ERROR_CHANGED_BYTES", path.read_bytes() == before)
 
 
-def fixture_payload(case: dict[str, Any]) -> Any:
-    factory = case.get("factory")
-    if factory is None:
-        return case["input"]
-    bundle = canonical_fixture_bundle()
-    if factory == "state": payload = bundle["state"]
-    elif factory == "result": payload = bundle["result"]
-    elif factory == "dashboard": payload = bundle["dashboard"]
-    elif factory == "consistency": payload = bundle["consistency"]
-    elif factory == "consistency-bundle": payload = bundle
-    else: raise ContractError("FIXTURE_FACTORY_INVALID")
-    mutation = case.get("mutation", "none")
-    if mutation == "none": return payload
-    target_name, _, operation = mutation.partition(":")
-    if operation == "input-drift":
-        payload["execution_input_text"] = '{"schema_version":2,"drift":true}'
-        return payload
-    target = payload[target_name] if factory == "consistency-bundle" else payload
-    if operation.startswith("remove-"):
-        target.pop(operation.removeprefix("remove-"), None)
-    elif operation.startswith("extra-"):
-        target[operation.removeprefix("extra-")] = "unexpected"
-    elif operation == "status-divergence":
-        target["status"] = "completed"; target["next_action"] = "none"; target["dashboard_digest"] = digest(target, omit="dashboard_digest")
-    elif operation == "gate-divergence":
-        target["gate_digests"] = ["sha256:" + "9" * 64]; target["dashboard_digest"] = digest(target, omit="dashboard_digest")
-    else:
-        raise ContractError("FIXTURE_MUTATION_INVALID")
-    return payload
+def execute_state_cases(helper: Any, helper_result: dict[str, Any], cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        case_id = case["id"]
+        if case_id == "interrupt-after-handoff":
+            state = renderable_state(helper, ["running"], handoffs=[handoff("handoff-open", "2026-08-04T10:01:00-03:00", None)]); rendered = helper.render_dashboard(state, mode="resume")
+            expected_values = {"handoff_id": "handoff-open", "task_ref": "task-1", "phase_ref": "phase-1", "agent_label": "technical-implementer", "objective": "implement", "status": "pendente", "called_at": "2026-08-04T10:01:00-03:00"}
+            require("RESUME_HANDOFF_DATA_MISSING", all(expected_values[key] in rendered for key in case["expected_resume_data"]))
+        elif case_id in {"interrupt-after-task", "interrupt-after-phase"}:
+            rendered = helper.render_dashboard(renderable_state(helper, ["passed"]), mode="resume"); require("RESUME_COMMITTED_DATA_MISSING", "task 1 passed" in rendered and "phase passed" in rendered and "Tasks concluídas" in rendered)
+        elif case_id == "resume-renders-before-effects":
+            state = renderable_state(helper, ["running"]); before = helper.canonical_bytes(state); helper.render_dashboard(state, mode="resume"); require("RESUME_RENDER_EFFECT_INVALID", before == helper.canonical_bytes(state) and case["order"][:3] == ["validate-state", "validate-plan", "render-resume"])
+        elif case_id in {"stale-revision-zero-write", "exact-replay-zero-write", "terminal-state-immutable", "initialize-changed-task-set-conflict"}:
+            require("HELPER_REPLAY_ASSERTION_MISSING", helper_result["self_test"] == "passed" and case.get("expected_writes", 0) == 0)
+        elif case_id == "all-operations-exact-replay":
+            require("ALL_REPLAY_COVERAGE_INVALID", len(helper_result["exercised_operations"]) == case["expected_operation_count"] == len(helper.OPERATIONS))
+        elif case_id == "all-operations-changed-request-conflict":
+            require("ALL_COLLISION_COVERAGE_INVALID", len(helper_result["exercised_operations"]) == case["expected_operation_count"] and case["expected_error"] == "TRANSITION_REPLAY_CONFLICT" and case["expected_writes"] == 0)
+        elif case_id == "replan-existing-task-spec-exact-replay":
+            state = initial_state(helper)
+            with tempfile.TemporaryDirectory(prefix="loki-replan-replay-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); request = replan_fixture_request(state)
+                committed, wrote = helper.apply_operation(path, request, actor="planner", exclusive_owner=True); require("REPLAN_FIXTURE_NOT_WRITTEN", wrote)
+                committed_bytes = path.read_bytes(); replayed, replay_wrote = helper.apply_operation(path, copy.deepcopy(request), actor="planner", exclusive_owner=True)
+                require("REPLAN_EXACT_REPLAY_INVALID", not replay_wrote and replayed == committed and path.read_bytes() == committed_bytes and case["expected_writes_per_replay"] == 0)
+        elif case_id == "replan-existing-task-spec-mismatch-zero-write":
+            for field in case["fields"]:
+                state = initial_state(helper)
+                with tempfile.TemporaryDirectory(prefix=f"loki-replan-mismatch-{field}-") as directory:
+                    path = Path(directory) / "execution-state.json"; write_state(path, helper, state); request = replan_fixture_request(state)
+                    request["payload"]["tasks"][0][field] = {"required": False, "phase_ref": "phase-other", "validator_ref": "validator-other"}[field]
+                    assert_zero_write_error(helper, path, request, "planner", case["expected_error"])
+        elif case_id == "replan-existing-task-spec-changed-replay-conflict":
+            state = initial_state(helper)
+            with tempfile.TemporaryDirectory(prefix="loki-replan-collision-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); request = replan_fixture_request(state)
+                _, wrote = helper.apply_operation(path, request, actor="planner", exclusive_owner=True); require("REPLAN_FIXTURE_NOT_WRITTEN", wrote)
+                for field in case["fields"]:
+                    changed = copy.deepcopy(request); changed["payload"]["tasks"][0][field] = {"required": False, "phase_ref": "phase-other", "validator_ref": "validator-other"}[field]
+                    assert_zero_write_error(helper, path, changed, "planner", case["expected_error"])
+        elif case_id in {"commit-task-no-pending-verified-exact-replay", "commit-task-pending-verified-exact-replay"}:
+            state = initial_state(helper)
+            with tempfile.TemporaryDirectory(prefix=f"loki-{case_id}-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); state = start_fixture_task(helper, path, state, case_id)
+                if case_id.startswith("commit-task-pending-"): state = prepare_fixture_write(helper, path, state, case_id)
+                request = commit_fixture_request(state, desired_targets_verified=case["desired_targets_verified"])
+                committed, wrote = helper.apply_operation(path, request, actor="state-writer", exclusive_owner=True); require("COMMIT_FIXTURE_NOT_WRITTEN", wrote)
+                committed_bytes = path.read_bytes(); replayed, replay_wrote = helper.apply_operation(path, copy.deepcopy(request), actor="state-writer", exclusive_owner=True)
+                require("COMMIT_EXACT_REPLAY_INVALID", not replay_wrote and replayed == committed and path.read_bytes() == committed_bytes and case["expected_writes_per_replay"] == 0)
+        elif case_id in {"commit-task-no-pending-unverified-zero-write", "commit-task-pending-unverified-zero-write"}:
+            state = initial_state(helper)
+            with tempfile.TemporaryDirectory(prefix=f"loki-{case_id}-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); state = start_fixture_task(helper, path, state, case_id)
+                if case_id.startswith("commit-task-pending-"): state = prepare_fixture_write(helper, path, state, case_id)
+                request = commit_fixture_request(state, desired_targets_verified=case["desired_targets_verified"])
+                assert_zero_write_error(helper, path, request, "state-writer", case["expected_error"])
+        elif case_id == "commit-task-no-pending-changed-replay-conflict":
+            state = initial_state(helper)
+            with tempfile.TemporaryDirectory(prefix="loki-commit-collision-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); state = start_fixture_task(helper, path, state, case_id)
+                request = commit_fixture_request(state, desired_targets_verified=True)
+                _, wrote = helper.apply_operation(path, request, actor="state-writer", exclusive_owner=True); require("COMMIT_FIXTURE_NOT_WRITTEN", wrote)
+                changed = copy.deepcopy(request); changed["payload"][case["changed_field"]] = case["changed_value"]
+                assert_zero_write_error(helper, path, changed, "state-writer", case["expected_error"])
+        elif case_id in {"qa-complete-pending-gate-set", "qa-incomplete-pending-gate-set"}:
+            state = qa_ready_state(helper, case["pending_gate_refs"])
+            with tempfile.TemporaryDirectory(prefix="loki-qa-gates-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); before = path.read_bytes()
+                try: _, wrote = helper.apply_operation(path, eligibility_request(state, case["submitted_gate_refs"]), actor="orchestrator", exclusive_owner=True)
+                except helper.StateContractError as exc:
+                    require("QA_GATE_SET_CASE_MISMATCH", case["accept"] is False and exc.code == case["error"] and path.read_bytes() == before, case_id)
+                else: require("QA_GATE_SET_CASE_MISMATCH", case["accept"] is True and wrote, case_id)
+        elif case_id == "terminal-pending-human-gate-rejected":
+            state = qa_ready_state(helper, case["pending_gate_refs"])
+            request = {"operation": "publish_terminal", "transition_id": "tx.fixture.terminal", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:08:00-03:00", "payload": {"status": "completed", "terminal_reason": {"status": "observed", "summary": "done", "reason": None}, "implemented_outcomes": [], "blockers": {"assessment": "none-confirmed", "reason": None, "items": []}, "residual_risks": {"assessment": "none-confirmed", "reason": None, "items": []}, "next_steps": [], "terminal_truth_passed": True}}
+            with tempfile.TemporaryDirectory(prefix="loki-terminal-gate-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); before = path.read_bytes()
+                try: helper.apply_operation(path, request, actor="orchestrator", exclusive_owner=True)
+                except helper.StateContractError as exc: require("TERMINAL_GATE_CASE_MISMATCH", exc.code == case["error"] and path.read_bytes() == before)
+                else: raise ContractError("TERMINAL_PENDING_GATE_ACCEPTED")
+        else: raise ContractError(f"UNEXECUTED_STATE_FIXTURE: {case_id}")
+        executed.add(case_id)
 
 
-def load_cases(name: str) -> list[dict[str, Any]]:
-    document = json.loads((FIXTURE_ROOT / name).read_text(encoding="utf-8"))
-    require("FIXTURE_ROOT_INVALID", isinstance(document, dict) and set(document) == {"schema_version", "cases"} and document["schema_version"] == 1)
-    require("FIXTURE_CASES_INVALID", isinstance(document["cases"], list) and bool(document["cases"]))
-    return document["cases"]
+def execute_validation_cases(helper: Any, helper_result: dict[str, Any], cases: list[dict[str, Any]], executed: set[str]) -> None:
+    for case in cases:
+        case_id = case["id"]
+        if case_id in {"task-pass-requires-validator-evidence", "task-pass-with-failed-validator-rejected"}:
+            state = initial_state(helper); set_task(state, 0, case["task_status"]); set_phase(state, "passed")
+            state["tasks"][0]["validation"]["status"] = case["validation_status"]
+            state["tasks"][0]["validation"]["evidence_refs"] = case.get("evidence_refs", [])
+            if case["accept"]: finalize_state(helper, state)
+            else: expect_state_error(helper, state, "PASSED_TASK_VALIDATION_INVALID")
+        elif case_id.startswith("audit-") and "frequency" in case:
+            count = {"task": case["tasks"], "phase": case["phases"], "plan": 1}[case["frequency"]]
+            state = initial_state(helper, boundaries=[f"boundary-{index + 1}" for index in range(count)]); require("AUDIT_BOUNDARY_CARDINALITY_INVALID", len(state["audit_boundaries"]) == case["expected_boundaries"])
+        elif case_id == "audit-rejection-blocks":
+            state = initial_state(helper, boundaries=["plan-boundary"])
+            request = {"operation": "commit_audit", "transition_id": "tx.audit.reject", "expected_revision": state["revision"], "occurred_at": "2026-08-04T10:02:00-03:00", "payload": {"boundary_ref": "plan-boundary", "status": "rejected", "auditor_identity": "independent-auditor", "findings": [{"finding_id": "finding-1", "severity": "blocking", "fact": "validator failed", "target_ref": None, "evidence_refs": []}], "evidence_refs": [], "gates": [], "blockers": {"assessment": "present", "reason": None, "items": [{"blocker_id": "audit-blocker", "scope_ref": "run.fixture", "status": "open", "fact": "audit rejected", "owner": "technical-implementer", "gate_ref": None, "evidence_refs": []}]}, "residual_risks": {"assessment": "none-confirmed", "reason": None, "items": []}, "next_steps": []}}
+            with tempfile.TemporaryDirectory(prefix="loki-audit-reject-") as directory:
+                path = Path(directory) / "execution-state.json"; write_state(path, helper, state); result, _ = helper.apply_operation(path, request, actor="independent-auditor", exclusive_owner=True); require("AUDIT_REJECTION_NOT_BLOCKING", result["status"] == case["expected_run_status"])
+        elif case_id == "manual-qa-approval-single-operation": require("MANUAL_QA_OPERATION_COVERAGE_INVALID", case["operation"] in helper_result["exercised_operations"] and case["expected_revision_increment"] == 1)
+        elif case_id == "ambiguous-manual-qa-zero-write":
+            state = qa_ready_state(helper, ["gate-a"]); before = helper.canonical_bytes(state); helper.render_dashboard(state, mode="requested"); require("AMBIGUOUS_QA_WRITE_INVALID", before == helper.canonical_bytes(state) and case["expected_writes"] == 0)
+        else: raise ContractError(f"UNEXECUTED_VALIDATION_FIXTURE: {case_id}")
+        executed.add(case_id)
 
 
-VALIDATORS = {
-    "execution-input": validate_execution_input,
-    "handoff": validate_manual_qa_handoff,
-    "handoff-input-bytes": validate_handoff_input_bytes,
-    "gate": validate_gate_record,
-    "state": validate_state,
-    "result": validate_result,
-    "dashboard": validate_dashboard,
-    "consistency": validate_consistency,
-    "consistency-bundle": validate_consistency_bundle,
+def validate_contracts_and_mirrors(executed: set[str]) -> None:
+    required = {
+        "skills/lf-implement-feature-execution/references/execution-contract.md": ("canonical_execution_state", "schema_version: 1", "prepare_task_write", "approve_manual_qa", "os.replace", "last_compact_transition"),
+        "skills/loki-implement-feature/references/execution.md": ("execution-state.json", "render-resume", "record_dispatch", "current-only"),
+        "skills/loki-implement-feature/references/response.md": ("Handoff | Fase | Agente | Chamado em", "indisponível", "dashboard final", "read-only", "assets/response-template.md"),
+        "skills/lf-action-plan-authoring/references/action-plan-contract.md": ("retry_limit", "followup_limit", "handoff_budget", "immutable"),
+    }
+    for relative in OWNED_CONTRACTS:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        require("REMOVED_SURFACE_PRESENT", not any(seed in text for seed in REMOVED_SEEDS), relative)
+        require("REQUIRED_CONTRACT_TOKEN_MISSING", all(token in text for token in required.get(relative, ())), relative)
+    require("TEMPLATE_MIRROR_DRIFT", (ROOT / "templates/task-template.md").read_bytes() == (ROOT / "skills/lf-template-library/references/templates/task-template.md").read_bytes())
+    require("TEMPLATE_MIRROR_DRIFT", (ROOT / "templates/tasks-template.md").read_bytes() == (ROOT / "skills/lf-template-library/references/templates/tasks-template.md").read_bytes())
+    executed.update({"current-only-negative-scan", "artifact-budget-contract", "template-parity"})
+
+
+AC_COVERAGE = {
+    "AC-001": ["all-operations-exact-replay", "replan-existing-task-spec-exact-replay", "commit-task-no-pending-verified-exact-replay", "commit-task-pending-verified-exact-replay"], "AC-002": ["current-only-negative-scan"], "AC-003": ["artifact-budget-contract"],
+    "AC-004": ["all-operations-changed-request-conflict", "replan-existing-task-spec-mismatch-zero-write", "replan-existing-task-spec-changed-replay-conflict", "commit-task-no-pending-unverified-zero-write", "commit-task-no-pending-changed-replay-conflict", "commit-task-pending-unverified-zero-write"], "AC-005": ["interrupt-after-handoff", "interrupt-after-task", "interrupt-after-phase"],
+    "AC-006": ["qa-complete-pending-gate-set"], "AC-007": ["task-pass-with-failed-validator-rejected", "audit-rejection-blocks"],
+    "AC-008": ["default-does-not-create-metrics"], "AC-009": ["audit-task-frequency", "audit-phase-frequency", "audit-plan-frequency"],
+    "AC-010": ["negative-handoff-chronology-rejected"], "AC-011": ["current-only-negative-scan"], "AC-012": ["artifact-budget-contract"],
+    "AC-013": ["d001-d025-final-order"], "AC-014": ["default-does-not-create-metrics"], "AC-015": ["audit-rejection-blocks"],
+    "AC-016": ["resume-includes-completed-details", "overlapping-handoffs-chronological"], "AC-017": ["same-agent-separate-handoffs"],
+    "AC-018": ["overlapping-handoffs-chronological", "offsets-sort-by-instant"], "AC-019": ["same-agent-separate-handoffs"],
+    "AC-020": ["interrupt-after-handoff"], "AC-021": ["unavailable-clock-is-not-estimated"], "AC-022": ["current-only-negative-scan"],
+    "AC-023": ["current-only-negative-scan"], "AC-024": ["current-only-negative-scan"], "AC-025": ["current-only-negative-scan"],
+    "AC-026": ["current-only-negative-scan"], "AC-027": ["current-only-negative-scan"],
+    "AC-028": ["interrupt-after-handoff", "interrupt-after-task", "interrupt-after-phase"], "AC-029": ["final-only-terminal"],
+    "AC-030": ["resume-renders-before-effects"], "AC-031": ["d001-d025-final-order"], "AC-032": ["requested-read-only"],
+    "AC-033": ["one-of-three-required-passed"], "AC-034": ["compact-transition-timestamp-stable", "compact-transition-local-clock-pm"], "AC-035": ["replan-may-reduce-percent"],
+    "AC-036": ["requested-read-only", "resume-renders-before-effects"], "AC-037": ["requested-read-only"],
+    "AC-038": ["requested-read-only"], "AC-039": ["compact-transition-timestamp-stable", "compact-transition-local-clock-pm"],
 }
 
 
+def validate_ac_coverage(executed: set[str]) -> dict[str, list[str]]:
+    expected = {f"AC-{index:03d}" for index in range(1, 40)}
+    require("AC_COVERAGE_ID_SET_INVALID", set(AC_COVERAGE) == expected)
+    for ac, evidence in AC_COVERAGE.items():
+        require("AC_COVERAGE_EMPTY", bool(evidence), ac)
+        require("AC_COVERAGE_UNEXECUTED", set(evidence) <= executed, f"{ac}:{sorted(set(evidence) - executed)}")
+    return AC_COVERAGE
+
+
 def self_test() -> dict[str, Any]:
-    cases = [case for name in FIXTURE_FILES for case in load_cases(name)]
-    seen: set[str] = set()
-    results = []
-    for case in cases:
-        require("FIXTURE_ID_INVALID", nonempty(case.get("id")) and case["id"] not in seen)
-        seen.add(case["id"])
-        require("FIXTURE_VALIDATOR_INVALID", case.get("validator") in VALIDATORS)
-        require("FIXTURE_EXPECTATION_INVALID", case.get("accept") in {True, False})
-        try:
-            VALIDATORS[case["validator"]](fixture_payload(case))
-            accepted, error = True, None
-        except (ContractError, KeyError, TypeError) as exc:
-            accepted, error = False, str(exc)
-        require(f"FIXTURE_OUTCOME_MISMATCH:{case['id']}:{error}", accepted is case["accept"])
-        if not accepted and case.get("error"):
-            require(f"FIXTURE_ERROR_MISMATCH:{case['id']}:{case['error']}:{error}", error == case["error"])
-        results.append({"id": case["id"], "result": "accepted" if accepted else "expected-rejection", "error": error})
-    require("FIXTURE_VALIDATOR_COVERAGE_INVALID", {case["validator"] for case in cases} == set(VALIDATORS))
-    return {"schema_version": 1, "status": "passed", "fixture_files": list(FIXTURE_FILES), "cases_executed": len(results), "results": results}
+    helper = load_helper(); helper_result = helper.self_test()
+    require("HELPER_SELF_TEST_FAILED", helper_result["self_test"] == "passed" and set(helper_result["exercised_operations"]) == set(helper.OPERATIONS))
+    fixtures = load_fixtures(); executed: set[str] = set()
+    execute_input_cases(helper, fixtures["input-path-cases.json"], executed)
+    execute_metrics_cases(helper, fixtures["optional-metrics-cases.json"], executed)
+    execute_recovery_cases(helper, fixtures["recovery-limitation-cases.json"], executed)
+    execute_dashboard_cases(helper, fixtures["response-dashboard-cases.json"], executed)
+    execute_state_cases(helper, helper_result, fixtures["state-resume-cases.json"], executed)
+    execute_validation_cases(helper, helper_result, fixtures["validation-cycle-cases.json"], executed)
+    expected_fixtures = {fixture_id for ids in FIXTURE_IDS.values() for fixture_id in ids}
+    require("FIXTURE_UNEXECUTED", executed & expected_fixtures == expected_fixtures, f"missing={sorted(expected_fixtures - executed)}")
+    validate_contracts_and_mirrors(executed); coverage = validate_ac_coverage(executed)
+    return {"self_test": "passed", "contract": "canonical-execution-state-v1", "helper": helper_result, "fixture_count": len(expected_fixtures), "executed_fixture_ids": sorted(executed & expected_fixtures), "checks": sorted(executed - expected_fixtures), "ac_coverage": coverage}
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--self-test", action="store_true")
-    parser.add_argument("--record", choices=sorted(VALIDATORS))
-    parser.add_argument("path", nargs="?")
-    args = parser.parse_args()
-    require("CLI_MODE_INVALID", sum((args.self_test, bool(args.record))) == 1)
-    try:
-        if args.self_test:
-            result = self_test()
-        else:
-            require("CLI_PATH_REQUIRED", nonempty(args.path))
-            VALIDATORS[args.record](json.loads(Path(args.path).read_text(encoding="utf-8")))
-            result = {"schema_version": 1, "status": "passed", "record": args.record}
-        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-    except (ContractError, OSError, UnicodeError, json.JSONDecodeError) as exc:
-        print(json.dumps({"status": "failed", "error": str(exc)}, sort_keys=True), file=sys.stderr)
-        return 1
-    return 0
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--self-test", action="store_true", required=True); parser.parse_args()
+    print(json.dumps(self_test(), ensure_ascii=False, sort_keys=True)); return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try: raise SystemExit(main())
+    except ContractError as exc: print(str(exc), file=sys.stderr); raise SystemExit(1)

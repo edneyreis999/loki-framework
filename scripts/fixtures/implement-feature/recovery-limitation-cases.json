@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id": "all-before-allows-explicit-abandon", "observed": ["before", "before"], "outcome": "abandon-or-retry"},
+    {"id": "all-desired-allows-validation", "observed": ["desired", "desired"], "outcome": "validate-and-commit"},
+    {"id": "mixed-blocks-without-repair", "observed": ["before", "desired"], "outcome": "block_pending_write"},
+    {"id": "unknown-blocks-without-repair", "observed": ["unknown"], "outcome": "block_pending_write"},
+    {"id": "open-handoff-remains-open", "external_status": "unknown", "outcome": "block-and-preserve-handoff"}
+  ]
+}

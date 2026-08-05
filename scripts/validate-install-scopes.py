@@ -101,6 +101,14 @@ FINAL_BUNDLE_RESOURCES = (
     "references/response.md",
     "assets/response-template.md",
 )
+CANONICAL_EXECUTION_SKILL = "lf-implement-feature-execution"
+CANONICAL_EXECUTION_HELPER = (
+    "skills/lf-implement-feature-execution/scripts/loki_execution_state.py"
+)
+CANONICAL_EXECUTION_IDENTITY_POLICY = {
+    "operational_role": "skill",
+    "required_resources": ["scripts/loki_execution_state.py"],
+}
 INSTALLABLE_PACKAGE_ROOTS = ("skills", "agents", "codex", "templates")
 ANALYTIC_INFERENCE_FIXTURE_ROOTS = (
     Path("skills/lf-analytic-inference/references/fixtures"),
@@ -855,6 +863,95 @@ def validate_manifest_entries(package_root: Path) -> None:
         missing.append(f"manifest entry for {SCOPE_FILE}")
     if missing:
         raise ValueError("missing manifest/source entries: " + ", ".join(missing))
+
+
+def validate_canonical_execution_helper_registration(
+    package_root: Path,
+    data: dict,
+) -> None:
+    """Require one installable closed state helper and no retired routes."""
+
+    failures: list[str] = []
+    helper = package_root / CANONICAL_EXECUTION_HELPER
+    if helper.is_symlink() or not helper.is_file():
+        failures.append(
+            f"canonical execution helper missing/non-regular: {CANONICAL_EXECUTION_HELPER}"
+        )
+
+    skill_scopes = artifact_scopes(data, "skills")
+    if skill_scopes.get(CANONICAL_EXECUTION_SKILL) != "both":
+        failures.append(
+            f"install-scopes artifacts.skills.{CANONICAL_EXECUTION_SKILL} must be both"
+        )
+    identity_policy = data.get("artifact_identity_policy", {})
+    exact_policy = identity_policy.get(
+        "skills/lf-implement-feature-execution/SKILL.md"
+    )
+    if exact_policy != CANONICAL_EXECUTION_IDENTITY_POLICY:
+        failures.append(
+            "install-scopes canonical execution helper policy must declare the exact nested resource"
+        )
+
+    manifest_catalog = parse_manifest_skill_catalog(package_root)
+    helper_metadata = manifest_catalog.get(CANONICAL_EXECUTION_SKILL, {})
+    if helper_metadata.get("executable_helper") != CANONICAL_EXECUTION_HELPER:
+        failures.append(
+            "manifest lf-implement-feature-execution executable_helper is missing or stale"
+        )
+    if "canonical-execution-state-v1" not in helper_metadata.get(
+        "current_contracts", ""
+    ):
+        failures.append(
+            "manifest lf-implement-feature-execution does not register canonical-execution-state-v1"
+        )
+
+    current_surfaces = (
+        "README.md",
+        "docs/usage-guide.md",
+        "docs/loki-plan-execution-workflow.md",
+        "docs/operational-inventory.md",
+        "manifest.yaml",
+        "install-scopes.json",
+    )
+    for relative in current_surfaces[:-1]:
+        text = (package_root / relative).read_text(encoding="utf-8")
+        if CANONICAL_EXECUTION_HELPER not in text:
+            failures.append(
+                f"{relative}: canonical execution helper registration missing"
+            )
+
+    retired_root_helper = package_root / "scripts" / (
+        "loki_execution_" + "projections.py"
+    )
+    if retired_root_helper.exists() or retired_root_helper.is_symlink():
+        failures.append("retired root execution helper is still present")
+    retired_reconciliation_fixture = (
+        package_root
+        / "scripts/fixtures/manual-qa"
+        / ("checklist-" + "reconciliation-cases.json")
+    )
+    if retired_reconciliation_fixture.exists() or retired_reconciliation_fixture.is_symlink():
+        failures.append("retired Manual QA reconciliation fixture is still present")
+
+    retired_tokens = (
+        "scripts/" + "loki_execution_projections.py",
+        "checklist_" + "admission",
+        "promotion_" + "admission",
+        "builds/manual-qa/" + "approval-v1.json",
+        "consistency-" + "last",
+        "manual_qa_" + "handoff",
+    )
+    for relative in current_surfaces:
+        text = (package_root / relative).read_text(encoding="utf-8")
+        for token in retired_tokens:
+            if token in text:
+                failures.append(f"{relative}: retired execution route token {token}")
+
+    if failures:
+        raise ValueError(
+            "canonical execution helper registration failures:\n- "
+            + "\n- ".join(failures)
+        )
 
 
 def validate_no_production_consumer_state(package_root: Path) -> None:
@@ -2068,6 +2165,7 @@ def main(argv: list[str] | None = None) -> int:
 
         validate_script_inventory_parity(package_root)
         validate_script_inventory_parity_self_tests()
+        validate_canonical_execution_helper_registration(package_root, data)
 
         agent_scopes = artifact_scopes(data, "agents")
         codex_agent_scopes = artifact_scopes(data, "codex_agents")

@@ -2,105 +2,89 @@
   "schema_version": 1,
   "cases": [
     {
-      "id": "checklist-human-first-zero-derived",
-      "kind": "checklist", "accept": true,
-      "human_gates": [{"schema_version": 3, "gate_id": "g1", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Open the feature.", "expected": "The main view appears.", "status": "pending", "evidence_refs": []}],
-      "derived_candidates": [],
-      "expected": [{"id": "MQ-01", "kind": "human-gate", "instruction": "Open the feature.", "expected": "The main view appears."}]
+      "id": "state-only-small-feature-tree",
+      "kind": "artifact-tree",
+      "paths": ["planos/p/builds/execution-state.json"],
+      "expected_mutable_administrative_files": 1,
+      "accept": true,
+      "ac": ["AC-001", "AC-002"]
     },
     {
-      "id": "checklist-ranking-dedup-and-five-cap",
-      "kind": "checklist", "accept": true,
-      "human_gates": [{"schema_version": 3, "gate_id": "g1", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Run the primary flow.", "expected": "The flow completes.", "status": "pending", "evidence_refs": []}],
-      "derived_candidates": [
-        {"source_ref": "s6", "instruction": "Test F.", "expected": "F passes.", "demand_relevance": 0, "regression_risk": 0, "changed_target_order": 5, "source_order": 5},
-        {"source_ref": "s2", "instruction": "Test B.", "expected": "B passes.", "demand_relevance": 2, "regression_risk": 1, "changed_target_order": 1, "source_order": 1},
-        {"source_ref": "s1", "instruction": "Test A.", "expected": "A passes.", "demand_relevance": 2, "regression_risk": 2, "changed_target_order": 2, "source_order": 0},
-        {"source_ref": "s1-dup", "instruction": "Test A.", "expected": "A passes.", "demand_relevance": 2, "regression_risk": 2, "changed_target_order": 3, "source_order": 2},
-        {"source_ref": "s3", "instruction": "Test C.", "expected": "C passes.", "demand_relevance": 1, "regression_risk": 2, "changed_target_order": 0, "source_order": 3},
-        {"source_ref": "s4", "instruction": "Test D.", "expected": "D passes.", "demand_relevance": 1, "regression_risk": 1, "changed_target_order": 0, "source_order": 4},
-        {"source_ref": "s5", "instruction": "Test E.", "expected": "E passes.", "demand_relevance": 1, "regression_risk": 0, "changed_target_order": 0, "source_order": 6}
+      "id": "state-plus-distinct-immutable-evidence-tree",
+      "kind": "artifact-tree",
+      "paths": [
+        "planos/p/builds/execution-state.json",
+        "planos/p/builds/evidence/task-validator.json",
+        "planos/p/builds/evidence/independent-audit.json"
       ],
-      "expected": [
-        {"id": "MQ-01", "kind": "human-gate", "instruction": "Run the primary flow.", "expected": "The flow completes."},
-        {"id": "MQ-02", "kind": "derived-test", "instruction": "Test A.", "expected": "A passes."},
-        {"id": "MQ-03", "kind": "derived-test", "instruction": "Test B.", "expected": "B passes."},
-        {"id": "MQ-04", "kind": "derived-test", "instruction": "Test C.", "expected": "C passes."},
-        {"id": "MQ-05", "kind": "derived-test", "instruction": "Test D.", "expected": "D passes."},
-        {"id": "MQ-06", "kind": "derived-test", "instruction": "Test E.", "expected": "E passes."}
-      ]
+      "expected_mutable_administrative_files": 1,
+      "accept": true,
+      "ac": ["AC-001", "AC-007"]
     },
     {
-      "id": "terminal-current-minimal-order", "kind": "terminal", "accept": true,
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/consistency.json"], "writes": 5
-      }
+      "id": "parallel-mutable-view-rejected",
+      "kind": "artifact-tree",
+      "paths": [
+        "planos/p/builds/execution-state.json",
+        "planos/p/builds/current-view.json"
+      ],
+      "mutable_administrative_paths": [
+        "planos/p/builds/execution-state.json",
+        "planos/p/builds/current-view.json"
+      ],
+      "accept": false,
+      "error": "MULTIPLE_MUTABLE_ADMINISTRATIVE_FILES",
+      "ac": ["AC-001", "AC-002", "AC-004"]
     },
     {
-      "id": "terminal-schema-99-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_SCHEMA_VERSIONS_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 99, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 99, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/consistency.json"], "writes": 5
-      }
+      "id": "checklist-gate-only",
+      "kind": "checklist-render",
+      "human_gate_count": 1,
+      "limitation_count": 0,
+      "exploratory_count": 0,
+      "expected_count": 1,
+      "accept": true,
+      "ac": ["AC-006"]
     },
     {
-      "id": "terminal-missing-target-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_PUBLISH_ORDER_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/consistency.json"], "writes": 4
-      }
+      "id": "checklist-fallback-only",
+      "kind": "checklist-render",
+      "human_gate_count": 0,
+      "limitation_count": 1,
+      "exploratory_count": 0,
+      "expected_count": 1,
+      "accept": true,
+      "ac": ["AC-006", "AC-007"]
     },
     {
-      "id": "terminal-external-target-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_RESULT_REF_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "outside/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "outside/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/consistency.json"], "writes": 5
-      }
+      "id": "checklist-required-items-do-not-consume-optional-cap",
+      "kind": "checklist-render",
+      "human_gate_count": 2,
+      "limitation_count": 2,
+      "exploratory_count": 10,
+      "expected_count": 14,
+      "accept": true,
+      "ac": ["AC-006"]
     },
     {
-      "id": "terminal-duplicate-target-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_TARGETS_NOT_DISTINCT",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/result.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/result.json", "planos/p/builds/consistency.json"], "writes": 5
-      }
+      "id": "checklist-ten-exploratory-valid",
+      "kind": "checklist-render",
+      "human_gate_count": 1,
+      "limitation_count": 0,
+      "exploratory_count": 10,
+      "expected_count": 11,
+      "accept": true,
+      "ac": ["AC-006"]
     },
     {
-      "id": "terminal-wrong-order-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_PUBLISH_ORDER_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/tasks.md", "planos/p/task-1.md", "planos/p/builds/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/consistency.json"], "writes": 5
-      }
-    },
-    {
-      "id": "terminal-arbitrary-extra-rejected", "kind": "terminal", "accept": false, "error": "TERMINAL_PUBLISH_ORDER_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/extra.json", "planos/p/builds/consistency.json"], "writes": 6
-      }
-    },
-    {
-      "id": "terminal-write-count-mismatch", "kind": "terminal", "accept": false, "error": "TERMINAL_WRITES_INVALID",
-      "input": {
-        "plan_directory": "planos/p", "state_ref": "planos/p/tasks.md", "result_ref": "planos/p/builds/result.json", "dashboard_ref": "planos/p/builds/dashboard.json", "consistency_ref": "planos/p/builds/consistency.json",
-        "before": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "awaiting-manual-qa", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]},
-        "after": {"state_schema_version": 4, "result_schema_version": 4, "dashboard_schema_version": 4, "consistency_schema_version": 3, "status": "completed", "gate_refs": ["planos/p/task-1.md#gate:g1"], "gate_digests": ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"]},
-        "publish_order": ["planos/p/task-1.md", "planos/p/tasks.md", "planos/p/builds/result.json", "planos/p/builds/dashboard.json", "planos/p/builds/consistency.json"], "writes": 4
-      }
+      "id": "checklist-eleven-exploratory-rejected",
+      "kind": "checklist-render",
+      "human_gate_count": 1,
+      "limitation_count": 0,
+      "exploratory_count": 11,
+      "accept": false,
+      "error": "CHECKLIST_EXPLORATORY_LIMIT_EXCEEDED",
+      "ac": ["AC-007"]
     }
   ]
 }

@@ -5,7 +5,7 @@ status: active
 created: 2026-06-26
 doc_id: loki-implementation-workflow
 version: 1.0.0
-last_updated: 2026-08-03
+last_updated: 2026-08-04
 scope: Demand and Markdown analysis through persisted planning, implementation, automatic validation, manual-QA handoff, and learning handoff
 not_scope: Package installation, automatic durable-learning promotion, or compatibility with superseded command contracts
 authority: Approved Loki package policy and the current loki-implement-feature and loki-manual-qa command bundles
@@ -28,8 +28,6 @@ Este e o guia canonico para transformar uma demanda e uma analise Markdown em
 plano persistido, implementacao escopada, validacao automatica por task e um
 handoff retomavel. O comando publico de implementação e
 `loki-implement-feature`; o QA manual material pertence a `loki-manual-qa`.
-
-![[loki-plan-execution-workflow.excalidraw.md]]
 
 ## Ideia central
 
@@ -82,10 +80,10 @@ overwrite ou reparo por memoria da conversa.
 
 Quando a analise Markdown ja esta pronta, invoque `loki-implement-feature`. O
 comando planeja, valida o plano e executa o DAG na mesma execucao retomavel.
-Quando restar QA humano material, ele persiste `awaiting-manual-qa`, que nao e
-conclusao, junto do handoff v3 `ready-for-manual-qa`. Quando nao houver QA
-manual material, ele conclui depois dos gates tecnicos com
-`manual-qa-not-required` e motivo nao vazio.
+Quando restar QA humano material, ele publica `awaiting-manual-qa`, que nao e
+conclusao, junto da base e revisao de elegibilidade exatas no estado canonico.
+Quando nao houver QA manual material, ele conclui depois dos gates tecnicos
+pela operacao terminal tipada e registra o motivo no mesmo estado.
 
 Preparacoes opcionais continuam terminais e nao auto-invocam o proximo passo:
 
@@ -102,8 +100,8 @@ proprio plano e o estado indicarem essa necessidade, sem promover norma.
 
 1. Valide demanda, `analysis_file`, digests, restricoes, retry e path do plano.
 2. Derive identidades tipadas de run e execution a partir dos inputs imutaveis.
-3. Crie ou retome o diretorio gerenciado e publique o LokiRunState atual antes
-   de qualquer target de producao.
+3. Crie ou retome o diretorio gerenciado e publique
+   `builds/execution-state.json` schema v1 antes de qualquer target de producao.
 4. Materialize `tasks.md`, `task-N.M.md`, fases, DAG, owners, gates e evidencias
    esperadas. Nao ha segunda approval cerimonial do diretorio.
 5. Registre um `target_decision` validado para cada target. Target inferido alem
@@ -131,11 +129,11 @@ proprio plano e o estado indicarem essa necessidade, sem promover norma.
     escrita afetada, replante, valide a decisao e somente depois retome.
 13. Ao fim do DAG, rode validators finais, reconcilie todos os ACs e encaminhe
     regressao pela mesma politica de severidade e retry.
-14. Nao derive, apresente, colete ou reconcilie QA manual. Quando ele for
-    material depois dos gates automaticos, publique somente o handoff
-    estruturado v3 `ready-for-manual-qa` junto de `awaiting-manual-qa`, sem
-    declarar conclusao; caso contrario, conclua e publique
-    `manual-qa-not-required` com motivo nao vazio.
+14. Nao derive, apresente nem colete QA manual. Quando ele for material depois
+    dos gates automaticos, publique por operacao tipada somente
+    `awaiting-manual-qa`, digest da base elegivel, revisao elegivel e refs
+    aplicaveis, sem declarar conclusao. Caso contrario, conclua por
+    `publish_terminal` depois de validar a verdade terminal.
 
 ## Estado e artefatos retomaveis
 
@@ -143,24 +141,26 @@ proprio plano e o estado indicarem essa necessidade, sem promover norma.
 <plan-directory>/
 |-- tasks.md
 |-- task-N.M.md
+|-- builds/execution-state.json               # unica autoridade mutavel
 |-- preflights/<run-path-id>/<agent-name>/preflight-v<N>.md
 |-- interaction/faseN/task-N.M/validation-cycles/
 |-- interaction/faseN/task-N.M/learned/       # opcional
 |-- builds/faseN/
-|-- builds/audits/<task|phase|plan>/<boundary-path-id>/checkpoint-v1-<iteration>.yaml
-|-- builds/metrics/execution-metrics.json
 |-- retrospetivas/faseN/
 +-- execution-knowledge/entries/              # opcional
 ```
 
-`tasks.md` contem a autoridade do plano, DAG e LokiRunState. Task files mantem
-estado local e locators. O estado guarda digests e refs, nao payloads brutos.
-O estado atual e exclusivamente LokiRunState v4: inclui a configuracao de
-auditoria v1 completa e direta, os refs dos ultimos checkpoints ativos para
-fronteiras ja due, e os locators de result v4, dashboard v4 e consistency v3.
-Resume revalida identidades, schemas, digests, target decisions, records
-imutaveis e estado atual dos targets; continuidade de sessao do provider e
-apenas otimizacao.
+`tasks.md` e task files definem a revisao imutavel do plano. O unico estado
+mutavel e `builds/execution-state.json`, no schema fechado
+`canonical_execution_state` v1. Ele guarda identidade, revisao do plano,
+limites, tasks, fases, handoffs, gates, fronteiras de auditoria, QA manual,
+decisoes humanas, outcomes, observacoes bounded, blockers, riscos, proximos
+passos e locators/digests opcionais. Nao guarda dashboard, totais derivados,
+formatted durations, logs grandes ou payloads duplicados.
+
+Resume valida o estado, a revisao imutavel do plano e a evidencia referenciada;
+depois renderiza a view de resume antes de preflight, dispatch ou escrita.
+Continuidade de sessao do provider e apenas otimizacao.
 
 Session preflight registra fontes, coverage, freshness, conflitos, lacunas e
 summary sanitizado para um agent/run. Ele nao contem transcript, prompt bruto,
@@ -168,39 +168,21 @@ segredo, PII, raciocinio privado, envelope completo nem autorizacao de escrita.
 Ele tambem nao substitui `lf-domain-context-preflight` quando esse preflight
 pessoal for aplicavel.
 
-## Metricas hierarquicas de execucao
+## Observacoes e artefatos opcionais
 
-O orquestrador publica atomicamente
-`builds/metrics/execution-metrics.json` schema v1 e referencia seu digest no
-`LokiRunState` v4, `implement_feature_execution_result` v4 e dashboard v4. Spans
-de run, phase, task, handoff, validator, gate, audit e reconciliation formam
-uma arvore aciclica com clock provenance, elapsed/active time e critical path;
-campos não observáveis ficam `unavailable` com motivo, nunca zero sintético.
-O digest é calculado sobre o mapping canônico sem `metrics_id` nem
-`metrics_digest`; o mesmo hash preenche o sufixo do ID e o digest. O critical
-path declara uma cadeia ordenada de spans cuja soma observada é verificável.
+O estado pode registrar observacoes bounded de effort, incluindo valores
+observados ou `unavailable` com motivo. O renderer nao inventa zero para dado
+ausente e nao cria budget de token/custo nem parada automatica por custo.
 
-Uso de tokens permanece separado em `exact`, `estimated` e `unavailable`.
-Exact exige contador run-scoped verificável; estimativa usa somente payload
-UTF-8 observável, range, confiança baixa e escopo parcial; totais mistos são
-proibidos. Falha de telemetria degrada apenas as métricas e não bloqueia o
-trabalho funcional. Antes de encerrar por silêncio, o adaptador registra um
-liveness probe: `running` ou `progress` proíbe a parada; cancelamento explícito
-do usuário continua uma rota separada.
-
-O modo `--consistency-packet <json>` de
-`scripts/validate-implement-feature-contracts.py` verifica ref, digest, status e motivo entre estado,
-resultado, dashboard e métricas. O dashboard de custo/recursos mostra apenas
-valores e provenance comprovados; não cria token/cost budgets nem automatic
-cost stops.
-Um arquivo mínimo publicado como `unavailable` mantém ref/digest. Somente falha
-total de publicação usa ref/digest nulos, status `unavailable` e motivo explícito
-`publication failure`, sem alterar o resultado funcional.
+Metricas detalhadas, evidencia de sessao, execution knowledge e retrospectiva
+nao sao produzidas por default. Cada artefato opcional exige proposito,
+consumer, autoridade e retention basis distintos; o estado guarda somente ref
+e digest. Falha de telemetria opcional nao altera a verdade funcional.
 
 ## Criterios de aceite, validators e retry
 
-Cada task tem `task_validation` com ACs, uma rota primaria, evidence refs e
-status. Validator deterministico decide seu check. Quando esse check pedir uma
+Cada task tem `task_validation` schema v2 com ACs, uma rota primaria, evidence
+refs, limitation refs e status. Validator deterministico decide seu check. Quando esse check pedir uma
 correcao introduced/regression, um Write Test Agent independente classifica a
 severidade. Na rota `write_test_agent`, o mesmo agente avalia o AC e escreve o
 finding.
@@ -222,55 +204,51 @@ transitivos sao skipped e branches independentes continuam. Depois de reteste
 medium/major aprovado, o Writer pode produzir um unico learned record opcional;
 falha nesse registro nao altera o resultado da task.
 
-## Dashboards e handoff para QA manual
+## Views puras e QA manual
 
-O dashboard de implementacao e uma projecao deterministica do estado
-persistido. Ele
-inclui:
-
-- status e motivo terminal;
-- units concluídas, pending, unresolved, skipped-dependency ou cancelled;
-- targets alterados e targets inferidos com provenance;
-- cada AC em `passed`, `failed`, `not-demonstrated` ou `not-applicable`, com
-  evidencia obrigatoria para `passed`;
-- validators de task e finais, ciclos, severidade, retries e retestes;
-- falhas, dependentes pulados, regressions, deviations, pre-existing,
-  soft-fails e unknowns;
-- assumptions, decisoes, blockers, riscos, limitations e resume;
-- learned records criados ou pulados;
-- configuracao de auditoria v1 completa, fronteiras esperadas e seu estado
-  due, checkpoints ativos, materialidade, independencia do Auditor,
-  findings/corrections e cada replay completo apos correcao;
-- um unico handoff de QA manual v3: `ready-for-manual-qa`, com identidades do
-  plano/run/execution, execution input ref/digest, evidencia automatica, gates
-  humanos pendentes e targets alterados, ou
-  `manual-qa-not-required`, com motivo nao vazio.
+Compact, resume, requested e final sao views puras de um snapshot validado do
+estado. Nenhuma view e persistida ou participa de commit. Elas apresentam
+status, progresso, targets, validacoes, handoffs, auditorias, blockers, riscos,
+observacoes e QA manual sem criar segunda autoridade.
 
 `loki-implement-feature` nao deriva passos manuais nem coleta observacoes ou
-evidencias humanas. Quando o handoff for
-`ready-for-manual-qa`, somente `loki-manual-qa` pode executar a transicao
-`awaiting-manual-qa -> completed`. Ele revalida o handoff e mostra um checklist
-efêmero com todos os gates humanos pendentes primeiro, seguido de zero a cinco
-testes derivados da demanda e dos targets alterados. Cada item contém somente
+evidencias humanas. Somente `loki-manual-qa` pode solicitar
+`awaiting-manual-qa -> completed`. A autoridade executavel compartilhada e
+`skills/lf-implement-feature-execution/scripts/loki_execution_state.py`. Ela
+valida o schema fechado e recebe apenas operacoes tipadas; nao existe JSON
+Patch, projection writer, consistency marker ou compatibility reader.
+
+O checklist efêmero usa o heading literal `## Playtest Checklist`, mostra
+primeiro todos os gates humanos pendentes e todos os
+fallbacks obrigatórios de limitações. Uma limitação válida pode ser a única
+fonte aplicável, sem gate inventado. Em seguida aparecem zero a dez itens
+exploratórios opcionais derivados da demanda e dos targets alterados; onze é
+rejeitado, e gates/fallbacks não consomem esse limite. Cada item contém somente
 ID, instrução executável e resultado observável; o checklist não é persistido.
 
 Ajuda por ID apenas detalha o item e nao altera bytes, status ou gates. O
 usuario confirma de forma agregada e inequivoca que ja testou e aprovou o
-checklist aplicavel. Não existe sessão, resultado, atestação ou evidência humana
-por teste persistida. Falha ou blocker retorna um prompt copiável para
+checklist aplicavel. `loki-manual-qa` envia `approve_manual_qa` com decision ID,
+digest da base, refs de gates/limitacoes e resumo terminal. O writer exige
+actor humano, CAS na revisao elegivel e igualdade exata com a elegibilidade
+armazenada; depois atualiza decisao, gates e status numa unica substituicao
+atomica. Replay exato e zero-write.
+
+Problema ou dificuldade retorna um payload copiável tipado para
 `loki-feedback`; ambiguidade, silêncio, ajuda e intenção futura fazem zero
-writes. Com aprovação clara, `loki-manual-qa` promove os gates humanos e
-reconcilia LokiRunState v4, resultado v4, dashboard v4 e consistency v3; a
-consistency é publicada por último como marcador da transação.
+writes. A rota `manual-qa-checklist-feedback` preserva plan root,
+run/execution IDs, digest da base, revisao elegivel, MQ-ID, instrução, resultado
+esperado e descrição sanitizada. O diagnóstico é serial e read-only, faz zero
+writes e zero dispatches e não gera retorno automático ou obrigatório ao
+Manual QA.
 
 Status persistidos sao `running`, `awaiting-manual-qa`, `completed`,
 `completed-with-limitations`, `partial`, `failed` e `cancelled`.
 `awaiting-manual-qa` e explicitamente nao concluido. `completed` e
-`completed-with-limitations` sem QA humano exigem `manual-qa-not-required`; o
-ramo com QA material so chega a `completed` pela promocao restrita de
-`loki-manual-qa`.
-`needs-human-review` e somente a projecao de um conflito normativo persistido
-como blocked. Nenhum texto da resposta pode transformar AC ou validator falho
+`completed-with-limitations` sem QA humano exigem verdade terminal valida; o
+ramo com QA material so chega a terminal pela operacao restrita de
+`loki-manual-qa`. Conflito normativo material permanece blocked e segue para
+decisao humana. Nenhum texto da resposta pode transformar AC ou validator falho
 em sucesso.
 Sucesso terminal tambem exige que toda fronteira due esteja `approved` ou
 `not-applicable`. Uma fronteira material sem Auditor disponivel, finding aberto,
@@ -287,7 +265,7 @@ checkpoint invalidado ou replay incompleto permanece nao terminal.
 | Finding/reteste | Write Test Agent independente |
 | Auditoria material de fronteira due | Auditor independente de todos os Writers e primary validators cobertos |
 | Resposta de correcao e learned record opcional | Writer aplicavel |
-| Checklist efêmero, interação, promoção de gates humanos e reconciliação terminal de estado/result/dashboard/consistency | `loki-manual-qa` |
+| Checklist efêmero, classificação humana e solicitação tipada de aprovação do estado | `loki-manual-qa` |
 | Execution knowledge entry | `execution-knowledge-cataloger` |
 
 Estado `.loki/analytic-inference/v2/` e `consumer-operational-state`, nao docs e
@@ -301,7 +279,7 @@ targets exatos, validators e approvals root-bound aplicaveis. `catalogador` e
 | --- | --- |
 | `loki-implement-feature` | Entrada publica unica para planejar e implementar demanda + analise Markdown. |
 | `loki-manual-qa` | QA manual pos-implementacao de um plano em `awaiting-manual-qa`; mostra checklist efêmero, aceita aprovação agregada e executa a promoção terminal restrita sem artefatos administrativos de sessão. |
-| `lf-implement-feature-execution` | Autoridade reutilizavel de estado, DAG, preflight, validation cycles, retry, resume e terminal truth. |
+| `lf-implement-feature-execution` | Autoridade reutilizavel do estado fechado, operacoes tipadas, writer atomico, DAG, preflight, validation cycles, retry, resume e views puras. |
 | `lf-action-plan-authoring` | Mantem o plano com fases, tasks, dependencias, targets, validators e gates. |
 | `lf-domain-context-preflight` | Seleciona contexto duradouro minimo do dominio sem autorizar escrita. |
 | `lf-agent-execution-evidence` | Persiste evidence provider-neutral sanitizada e tipada. |
@@ -335,9 +313,9 @@ exigem uma tecnologia concreta.
 Outra pessoa ou LLM consegue retomar somente pelo disco e descobrir: run e
 execution IDs, demanda e analise, plano/DAG, fase/task atual, target decisions,
 owners, preflights, ACs, validators, cycles, retries, arquivos alterados,
-evidence, gates, blockers, riscos, handoff de QA manual e proxima acao. No ramo
-manual, o disco distingue o plano ainda `awaiting-manual-qa` do conjunto
-terminal mínimo reconciliado por `loki-manual-qa`.
+evidence, gates, blockers, riscos, QA manual e proxima acao. No ramo manual, o
+mesmo arquivo distingue o plano ainda `awaiting-manual-qa` do estado terminal
+aprovado por `loki-manual-qa`.
 
 ## Captura de evidencia ao concluir
 

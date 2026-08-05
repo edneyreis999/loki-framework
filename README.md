@@ -5,7 +5,7 @@ status: draft
 created: 2026-06-24
 doc_id: loki-framework-local-readme
 version: 1.0.0
-last_updated: 2026-08-01
+last_updated: 2026-08-04
 scope: local-project-package
 not_scope: consumer project policy, package installation approval, or runtime validation
 authority: Approved Loki package policy and this package source
@@ -46,9 +46,9 @@ Fluxos principais:
 - `loki-implement-feature`: caminho publico direto de demanda + analise
   Markdown para plano persistido, implementacao autonoma, validacao por task,
   e handoff estruturado para QA manual quando ele for material.
-- `loki-manual-qa`: QA manual pós-implementação com checklist efêmero,
-  ajuda por ID sem mutacao e aprovação humana agregada, sem sessão, resultado,
-  atestação ou evidencia humana por teste persistida.
+- `loki-manual-qa`: QA manual pós-implementação state-only, com checklist
+  efêmero e aprovação agregada vinculada ao digest/revisão elegível; problema,
+  dificuldade, ajuda, silêncio e ambiguidade fazem zero writes.
 - `loki-deep-research`: pesquisa profunda na internet com fontes citadas,
   verificacao cruzada, contradicoes e handoff para analise ou plano.
 - `loki-continuous-improvement`: recebe fontes aprovadas ou um plano completo,
@@ -90,24 +90,39 @@ respostas do Writer, retestes e retry debits ficam persistidos. Falha esgotada
 interrompe apenas dependentes transitivos; branches independentes continuam.
 Findings minor nao consomem o budget e cedem o scheduler entre ciclos.
 
-A resposta final deriva status, units, targets alterados e inferidos, ACs e
-evidencias, validators, retries, riscos e resume. Quando QA humano material e a
-unica condicao restante, a implementacao persiste `awaiting-manual-qa` —
-explicitamente nao concluido — junto do handoff v3
-`ready-for-manual-qa`. Quando QA manual nao e material, conclui depois dos
-gates tecnicos com `manual-qa-not-required` e motivo nao vazio.
+A resposta final e uma view pura derivada de
+`<plan-directory>/builds/execution-state.json`. Quando QA humano material e a
+unica condicao restante, a implementacao publica no proprio estado
+`awaiting-manual-qa`, o digest da base elegivel, a revisao elegivel e os refs
+aplicaveis. Quando QA manual nao e material, conclui pelo writer tipado depois
+dos gates tecnicos e registra a razao terminal no mesmo estado.
 
-Somente `loki-manual-qa` promove `awaiting-manual-qa` para `completed`. Ele
-revalida o estado e o handoff, mostra primeiro todos os gates humanos pendentes
-e pode acrescentar até cinco testes derivados da demanda e dos targets
-alterados. O checklist existe apenas na resposta. Ajuda por ID nao altera bytes
-ou status.
+Somente `loki-manual-qa` solicita a transicao humana de
+`awaiting-manual-qa` para `completed`. Ele valida o estado canonico current-only
+e exige que revisao, digest da base, gates e limitacoes coincidam exatamente
+com a elegibilidade publicada. A resposta usa o heading literal
+`## Playtest Checklist`; o checklist mostra primeiro todos os
+gates humanos pendentes e todos os fallbacks obrigatórios de limitações; a rota
+somente-fallback também é aplicável sem inventar gate. Depois inclui de zero a
+dez testes exploratórios opcionais derivados da demanda e dos targets
+alterados; onze é inválido. Gates e fallbacks obrigatórios não consomem esse
+limite. O checklist existe apenas na resposta. Ajuda por ID não altera bytes ou
+status.
 O gate humano aceita uma confirmacao inequivoca de que todos os itens
 aplicaveis foram testados e aprovados; nao coleta resultado ou evidencia por
-teste. Falha ou blocker recomenda um prompt copiável para `loki-feedback`, sem
-persistir ou despachar feedback. Depois da aprovação clara, o comando promove
-os gates humanos e publica estado, resultado e dashboard, com consistency por
-último; não cria artefato administrativo de QA manual.
+teste. A unica escrita administrativa e a operacao tipada
+`approve_manual_qa` sobre `builds/execution-state.json`, executada pelo writer
+atomico com compare-and-swap. Revisao stale, base alterada, problema ou blocker
+falham sem escrita. Problema ou dificuldade produz um payload copiavel tipado
+para `loki-feedback`, mas nao o despacha. Essa rota e read-only, faz zero writes
+e zero dispatches e nao cria retorno automatico ao Manual QA.
+
+O contrato de execucao atual e `canonical_execution_state` schema v1. O helper
+instalavel
+`skills/lf-implement-feature-execution/scripts/loki_execution_state.py` e a
+unica autoridade executavel para schema fechado, operacoes tipadas, escrita
+atomica com CAS, replay idempotente e views puras de compact/resume/requested/final.
+Nao existe projection writer, consistency marker ou compatibility reader.
 
 Este e um contrato current-only: nao ha alias, wrapper, conversor, fallback ou
 segunda autoridade publica para formatos e comandos substituidos.

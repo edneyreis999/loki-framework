@@ -18,6 +18,12 @@
     "skills/lf-*/SKILL.md": {
       "operational_role": "skill"
     },
+    "skills/lf-implement-feature-execution/SKILL.md": {
+      "operational_role": "skill",
+      "required_resources": [
+        "scripts/loki_execution_state.py"
+      ]
+    },
     "claude_code": {
       "projection": "manual-copy",
       "categories": {

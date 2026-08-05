@@ -1,18 +1,20 @@
 {
   "schema_version": 1,
   "cases": [
-    {"id": "result-v4-canonical", "validator": "result", "factory": "result", "mutation": "none", "accept": true},
-    {"id": "result-v4-extra-field", "validator": "result", "factory": "result", "mutation": "result:extra-field", "accept": false, "error": "RESULT_SHAPE_INVALID"},
-    {"id": "result-v4-missing-audit-configuration", "validator": "result", "factory": "result", "mutation": "result:remove-audit_configuration", "accept": false, "error": "RESULT_SHAPE_INVALID"},
-    {"id": "dashboard-v4-canonical", "validator": "dashboard", "factory": "dashboard", "mutation": "none", "accept": true},
-    {"id": "dashboard-v4-extra-field", "validator": "dashboard", "factory": "dashboard", "mutation": "dashboard:extra-field", "accept": false, "error": "DASHBOARD_SHAPE_INVALID"},
-    {"id": "dashboard-v4-missing-metrics-status", "validator": "dashboard", "factory": "dashboard", "mutation": "dashboard:remove-execution_metrics_status", "accept": false, "error": "DASHBOARD_SHAPE_INVALID"},
-    {"id": "consistency-v3-canonical", "validator": "consistency", "factory": "consistency", "mutation": "none", "accept": true},
-    {"id": "consistency-v3-extra-field", "validator": "consistency", "factory": "consistency", "mutation": "consistency:extra-field", "accept": false, "error": "CONSISTENCY_SHAPE_INVALID"},
-    {"id": "consistency-v3-missing-validator-digest", "validator": "consistency", "factory": "consistency", "mutation": "consistency:remove-validator_digest", "accept": false, "error": "CONSISTENCY_SHAPE_INVALID"},
-    {"id": "canonical-cross-projection-bundle", "validator": "consistency-bundle", "factory": "consistency-bundle", "mutation": "none", "accept": true},
-    {"id": "bundle-status-divergence", "validator": "consistency-bundle", "factory": "consistency-bundle", "mutation": "dashboard:status-divergence", "accept": false, "error": "BUNDLE_DASHBOARD_STATUS_MISMATCH"},
-    {"id": "bundle-gate-divergence", "validator": "consistency-bundle", "factory": "consistency-bundle", "mutation": "dashboard:gate-divergence", "accept": false, "error": "BUNDLE_DASHBOARD_GATE_PARITY_MISMATCH"},
-    {"id": "bundle-execution-input-drift", "validator": "consistency-bundle", "factory": "consistency-bundle", "mutation": "bundle:input-drift", "accept": false, "error": "BUNDLE_EXECUTION_INPUT_DIGEST_MISMATCH"}
+    {"id": "one-of-three-required-passed", "required_statuses": ["passed", "running", "blocked"], "expected_progress": "1/3 tasks (33%)"},
+    {"id": "replan-may-reduce-percent", "before": [2, 3], "after": [2, 4], "expected_before": 67, "expected_after": 50},
+    {"id": "overlapping-handoffs-chronological", "called_at": ["2026-08-04T10:00:00-03:00", "2026-08-04T10:01:00-03:00"], "delivered_at": ["2026-08-04T10:04:00-03:00", "2026-08-04T10:03:00-03:00"], "expected_seconds": [240, 120]},
+    {"id": "same-agent-separate-handoffs", "handoff_ids": ["handoff-1", "handoff-2"], "agent_labels": ["technical-implementer", "technical-implementer"], "expected_rows": 2},
+    {"id": "unavailable-clock-is-not-estimated", "called_status": "unavailable", "called_reason": "adapter did not expose dispatch time", "expected_contains": "indisponível"},
+    {"id": "compact-transition-timestamp-stable", "occurred_at": "2026-08-04T10:05:00-03:00", "rerendered_at": "2026-08-04T13:00:00-03:00", "expected_updated_at": "10:05 AM", "forbidden_updated_at": ["2026-08-04", "-03:00", "10:05:00"]},
+    {"id": "compact-transition-local-clock-pm", "occurred_at": "2026-08-04T22:07:59+05:30", "expected_updated_at": "10:07 PM", "forbidden_updated_at": ["2026-08-04", "+05:30", "22:07", "10:07:59"]},
+    {"id": "final-only-terminal", "statuses": ["completed", "completed-with-limitations", "partial", "failed", "cancelled"]},
+    {"id": "requested-read-only", "mode": "requested", "expected_writes": 0},
+    {"id": "equal-clock-endpoints", "called_at": "2026-08-04T10:00:00-03:00", "delivered_at": "2026-08-04T10:00:00-03:00", "expected_duration": "0s"},
+    {"id": "offsets-sort-by-instant", "called_at": ["2026-08-04T12:00:00+02:00", "2026-08-04T08:30:00-03:00"], "handoff_ids": ["handoff-earlier", "handoff-later"], "expected_order": ["handoff-earlier", "handoff-later"]},
+    {"id": "negative-handoff-chronology-rejected", "called_at": "2026-08-04T10:00:00-03:00", "delivered_at": "2026-08-04T09:59:59-03:00", "error": "HANDOFF_NEGATIVE_CHRONOLOGY"},
+    {"id": "d001-d025-final-order", "expected_sequence": ["opening-paragraph", "handoff-table", "effort-table", "blockers-risks", "next-steps"], "forbidden_sections": ["Tasks concluídas", "Fases concluídas", "Ponto de retomada"]},
+    {"id": "frictions-omitted-when-empty", "expected_heading": "Fricções materiais", "present": false},
+    {"id": "resume-includes-completed-details", "expected_sections": ["Tasks concluídas", "Fases concluídas", "Ponto de retomada"]}
   ]
 }

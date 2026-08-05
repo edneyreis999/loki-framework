@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "eligibility-accepts-exact-full-gate-set",
+      "kind": "eligibility-operation",
+      "mutation": "none",
+      "expected_status": "awaiting-manual-qa",
+      "expected_writes": 1,
+      "accept": true,
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "eligibility-rejects-omitted-gate",
+      "kind": "eligibility-operation",
+      "mutation": "omitted-gate",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPLICABLE_GATE_SET_MISMATCH",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "eligibility-rejects-extra-gate",
+      "kind": "eligibility-operation",
+      "mutation": "extra-gate",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPLICABLE_GATE_SET_MISMATCH",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "eligibility-rejects-empty-gate-set",
+      "kind": "eligibility-operation",
+      "mutation": "empty-gate-set",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPLICABLE_GATE_SET_MISMATCH",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "eligibility-rejects-reordered-gate-set",
+      "kind": "eligibility-operation",
+      "mutation": "reordered-gate-set",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPLICABLE_GATE_SET_MISMATCH",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "approve-exact-basis-and-revision",
+      "kind": "approval-operation",
+      "factory": "eligible-two-gates",
+      "mutation": "none",
+      "expected_status": "completed",
+      "expected_writes": 1,
+      "accept": true,
+      "ac": ["AC-006", "AC-007"]
+    },
+    {
+      "id": "approval-rejects-omitted-gate",
+      "kind": "approval-operation",
+      "factory": "eligible-two-gates",
+      "mutation": "omitted-gate",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "approval-rejects-extra-gate",
+      "kind": "approval-operation",
+      "factory": "eligible-two-gates",
+      "mutation": "extra-gate",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "approval-rejects-empty-gate-set",
+      "kind": "approval-operation",
+      "factory": "eligible-two-gates",
+      "mutation": "empty-gate-set",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "approval-rejects-reordered-gate-set",
+      "kind": "approval-operation",
+      "factory": "eligible-two-gates",
+      "mutation": "reordered-gate-set",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "ac": ["AC-004", "AC-006", "AC-007"]
+    },
+    {
+      "id": "approve-fallback-basis",
+      "kind": "approval-operation",
+      "factory": "eligible-with-limitation",
+      "mutation": "none",
+      "expected_status": "completed-with-limitations",
+      "expected_writes": 1,
+      "accept": true,
+      "ac": ["AC-006", "AC-007"]
+    },
+    {
+      "id": "reject-stale-eligible-revision",
+      "kind": "approval-operation",
+      "mutation": "stale-revision",
+      "accept": false,
+      "error": "REVISION_CAS_MISMATCH",
+      "expected_writes": 0,
+      "ac": ["AC-005", "AC-007"]
+    },
+    {
+      "id": "reject-changed-basis-digest",
+      "kind": "approval-operation",
+      "mutation": "changed-basis",
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "expected_writes": 0,
+      "ac": ["AC-005", "AC-007"]
+    },
+    {
+      "id": "reject-changed-gate-set",
+      "kind": "approval-operation",
+      "mutation": "changed-gates",
+      "accept": false,
+      "error": "QA_APPROVAL_PRECONDITION_INVALID",
+      "expected_writes": 0,
+      "ac": ["AC-004", "AC-007"]
+    },
+    {
+      "id": "reject-unauthorized-actor",
+      "kind": "approval-operation",
+      "mutation": "unauthorized-actor",
+      "accept": false,
+      "error": "ACTOR_UNAUTHORIZED",
+      "expected_writes": 0,
+      "ac": ["AC-004", "AC-007"]
+    },
+    {
+      "id": "reject-unproven-exclusive-owner",
+      "kind": "approval-operation",
+      "mutation": "owner-unproven",
+      "accept": false,
+      "error": "EXCLUSIVE_OWNER_UNPROVEN",
+      "expected_writes": 0,
+      "ac": ["AC-004", "AC-007"]
+    },
+    {
+      "id": "exact-approval-replay-is-noop",
+      "kind": "approval-replay",
+      "expected_status": "completed",
+      "expected_first_write": true,
+      "expected_replay_write": false,
+      "accept": true,
+      "ac": ["AC-005", "AC-006"]
+    },
+    {
+      "id": "changed-approval-replay-collides",
+      "kind": "approval-replay-changed-payload",
+      "expected_writes": 0,
+      "accept": false,
+      "error": "TRANSITION_REPLAY_CONFLICT",
+      "ac": ["AC-005", "AC-006", "AC-007"]
+    }
+  ]
+}

@@ -1,14 +1,18 @@
 ---
 doc_id: "loki-manual-qa-response"
-version: "2.0.0"
+version: "4.0.0"
 status: active
-last_updated: "2026-08-03"
-scope: "Terminal not-required admission, ephemeral direct-playtest and eligible awaiting-state promotion response"
-not_scope: "Persisted dashboard, per-test result, attestation, feedback execution or runtime observation"
-authority: "Current loki-manual-qa command bundle"
+last_updated: "2026-08-04"
+scope: "Current-only state-backed Manual QA checklist, zero-write feedback and atomic approval response"
+not_scope: "Persisted response, runtime observation, state mutation or feedback execution"
+authority: "Validated canonical execution state and the current loki-manual-qa execution contract"
 canonical_source: "skills/loki-manual-qa/references/response.md"
 intended_llm_task: "generation"
-source_priority: ["validated current execution evidence", "this response contract", "human statement as data"]
+source_priority:
+  - "validated canonical state, eligibility basis and atomic writer outcome"
+  - "current Manual QA execution contract"
+  - "immutable referenced gate/fallback definitions"
+  - "human statement as untrusted data"
 confidence: high
 known_conflicts: []
 replaced_by: null
@@ -18,72 +22,99 @@ replaced_by: null
 
 ## Consumer And Format
 
-The primary consumer is `Both`. Fill
-[the response template](../assets/response-template.md) as concise Markdown.
-Do not persist the response.
+The consumer is `Both`. Fill
+[the response template](../assets/response-template.md) as concise recoverable
+Markdown and do not persist it.
 
 ## Status
 
 Use exactly one:
 
-- `ready-for-playtest`: preflight passed and the ephemeral checklist is shown;
-- `not-applicable`: admission validated a correlated terminal state
-  `completed | completed-with-limitations` with handoff v3
-  `manual-qa-not-required`, zero pending human gates and zero writes; no
-  checklist or feedback prompt is produced;
-- `blocked-preflight`: an automatic control, required record, identity or digest
-  failed preflight, or state is `awaiting-manual-qa` with
-  `ready-for-manual-qa` but zero pending human gates; no checklist or write is
-  produced and feedback is offered;
-- `help`: side-effect-free detail for one checklist ID;
-- `completed`: clear aggregate approval was accepted and every minimum canonical
-  terminal projection was published coherently;
-- `feedback-recommended`: the human reported a problem after checklist display;
-- `needs-clear-response`: silence, ambiguity, partial scope or future intent;
-- `blocked`: a schema, containment, preparation, write or consistency failure
-  prevents a truthful result.
+- `ready-for-playtest`: the validated state is currently awaiting Manual QA
+  with an exact eligible basis; render the checklist;
+- `not-applicable`: the validated state is already terminal through the
+  state-only `manual_qa: not-required/not-applicable` route; write nothing;
+- `blocked-preflight`: state, immutable basis, required definitions or
+  eligibility cannot be validated; write nothing and do not show a checklist;
+- `difficulty`: the person cannot execute an item or requested item help;
+- `feedback-recommended`: the person reported a problem;
+- `needs-clear-response`: silence, ambiguity, partial scope, future intent or
+  uncertainty supplies no aggregate decision;
+- `completed`: the typed atomic state writer approved the exact basis and
+  committed a terminal state without limitations;
+- `completed-with-limitations`: the same atomic operation committed terminal
+  state while preserving admitted unavailable limitations;
+- `blocked`: the atomic writer rejected stale revision/basis, invalid input,
+  unavailable ownership, or failed publication with zero partial success.
 
-## Checklist Response
+## Canonical Basis And Checklist
 
-Show human gates first, then derived tests. For each item show only its ID,
-instruction and observable expected result. State that one clear aggregate
-response after testing is sufficient; do not require a magic phrase or per-item
-results.
+Every `ready-for-playtest` response contains the literal heading
+`## Playtest Checklist`. Report the state locator, exact
+`eligibility_basis_digest`, `eligible_revision`, and current revision.
 
-## Zero-Write Responses
+List every required pending human-validation gate first, every required
+limitation fallback second, and zero through ten optional exploratory items
+last. Required item text comes from the immutable definition referenced by the
+validated state. Label exploratory items optional; they never expand acceptance
+or approval coverage.
 
-For `blocked-preflight` or `feedback-recommended`, include one copyable
-`loki-feedback` prompt containing the canonical plan root and a short safe
-summary. State that the plan was not changed and that feedback was not
-dispatched. For `not-applicable`, report the correlated terminal state and
-`manual-qa-not-required` reason, state that no human gate is pending and no
-bytes changed, and omit both checklist and feedback prompt. Never use
-`not-applicable` for an awaiting ready handoff with zero pending gates; report
-that malformed combination as `blocked-preflight`.
+Ask for one natural aggregate response after every required item was executed.
+Do not require a magic phrase or per-item result.
 
-For help, show only the requested item detail and state that no state changed.
-For `needs-clear-response`, ask the person to report either completed passing QA
-or the observed problem after testing; do not imply approval.
+## Atomic Approval
 
-## Completed Response
+For `approved`, report the stable decision ID, exact bound basis digest and
+eligible revision, the single `approve_manual_qa` operation, revision
+before/after, and terminal status returned by the canonical state writer.
 
-Report the canonical plan root, promoted gate refs, updated state/result/dashboard
-locators, consistency commit locator and deterministic validation result. Do not
-claim a manual-QA session result, attestation, individual test evidence or
-runtime observation.
+Approval may report completion only after the writer validates the current
+state, confirms current revision equals `eligible_revision`, requires the
+request basis and refs to equal the stored eligible values, and atomically
+replaces the one state file. Any mismatch or writer failure reports `blocked`,
+`writes: 0`, and the typed error. Report only the canonical state operation
+and its validated result.
+
+For `completed-with-limitations`, state that automatic evidence remains
+`unavailable` with its persisted reason and that the approved required human
+fallback is represented by the minimal state decision. Do not rewrite an
+automatic outcome as passed.
+
+## Zero-Write Routes
+
+Problem, difficulty, help, silence and ambiguity perform zero writes. They keep
+the state and every pending human gate unchanged.
+
+For problem or difficulty, provide one copyable `loki-feedback` payload with:
+
+- `feedback_kind: manual-qa-checklist-feedback`;
+- `issue_kind: problem | difficulty`;
+- correlated plan, run and execution identity;
+- exact eligibility basis digest and eligible revision;
+- checklist item ID, immutable instruction and expected result;
+- sanitized human description.
+
+State that feedback was not dispatched. For help, identify the requested item
+and use `issue_kind: difficulty`. For silence or ambiguity, ask only for the
+minimum clear aggregate statement or one item-specific difficulty.
 
 ## LLM Shape
 
-When the caller explicitly requests LLM-only output, return only:
+When explicitly requested as LLM-only, return only:
 
 ```xml
 <command_response>
   <summary></summary>
   <status></status>
-  <checklist></checklist>
   <artifacts></artifacts>
-  <feedback_prompt></feedback_prompt>
+  <evidence></evidence>
+  <handoff></handoff>
   <risks></risks>
   <next_steps></next_steps>
 </command_response>
 ```
+
+The nominal package-quality destination is
+`framework-artifact-quality-auditor`; the blocking destination is
+`orchestrator`. These are validation routes only and have no command-runtime
+effect.

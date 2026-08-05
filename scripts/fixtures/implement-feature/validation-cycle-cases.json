@@ -1,31 +1,13 @@
 {
   "schema_version": 1,
   "cases": [
-    {
-      "id": "gate-v3-automatic-passed",
-      "validator": "gate",
-      "accept": true,
-      "input": {"schema_version": 3, "gate_id": "tests", "task_ref": "planos/p/task-1.md", "kind": "automatic", "instruction": "Run the unit tests.", "expected": "Every unit test passes.", "status": "passed", "evidence_refs": ["planos/p/builds/tests.log"]}
-    },
-    {
-      "id": "gate-v3-human-pending",
-      "validator": "gate",
-      "accept": true,
-      "input": {"schema_version": 3, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes without an error.", "status": "pending", "evidence_refs": []}
-    },
-    {
-      "id": "gate-v2-rejected-current-only",
-      "validator": "gate",
-      "accept": false,
-      "error": "GATE_RECORD_SCHEMA_INVALID",
-      "input": {"schema_version": 2, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes.", "status": "pending", "evidence_refs": []}
-    },
-    {
-      "id": "human-gate-evidence-forbidden",
-      "validator": "gate",
-      "accept": false,
-      "error": "HUMAN_GATE_EVIDENCE_FORBIDDEN",
-      "input": {"schema_version": 3, "gate_id": "playtest", "task_ref": "planos/p/task-1.md", "kind": "human-validation", "instruction": "Complete the primary flow.", "expected": "The flow completes.", "status": "passed", "evidence_refs": ["planos/p/builds/manual.json"]}
-    }
+    {"id": "task-pass-requires-validator-evidence", "task_status": "passed", "validation_status": "passed", "evidence_refs": ["builds/evidence/unit-tests.txt"], "accept": true},
+    {"id": "task-pass-with-failed-validator-rejected", "task_status": "passed", "validation_status": "failed", "accept": false},
+    {"id": "audit-task-frequency", "frequency": "task", "tasks": 3, "phases": 2, "expected_boundaries": 3},
+    {"id": "audit-phase-frequency", "frequency": "phase", "tasks": 3, "phases": 2, "expected_boundaries": 2},
+    {"id": "audit-plan-frequency", "frequency": "plan", "tasks": 3, "phases": 2, "expected_boundaries": 1},
+    {"id": "audit-rejection-blocks", "audit_status": "rejected", "expected_run_status": "blocked"},
+    {"id": "manual-qa-approval-single-operation", "operation": "approve_manual_qa", "expected_revision_increment": 1},
+    {"id": "ambiguous-manual-qa-zero-write", "human_declaration": "I had a problem", "expected_writes": 0}
   ]
 }

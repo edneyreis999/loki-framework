@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id": "default-does-not-create-metrics", "explicit_trigger": false, "expected_artifact": null, "expected_rendering": "indisponível (telemetry not requested)"},
+    {"id": "explicit-metrics-artifact-has-consumer", "explicit_trigger": true, "kind": "detailed-metrics", "consumer": "named measurement workflow", "authority": "explicit measurement purpose", "retention_basis": "approved measurement request"},
+    {"id": "missing-observation-is-not-zero", "status": "unavailable", "value": null, "unit": null, "reason": "adapter did not expose usage"},
+    {"id": "observed-effort-is-non-negative", "status": "observed", "value": 1250, "unit": "milliseconds", "reason": null}
+  ]
+}

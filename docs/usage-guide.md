@@ -6,7 +6,7 @@ created: 2026-06-24
 scope: local-project-package
 doc_id: loki-usage-guide
 version: 1.0.0
-last_updated: 2026-08-01
+last_updated: 2026-08-04
 not_scope: Consumer project policy, installation approval, runtime validation, or compatibility with superseded commands
 authority: Approved Loki package policy and current package command contracts
 canonical_source: docs/usage-guide.md
@@ -40,6 +40,10 @@ outro projeto.
   agents Codex.
 - `scripts/install-loki-symlinks.py`: instalador Codex por symlink para
   projetos consumidores ou para o package source, filtrado por perfil.
+- `skills/lf-implement-feature-execution/scripts/loki_execution_state.py`:
+  helper instalavel current-only e unica autoridade executavel para o estado
+  fechado, operacoes tipadas, CAS/replace atomico, replay idempotente e views
+  puras.
 - `install-scopes.json`: fonte machine-readable dos escopos `internal-only`,
   `both` e `consumer-only`.
 - `templates/`: contratos minimos para criar novos command bundles e componentes.
@@ -152,10 +156,11 @@ Use `loki-implement-feature` quando ja houver uma demanda nao vazia e uma
 analise Markdown decision-complete. O comando recebe esses dois inputs,
 materializa ou retoma o plano, registra targets e owners antes da escrita,
 executa o DAG e, quando QA humano for material, persiste o estado
-`awaiting-manual-qa` — explicitamente nao concluido — junto do handoff v3
-`ready-for-manual-qa`. Quando QA manual nao for material, ele conclui depois
-dos gates tecnicos com `manual-qa-not-required` e motivo nao vazio. Nao existe
-uma segunda chamada publica para executar o plano.
+`awaiting-manual-qa` — explicitamente nao concluido — junto do digest da base,
+revisao elegivel e refs aplicaveis no proprio estado canonico. Quando QA manual
+nao for material, ele conclui pela operacao tipada `publish_terminal` depois
+dos gates tecnicos. Nao existe uma segunda chamada publica para executar o
+plano.
 
 Um terceiro argumento publico opcional, `audit_frequency`, controla a
 granularidade da auditoria independente. Se omitido, normaliza para
@@ -196,46 +201,55 @@ enriquecimento: atraso ou falha vira `partial`, `failed` ou `unsupported`;
 lookup trivial pode ser `skipped-nonmaterial`. Somente
 `loki-continuous-improvement` promove conhecimento depois.
 
-O resultado unificado deriva do estado persistido e inclui AC/evidence,
-validators, ciclos, retries, failed tasks, skipped dependents, targets
-inferidos, riscos, resume e um handoff fechado: `ready-for-manual-qa` com
-identidades e evidencia automatica correlatas, ou `manual-qa-not-required` com
-motivo nao vazio. `loki-implement-feature` nao deriva passos manuais, nem
-interpreta validacao humana. Os statuses persistidos atuais sao `running`,
+O resultado unificado e uma view pura de um snapshot validado de
+`<plan-directory>/builds/execution-state.json`. O estado fechado schema v1
+contem identidade, revisao do plano, tasks, fases, handoffs, gates, auditorias,
+QA manual, decisoes humanas, outcomes, friccoes, blockers, riscos e proximos
+passos. `loki-implement-feature` nao deriva passos manuais nem interpreta
+validacao humana. Os statuses persistidos atuais sao `running`,
 `awaiting-manual-qa`, `completed`, `completed-with-limitations`, `partial`,
-`failed` e `cancelled`. O resultado tambem mostra a configuracao v1 completa,
-fronteiras due, checkpoints
-ativos, materialidade, independencia, findings/corrections e full replays. Um
-status de sucesso exige toda fronteira due `approved` ou `not-applicable`.
+`failed` e `cancelled`. Sucesso exige tasks, auditorias e gates aplicaveis em
+estado terminal valido. Compact, resume, requested e final sao renderizacoes
+read-only; nao sao arquivos persistidos nem segunda autoridade.
 
 ### QA manual pos-implementacao
 
 `loki-manual-qa` e o unico owner da transicao
-`awaiting-manual-qa -> completed`. Depois de revalidar estado, projeções e
-handoff v3, ele mostra um checklist efêmero: todos os gates humanos pendentes
-primeiro e zero a cinco testes derivados da demanda e dos targets alterados.
-Cada item tem somente ID, instrução e resultado observável; nada é persistido.
+`awaiting-manual-qa -> completed`. Depois de validar o estado canonico, ele
+exige elegibilidade corrente: a revisao atual deve ser a revisao elegivel e o
+digest da base, gates e limitacoes da requisicao devem coincidir exatamente
+com os valores armazenados. O checklist efêmero usa o heading literal
+`## Playtest Checklist` e mostra
+todos os gates humanos pendentes, todos os fallbacks
+obrigatórios de limitações e depois zero a dez testes exploratórios opcionais;
+onze exploratórios é rejeitado. Gates e fallbacks não consomem esse limite. A
+rota somente-fallback é aplicável sem inventar gate. Cada item tem somente ID,
+instrução e resultado observável; o checklist não é persistido.
 
 Ajuda por ID reapresenta um guia e nao altera estado. Para passar o gate humano,
 o usuario declara de forma inequivoca que ja testou e aprovou o checklist
-aplicavel. A confirmação é agregada e não é persistida. Falha ou blocker gera
-somente um prompt copiável para `loki-feedback`; ajuda, ambiguidade e intenção
-futura fazem zero writes. Depois da aprovação clara e da revalidação final,
-somente `loki-manual-qa` promove os gates humanos e reconcilia estado,
-resultado e dashboard, publicando consistency por último.
+aplicavel. A decisao agregada e submetida como uma operacao fechada
+`approve_manual_qa` ao unico writer atomico de
+`builds/execution-state.json`. O writer aplica compare-and-swap, valida actor,
+base e refs, atualiza gates/decisao/status numa unica substituicao e trata replay
+exato como zero-write. Qualquer revisao stale, alteracao de base, actor invalido
+ou falha de ownership bloqueia sem arquivo parcial.
 
-O mesmo run publica `builds/metrics/execution-metrics.json` schema v1, ligado
-por ref/digest ao LokiRunState v4, resultado v4 e dashboard v4. Ele registra spans,
-clocks, elapsed/active/critical-path, contagens e tokens separados em
-`exact`, `estimated` ou `unavailable`; estimativas têm range, baixa confiança e
-escopo parcial. Telemetria degradada não bloqueia execução funcional. Uma
-parada por silêncio exige liveness probe do adaptador, e `running`/`progress`
-proíbe a parada. O dashboard exibe custo/recursos apenas com provenance: não há
-budgets de token/custo nem parada automática por custo.
-O mesmo hash canônico, calculado sem os dois campos de identidade, alimenta
-`metrics_id` e `metrics_digest`. Um documento mínimo `unavailable` publicado
-mantém ref/digest; somente falha total de publicação usa null/null com status
-`unavailable` e motivo explícito `publication failure`.
+Problema ou dificuldade gera somente um payload copiável tipado para
+`loki-feedback`; ajuda, ambiguidade, silencio e intenção futura fazem zero
+writes. A rota `manual-qa-checklist-feedback` preserva plan root,
+run/execution IDs, digest da base elegivel, revisao elegivel, MQ-ID, instrução,
+resultado esperado e descrição sanitizada. Ela conduz diagnóstico serial
+read-only, com zero writes e zero dispatches, e não cria retorno
+obrigatório ou automático para Manual QA; a pessoa controla qualquer
+reinvocação.
+
+Metricas detalhadas nao sao criadas por default. Quando um proposito, consumer,
+autoridade e retention basis explicitos exigirem um artefato opcional, o estado
+registra somente seu locator e digest. A view de recursos deriva observacoes
+bounded do estado; valor nao observavel aparece como `indisponível` com motivo,
+nunca como zero sintetico. Telemetria opcional nao cria budget ou parada
+automatica por custo.
 
 ## Evidencia de Sessao
 

@@ -2,241 +2,72 @@
   "schema_version": 1,
   "cases": [
     {
-      "id": "handoff-ready-current-input-locator",
-      "kind": "handoff",
+      "id": "eligible-state-gate-only",
+      "kind": "state-route",
+      "factory": "eligible-gate-only",
+      "expected": "eligible",
       "accept": true,
-      "input": {
-        "schema_version": 3,
-        "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-        "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"],
-        "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"],
-        "changed_target_refs": ["src/app.py"],
-        "reason": null
-      }
+      "ac": ["AC-006"]
     },
     {
-      "id": "handoff-not-required-current",
-      "kind": "handoff",
+      "id": "eligible-state-fallback-only",
+      "kind": "state-route",
+      "factory": "eligible-fallback-only",
+      "expected": "eligible",
       "accept": true,
-      "input": {
-        "schema_version": 3,
-        "status": "manual-qa-not-required",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-        "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/automatic-unit-tests.json"],
-        "pending_human_gate_refs": [],
-        "changed_target_refs": ["src/app.py"],
-        "reason": "No human-validation gate applies to this completed execution."
-      }
+      "ac": ["AC-006", "AC-007"]
     },
     {
-      "id": "handoff-not-required-without-automatic-evidence-rejected",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_NOT_REQUIRED_EVIDENCE_EMPTY",
-      "input": {
-        "schema_version": 3,
-        "status": "manual-qa-not-required",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-        "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": [],
-        "pending_human_gate_refs": [],
-        "changed_target_refs": ["src/app.py"],
-        "reason": "No human-validation gate applies to this completed execution."
-      }
-    },
-    {
-      "id": "handoff-absolute-changed-target-rejected",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {
-        "schema_version": 3, "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a", "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"], "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"], "changed_target_refs": ["/src/app.py"], "reason": null
-      }
-    },
-    {
-      "id": "handoff-traversing-changed-target-rejected",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {
-        "schema_version": 3, "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a", "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"], "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"], "changed_target_refs": ["../src/app.py"], "reason": null
-      }
-    },
-    {
-      "id": "handoff-backslash-changed-target-rejected",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_CHANGED_TARGET_REFS_INVALID",
-      "input": {
-        "schema_version": 3, "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a", "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json", "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"], "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"], "changed_target_refs": ["src\\app.py"], "reason": null
-      }
-    },
-    {
-      "id": "handoff-fixed-result-anchor-rejected",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_SHAPE_INVALID",
-      "input": {
-        "schema_version": 3,
-        "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-        "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"],
-        "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"],
-        "changed_target_refs": [],
-        "reason": null,
-        "manual_qa_result_ref": "planos/feature-a/builds/manual-qa/result.json"
-      }
-    },
-    {
-      "id": "handoff-no-pending-human-gate",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_READY_HUMAN_GATES_EMPTY",
-      "input": {
-        "schema_version": 3,
-        "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/custom-input.json",
-        "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"],
-        "pending_human_gate_refs": [],
-        "changed_target_refs": [],
-        "reason": null
-      }
-    },
-    {
-      "id": "handoff-input-digest-malformed",
-      "kind": "handoff",
-      "accept": false,
-      "error": "HANDOFF_INPUT_DIGEST_INVALID",
-      "input": {
-        "schema_version": 3,
-        "status": "ready-for-manual-qa",
-        "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "plan_directory": "planos/feature-a",
-        "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-        "execution_input_digest": "sha256:drift",
-        "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"],
-        "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"],
-        "changed_target_refs": [],
-        "reason": null
-      }
-    },
-    {
-      "id": "handoff-input-byte-drift-rejected",
-      "kind": "handoff-input-bytes",
-      "accept": false,
-      "error": "HANDOFF_INPUT_DIGEST_MISMATCH",
-      "input": {
-        "handoff": {
-          "schema_version": 3,
-          "status": "ready-for-manual-qa",
-          "run_id": "loki-run-v2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "execution_id": "loki-execution-v2:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          "plan_directory": "planos/feature-a",
-          "execution_input_ref": "planos/feature-a/builds/execution-input-v2.json",
-          "execution_input_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-          "automatic_evidence_refs": ["planos/feature-a/builds/validator.json"],
-          "pending_human_gate_refs": ["planos/feature-a/task-1.md#gate:playtest"],
-          "changed_target_refs": [],
-          "reason": null
-        },
-        "execution_input_text": "{\"schema_version\":2}"
-      }
-    },
-    {
-      "id": "gate-pending-human-observable",
-      "kind": "gate",
+      "id": "eligible-state-gate-and-fallback",
+      "kind": "state-route",
+      "factory": "eligible-both",
+      "expected": "eligible",
       "accept": true,
-      "input": {
-        "schema_version": 3,
-        "gate_id": "playtest-core",
-        "task_ref": "planos/feature-a/task-1.md",
-        "kind": "human-validation",
-        "instruction": "Open the feature and complete the primary action.",
-        "expected": "The action completes once and the UI remains responsive.",
-        "status": "pending",
-        "evidence_refs": []
-      }
+      "ac": ["AC-006", "AC-007"]
     },
     {
-      "id": "gate-vague-expected-rejected",
-      "kind": "gate",
+      "id": "eligible-state-with-no-required-item-rejected",
+      "kind": "state-route",
+      "factory": "eligible-neither",
       "accept": false,
-      "error": "GATE_EXPECTED_INVALID",
-      "input": {
-        "schema_version": 3,
-        "gate_id": "playtest-core",
-        "task_ref": "planos/feature-a/task-1.md",
-        "kind": "human-validation",
-        "instruction": "Test it.",
-        "expected": "",
-        "status": "pending",
-        "evidence_refs": []
-      }
+      "error": "MANUAL_QA_REQUIRED_ITEMS_EMPTY",
+      "ac": ["AC-007"]
     },
     {
-      "id": "automatic-evidence-passed",
-      "kind": "automatic-evidence",
+      "id": "terminal-not-required-is-zero-write",
+      "kind": "state-route",
+      "factory": "terminal-not-required",
+      "expected": "not-applicable",
+      "expected_writes": 0,
       "accept": true,
-      "input": {
-        "schema_version": 1,
-        "control_id": "unit-tests",
-        "status": "passed",
-        "evidence_ref": "planos/feature-a/builds/unit-tests.log",
-        "evidence_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-      }
+      "ac": ["AC-006"]
     },
     {
-      "id": "automatic-evidence-failed-rejected",
-      "kind": "automatic-evidence",
+      "id": "running-state-is-not-eligible",
+      "kind": "state-route",
+      "factory": "running",
       "accept": false,
-      "error": "AUTOMATIC_EVIDENCE_STATUS_INVALID",
-      "input": {
-        "schema_version": 1,
-        "control_id": "unit-tests",
-        "status": "failed",
-        "evidence_ref": "planos/feature-a/builds/unit-tests.log",
-        "evidence_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-      }
+      "error": "MANUAL_QA_STATE_NOT_ELIGIBLE",
+      "expected_writes": 0,
+      "ac": ["AC-007"]
     },
     {
-      "id": "superseded-attestation-form-rejected",
-      "kind": "forbidden-form",
+      "id": "eligible-revision-must-be-positive-integer",
+      "kind": "state-validation",
+      "factory": "eligible-gate-only",
+      "mutation": "boolean-eligible-revision",
       "accept": false,
-      "error": "SUPERSEDED_FORM_ACCEPTED",
-      "input": {"attestation_ref": "planos/feature-a/interaction/manual-qa/attestation.json"}
+      "error": "MANUAL_QA_ELIGIBLE_REVISION_INVALID",
+      "ac": ["AC-004", "AC-007"]
+    },
+    {
+      "id": "eligible-basis-must-be-exact-digest",
+      "kind": "state-validation",
+      "factory": "eligible-gate-only",
+      "mutation": "invalid-basis-digest",
+      "accept": false,
+      "error": "MANUAL_QA_ELIGIBILITY_BASIS_INVALID",
+      "ac": ["AC-004", "AC-007"]
     }
   ]
 }
