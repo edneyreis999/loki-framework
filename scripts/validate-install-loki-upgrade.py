@@ -27,11 +27,11 @@ LEGACY_COMMAND_RELATIVE_DIR = Path(".agents") / "commands" / "loki"
 PLAN_LINE = re.compile(r"^- status=\S+ type=(\S+) ")
 
 FINAL_COUNTS = {
-    "consumer": {"skill": 55, "agent": 28, "codex-agent": 28, "templates": 1},
-    "package-source": {"skill": 41, "agent": 15, "codex-agent": 15, "templates": 1},
-    "all": {"skill": 55, "agent": 28, "codex-agent": 28, "templates": 1},
+    "consumer": {"skill": 56, "agent": 26, "codex-agent": 26, "templates": 1},
+    "package-source": {"skill": 43, "agent": 13, "codex-agent": 13, "templates": 1},
+    "all": {"skill": 57, "agent": 26, "codex-agent": 26, "templates": 1},
 }
-FINAL_TOTALS = {"consumer": 112, "package-source": 72, "all": 112}
+FINAL_TOTALS = {"consumer": 109, "package-source": 70, "all": 110}
 RETIRED_SKILLS = (
     "loki-" + "generate-action-plan",
     "loki-" + "run-plan",
@@ -388,6 +388,7 @@ class ProfileAndSchemaTests(unittest.TestCase):
         self_healing = PACKAGE_ROOT / "skills" / "loki-self-healing" / "SKILL.md"
         self.assertEqual(
             [
+                "lf-command-input-interview",
                 "lf-framework-impact-audit",
                 "lf-command-creator",
                 "lf-skill-creator",

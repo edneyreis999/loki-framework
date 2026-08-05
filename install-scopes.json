@@ -155,6 +155,7 @@
       "lf-implement-feature-execution": "both",
       "lf-domain-context-preflight": "both",
       "loki-self-healing": "both",
+      "loki-self-e2e-test": "internal-only",
       "lf-skill-creator": "both",
       "loki-demand-text-improver": "both",
       "loki-tech-analysis": "both",

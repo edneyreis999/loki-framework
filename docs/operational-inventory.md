@@ -6,7 +6,7 @@ type: operational-inventory
 self_contained: true
 doc_id: loki-operational-inventory
 version: 1.0.0
-last_updated: 2026-08-04
+last_updated: 2026-08-05
 scope: Current package commands, skills, agents, templates, docs, validators, and reference-only backlog
 not_scope: Consumer project inventory, installed destination state, or compatibility with superseded package contracts
 authority: Approved Loki package policy and the versioned package source
@@ -66,6 +66,7 @@ não existe projection ou command físico separado.
 | `loki-knowledge-extraction-analysis` | `mvp` | Analisar artefatos externos e extrair aprendizados rastreaveis, nao forcados e consumiveis por `loki-continuous-improvement`. |
 | `loki-deep-research` | `mvp` | Conduzir pesquisa profunda multiagentica na internet, com uma trilha `source-researcher` por subpesquisa em modo deep/deeper, fontes citadas, verificacao cruzada, contradicoes, assumptions e handoff compacto para analise, plano ou decisao. |
 | `loki-self-healing` | `mvp` | Auditar artefatos internos do pacote pelos contratos canonicos dos tres creators e aplicar correcoes escopadas no working tree sem stage ou commit automatico. |
+| `loki-self-e2e-test` | `mvp` | Inferir e executar autonomamente um cenário E2E do workflow de planos Loki no sandbox fixo Playground2, sem perguntas ao mantenedor, com `/clean` entre comandos e relatório local numerado. |
 | `loki-criar-nsd` | `backlog` | Conduzir entrevista narrativa quando o contrato de NSD for normalizado. |
 | `loki-ai-enemy-optimizer` | `backlog` | Gerar comportamento de inimigos por contrato de dominio especializado. |
 | `loki-brainstorm-phase-1-create-boss` | `backlog` | Criar conceito inicial de boss com escopo narrativo/gameplay. |
@@ -75,11 +76,13 @@ não existe projection ou command físico separado.
 | `zord:troubleshoot` | `reference-only` | Inspiracao para debug iterativo futuro. |
 | `zord:entrevistador` | `reference-only` | Inspiracao para entrevistas com uma pergunta por vez. |
 
-O pacote possui 17 command bundles `loki-*` ativos, todos com escopo de
-instalacao `both`. O router geral `lf-command-workflows` expoe 15 workflows de
-uso geral; os dois workflows de manutencao do pacote,
-`loki-knowledge-extraction-analysis` e `loki-self-healing`, sao roteados por
-`lf-internal-command-workflows`. Instalar esses workflows em um consumidor nao
+O pacote possui 18 command bundles `loki-*` ativos: 17 com escopo de instalação
+`both` e `loki-self-e2e-test` com escopo `internal-only`, disponível somente
+nos perfis `package-source` e `all`. O router geral `lf-command-workflows` expõe
+15 workflows de uso geral; `loki-knowledge-extraction-analysis` e
+`loki-self-healing` continuam roteados por `lf-internal-command-workflows`,
+enquanto `loki-self-e2e-test` é invocado diretamente no workspace do pacote.
+Instalar esses workflows em um consumidor não
 autoriza mutar artefatos consolidados do pacote ou superficies do consumidor:
 mutacao do pacote continua exigindo package root e envelope
 `destination_scope: package`; relatorios transitorios preservam os limites do

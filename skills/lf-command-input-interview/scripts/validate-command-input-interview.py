@@ -483,9 +483,15 @@ def validate_package(root: Path) -> list[str]:
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
         errors.append("schema digest self-check failed")
     command_paths = tuple(sorted((root / "skills").glob("loki-*/SKILL.md")))
-    command_names = tuple(path.parent.name for path in command_paths)
-    if command_names != EXPECTED_COMMANDS:
-        errors.append("current Loki command set differs from the expected 17-command set")
+    install_scopes = load_json(required_paths[5])
+    skill_scopes = install_scopes["artifacts"]["skills"]
+    shared_command_names = tuple(
+        path.parent.name
+        for path in command_paths
+        if skill_scopes.get(path.parent.name) == "both"
+    )
+    if shared_command_names != EXPECTED_COMMANDS:
+        errors.append("current shared Loki command set differs from the expected 17-command set")
     for path in command_paths:
         text = path.read_text(encoding="utf-8")
         relative = path.relative_to(root)

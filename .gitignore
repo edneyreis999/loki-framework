@@ -10,3 +10,6 @@ __pycache__/
 .agents/
 frameworks-de-referencia
 .env
+
+# Local E2E execution reports
+e2e-runs/
